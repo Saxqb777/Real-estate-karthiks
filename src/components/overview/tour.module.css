@@ -1,0 +1,139 @@
+/* First-run tour: dimmed screen with a spotlight hole + a coach card with corner brackets. */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+}
+.shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.dim {
+  fill: rgba(9, 8, 7, 0.68);
+}
+.ring {
+  fill: none;
+  stroke: var(--marigold);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 10px rgba(255, 181, 71, 0.35));
+}
+
+.card {
+  --c: var(--marigold);
+  position: fixed;
+  padding: 14px 16px 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 90px),
+    #1d1915;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    var(--inner-hi),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  --l: 10px;
+  --w: 2px;
+  background:
+    linear-gradient(var(--c) 0 0) top left / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) top left / var(--w) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) top right / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) top right / var(--w) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom left / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom left / var(--w) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom right / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom right / var(--w) var(--l) no-repeat;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.eyebrow {
+  font-family: var(--ff-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--marigold);
+}
+.count {
+  font-family: var(--ff-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.title {
+  margin: 0 0 6px;
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.body b {
+  color: var(--text);
+  font-weight: 700;
+}
+.body kbd {
+  vertical-align: 1px;
+}
+.body .teal {
+  color: var(--teal);
+}
+.body .marigold {
+  color: var(--marigold);
+}
+.body .coral {
+  color: var(--coral);
+}
+.pips {
+  display: flex;
+  gap: 4px;
+  margin: 12px 0 10px;
+}
+.pip {
+  flex: 1;
+  height: 3px;
+  background: var(--line-strong);
+}
+.pipDone {
+  background: rgba(255, 181, 71, 0.45);
+}
+.pipOn {
+  background: var(--marigold);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.skip {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  padding: 4px 2px;
+}
+.skip:hover {
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.flex {
+  flex: 1;
+}

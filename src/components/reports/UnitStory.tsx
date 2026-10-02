@@ -13,6 +13,7 @@ import {
   DocHeader,
   Equation,
   Facts,
+  Keep,
   More,
   Money,
   Note,
@@ -217,10 +218,10 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
           <p className={s.calm}>Bought after today — nothing to value yet.</p>
         )}
         <div className={s.cols2}>
-          <Sub title="Value over time">
+          <Sub title="Value over time" keep>
             <ValueChart points={data.valueGrowth.map((p) => ({ date: p.date, label: p.label, estimate: p.estimate, offer: p.bestOfferToDate }))} price={data.purchase.price} />
           </Sub>
-          <Sub title={`Offers received · ${data.offers.length}`}>
+          <Sub title={`Offers received · ${data.offers.length}`} keep>
             {data.offers.length ? (
               <RTable caption="Offers" cols={offerCols} rows={data.offers} rowKey={(o) => o.id} dense />
             ) : (
@@ -243,7 +244,7 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
           <Sub title={`By year · ${yearsLabel}`}>
             <RTable caption="Cash flow by year" cols={yearCols} rows={data.byYear} rowKey={(y) => String(y.year)} dense />
           </Sub>
-          <Sub title="Where the money went">
+          <Sub title="Where the money went" keep>
             <CategoryBars slices={data.expensesByCategory} total={t.expenses} scope="All time" />
           </Sub>
         </div>
@@ -251,7 +252,7 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
 
       {/* ─────────── TENANTS & DEPOSITS ─────────── */}
       <Section bucket="deposits" title="Tenants and deposits" scope={allTime} note="Every lease on this unit. Deposits are the tenants' money held by you — not income.">
-        <RTable caption="Leases" cols={leaseCols} rows={data.leases} rowKey={(l) => l.leaseId} empty="No leases yet." />
+        <RTable caption="Leases" cols={leaseCols} rows={data.leases} rowKey={(l) => l.leaseId} empty="No leases yet." keep />
         {now?.nextPayment && now.nextPayment.arrears.months.length > 0 && (
           <Note tone="coral">
             {now.activeLease?.tenantName ?? "The tenant"} owes <Money v={now.nextPayment.arrears.total} tone="exp" /> for{" "}
@@ -279,6 +280,7 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
             ]}
           />
         )}
+        <Keep>
         <OccupancyStrip
           from={data.purchase.date}
           to={data.today}
@@ -307,6 +309,7 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
             ))}
           </ul>
         )}
+        </Keep>
         <More label={(open) => (open ? "Hide occupancy by year" : "Occupancy by year")}>
           <Sub title="Occupancy by year">
             <RTable caption="Occupancy by year" cols={occCols} rows={data.byYear} rowKey={(y) => String(y.year)} dense />

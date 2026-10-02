@@ -159,9 +159,9 @@ export function Section({
 }
 
 /** Smaller heading inside a section ("By month", "By unit"). */
-export function Sub({ title, right, children, className }: { title: ReactNode; right?: ReactNode; children: ReactNode; className?: string }) {
+export function Sub({ title, right, children, className, keep }: { title: ReactNode; right?: ReactNode; children: ReactNode; className?: string; keep?: boolean }) {
   return (
-    <div className={cx(s.sub, className)}>
+    <div className={cx(s.sub, keep && s.keep, className)}>
       <div className={s.subHead}>
         <h4 className={s.subTitle}>{title}</h4>
         {right}
@@ -169,6 +169,11 @@ export function Sub({ title, right, children, className }: { title: ReactNode; r
       {children}
     </div>
   );
+}
+
+/** Print: keep these blocks on one page. */
+export function Keep({ children }: { children: ReactNode }) {
+  return <div className={s.keep}>{children}</div>;
 }
 
 /** "FY 2025-26" / "ALL TIME" / "TO 3/10/2026" */
@@ -234,6 +239,7 @@ export function RTable<T>({
   empty,
   className,
   dense,
+  keep,
 }: {
   cols: Col<T>[];
   rows: T[];
@@ -243,11 +249,13 @@ export function RTable<T>({
   empty?: ReactNode;
   className?: string;
   dense?: boolean;
+  /** print: keep the whole (short) table on one page */
+  keep?: boolean;
 }) {
   const hasFoot = cols.some((c) => c.footer !== undefined);
   const cls = (c: Col<T>) => cx(c.num && s.numCell, c.wide && s.wide, c.className);
   return (
-    <div className={cx(s.tableWrap, className)}>
+    <div className={cx(s.tableWrap, keep && s.keep, className)}>
       <table className={cx(s.table, dense && s.dense)}>
         <caption className="sr-only">{caption}</caption>
         <colgroup>

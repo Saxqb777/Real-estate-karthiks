@@ -1,7 +1,6 @@
 "use client";
 // Annual statement (GET /api/reports/annual): cash flow by month and by unit, expenses by category,
 // deposits held for tenants, occupancy, and the reconciliation checks. Same component for screen and print.
-import { Info } from "lucide-react";
 import type { AnnualReport } from "@/lib/dashboard-types";
 import { MS_PER_DAY } from "@/lib/dates";
 import { MonthBars, OccupancyStrip, StripLegend } from "./charts";
@@ -13,7 +12,6 @@ import {
   Equation,
   More,
   Money,
-  Note,
   RTable,
   Scope,
   Section,
@@ -108,7 +106,12 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
   ];
 
   const depositCols = [
-    { key: "who", header: "Tenant", cell: (r: DepositRow) => <Two top={r.tenantName} bottom={`${r.unitName} · taken ${d(r.receivedDate)}`} /> },
+    {
+      key: "who",
+      header: "Tenant",
+      cell: (r: DepositRow) => <Two top={r.tenantName} bottom={`${r.unitName} · taken ${d(r.receivedDate)}`} />,
+      footer: <TotalLabel sub={`${data.deposits.rows.length} ${data.deposits.rows.length === 1 ? "deposit" : "deposits"}`}>Held on {d(data.through)}</TotalLabel>,
+    },
     { key: "dep", header: "Deposit", num: true, cell: (r: DepositRow) => <Money v={r.deposit} /> },
     {
       key: "back",
@@ -142,6 +145,7 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
         sub={
           <>
             {d(data.start)} – {d(data.end)} · {MODE_NAME[data.yearMode]}
+            {data.isPartial && <> · still running, so everything is counted up to {d(data.through)}</>}
           </>
         }
         chips={
@@ -159,12 +163,6 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
         generated={data.today}
         rec={data.reconciliation}
       />
-
-      {data.isPartial && (
-        <Note icon={<Info aria-hidden />}>
-          {data.label} is still running — everything is counted up to {d(data.through)}. Months after that are shown as &ldquo;not yet&rdquo;.
-        </Note>
-      )}
 
       {/* ─────────── CASH FLOW ─────────── */}
       <Section bucket="cash" title="Cash flow" scope={scope} note="Real money that moved: rent that came in and money spent.">
@@ -204,11 +202,11 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
             <RTable caption={`Cash flow by month, ${data.label}`} cols={monthCols} rows={data.months} rowKey={(m) => m.key} rowClass={(m) => (isFuture(m) ? s.rowFuture : undefined)} dense />
           </Sub>
           <div className={s.stackCol}>
-            <Sub title="By unit">
+            <Sub title="By unit" keep>
               <RTable caption={`Cash flow by unit, ${data.label}`} cols={unitCols} rows={data.units} rowKey={(u) => u.unitId ?? "plot"} />
               <p className={s.tableNote}>Unit rows + whole plot = the totals above. Rent is counted when it was received.</p>
             </Sub>
-            <Sub title="Where the money went">
+            <Sub title="Where the money went" keep>
               <CategoryBars slices={data.expensesByCategory} total={t.expenses} scope={data.label} />
             </Sub>
           </div>
@@ -241,7 +239,7 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
           ]}
         />
         {data.deposits.rows.length > 0 ? (
-          <RTable caption={`Deposits, ${data.label}`} cols={depositCols} rows={data.deposits.rows} rowKey={(r) => r.leaseId} />
+          <RTable caption={`Deposits, ${data.label}`} cols={depositCols} rows={data.deposits.rows} rowKey={(r) => r.leaseId} keep />
         ) : (
           <p className={s.calm}>No deposits were held in {data.label}.</p>
         )}

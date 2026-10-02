@@ -20,7 +20,9 @@ function useFontStacks() {
     noop,
     () => {
       const cs = getComputedStyle(document.documentElement);
-      return `${cs.getPropertyValue("--font-body").trim() || "sans-serif"}|${cs.getPropertyValue("--font-display").trim() || "sans-serif"}`;
+      const tamil = cs.getPropertyValue("--font-tamil").trim();
+      const body = cs.getPropertyValue("--font-body").trim() || "sans-serif";
+      return `${tamil ? `${body}, ${tamil}` : body}|${cs.getPropertyValue("--font-display").trim() || "sans-serif"}`;
     },
     () => "sans-serif|sans-serif",
   );
@@ -48,8 +50,10 @@ export function PrintPortal({ children, running }: { children: ReactNode; runnin
   const css = `
 [data-print-doc] { display: none; }
 @media print {
+  :root { color-scheme: light !important; }
   @page {
     size: A4 portrait;
+    background: #fff;
     margin: ${running.margin ?? "15mm 13mm 16mm"};
     ${running.topLeft ? `@top-left { content: ${str(running.topLeft)}; ${box} vertical-align: bottom; padding-bottom: 3mm; }` : ""}
     ${running.topRight ? `@top-right { content: ${str(running.topRight)}; ${box} vertical-align: bottom; padding-bottom: 3mm; }` : ""}
