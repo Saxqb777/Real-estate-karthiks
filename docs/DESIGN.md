@@ -109,3 +109,38 @@ One shared helper (src/lib/day-phase.ts) maps IST time → phase, used by BOTH t
 - HUD clock shows the Tamil word large (Noto Sans Tamil) + English small + time, e.g. "காலை · Morning · 7:42 AM", with a small sun/moon arc.
 - Login page greets with the Tamil greeting for the phase (e.g. "காலை வணக்கம்" / "மாலை வணக்கம்" / "இரவு வணக்கம்").
 - Transitions between phases are smooth (lighting lerps over ~minutes of real time; a manual override lets the owner preview any phase).
+
+## ONE-SCREEN RULE (owner request — overrides any long-scroll layout above)
+No long scrolling pages. Every page fits the viewport (100dvh) like a game screen; the body never scrolls on desktop.
+Content that doesn't fit lives in tabs / drawers / panels that scroll *internally*.
+
+### Overview ("/") = the game screen
+```
+┌ top bar: brand · Tamil town · nav · Tamil clock · ⌘K ───────────────────────┐
+│┌LEFT HUD (≈320px)┐        3D WORLD fills the whole screen        ┌RIGHT HUD┐│
+││ PORTFOLIO        │        (background layer, interactive)        │ THIS     ││
+││ ₹1.12 Cr (hero)  │                                               │ MONTH    ││
+││ invested · LVL   │                                               │ rent XP  ││
+││ CAGR             │                                               │ next due ││
+││ NET PROFIT       │                                               │ to-dos   ││
+││ rent ▮▮▮ exp ▮   │                                               │ (unit    ││
+││ alerts ticker    │                                               │  card on ││
+│└──────────────────┘                                               │  click)  ││
+│┌ BOTTOM DOCK (tabbed tray, collapsible, keys 1–6) ───────────────────────────┐│
+││ [Income vs exp] [Expenses] [Front vs Back] [Occupancy] [Growth] [Payments]  ││
+││  one chart/table visible at a time, ≈240px tall                             ││
+│└─────────────────────────────────────────────────────────────────────────────┘│
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+- Empty DB → the left HUD shows the Quest log instead of money panels.
+- Clicking a unit swaps the right HUD to the unit card; Esc / click ground returns.
+- Dock can collapse to a slim bar for a full-world view ("F" toggles). Panels never cover the units' centre.
+- Laptop 1280×720 must still fit without page scroll (panels compress, dock shorter).
+
+### Data ("/data") and Config ("/config")
+- Fit the viewport: tab rail + one panel; tables/forms scroll inside their panel with sticky headers.
+- Config: form on the left, live 3D preview on the right, both within the screen.
+
+### Mobile (<768px)
+- 3D world on top (~45dvh) + a bottom sheet with swipeable tabs (Portfolio · This month · Charts · Units · To-do).
+  Still no long page scroll — swipe/tabs, content scrolls inside the sheet.
