@@ -3,10 +3,13 @@ import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
-import { leaseDetailInclude, leaseMoveOutSchema, leaseRuleIssues } from "@/lib/schemas/lease";
+import { leaseDetailInclude, leaseMoveOutSchema, leaseRuleIssues, leaseStatus } from "@/lib/schemas/lease";
 import { paymentsOutsideLease, periodLabel, summarizePayments } from "@/lib/schemas/payment";
 
-/** End an active lease: set the move-out date, record the deposit refund and switch off reminders. */
+/**
+ * End an open lease: set the LAST DAY of tenancy (endDate, inclusive — today at the latest), record the deposit refund
+ * and switch off reminders. The tenant still counts as living there on that day; the next lease may start the day after.
+ */
 export const POST = handler(async (req, ctx) => {
   const id = await param(ctx, "id");
   const body = await parseBody(req, leaseMoveOutSchema);
@@ -22,7 +25,9 @@ export const POST = handler(async (req, ctx) => {
     });
     if (!existing) throw notFound("Lease");
     if (existing.endDate) {
-      throw conflict(`${existing.tenant.name}'s lease already ended on ${formatDate(existing.endDate)} — only active leases can be moved out`);
+      throw conflict(
+        `${existing.tenant.name}'s lease already has a last day of tenancy (${formatDate(existing.endDate)}) — only open leases can be moved out. Edit the lease to change that date.`,
+      );
     }
 
     const merged = {
@@ -34,7 +39,9 @@ export const POST = handler(async (req, ctx) => {
       depositRefundDate: body.depositRefundDate !== undefined ? body.depositRefundDate : existing.depositRefundDate,
     };
     const issues = leaseRuleIssues(merged).map((i) =>
-      i.field === "endDate" ? { ...i, message: `Move-out date ${formatDate(body.endDate)} can't be before the lease start ${formatDate(existing.startDate)}` } : i,
+      i.field === "endDate"
+        ? { ...i, message: `Last day of tenancy ${formatDate(body.endDate)} can't be before the lease start ${formatDate(existing.startDate)}` }
+        : i,
     );
     if (issues.length) {
       throw new ZodError(issues.map((i) => ({ code: "custom" as const, path: [i.field], message: i.message, input: undefined })));
@@ -44,8 +51,8 @@ export const POST = handler(async (req, ctx) => {
     if (outside.length) {
       const labels = outside.slice(0, 3).map((p) => periodLabel({ month: p.periodMonth, year: p.periodYear }));
       const message =
-        `Rent is already recorded for ${labels.join(", ")}${outside.length > 3 ? ", …" : ""}, after a move-out on ${formatDate(body.endDate)}. ` +
-        `Pick a later move-out date, or delete those payments first.`;
+        `Rent is already recorded for ${labels.join(", ")}${outside.length > 3 ? ", …" : ""}, after a last day of tenancy of ${formatDate(body.endDate)}. ` +
+        `Pick a later last day, or delete those payments first.`;
       throw fieldError(409, "endDate", message);
     }
 
@@ -62,5 +69,5 @@ export const POST = handler(async (req, ctx) => {
     });
   });
 
-  return json({ ...lease, isActive: false, ...summarizePayments(lease.payments) });
+  return json({ ...lease, ...leaseStatus(lease), ...summarizePayments(lease.payments) });
 });

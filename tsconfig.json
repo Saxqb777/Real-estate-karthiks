@@ -31,9 +31,13 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next-calc-v2/types/**/*.ts",
+    ".next-forms-data-config/types/**/*.ts",
+    ".next-hud/types/**/*.ts",
+    ".next-me/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-me/types/**/*.ts"
+    ".next-world-v2/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

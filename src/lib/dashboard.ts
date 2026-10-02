@@ -1,7 +1,7 @@
-// GET /api/dashboard data loader: reads every table in one consistent snapshot, converts Decimal → number
-// and hands plain inputs to the pure buildDashboard() in calculations.ts. No formulas live here.
+// Data loader for GET /api/dashboard and GET /api/reports/*: reads every table in one consistent snapshot, converts
+// Decimal → number and hands plain inputs to the pure builders in calculations.ts / reports.ts. No formulas live here.
 import { Prisma } from "@prisma/client";
-import { buildDashboard, type DashboardInput, type SettingsInput } from "./calculations";
+import { buildDashboard, type DashboardInput, type SettingsInput, type YearMode } from "./calculations";
 import type { DashboardData } from "./dashboard-types";
 import { todayIST } from "./dates";
 import { prisma } from "./db";
@@ -26,7 +26,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       prisma.settings.findUnique({ where: { id: 1 } }),
       prisma.plot.findUnique({ where: { id: 1 } }),
       prisma.unit.findMany(),
-      prisma.offer.findMany({ select: { id: true, unitId: true, amount: true, offerDate: true } }),
+      prisma.offer.findMany({ select: { id: true, unitId: true, amount: true, offerDate: true, notes: true } }),
       prisma.lease.findMany({ include: { tenant: { select: { name: true, phone: true } } } }),
       prisma.payment.findMany({
         select: {
@@ -38,11 +38,17 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
           periodYear: true,
           invoiceSeq: true,
           invoiceNumber: true,
+          method: true,
         },
       }),
-      prisma.expense.findMany({ select: { id: true, unitId: true, categoryId: true, expenseDate: true, amount: true } }),
+      prisma.expense.findMany({
+        select: { id: true, unitId: true, categoryId: true, expenseDate: true, amount: true, description: true },
+      }),
       prisma.expenseCategory.findMany({ select: { id: true, name: true, color: true } }),
-      prisma.actionItem.findMany({ where: { isDone: false } }),
+      // Done ones too: the time scrubber shows what was still pending on a past date.
+      prisma.actionItem.findMany({
+        select: { id: true, title: true, priority: true, dueDate: true, isDone: true, unitId: true, createdAt: true, doneAt: true },
+      }),
     ],
     { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
   );
@@ -71,6 +77,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       id: u.id,
       name: u.name,
       type: u.type,
+      address: u.address,
       position: u.position,
       floors: u.floors,
       isActive: u.isActive,
@@ -95,6 +102,8 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       endDate: l.endDate,
       monthlyRent: num(l.monthlyRent),
       securityDeposit: num(l.securityDeposit),
+      depositRefundedAmount: numOrNull(l.depositRefundedAmount),
+      depositRefundDate: l.depositRefundDate,
     })),
     payments: payments.map((p) => ({ ...p, amount: num(p.amount) })),
     expenses: expenses.map((e) => ({ ...e, amount: num(e.amount) })),
@@ -106,11 +115,20 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       dueDate: a.dueDate,
       isDone: a.isDone,
       unitId: a.unitId,
+      createdAt: a.createdAt,
+      doneAt: a.doneAt,
     })),
   };
 }
 
+export interface DashboardQuery {
+  /** date-only; default today (IST) */
+  asOf?: Date;
+  yearMode?: YearMode;
+}
+
 /** Full dashboard payload; "today" is the current date in India. */
-export async function loadDashboard(now: Date = new Date()): Promise<DashboardData> {
-  return buildDashboard(await loadDashboardInput(), todayIST(now), now);
+export async function loadDashboard(q: DashboardQuery = {}, now: Date = new Date()): Promise<DashboardData> {
+  const today = todayIST(now);
+  return buildDashboard(await loadDashboardInput(), { asOf: q.asOf ?? today, yearMode: q.yearMode ?? "fy", today, now });
 }

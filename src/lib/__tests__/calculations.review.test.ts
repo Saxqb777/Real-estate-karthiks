@@ -79,7 +79,7 @@ const input = (over: Partial<DashboardInput> = {}): DashboardInput => ({
 
 // ───────────────────────────── confirmed bugs ─────────────────────────────
 
-describe("BUG 1 — a lease that has not started yet made the unit 'occupied'", () => {
+describe("BUG 1 — a lease that has not started yet made the unit 'occupied' (now: 'incoming')", () => {
   // Bought 1/1/2026; lease signed, tenant moves in 1/7/2026; today 15/6/2026.
   const d = buildDashboard(
     input({
@@ -96,24 +96,27 @@ describe("BUG 1 — a lease that has not started yet made the unit 'occupied'", 
     expect(u).toMatchObject({ daysOwned: 165, daysOccupied: 0, vacantDays: 165, occupancyPct: 0 });
   });
 
-  it("so the unit is vacant and not counted as occupied (was: status 'occupied', unitsOccupied 1)", () => {
-    expect(u.status).toBe("vacant");
+  it("so the unit is 'incoming', not occupied (was: status 'occupied', unitsOccupied 1)", () => {
+    expect(u.status).toBe("incoming");
     expect(d.kpis.unitsOccupied).toBe(0);
+    expect(d.kpis.unitsIncoming).toBe(1);
   });
 
   it("the incoming tenant and first rent are still shown", () => {
-    expect(u.activeLease?.id).toBe("L");
+    expect(u.activeLease).toBeNull();
+    expect(u.incomingLease?.id).toBe("L");
+    expect(u.rentState).toBe("none");
     expect(u.nextPayment).toMatchObject({ dueDate: ISO("2026-07-05"), periodMonth: 7, isOverdue: false });
   });
 });
 
 describe("BUG 2 — a move-out date recorded in advance made the unit 'vacant' while the tenant still lives there", () => {
-  // L0 [1/1, 1/2/2025) → 31-day gap → L1 from 1/3/2025 with move-out recorded for 31/7/2026; today 15/6/2026.
+  // L0 1/1 – 31/1/2025 (last day) → 28-day gap → L1 from 1/3/2025 with a last day of 31/7/2026; today 15/6/2026.
   const d = buildDashboard(
     input({
       units: [unit({ id: "u" })],
       leases: [
-        lease({ id: "L0", unitId: "u", startDate: D("2025-01-01"), endDate: D("2025-02-01") }),
+        lease({ id: "L0", unitId: "u", startDate: D("2025-01-01"), endDate: D("2025-01-31") }),
         lease({ id: "L1", unitId: "u", startDate: D("2025-03-01"), endDate: D("2026-07-31") }),
       ],
     }),
@@ -124,7 +127,17 @@ describe("BUG 2 — a move-out date recorded in advance made the unit 'vacant' w
 
   it("vacancy counts the tenant as present up to today", () => {
     expect(u.vacantPeriods).toEqual([
-      { start: ISO("2025-02-01"), end: ISO("2025-03-01"), days: 28, rentBasis: 20_000, unrealizedLoss: 18_666.67, noRentHistory: false },
+      {
+        start: ISO("2025-02-01"),
+        end: ISO("2025-03-01"),
+        lastDay: ISO("2025-02-28"),
+        days: 28,
+        ongoing: false,
+        rentBasis: 20_000,
+        rentBasisSource: "previous-lease",
+        unrealizedLoss: 18_667, // 28 × 20,000 / 30 = 18,666.67 → whole rupees
+        noRentHistory: false,
+      },
     ]);
   });
 
@@ -166,8 +179,8 @@ describe("BUG 3 — a still-open lease on an INACTIVE unit leaked into portfolio
 
 describe("BUG 4 — next rent period could fall before the lease started", () => {
   // Lease starts 10/1/2025; a stray payment exists for 11/2024 (e.g. data entered before the start date was corrected).
-  const l = { id: "L", startDate: D("2025-01-10"), monthlyRent: 25_000 };
-  const n = nextPaymentFor(l, [{ periodMonth: 11, periodYear: 2024 }], settings, D("2025-01-05"));
+  const l = { id: "L", startDate: D("2025-01-10"), endDate: null, monthlyRent: 25_000 };
+  const n = nextPaymentFor(l, [{ periodMonth: 11, periodYear: 2024, amount: 25_000, paymentDate: D("2024-11-01") }], settings, D("2025-01-05"));
 
   it("asks for January 2025 — a period POST /api/payments accepts (was: December 2024, which it rejects)", () => {
     expect(n).toMatchObject({ periodMonth: 1, periodYear: 2025, dueDate: ISO("2025-01-10"), isOverdue: false });
@@ -177,8 +190,8 @@ describe("BUG 4 — next rent period could fall before the lease started", () =>
 describe("BUG 5 — 'late fee applied' was reported for a ₹0 late fee", () => {
   it("enabled with amount 0 → no late fee flag", () => {
     const n = nextPaymentFor(
-      { id: "L", startDate: D("2025-01-10"), monthlyRent: 25_000 },
-      [{ periodMonth: 5, periodYear: 2026 }],
+      { id: "L", startDate: D("2026-05-10"), endDate: null, monthlyRent: 25_000 },
+      [{ periodMonth: 5, periodYear: 2026, amount: 25_000, paymentDate: D("2026-05-10") }],
       { ...settings, lateFeeAmount: 0 },
       D("2026-06-20"),
     );
@@ -220,8 +233,8 @@ describe("CHECK — dates: leap years, month clamping, IST 'today'", () => {
   });
 
   it("rent overdue counts from the day after the due date, across a year boundary", () => {
-    const l = { id: "L", startDate: D("2025-01-01"), monthlyRent: 10_000 };
-    const n = nextPaymentFor(l, [{ periodMonth: 12, periodYear: 2025 }], { ...settings, rentDueDay: 31 }, D("2026-02-01"));
+    const l = { id: "L", startDate: D("2025-12-01"), endDate: null, monthlyRent: 10_000 };
+    const n = nextPaymentFor(l, [{ periodMonth: 12, periodYear: 2025, amount: 10_000, paymentDate: D("2025-12-01") }], { ...settings, rentDueDay: 31 }, D("2026-02-01"));
     expect(n).toMatchObject({ dueDate: ISO("2026-01-31"), periodMonth: 1, periodYear: 2026, isOverdue: true, daysOverdue: 1 });
   });
 });
@@ -313,7 +326,11 @@ describe("CHECK — fuzzed portfolios: no NaN/Infinity, parts add up to the KPIs
       expect(sum(act.map((u) => u.valuation))).toBe(d.kpis.bestOfferTotal);
       expect(sum(act.map((u) => u.unrealizedLoss))).toBe(d.kpis.unrealizedLoss);
       expect(sum(d.units.map((u) => u.rentCollected))).toBe(d.kpis.rentCollected);
-      expect(d.kpis.totalExpenses).toBe(sumAmounts(expenses));
+      // only records dated on/before "today" count
+      expect(d.kpis.totalExpenses).toBe(sumAmounts(expenses.filter((e) => e.expenseDate.getTime() <= TODAY.getTime())));
+      expect(d.checks.ledgerBalanced, JSON.stringify(d.checks.items.filter((i) => !i.ok))).toBe(true);
+      for (const e of Object.values(d.explain)) expect(e.steps.at(-1)?.value, e.key).toBe(e.value);
+      expect(d.kpis.overdueAmount).toBe(sum(act.map((u) => (u.activeLease ? (u.nextPayment?.arrears.totalWithFees ?? 0) : 0))));
       expect(sum(d.monthlyByYear.map((y) => y.expenses))).toBe(d.kpis.totalExpenses);
       expect(sum(d.monthlyByYear.map((y) => y.income))).toBe(d.kpis.rentCollected);
       expect(sum(d.expenseComposition.allTime.map((s) => s.amount))).toBe(d.kpis.totalExpenses);

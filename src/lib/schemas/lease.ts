@@ -1,9 +1,12 @@
 // Lease input schemas + pure lease rules (shared by /api/leases and the UI).
-// A lease covers [startDate, endDate): endDate is the move-out day; null endDate = active, open-ended.
+// endDate is the LAST DAY of tenancy (inclusive): a lease covers every day from startDate through endDate, and the
+// next lease on the unit may start the day after. null endDate = open-ended. UI label: "Last day of tenancy".
+// State on a date: start after it → "incoming"; last day before it → "ended"; otherwise "current" (= active).
 import type { Lease, Payment, Prisma, Tenant, Unit } from "@prisma/client";
 import { z } from "zod";
 import "./messages";
-import { formatDate, todayIST } from "@/lib/dates";
+import type { LeaseState } from "@/lib/dashboard-types";
+import { addDays, formatDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import { zBool, zDate, zDateOrNull, zMoney, zPositiveMoney, zText } from "@/lib/validation";
 import type { PaymentStats } from "./payment";
@@ -15,9 +18,10 @@ const zRef = (msg: string) => z.string({ message: msg }).trim().min(1, msg);
 /** Optional money that may be "" / null → null. */
 const zMoneyOrNull = z.preprocess((v) => (v === "" || v === undefined ? null : v), zMoney.nullable());
 
-// endDate null = active lease (see schema.prisma), so a move-out / refund date is a past event, never a plan.
+// The last day of tenancy / refund date is recorded when it happens (today at the latest), never planned ahead.
 const notFuture = (d: Date | null) => d === null || d.getTime() <= todayIST().getTime();
-const END_IN_FUTURE = "can't be in the future — leave it empty while the tenant still lives there, and record the move-out when they leave";
+const END_IN_FUTURE =
+  "can't be in the future — leave it empty while the tenant still lives there, and record the last day of tenancy when they leave";
 const REFUND_IN_FUTURE = "can't be in the future — record the refund once it's paid";
 const zEndDate = zDateOrNull.refine(notFuture, END_IN_FUTURE);
 const zRefundDate = zDateOrNull.refine(notFuture, REFUND_IN_FUTURE);
@@ -42,7 +46,7 @@ export function leaseRuleIssues(l: LeaseRuleInput): { field: string; message: st
   if (l.endDate && ms(l.endDate) < ms(l.startDate)) {
     issues.push({
       field: "endDate",
-      message: `End date ${formatDate(l.endDate)} can't be before the start date ${formatDate(l.startDate)}`,
+      message: `Last day of tenancy ${formatDate(l.endDate)} can't be before the start date ${formatDate(l.startDate)}`,
     });
   }
   if (l.depositRefundedAmount != null && l.depositRefundedAmount > l.securityDeposit) {
@@ -65,14 +69,24 @@ export interface LeaseSpan {
   endDate: DateLike | null;
 }
 
-/** [start, end) intervals; null end = open-ended. */
+/** Inclusive [start, last day] intervals share at least one day; null end = open-ended. */
 export function leasesOverlap(a: LeaseSpan, b: LeaseSpan): boolean {
   const aEnd = a.endDate ? ms(a.endDate) : Infinity;
   const bEnd = b.endDate ? ms(b.endDate) : Infinity;
-  return ms(a.startDate) < bEnd && ms(b.startDate) < aEnd;
+  return ms(a.startDate) <= bEnd && ms(b.startDate) <= aEnd;
 }
 
-/** "1/1/2025 – 31/12/2025" or "from 1/1/2025, still active" */
+/** incoming / current / ended on `today` (IST by default). */
+export function leaseStateOf(l: LeaseSpan, today: Date = todayIST()): LeaseState {
+  if (ms(l.startDate) > today.getTime()) return "incoming";
+  if (l.endDate && ms(l.endDate) < today.getTime()) return "ended";
+  return "current";
+}
+
+/** Active = not ended yet (open-ended, or today is on/before the last day of tenancy). Includes incoming leases. */
+export const isLeaseActive = (l: LeaseSpan, today: Date = todayIST()) => leaseStateOf(l, today) !== "ended";
+
+/** "1/1/2025 – 31/12/2025" (start – last day) or "from 1/1/2025, still active" */
 export const leaseSpanLabel = (l: LeaseSpan) =>
   l.endDate ? `${formatDate(l.startDate)} – ${formatDate(l.endDate)}` : `from ${formatDate(l.startDate)}, still active`;
 
@@ -89,12 +103,13 @@ export function leaseConflictMessage(
   if (!candidate.endDate) {
     const active = sorted.find((o) => !o.endDate);
     if (active) {
-      return `${unitName} already has an active lease (${active.tenant.name}, ${leaseSpanLabel(active)}). Record that tenant's move-out before adding another active lease.`;
+      return `${unitName} already has an open lease (${active.tenant.name}, ${leaseSpanLabel(active)}). Record that tenant's last day of tenancy before adding another open lease.`;
     }
   }
   const hit = sorted.find((o) => leasesOverlap(candidate, o));
   if (!hit) return null;
-  return `These dates overlap ${hit.tenant.name}'s lease on ${unitName} (${leaseSpanLabel(hit)}). Leases on the same unit can't overlap — a new lease may start on the previous lease's move-out date.`;
+  const after = hit.endDate ? ` — the next lease can start on ${formatDate(addDays(new Date(ms(hit.endDate)), 1))}, the day after their last day` : "";
+  return `These dates overlap ${hit.tenant.name}'s lease on ${unitName} (${leaseSpanLabel(hit)}). Leases on the same unit can't share a day${after}.`;
 }
 
 /** Why a lease can't be deleted (it has recorded rent), or null. */
@@ -105,9 +120,9 @@ export function leaseDeleteBlockedMessage(tenantName: string, unitName: string, 
   return `${tenantName}'s lease on ${unitName} has ${n} recorded, so it's kept for your records. If it was entered by mistake, delete ${them} first.`;
 }
 
-/** Sort order for lease lists: active first, then newest start date first. */
-export function compareLeases(a: LeaseSpan, b: LeaseSpan): number {
-  return Number(a.endDate !== null) - Number(b.endDate !== null) || ms(b.startDate) - ms(a.startDate);
+/** Sort order for lease lists: active (not ended) first, then newest start date first. */
+export function compareLeases(a: LeaseSpan, b: LeaseSpan, today: Date = todayIST()): number {
+  return Number(!isLeaseActive(a, today)) - Number(!isLeaseActive(b, today)) || ms(b.startDate) - ms(a.startDate);
 }
 
 // ---- Schemas ------------------------------------------------------------------------------------
@@ -143,7 +158,7 @@ export const leaseUpdateSchema = z.object(leaseFields).partial();
 
 /** POST /api/leases/[id]/move-out */
 export const leaseMoveOutSchema = z.object({
-  endDate: zRequired(zDate.refine(notFuture, END_IN_FUTURE), "is required (the move-out date)"),
+  endDate: zRequired(zDate.refine(notFuture, END_IN_FUTURE), "is required (the last day of tenancy)"),
   depositRefundedAmount: zMoneyOrNull.optional(),
   depositRefundDate: zRefundDate.optional(),
   moveOutNotes: zText(2000).optional(),
@@ -175,8 +190,14 @@ export type LeaseMoveOutInput = z.input<typeof leaseMoveOutSchema>;
 // ---- Response types (JSON as returned by the API) ------------------------------------------------
 
 export type LeaseDTO = Serialized<Lease>;
-/** Derived fields on every lease response. paymentsTotal uses sumAmounts(). */
-export type LeaseStats = PaymentStats & { isActive: boolean };
+/** Derived fields on every lease response. paymentsTotal uses sumAmounts(). isActive = state !== "ended". */
+export type LeaseStats = PaymentStats & { isActive: boolean; state: LeaseState };
+
+/** isActive + state of a lease today (for API responses). */
+export const leaseStatus = (l: LeaseSpan, today: Date = todayIST()) => {
+  const state = leaseStateOf(l, today);
+  return { isActive: state !== "ended", state };
+};
 
 /** GET /api/leases → { items: LeaseListItem[] }; POST /api/leases → LeaseListItem */
 export type LeaseListItem = LeaseDTO &

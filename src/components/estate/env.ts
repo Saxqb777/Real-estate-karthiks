@@ -76,6 +76,15 @@ export type Env = { [K in ColorField]: THREE.Color } & { [K in NumField]: number
   fog: THREE.Color;
   /** 0..1 kolam freshness: drawn at dawn, crisp in the morning, fading by night */
   kolam: number;
+  /** scene ("world") time in seconds: advances with timeScale, so focus dimming slows every ambient motion */
+  t: number;
+  /** last frame's scene-time step (clamped, scaled) */
+  dt: number;
+  /** 1 normal · ~0.3 while the world is dimmed behind a reading panel */
+  timeScale: number;
+  /** gust strength 0.15..1 at the plot centre, and the prevailing wind heading in world x/z */
+  wind: number;
+  windDir: [number, number];
 };
 
 const keyColors = KEYS.map((k) => Object.fromEntries(COLOR_FIELDS.map((f) => [f, new THREE.Color(k[f])])) as Record<ColorField, THREE.Color>);
@@ -93,6 +102,11 @@ export function createEnv(): Env {
   e.sunVis = 1;
   e.moonVis = 0;
   e.kolam = 1;
+  e.t = 0;
+  e.dt = 0;
+  e.timeScale = 1;
+  e.wind = 0.5;
+  e.windDir = [1, 0];
   return e;
 }
 
@@ -155,7 +169,17 @@ export function windAt(t: number): number {
 }
 
 /** Prevailing wind heading in the ground plane (world x/z), slowly veering. */
-export function windDir(t: number): [number, number] {
+export function windDir(t: number, out: [number, number] = [0, 0]): [number, number] {
   const a = 0.35 + Math.sin(t * 0.05) * 0.35;
-  return [Math.cos(a), Math.sin(a)];
+  out[0] = Math.cos(a);
+  out[1] = Math.sin(a);
+  return out;
+}
+
+/** Gust fronts travel downwind at this speed (ft/s), so palms, laundry and petals catch the same gust one after another. */
+export const GUST_SPEED = 26;
+
+/** Gust strength at a world position: the plot-centre gust, delayed by how far downwind the point is. */
+export function gustAt(e: Pick<Env, "t" | "windDir">, x: number, z: number): number {
+  return windAt(e.t - (x * e.windDir[0] + z * e.windDir[1]) / GUST_SPEED);
 }

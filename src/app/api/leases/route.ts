@@ -2,18 +2,23 @@ import { Prisma } from "@prisma/client";
 import { handler, json, parseBody, parseQuery } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
-import { compareLeases, leaseConflictMessage, leaseCreateSchema, leaseListQuerySchema } from "@/lib/schemas/lease";
+import { todayIST } from "@/lib/dates";
+import { compareLeases, leaseConflictMessage, leaseCreateSchema, leaseListQuerySchema, leaseStatus } from "@/lib/schemas/lease";
 import { summarizePayments } from "@/lib/schemas/payment";
 
-/** Leases (active first, then newest) with unit, tenant and payment stats. */
+/**
+ * Leases (active first, then newest) with unit, tenant, payment stats, isActive and state (incoming / current / ended).
+ * status=active → not ended (open-ended or the last day of tenancy is today or later); status=past → ended.
+ */
 export const GET = handler(async (req) => {
   const q = parseQuery(req, leaseListQuerySchema);
+  const today = todayIST();
   const leases = await prisma.lease.findMany({
     where: {
       unitId: q.unitId,
       tenantId: q.tenantId,
-      ...(q.status === "active" && { endDate: null }),
-      ...(q.status === "past" && { endDate: { not: null } }),
+      ...(q.status === "active" && { OR: [{ endDate: null }, { endDate: { gte: today } }] }),
+      ...(q.status === "past" && { endDate: { lt: today } }),
     },
     include: {
       unit: { select: { id: true, name: true, position: true } },
@@ -22,8 +27,8 @@ export const GET = handler(async (req) => {
     },
   });
   const items = leases
-    .map(({ payments, ...l }) => ({ ...l, isActive: l.endDate === null, ...summarizePayments(payments) }))
-    .sort(compareLeases);
+    .map(({ payments, ...l }) => ({ ...l, ...leaseStatus(l, today), ...summarizePayments(payments) }))
+    .sort((a, b) => compareLeases(a, b, today));
   return json({ items });
 });
 
@@ -55,5 +60,5 @@ export const POST = handler(async (req) => {
       },
     });
   });
-  return json({ ...lease, isActive: lease.endDate === null, ...summarizePayments([]) }, 201);
+  return json({ ...lease, ...leaseStatus(lease), ...summarizePayments([]) }, 201);
 });

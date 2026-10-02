@@ -27,6 +27,8 @@ export interface SceneUnit {
   /** optional extras for richer labels */
   daysOverdue?: number;
   vacantDays?: number;
+  /** status "incoming": the first day of the signed lease (ISO date) — drawn as a "Moving in D/M" board */
+  moveInDate?: string | null;
 }
 
 export interface Pt {
@@ -125,6 +127,24 @@ export interface CompoundWall {
   gate?: "passage" | "porch" | "main";
 }
 
+/**
+ * Street-front furniture that doubles as data entry points in the 3D world (DESIGN.md "World objects").
+ * Mount points are on the plot boundary (z = 0) unless noted; the renderer pushes each one out to the street face.
+ */
+export interface SiteFixtures {
+  /** letter box on a gate pillar (the front unit's porch gate, else the main gate) */
+  mailbox: Pt;
+  /** notice board on the building's front wall next to the passage gate, or on the compound wall by the gate */
+  noticeBoard: Pt & { widthFt: number; on: "building" | "wall" };
+  /** property-tax stamp plaque on the other gate pillar */
+  taxStamp: Pt;
+  /** survey stone + ranging flag just outside the back-left corner */
+  plotMarker: Pt;
+  /** EB poles on the near shoulder: [0] carries the street lamp, the meter and the service drop */
+  poles: Pt[];
+  poleHeightFt: number;
+}
+
 export type DimensionKind = "plot" | "footprint" | "gap" | "height" | "area";
 export interface Dimension {
   /** highlight key, e.g. "frontWidthFt", "footprintWidthFt:front", "floors:back", "areaSqft" */
@@ -163,6 +183,7 @@ export interface SiteLayout {
   /** paved ground: plot from the front edge to the back of the last real building (empty when no units) */
   paved: Pt[];
   compoundWalls: CompoundWall[];
+  fixtures: SiteFixtures;
   site: {
     tile: Pt[];
     street: { x0: number; x1: number; drain: [number, number]; nearShoulder: [number, number]; road: [number, number]; farShoulder: [number, number] };
@@ -233,26 +254,33 @@ export function offsetPolygon(pts: Pt[], dist: number | number[]): Pt[] {
 
 /** Map dashboard units (GET /api/dashboard) to scene units. */
 export function sceneUnitsFromBreakdown(units: UnitBreakdown[]): SceneUnit[] {
-  return units.map((u) => ({
-    id: u.id,
-    name: u.name,
-    position: u.position,
-    floors: u.floors,
-    footprintWidthFt: u.footprintWidthFt,
-    footprintDepthFt: u.footprintDepthFt,
-    status: u.status,
-    rentState: u.rentState,
-    tenantName: u.activeLease?.tenantName ?? null,
-    monthlyRent: u.activeLease?.monthlyRent ?? null,
-    isActive: u.isActive,
-    daysOverdue: u.nextPayment?.daysOverdue ?? 0,
-    vacantDays: u.status === "vacant" ? currentVacantDays(u) : 0,
-  }));
+  return units.map((u) => {
+    const incoming = u.status === "incoming";
+    // an incoming unit is empty today: its board names the tenant who is moving in
+    const lease = u.activeLease ?? (incoming ? u.incomingLease : null);
+    const out: SceneUnit = {
+      id: u.id,
+      name: u.name,
+      position: u.position,
+      floors: u.floors,
+      footprintWidthFt: u.footprintWidthFt,
+      footprintDepthFt: u.footprintDepthFt,
+      status: u.status,
+      rentState: u.rentState,
+      tenantName: lease?.tenantName ?? null,
+      monthlyRent: lease?.monthlyRent ?? null,
+      isActive: u.isActive,
+      daysOverdue: incoming ? 0 : (u.nextPayment?.daysOverdue ?? 0),
+      vacantDays: u.status === "vacant" || incoming ? currentVacantDays(u) : 0,
+    };
+    if (incoming) out.moveInDate = u.incomingLease?.startDate ?? null;
+    return out;
+  });
 }
 
 function currentVacantDays(u: UnitBreakdown): number {
   const last = u.vacantPeriods[u.vacantPeriods.length - 1];
-  return last ? last.days : 0;
+  return last && last.ongoing !== false ? last.days : 0;
 }
 
 /** Assign units to the front/back slots: active with a position → inactive with a position → the rest in order. */
@@ -408,6 +436,7 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
   };
 
   const compoundWalls = buildCompoundWalls(polygon, frontSlot ?? null, leftX);
+  const fixtures = buildFixtures(polygon, compoundWalls, frontSlot ?? null, street, tile);
   const maxHeightFt = slots.reduce((m, s) => Math.max(m, s.heightFt + s.parapetFt), 0);
   const center = { x: rightX / 2 + leftX(depth / 2) / 2, z: depth / 2 };
   const radius = Math.max(...tile.map((p) => Math.hypot(p.x - center.x, p.z - center.z)));
@@ -419,6 +448,7 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
     rearYard: { z0: slots.length ? Math.max(...slots.map((s) => s.rect.z1)) : 0, z1: depth },
     paved,
     compoundWalls,
+    fixtures,
     site: { tile, street },
     dimensions: [],
     center,
@@ -535,6 +565,58 @@ function buildCompoundWalls(polygon: Pt[], frontSlot: BuildingSlot | null, leftX
   out.push({ a: BR, b: BL, kind: "wall" });
   out.push({ a: BL, b: { x: leftX(0), z: 0 }, kind: "wall" });
   return out;
+}
+
+/** x of the tile edge (a → b) at plan z. */
+function xAt(a: Pt, b: Pt, z: number): number {
+  return Math.abs(b.z - a.z) < 1e-9 ? a.x : a.x + ((b.x - a.x) * (z - a.z)) / (b.z - a.z);
+}
+
+function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: BuildingSlot | null, street: SiteLayout["site"]["street"], tile: Pt[]): SiteFixtures {
+  const [FL, FR, , BL] = polygon;
+  const porch = walls.find((w) => w.gate === "porch");
+  const passage = walls.find((w) => w.gate === "passage");
+  const main = walls.find((w) => w.gate === "main");
+  const BOARD_W = 3.4;
+  let mailbox: Pt;
+  let taxStamp: Pt;
+  let noticeBoard: SiteFixtures["noticeBoard"];
+  if (porch && frontSlot) {
+    mailbox = { ...porch.a };
+    taxStamp = passage ? { ...passage.a } : { ...porch.b };
+    // the front wall left of its first window (windows are spread evenly along the wall)
+    const x0 = frontSlot.rect.x0;
+    const wallLen = frontSlot.notch.wide.x0 - x0;
+    const n = Math.max(1, Math.floor((wallLen - 1.2) / 6.2));
+    const firstWin = x0 + wallLen / (2 * n) - 1.5;
+    const w = clamp(firstWin - x0 - 1.2, 0, BOARD_W);
+    noticeBoard = w >= 2 ? { x: x0 + 0.6 + w / 2, z: 0, widthFt: r2(w), on: "building" } : { x: (frontSlot.notch.wide.x0 + porch.a.x) / 2, z: 0, widthFt: r2(clamp(porch.a.x - frontSlot.notch.wide.x0 - 0.8, 1.2, BOARD_W)), on: "wall" };
+  } else {
+    const g = main ?? walls.find((w) => w.kind === "gate");
+    const a = g ? g.a : FL;
+    const b = g ? g.b : { x: FL.x + 4, z: 0 };
+    mailbox = { ...b };
+    taxStamp = { ...a };
+    const room = FR.x - b.x - 1.6;
+    const w = clamp(room, 1.2, BOARD_W);
+    noticeBoard = { x: b.x + 0.8 + w / 2, z: 0, widthFt: r2(w), on: "wall" };
+  }
+  // poles stand on the near shoulder, one left of the plot (lamp + meter), one to the right
+  const zPole = (street.nearShoulder[0] + street.nearShoulder[1]) / 2 + 0.4;
+  const [, tFR, tBR] = tile;
+  const tx1 = xAt(tFR, tBR, zPole);
+  const poles = [
+    { x: r2(FL.x - 3.2), z: r2(zPole) },
+    { x: r2(Math.min(tx1 - 4, FR.x + 10)), z: r2(zPole) },
+  ];
+  return {
+    mailbox,
+    noticeBoard,
+    taxStamp,
+    plotMarker: { x: r2(BL.x - 2.6), z: r2(BL.z + 2.6) },
+    poles,
+    poleHeightFt: 26,
+  };
 }
 
 // ───────────────────────────── dimensions ─────────────────────────────

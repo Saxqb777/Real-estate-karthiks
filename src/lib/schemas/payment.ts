@@ -3,7 +3,7 @@ import type { Payment } from "@prisma/client";
 import { z } from "zod";
 import "./messages";
 import { sumAmounts } from "@/lib/calculations";
-import { addDays, formatDate, periodLabel, todayIST } from "@/lib/dates";
+import { formatDate, periodLabel, todayIST } from "@/lib/dates";
 import { zDate, zInt, zPositiveMoney, zText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
@@ -56,14 +56,14 @@ export function periodOf(d: DateLike): Period {
 }
 
 /**
- * First and last rent periods a lease may be paid for (last = null while the lease is active).
- * endDate is the move-out day (exclusive), so the last period is the month of the day before it:
- * moving out on 1/3 means February is the last month. A lease that ends on its start day has last < first.
+ * First and last rent periods a lease may be paid for (last = null while the lease is open-ended).
+ * endDate is the LAST DAY of tenancy (inclusive), so the last rent month is the month of endDate:
+ * a last day of 31/5 or 1/5 both make May the last month.
  */
 export function leasePeriodBounds(lease: { startDate: DateLike; endDate: DateLike | null }) {
   return {
     first: periodOf(lease.startDate),
-    last: lease.endDate ? periodOf(addDays(toDate(lease.endDate), -1)) : null,
+    last: lease.endDate ? periodOf(toDate(lease.endDate)) : null,
   };
 }
 
@@ -71,13 +71,13 @@ export function leasePeriodBounds(lease: { startDate: DateLike; endDate: DateLik
 export function paymentPeriodError(lease: { startDate: DateLike; endDate: DateLike | null }, p: Period): string | null {
   const { first, last } = leasePeriodBounds(lease);
   if (last && periodIndex(last) < periodIndex(first)) {
-    return `This lease ended on the day it started (${formatDate(lease.startDate)}), so no rent can be recorded against it.`;
+    return `This lease's last day (${formatDate(lease.endDate)}) is before its start (${formatDate(lease.startDate)}) — fix the lease dates first.`;
   }
   if (periodIndex(p) < periodIndex(first)) {
     return `Rent period ${periodLabel(p)} is before this lease started (${periodLabel(first)}). Choose ${periodLabel(first)} or later.`;
   }
   if (last && periodIndex(p) > periodIndex(last)) {
-    return `Rent period ${periodLabel(p)} is after the tenant moved out on ${formatDate(lease.endDate)} — this lease's last month is ${periodLabel(last)}. Choose ${periodLabel(last)} or earlier.`;
+    return `Rent period ${periodLabel(p)} is after the tenant's last day of tenancy (${formatDate(lease.endDate)}) — this lease's last rent month is ${periodLabel(last)}. Choose ${periodLabel(last)} or earlier.`;
   }
   return null;
 }

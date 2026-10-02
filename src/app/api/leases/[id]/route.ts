@@ -8,6 +8,7 @@ import {
   leaseDeleteBlockedMessage,
   leaseDetailInclude,
   leaseRuleIssues,
+  leaseStatus,
   leaseUpdateSchema,
 } from "@/lib/schemas/lease";
 import { paymentsOutsideLease, periodLabel, summarizePayments } from "@/lib/schemas/payment";
@@ -15,7 +16,7 @@ import { paymentsOutsideLease, periodLabel, summarizePayments } from "@/lib/sche
 async function leaseDetail(id: string) {
   const lease = await prisma.lease.findUnique({ where: { id }, include: leaseDetailInclude });
   if (!lease) throw notFound("Lease");
-  return { ...lease, isActive: lease.endDate === null, ...summarizePayments(lease.payments) };
+  return { ...lease, ...leaseStatus(lease), ...summarizePayments(lease.payments) };
 }
 
 /** Lease with full unit, tenant and payments (newest period first). */
