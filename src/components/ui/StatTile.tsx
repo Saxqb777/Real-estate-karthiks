@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import type { ReactNode } from "react";
-import { AnimatedNumber, formatNumber, type NumberFormat } from "./AnimatedNumber";
+import { AnimatedNumber } from "./AnimatedNumber";
+import { formatNumber, type NumberFormat } from "./format-number";
 import { cx } from "./cx";
 import styles from "./StatTile.module.css";
 
