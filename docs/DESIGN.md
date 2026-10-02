@@ -249,3 +249,12 @@ The spec describes the old site's data; presentation must be rethought so nothin
   it disappears once used. Never more than 3 dots visible at once.
 - **"?" key / button** toggles a help overlay that labels every hotspot in the 3D world and HUD with what it opens + keyboard shortcuts.
 - Every inspect card and panel shows its next step as a hint at the bottom ("Enter to expand · Esc to close · ⓘ how is this calculated").
+
+## Layout decision (owner delegated: "do what's best, change later if needed")
+Chosen: **A — world as background**, refined to stay calm:
+- The 3D world fills the screen; the camera frames the plot inside the *free area* between the HUD panels (computed from panel
+  sizes, so houses are never covered), plot ≈ 40–50% of viewport width, street + palms visible around it.
+- HUD panels are near-solid (panel-strong, light blur only) so text is always crisp over the moving world.
+- **Focus dimming**: when a side panel or the dock is expanded for reading, the world softly dims/desaturates and ambient motion slows;
+  it returns when closed. "F" hides all HUD for a full-world view.
+- Easy to switch later to B (framed world) — keep the layout in one component with a `layout="immersive" | "framed"` prop.

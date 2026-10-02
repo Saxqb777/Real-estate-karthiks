@@ -52,3 +52,4 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - Yearly grouping: Indian FY (Apr–Mar) by default with a toggle to calendar year (owner choice).
 - DATA CLARITY CONTRACT in docs/DESIGN.md is mandatory: cash vs paper value vs occupancy always separated and tagged, scope chip on every
   number, fixed vocabulary, deposits ≠ income, visible reconciliation, identical formats everywhere.
+- Layout: immersive world-as-background (option A) with focus dimming; option B (framed) kept switchable via a layout prop.
