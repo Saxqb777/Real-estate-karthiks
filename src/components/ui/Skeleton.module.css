@@ -1,0 +1,26 @@
+.sk {
+  display: block;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(243, 233, 216, 0.045) 0%, rgba(243, 233, 216, 0.1) 40%, rgba(243, 233, 216, 0.045) 80%);
+  background-size: 250% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+.text {
+  height: 12px;
+}
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.block {
+  border-radius: var(--radius-sm);
+}
