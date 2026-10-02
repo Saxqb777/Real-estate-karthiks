@@ -81,3 +81,18 @@ Do instead — crafted and specific to this place:
   not through glow. Glow only for status signals (overdue pulse, selected unit).
 - Restrained palette: mostly warm-dark neutrals, one brand accent (marigold), teal/coral only for meaning (income/expense, ok/overdue).
 - Purposeful asymmetry and density like a real management game screen, not a SaaS landing page.
+
+## Living world (owner request: "lively vibe, people walking, cars going, wind — make it crazy")
+The diorama must feel alive, like a tiny Tamil Nadu street scene running in real time:
+- A **street along the plot front** (asphalt with worn edges, mud shoulder, a drain, an electric pole with sagging wires, a street lamp).
+- **Traffic loop**: auto-rickshaws (yellow/green TN autos), a TVS moped / scooter, a cyclist, an occasional small car or bus — low-poly,
+  stylised, driving both directions with headlights at night.
+- **Pedestrians**: a few stylised low-poly people walking the street (simple walk bob + limb swing), someone with an umbrella, a kid running,
+  a vendor pushing a cart; occasionally someone stops at the gate.
+- **Wind**: palm fronds sway with gusts (shader/vertex sway, gust strength varies over time), leaves/petals drifting across the plot,
+  clothes drying on a rooftop line fluttering, a small flag/bunting on the gate, ripples in a puddle.
+- **Sky life**: birds (crows / parakeets) flying in loose flocks across occasionally, clouds drifting, sun/moon arc by IST time,
+  stars + fireflies at night; street lamp and house windows switch on at dusk.
+- Small details: a stray dog napping / trotting, a cow by the roadside, a kolam that is freshly drawn in the morning.
+- Everything procedural + instanced, frame-rate independent, paused off-screen, disabled/reduced with prefers-reduced-motion, and
+  a "Life" toggle (on by default) in the scene HUD. Must keep 60fps on a normal laptop and stay smooth on a phone (scale down counts on mobile).
