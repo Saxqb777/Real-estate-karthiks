@@ -2,14 +2,15 @@
 // Orbit camera with sensible limits + scripted glides: hero fly-in, glide to the selected unit, glide home on deselect.
 import { OrbitControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type ComponentRef } from "react";
 import * as THREE from "three";
-import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { SiteLayout } from "@/lib/site-layout";
 import type { SceneMode } from "./UnitSlot";
 import { easeInOutCubic, easeOutCubic, type World } from "./util";
 
 export const FOV = 30;
+
+type OrbitControlsImpl = ComponentRef<typeof OrbitControls>;
 
 interface Pose {
   target: THREE.Vector3;
@@ -21,6 +22,8 @@ interface Pose {
 interface Flight {
   from: Pose;
   to: Pose;
+  /** flying back to the overview pose (keeps following it if the framing changes mid-flight) */
+  home?: boolean;
   /** clock time the flight started (set on its first frame) */
   start: number | null;
   dur: number;
@@ -70,6 +73,8 @@ export function CameraRig({
   const size = useThree((s) => s.size);
   const flight = useRef<Flight | null>(null);
   const started = useRef(false);
+  /** true while the camera sits on (or flies to) the overview pose — then data / size changes may reframe it */
+  const atHome = useRef(true);
 
   const vt = view?.theta;
   const vp = view?.phi;
@@ -80,7 +85,8 @@ export function CameraRig({
     const aspect = size.width / Math.max(1, size.height);
     const vfov = THREE.MathUtils.degToRad(FOV);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
-    const R = layout.radius * v.fit + layout.maxHeightFt * 0.15;
+    // portrait screens: crop the tile corners a little more so the plot fills the width
+    const R = layout.radius * v.fit * (aspect < 1 ? 0.8 : 1) + layout.maxHeightFt * 0.15;
     const dist = R / Math.sin(Math.min(vfov, hfov) / 2);
     const target = new THREE.Vector3(1.5, Math.min(8, layout.maxHeightFt * 0.25), world.z(layout.center.z) + (mode === "preview" ? 5 : 6));
     return { target, radius: dist, phi: v.phi, theta: v.theta };
@@ -110,40 +116,60 @@ export function CameraRig({
     camera.lookAt(p.target);
   };
 
-  const fly = (to: Pose, dur: number, ease = easeInOutCubic) => {
+  const fly = (to: Pose, dur: number, ease = easeInOutCubic, home = false) => {
     const c = controls.current;
     if (!c || reduced) {
       apply(to);
       c?.update();
       return;
     }
-    flight.current = { from: poseOf(camera, c.target), to, start: null, dur, ease };
+    flight.current = { from: poseOf(camera, c.target), to, start: null, dur, ease, home };
   };
 
   // first placement (+ hero fly-in)
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    if (intro && !reduced) {
+    if (focus) {
+      // mounted with a unit already selected
+      atHome.current = false;
+      apply({ ...focus, theta: home.theta, phi: 0.95 });
+    } else if (intro && !reduced) {
       apply({ ...home, radius: home.radius * 1.9, phi: 0.45, theta: home.theta - 1.25 });
-      flight.current = { from: { ...home, radius: home.radius * 1.9, phi: 0.45, theta: home.theta - 1.25 }, to: home, start: null, dur: 3.2, ease: easeOutCubic };
+      flight.current = { from: { ...home, radius: home.radius * 1.9, phi: 0.45, theta: home.theta - 1.25 }, to: home, start: null, dur: 3.2, ease: easeOutCubic, home: true };
     } else {
       apply(home);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // react to selection / reframing
+  // selection changes: glide to the unit, or back to the overview
+  const lastFocus = useRef(focus);
   useEffect(() => {
-    if (!started.current || !controls.current) return;
+    if (!started.current || !controls.current || lastFocus.current === focus) return;
+    lastFocus.current = focus;
     if (focus) {
       const cur = poseOf(camera, controls.current.target);
+      atHome.current = false;
       fly({ ...focus, theta: cur.theta, phi: Math.min(1.1, Math.max(0.75, cur.phi)) }, 1.25);
     } else {
-      fly(home, 1.2);
+      atHome.current = true;
+      fly(home, 1.2, easeInOutCubic, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focus, home]);
+  }, [focus]);
+
+  // overview framing changes (plot resized, viewport resized): follow only if the user has not moved the camera
+  useEffect(() => {
+    if (!started.current || focus || !atHome.current) return;
+    const f = flight.current;
+    if (f?.home) f.to = home;
+    else if (!f) {
+      apply(home);
+      controls.current?.update();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [home]);
 
   useFrame(({ clock }) => {
     const c = controls.current;
@@ -190,6 +216,7 @@ export function CameraRig({
       autoRotateSpeed={0.35}
       onStart={() => {
         flight.current = null;
+        atHome.current = false;
       }}
     />
   );

@@ -3,7 +3,7 @@
 // transaction with the tax row locked, so expense totals (always read from the Expense table) never drift.
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
-import { conflict, notFound } from "@/lib/api";
+import { ApiError, conflict, notFound } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { PROPERTY_TAX_CATEGORY } from "@/lib/schemas/expense-category";
 import {
@@ -49,7 +49,7 @@ export async function propertyTaxCategoryId(tx: Tx): Promise<string> {
 
 async function unitName(tx: Tx, unitId: string): Promise<string> {
   const unit = await tx.unit.findUnique({ where: { id: unitId }, select: { name: true } });
-  if (!unit) throw notFound("Unit");
+  if (!unit) throw new ApiError(404, "Unit not found", [{ field: "unitId", message: "Unit not found" }]);
   return unit.name;
 }
 

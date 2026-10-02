@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import {
   UNIT_POSITION_LOCK,
   positionTakenMessage,
+  unitDeactivateBlockedMessage,
   unitDeleteBlockedMessage,
   unitUpdateSchema,
 } from "@/lib/schemas/unit";
@@ -29,8 +30,15 @@ export const PUT = handler(async (req, ctx) => {
   const id = await param(ctx, "id");
   const data = await parseBody(req, unitUpdateSchema);
   await prisma.$transaction(async (tx) => {
-    const existing = await tx.unit.findUnique({ where: { id }, select: { position: true, isActive: true } });
+    // Deactivating: take the unit row lock lease writes take, so no lease can start between the check and the update.
+    if (data.isActive === false) await tx.$queryRaw`SELECT 1 FROM unit WHERE id = ${id} FOR UPDATE`;
+    const existing = await tx.unit.findUnique({ where: { id }, select: { name: true, position: true, isActive: true } });
     if (!existing) throw notFound("Unit");
+    if (data.isActive === false && existing.isActive) {
+      // An inactive unit can't hold a running lease (POST /api/leases refuses inactive units for the same reason).
+      const active = await tx.lease.findFirst({ where: { unitId: id, endDate: null }, select: { tenant: { select: { name: true } } } });
+      if (active) throw conflict(unitDeactivateBlockedMessage(existing.name, active.tenant.name));
+    }
     const position = data.position !== undefined ? data.position : existing.position;
     const isActive = data.isActive ?? existing.isActive;
     if (position && isActive && (data.position !== undefined || data.isActive !== undefined)) {

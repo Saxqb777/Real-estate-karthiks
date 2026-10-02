@@ -1,6 +1,7 @@
 // GET /api/actions?status=pending|done|all ; POST /api/actions
 // Pending: due date ascending (undated last), then High → Low. Done: most recently completed first. (compareActions)
-import { handler, json, notFound, parseBody, parseQuery } from "@/lib/api";
+import { handler, json, parseBody, parseQuery } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { todayIST } from "@/lib/dates";
 import { prisma } from "@/lib/db";
 import {
@@ -24,7 +25,7 @@ export const GET = handler(async (req) => {
 export const POST = handler(async (req) => {
   const data = await parseBody(req, actionCreateSchema);
   if (data.unitId && !(await prisma.unit.findUnique({ where: { id: data.unitId }, select: { id: true } }))) {
-    throw notFound("Unit");
+    throw fieldError(404, "unitId", "Unit not found");
   }
   const action = await prisma.actionItem.create({ data, include: actionInclude });
   return json(toActionDTO(action), 201);

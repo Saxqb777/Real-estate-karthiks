@@ -9,7 +9,6 @@
   isolation: isolate;
   background: radial-gradient(120% 90% at 50% 20%, #2a2119 0%, var(--bg-0, #0e0d0b) 70%);
   border-radius: inherit;
-  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -26,6 +25,10 @@
 .canvas {
   position: absolute !important;
   inset: 0;
+}
+/* embedded in a scrolling page: vertical swipes scroll the page, horizontal drags orbit (OrbitControls sets "none" inline) */
+.pageScroll canvas {
+  touch-action: pan-y !important;
 }
 
 .fadeIn {

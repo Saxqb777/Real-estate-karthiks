@@ -1,8 +1,8 @@
-// GET /api/expenses?year=&unitId=(id|plot)&categoryId= → { items, total, count } (newest first) ; POST /api/expenses
+// GET /api/expenses?year=&yearMode=calendar|fy&unitId=(id|plot)&categoryId= → { items, total, count } (newest first) ; POST /api/expenses
 import type { Prisma } from "@prisma/client";
-import { handler, json, notFound, parseBody, parseQuery } from "@/lib/api";
+import { handler, json, parseBody, parseQuery } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { sumAmounts } from "@/lib/calculations";
-import { dateOnly } from "@/lib/dates";
 import { prisma } from "@/lib/db";
 import {
   WHOLE_PLOT,
@@ -10,12 +10,14 @@ import {
   expenseInclude,
   expenseListQuerySchema,
   toExpenseDTO,
+  yearRange,
 } from "@/lib/schemas/expense";
 
 export const GET = handler(async (req) => {
-  const { year, unitId, categoryId } = parseQuery(req, expenseListQuerySchema);
+  const { year, yearMode, unitId, categoryId } = parseQuery(req, expenseListQuerySchema);
+  const range = year !== undefined ? yearRange(year, yearMode) : null;
   const where: Prisma.ExpenseWhereInput = {
-    ...(year !== undefined && { expenseDate: { gte: dateOnly(year, 1, 1), lt: dateOnly(year + 1, 1, 1) } }),
+    ...(range && { expenseDate: { gte: range.from, lt: range.to } }),
     ...(unitId !== undefined && { unitId: unitId === WHOLE_PLOT ? null : unitId }),
     ...(categoryId !== undefined && { categoryId }),
   };
@@ -37,8 +39,8 @@ export const POST = handler(async (req) => {
     prisma.expenseCategory.findUnique({ where: { id: data.categoryId }, select: { id: true } }),
     data.unitId ? prisma.unit.findUnique({ where: { id: data.unitId }, select: { id: true } }) : true,
   ]);
-  if (!category) throw notFound("Expense category");
-  if (!unit) throw notFound("Unit");
+  if (!category) throw fieldError(404, "categoryId", "Expense category not found");
+  if (!unit) throw fieldError(404, "unitId", "Unit not found");
   const expense = await prisma.expense.create({ data, include: expenseInclude });
   return json(toExpenseDTO(expense), 201);
 });

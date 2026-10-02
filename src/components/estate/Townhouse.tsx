@@ -7,6 +7,8 @@ import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { SITE_DEFAULTS, offsetPolygon, type BuildingSlot, type Pt } from "@/lib/site-layout";
 import type { Env } from "./env";
+import { ball, box, rod, type Part } from "./bake";
+import { Baked, vcMaterial } from "./Baked";
 import { G, PAL, holoMaterial, std, type Finish } from "./materials";
 import { athangudiTex, doorTex, kolamTex, plasterTex, roofTex, windowGlowTex, windowTex, withRepeat } from "./textures";
 import { FLAT, hash, planShape, type World } from "./util";
@@ -74,7 +76,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const holo = useMemo(() => (ghost ? holoMaterial() : null), [ghost]);
   useEffect(() => () => holo?.dispose(), [holo]);
   const M = useMemo(() => {
-    if (holo) return { plaster: holo, roof: holo, plinth: holo, band: holo, accent: holo, cornice: holo, parapetSide: holo, parapetCap: holo, stair: holo, tank: holo, frame: holo };
+    if (holo) return { plaster: holo, roof: holo, plinth: holo, band: holo, accent: holo, cornice: holo, parapetSide: holo, parapetCap: holo, stair: holo };
     const f = finish;
     return {
       plaster: std(PAL.plaster, { map: withRepeat(plasterTex(), 1 / 9, 1 / 9), rough: 0.92, finish: f }),
@@ -86,8 +88,6 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       parapetSide: std(PAL.terracotta, { map: withRepeat(plasterTex(), 1 / 6, 1 / 6), rough: 0.88, finish: f }),
       parapetCap: std(PAL.terracottaCap, { rough: 0.8, finish: f }),
       stair: std("#e6d9c4", { rough: 0.9, finish: f }),
-      tank: std(PAL.tank, { rough: 0.42, finish: f }),
-      frame: std(PAL.woodDark, { rough: 0.7, finish: f }),
     };
   }, [holo, finish]);
 
@@ -114,8 +114,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     return spots;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig]);
-  const litWin = windows.filter((w) => w.lit);
-  const darkWin = windows.filter((w) => !w.lit);
+  // only a lived-in unit gets glowing windows (inactive / vacant units keep them dark)
+  const [litWin, darkWin] = useMemo(() => (lived ? [windows.filter((w) => w.lit), windows.filter((w) => !w.lit)] : [[], windows]), [windows, lived]);
 
   const winMat = useMemo(() => std("#ffffff", { map: windowTex(), rough: 0.35, finish }), [finish]);
   const litMat = useMemo(
@@ -218,8 +218,26 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   // ── door, roof furniture ──
   const door = slot.door;
   const doorPos: [number, number, number] = [world.x(door.x + 0.07), 0.6 + 3.5, world.z(door.z)];
-  const tank = { x: world.x(slot.rect.x0 + 3.0), z: world.z(slot.rect.z1 - 3.0) };
-  const top = H + 0.15;
+  const top = H + 0.1;
+  const furniture = useMemo<Part[]>(() => {
+    const tx = world.x(slot.rect.x0 + 3.0);
+    const tz = world.z(slot.rect.z1 - 3.0);
+    const parts: Part[] = [
+      // black HDPE water tank on a brick stand
+      box([tx, top + 0.75, tz], [4.2, 1.5, 4.2], PAL.terracotta),
+      rod([tx, top + 3.65, tz], [3.9, 4.3, 3.9], PAL.tank),
+      ...[2.3, 3.6, 4.9].map((y) => rod([tx, top + y, tz], [4.05, 0.16, 4.05], "#121315")),
+      rod([tx, top + 6.0, tz], [1.3, 0.4, 1.3], PAL.tank),
+      // stair landings, spine wall, hand rails
+      ...stairs.slabs.map((s) => box(s.p, s.s, "#e6d9c4")),
+      box([stairs.spine.p[0], stairs.spine.h / 2, stairs.spine.p[2]], [0.32, stairs.spine.h, stairs.spine.len], PAL.plaster),
+      ...stairs.rails.map((r) => box(r.p, [0.14, 0.14, r.len], PAL.woodDark, [r.pitch, 0, 0])),
+    ];
+    return parts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig, stairs]);
+  const furnitureMat = holo ?? vcMaterial(0.6, finish);
+  const doorTrim = useMemo<Part[]>(() => [box([0, 0.2, -0.05], [door.widthFt + 0.7, 7.5, 0.18], PAL.woodDark), box([0, 4.05, 0.45], [door.widthFt + 1.4, 0.3, 1.0], PAL.cornice)], [door.widthFt]);
 
   return (
     <group>
@@ -242,34 +260,17 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       <instancedMesh ref={litRef} args={[G.plane(), ghost ? M.plaster : litMat, Math.max(1, windows.length)]} />
       <instancedMesh ref={shadeRef} args={[G.box(), M.band, Math.max(1, windows.length)]} castShadow={!ghost} receiveShadow />
 
-      {/* door with frame, step, lamp */}
+      {/* door with frame, canopy, lamp */}
       <group position={doorPos} rotation={[0, Math.PI / 2, 0]}>
-        <mesh geometry={G.box()} material={M.frame} scale={[door.widthFt + 0.7, 7.5, 0.18]} position={[0, 0.2, -0.05]} />
+        <Baked parts={doorTrim} cast={!ghost} material={furnitureMat} />
         <mesh geometry={G.plane()} material={ghost ? M.plaster : std("#ffffff", { map: doorTex(), rough: 0.6, finish })} scale={[door.widthFt, 7, 1]} position={[0, 0, 0.06]} />
-        <mesh geometry={G.box()} material={M.band} scale={[door.widthFt + 1.4, 0.3, 1.0]} position={[0, 4.05, 0.45]} castShadow={!ghost} />
         {!ghost && <mesh geometry={G.sphere()} material={lampMat} scale={0.4} position={[door.widthFt / 2 + 0.75, 2.6, 0.3]} />}
         {lived && !ghost && <Thoranam width={door.widthFt + 0.6} animate={animate} />}
       </group>
 
-      {/* external dog-leg staircase */}
+      {/* external dog-leg staircase steps (instanced) + baked landings / spine / rails / water tank */}
       <instancedMesh ref={stepRef} args={[G.box(), M.stair, Math.max(1, stairs.steps.length)]} castShadow={!ghost} receiveShadow />
-      {stairs.slabs.map((s, i) => (
-        <mesh key={i} geometry={G.box()} material={M.stair} position={s.p} scale={s.s} castShadow={!ghost} receiveShadow />
-      ))}
-      <mesh geometry={G.box()} material={M.plaster} position={[stairs.spine.p[0], stairs.spine.h / 2, stairs.spine.p[2]]} scale={[0.32, stairs.spine.h, stairs.spine.len]} castShadow={!ghost} receiveShadow />
-      {stairs.rails.map((r, i) => (
-        <mesh key={i} geometry={G.box()} material={M.frame} position={r.p} rotation={[r.pitch, 0, 0]} scale={[0.14, 0.14, r.len]} />
-      ))}
-
-      {/* roof: water tank on a brick stand + DTH dish */}
-      <group position={[tank.x, top, tank.z]}>
-        <mesh geometry={G.box()} material={ghost ? M.plaster : M.parapetSide} scale={[4.2, 1.5, 4.2]} position={[0, 0.75, 0]} castShadow={!ghost} />
-        <mesh geometry={G.cyl()} material={M.tank} scale={[3.9, 4.3, 3.9]} position={[0, 3.65, 0]} castShadow={!ghost} receiveShadow />
-        {[2.3, 3.6, 4.9].map((y) => (
-          <mesh key={y} geometry={G.cyl()} material={M.tank} scale={[4.05, 0.16, 4.05]} position={[0, y, 0]} />
-        ))}
-        <mesh geometry={G.cyl()} material={M.tank} scale={[1.3, 0.4, 1.3]} position={[0, 6.0, 0]} castShadow={!ghost} />
-      </group>
+      <Baked parts={furniture} cast={!ghost} receive material={furnitureMat} />
       {!ghost && (
         <group position={[world.x(slot.rect.x0 + 1.4), top + slot.parapetFt - 0.1, world.z(slot.rect.z0 + 1.6)]}>
           <mesh geometry={G.cyl()} material={std("#d9d9d9", { rough: 0.5, metal: 0.3, finish })} scale={[0.12, 1.6, 0.12]} position={[0, 0.8, 0]} />
@@ -288,8 +289,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   );
 }
 
-/** Mango-leaf thoranam over the door (local space of the door group). */
-function Thoranam({ width, animate }: { width: number; animate: boolean }) {
+/** Mango-leaf thoranam (optionally with marigolds) strung along local X at height y, z in front. */
+export function Thoranam({ width, animate, y = 3.55, z = 0.55, flowers = false }: { width: number; animate: boolean; y?: number; z?: number; flowers?: boolean }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const count = Math.max(5, Math.round(width / 0.42));
   const geo = useMemo(() => {
@@ -308,7 +309,7 @@ function Thoranam({ width, animate }: { width: number; animate: boolean }) {
     for (let i = 0; i < count; i++) {
       const x = -width / 2 + (i + 0.5) * (width / count);
       const sag = Math.sin(((i + 0.5) / count) * Math.PI) * 0.25;
-      o.position.set(x, 3.55 - sag, 0.55);
+      o.position.set(x, y - sag, z);
       o.rotation.set(0.25 + Math.sin(t * 2.6 + i * 0.9) * 0.18, 0, Math.sin(t * 1.7 + i) * 0.08);
       o.scale.setScalar(i % 2 ? 0.9 : 1.05);
       o.updateMatrix();
@@ -318,10 +319,21 @@ function Thoranam({ width, animate }: { width: number; animate: boolean }) {
   };
   useEffect(() => pose(0));
   useFrame(({ clock }) => animate && pose(clock.elapsedTime));
+  const blooms = useMemo<Part[]>(
+    () =>
+      flowers
+        ? Array.from({ length: count + 1 }, (_, i) => {
+            const t = i / count;
+            return ball([-width / 2 + t * width, y - Math.sin(t * Math.PI) * 0.25 + 0.05, z], 0.34, i % 2 ? PAL.saffron : PAL.marigold);
+          })
+        : [],
+    [flowers, count, width, y, z],
+  );
   return (
     <group>
-      <mesh geometry={G.box()} material={std("#e8d9b5")} scale={[width, 0.05, 0.05]} position={[0, 3.55, 0.55]} />
+      <mesh geometry={G.box()} material={std("#e8d9b5")} scale={[width, 0.05, 0.05]} position={[0, y, z]} />
       <instancedMesh ref={ref} args={[geo, std("#3f8a35", { side: THREE.DoubleSide, flat: true, rough: 0.7 }), count]} />
+      {flowers && <Baked parts={blooms} />}
     </group>
   );
 }
@@ -364,12 +376,10 @@ function ClothesLine({ slot, world, y, animate }: { slot: BuildingSlot; world: W
       pos.needsUpdate = true;
     }
   });
-  const pole = std("#8a8a8a", { rough: 0.6, metal: 0.3 });
+  const frame = useMemo<Part[]>(() => [rod([0, 2.6, 0], [0.14, 5.2, 0.14], "#8a8a8a"), rod([len, 2.6, 0], [0.14, 5.2, 0.14], "#8a8a8a"), box([len / 2, 5.1, 0], [len, 0.04, 0.04], "#dddddd")], [len]);
   return (
     <group position={[world.x(x0), y, world.z(z)]}>
-      <mesh geometry={G.cyl()} material={pole} scale={[0.14, 5.2, 0.14]} position={[0, 2.6, 0]} castShadow />
-      <mesh geometry={G.cyl()} material={pole} scale={[0.14, 5.2, 0.14]} position={[len, 2.6, 0]} castShadow />
-      <mesh geometry={G.box()} material={std("#dddddd")} scale={[len, 0.04, 0.04]} position={[len / 2, 5.1, 0]} />
+      <Baked parts={frame} cast />
       {clothes.map((c, i) => (
         <mesh key={i} geometry={c.geo} material={std(c.color, { side: THREE.DoubleSide, flat: true, rough: 0.95 })} position={[c.x, 5.1, 0]} castShadow />
       ))}

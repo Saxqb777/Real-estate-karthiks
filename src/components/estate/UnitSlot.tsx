@@ -11,7 +11,7 @@ import { formatFeetInches, type BuildingSlot, type SlotName } from "@/lib/site-l
 import type { Env } from "./env";
 import { G, PAL, std } from "./materials";
 import { Townhouse } from "./Townhouse";
-import { glowTex, toLetTex } from "./textures";
+import { glowTex, kolamTex, toLetTex } from "./textures";
 import type { LabelSpec, Tone, V3 } from "./Overlay";
 import { FLAT, easeOutBack, type World } from "./util";
 
@@ -154,6 +154,7 @@ function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interacti
       {!look.ring && (highlighted || selected) && <StatusRing slot={slot} world={world} color={PAL.marigold} pulse={false} dashed={false} boost={1} />}
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
       {slot.status === "vacant" && <ToLetBoard slot={slot} world={world} reduced={reduced} at={signAt} />}
+      {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x)} z={world.z(signAt.z - 1.2)} env={env} />}
       {/* invisible hit box: hover / click target for the whole building */}
       <mesh ref={occluder} visible={false} position={[cx, totalH / 2, cz]} scale={[slot.widthFt + 1, totalH + 1, slot.depthFt + 1]} geometry={G.box()} {...handlers} />
     </group>
@@ -306,6 +307,16 @@ function ToLetBoard({ slot, world, reduced, at }: { slot: BuildingSlot; world: W
       </group>
     </group>
   );
+}
+
+/** A kolam drawn on the street in front of the gate (fresh in the morning, fading through the day). */
+function StreetKolam({ x, z, env }: { x: number; z: number; env: RefObject<Env> }) {
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ map: kolamTex(), transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), []);
+  useEffect(() => () => mat.dispose(), [mat]);
+  useFrame(() => {
+    mat.opacity = env.current.kolam;
+  });
+  return <mesh geometry={G.plane()} material={mat} rotation={FLAT} position={[x, 0.09, z]} scale={[3.4, 3.4, 1]} renderOrder={2} />;
 }
 
 // ───────────────────────────── empty slot ─────────────────────────────

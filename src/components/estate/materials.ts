@@ -16,7 +16,6 @@ export const PAL = {
   tank: "#1c1d21",
   concrete: "#bdb5a8",
   concreteDark: "#8f877b",
-  iron: "#1d3330",
   laterite: "#b5532e",
   palmTrunk: "#8b6b4c",
   frond: "#3d8a4b",
@@ -127,18 +126,10 @@ export function std(color: string, o: StdOpts = {}): THREE.MeshStandardMaterial 
   return m;
 }
 
-/** A fresh (uncached) standard material for things that animate their own uniforms. */
-export function ownStd(color: string, o: StdOpts = {}): THREE.MeshStandardMaterial {
-  const m = std(color, o).clone();
-  if (o.finish === "muted") applyMuted(m);
-  return m;
-}
-
 let _box: THREE.BoxGeometry | null = null;
 let _cyl: THREE.CylinderGeometry | null = null;
 let _cone: THREE.ConeGeometry | null = null;
 let _sphere: THREE.SphereGeometry | null = null;
-let _ico: THREE.IcosahedronGeometry | null = null;
 let _plane: THREE.PlaneGeometry | null = null;
 /** Unit geometries: scale them per mesh (shared buffers, cheap). */
 export const G = {
@@ -146,7 +137,6 @@ export const G = {
   cyl: () => (_cyl ??= new THREE.CylinderGeometry(0.5, 0.5, 1, 14)),
   cone: () => (_cone ??= new THREE.ConeGeometry(0.5, 1, 12)),
   sphere: () => (_sphere ??= new THREE.SphereGeometry(0.5, 14, 10)),
-  ico: () => (_ico ??= new THREE.IcosahedronGeometry(0.5, 0)),
   plane: () => (_plane ??= new THREE.PlaneGeometry(1, 1)),
 };
 

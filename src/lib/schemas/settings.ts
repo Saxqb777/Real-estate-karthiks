@@ -1,9 +1,9 @@
 // Settings (singleton row id=1): zod schemas for PUT /api/settings + response type. Safe to import in the UI.
 import type { Settings } from "@prisma/client";
 import { z } from "zod";
-import { zEmailOrNull, zInt, zMoney, zRequiredText, zText } from "@/lib/validation";
+import "./messages";
 import type { Serialized } from "@/lib/types";
-import { zFlag } from "@/lib/validation";
+import { zEmailOrNull, zFlag, zInt, zMoney, zRequired, zRequiredText, zText } from "@/lib/validation";
 
 export const DATE_FORMATS = ["D/M/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"] as const;
 
@@ -18,10 +18,10 @@ export const settingsSchema = z.object({
     .toUpperCase()
     .regex(/^[A-Z]{3}$/, "must be a 3-letter currency code like INR"),
   dateFormat: z.enum(DATE_FORMATS, { message: `must be one of ${DATE_FORMATS.join(", ")}` }),
-  rentDueDay: zInt(1, 31),
+  rentDueDay: zRequired(zInt(1, 31)),
   lateFeeEnabled: zFlag,
   lateFeeAmount: zMoney,
-  lateFeeGraceDays: zInt(0, 60),
+  lateFeeGraceDays: zRequired(zInt(0, 60)),
 });
 
 /** PUT body: partial — only the fields sent are changed. */

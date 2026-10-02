@@ -23,12 +23,18 @@ function make(key: string, w: number, h: number, draw: Draw, o: { srgb?: boolean
   return tex;
 }
 
-/** Copy of a cached texture with its own repeat/offset (shares the image). */
+const repeats = new Map<string, THREE.Texture>();
+/** Cached copy of a texture with its own repeat/offset (shares the image). Safe to call during render. */
 export function withRepeat(tex: THREE.Texture, rx: number, ry: number, ox = 0, oy = 0) {
-  const t = tex.clone();
-  t.repeat.set(rx, ry);
-  t.offset.set(ox, oy);
-  t.needsUpdate = true;
+  const key = `${tex.uuid}|${rx.toFixed(5)}|${ry.toFixed(5)}|${ox.toFixed(4)}|${oy.toFixed(4)}`;
+  let t = repeats.get(key);
+  if (!t) {
+    t = tex.clone();
+    t.repeat.set(rx, ry);
+    t.offset.set(ox, oy);
+    t.needsUpdate = true;
+    repeats.set(key, t);
+  }
   return t;
 }
 

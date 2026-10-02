@@ -47,7 +47,9 @@ export function errorResponse(err: unknown) {
   }
   if (err instanceof ZodError) {
     const issues = err.issues.map((i) => ({ field: i.path.join(".") || "(body)", message: i.message }));
-    const summary = issues.map((i) => (i.field === "(body)" ? i.message : `${i.field}: ${i.message}`)).join("; ");
+    const summary = issues
+      .map((i) => (i.field === "(body)" || i.message.startsWith(humanizeField(i.field)) ? i.message : `${humanizeField(i.field)} ${i.message}`))
+      .join("; ");
     return NextResponse.json({ error: `Validation failed — ${summary}`, issues }, { status: 400 });
   }
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -61,6 +63,8 @@ export function errorResponse(err: unknown) {
           { status: 409 },
         );
       }
+      case "P2020":
+        return NextResponse.json({ error: "A number is too large to store — please check the amounts" }, { status: 400 });
       case "P2003":
         return NextResponse.json(
           { error: "This record is linked to other records (e.g. leases, expenses, payments) and cannot be removed or changed this way" },
@@ -68,8 +72,55 @@ export function errorResponse(err: unknown) {
         );
     }
   }
+  if (err instanceof Error && /22003|out of range|numeric field overflow/i.test(err.message)) {
+    return NextResponse.json({ error: "A number is too large to store — please check the amounts" }, { status: 400 });
+  }
   console.error("[api] unexpected error", err);
   return NextResponse.json({ error: "Something went wrong on the server" }, { status: 500 });
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  builtUpSqft: "Built-up area (sqft)",
+  purchasePrice: "Purchase price",
+  purchaseDate: "Purchase date",
+  annualAppreciationRate: "Appreciation rate",
+  electricityConsumerNumber: "TNPDCL consumer number",
+  electricityPayUrl: "Electricity pay link",
+  footprintWidthFt: "Footprint width",
+  footprintDepthFt: "Footprint depth",
+  frontWidthFt: "Front width",
+  backWidthFt: "Back width",
+  depthFt: "Depth",
+  areaSqft: "Area",
+  monthlyRent: "Monthly rent",
+  securityDeposit: "Security deposit",
+  depositRefundedAmount: "Deposit refunded",
+  depositRefundDate: "Refund date",
+  periodMonth: "Rent month",
+  periodYear: "Rent year",
+  paymentDate: "Payment date",
+  expenseDate: "Expense date",
+  offerDate: "Offer date",
+  startDate: "Start date",
+  endDate: "End date",
+  dueDate: "Due date",
+  rentDueDay: "Rent due day",
+  lateFeeAmount: "Late fee",
+  lateFeeGraceDays: "Grace days",
+  ownerEmail: "Owner email",
+  idProofRef: "ID proof reference",
+  unitId: "Unit",
+  tenantId: "Tenant",
+  leaseId: "Lease",
+  categoryId: "Category",
+};
+
+/** "builtUpSqft" → "Built-up area (sqft)"; unknown camelCase → "Some field". */
+export function humanizeField(field: string): string {
+  const key = field.split(".").pop() ?? field;
+  if (FIELD_LABELS[key]) return FIELD_LABELS[key];
+  const words = key.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 type RouteCtx = { params: Promise<Record<string, string>> };

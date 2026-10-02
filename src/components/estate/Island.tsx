@@ -7,6 +7,8 @@ import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { offsetPolygon, type Pt, type SiteLayout } from "@/lib/site-layout";
 import type { Env } from "./env";
+import { box, rod, type Part } from "./bake";
+import { Baked, vcMaterial } from "./Baked";
 import { G, PAL, std } from "./materials";
 import { asphaltTex, earthTex, glowTex, milestoneTex, plasterTex, strataTex, withRepeat } from "./textures";
 import { FLAT, planShape, rng, type World } from "./util";
@@ -57,7 +59,7 @@ export function Tile({ layout, world }: { layout: SiteLayout; world: World }) {
     const r = rng(77);
     const out: { x: number; z: number; h: number; s: number; rot: number }[] = [];
     for (let i = 0; i < 14; i++) {
-      out.push({ x: xs[0] + r() * (Math.max(...xs) - Math.min(...xs)), z: Math.min(...zs) + r() * (Math.max(...zs) - Math.min(...zs)), h: 3 + r() * 9, s: 2.5 + r() * 4, rot: r() * 6 });
+      out.push({ x: Math.min(...xs) + r() * (Math.max(...xs) - Math.min(...xs)), z: Math.min(...zs) + r() * (Math.max(...zs) - Math.min(...zs)), h: 3 + r() * 9, s: 2.5 + r() * 4, rot: r() * 6 });
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,11 +113,20 @@ export function Street({ layout, world }: { layout: SiteLayout; world: World }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   useEffect(() => () => Object.values(geos).forEach((g) => g.dispose()), [geos]);
-  const roadMats = useMemo(() => {
-    const vOff = -(st.road[0] - world.cz) / (st.road[1] - st.road[0]);
-    const top = std("#ffffff", { map: withRepeat(asphaltTex(), 1 / 32, 1 / (st.road[1] - st.road[0]), 0, vOff), rough: 0.85 });
-    return [top, std("#2f2f33", { rough: 0.9 })];
-  }, [st.road, world.cz]);
+  // own texture instance: its offset follows the (animated) layout centre without creating new textures
+  const roadTex = useMemo(() => {
+    const t = asphaltTex().clone();
+    t.needsUpdate = true;
+    return t;
+  }, []);
+  useEffect(() => () => roadTex.dispose(), [roadTex]);
+  const roadMats = useMemo(() => [new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.85 }), std("#2f2f33", { rough: 0.9 })], [roadTex]);
+  useEffect(() => () => roadMats[0].dispose(), [roadMats]);
+  useEffect(() => {
+    const w = st.road[1] - st.road[0];
+    roadTex.repeat.set(1 / 32, 1 / w);
+    roadTex.offset.set(0, -(st.road[0] - world.cz) / w);
+  }, [roadTex, st.road, world.cz]);
   const mud = std("#8a4f33", { map: withRepeat(plasterTex(), 1 / 6, 1 / 6), rough: 1, polygonOffset: 1 });
 
   // drain curbs + slabs at the gates
@@ -154,10 +165,9 @@ export function PoleAndLamp({ layout, world, env, lampLight }: { layout: SiteLay
   const poles = [layout.plot.polygon[0].x - 3.2, Math.min(tx1 - 4, layout.plot.rightX + 10)];
   const H = 26;
   const light = useRef<THREE.PointLight>(null);
-  const headMat = useMemo(() => std("#2b2b2b", { rough: 0.6 }).clone(), []);
   const bulbMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#fff3d6", emissive: "#ffcf87", emissiveIntensity: 0, toneMapped: false }), []);
   const haloMat = useMemo(() => new THREE.SpriteMaterial({ map: glowTex(), color: "#ffc677", transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }), []);
-  useEffect(() => () => [headMat, bulbMat, haloMat].forEach((m) => m.dispose()), [headMat, bulbMat, haloMat]);
+  useEffect(() => () => [bulbMat, haloMat].forEach((m) => m.dispose()), [bulbMat, haloMat]);
   useFrame(() => {
     const l = env.current.lamps;
     bulbMat.emissiveIntensity = 0.2 + l * 6;
@@ -198,20 +208,29 @@ export function PoleAndLamp({ layout, world, env, lampLight }: { layout: SiteLay
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tx0, tx1, poles[0], poles[1], zPole, world, layout.slots]);
 
-  const concrete = std("#b9b3aa", { rough: 0.9 });
+  const poleParts = useMemo<Part[]>(
+    () =>
+      poles.flatMap((x, i) => {
+        const X = world.x(x);
+        const Z = world.z(zPole);
+        const parts: Part[] = [
+          rod([X, H / 2, Z], [0.75, H, 0.75], "#b9b3aa"),
+          box([X, wireY, Z], [0.3, 0.3, 3.4], "#5b5b5b"),
+          ...[-0.9, 0, 0.9].map((dz) => rod([X, wireY + 0.35, Z + dz], [0.2, 0.45, 0.2], "#e8e2d6")),
+        ];
+        if (i === 0) parts.push(box([X, H - 5.6, Z + 2.2], [0.22, 0.22, 4.4], "#2b2b2b", [0.12, 0, 0]), box([X, H - 5.25, Z + 4.4], [0.85, 0.32, 1.7], "#2b2b2b"));
+        return parts;
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [poles[0], poles[1], zPole, world, H, wireY],
+  );
   return (
     <group>
+      <Baked parts={poleParts} cast material={vcMaterial(0.8)} />
       {poles.map((x, i) => (
         <group key={i} position={[world.x(x), 0, world.z(zPole)]}>
-          <mesh geometry={G.cyl()} material={concrete} scale={[0.75, H, 0.75]} position={[0, H / 2, 0]} castShadow />
-          <mesh geometry={G.box()} material={std("#5b5b5b", { rough: 0.6, metal: 0.4 })} scale={[0.3, 0.3, 3.4]} position={[0, wireY, 0]} castShadow />
-          {[-0.9, 0, 0.9].map((dz) => (
-            <mesh key={dz} geometry={G.cyl()} material={std("#e8e2d6", { rough: 0.4 })} scale={[0.2, 0.45, 0.2]} position={[0, wireY + 0.35, dz]} />
-          ))}
           {i === 0 && (
             <>
-              <mesh geometry={G.box()} material={headMat} scale={[0.22, 0.22, 4.4]} position={[0, H - 5.6, 2.2]} rotation={[0.12, 0, 0]} castShadow />
-              <mesh geometry={G.box()} material={headMat} scale={[0.85, 0.32, 1.7]} position={[0, H - 5.25, 4.4]} castShadow />
               <mesh geometry={G.box()} material={bulbMat} scale={[0.62, 0.08, 1.3]} position={[0, H - 5.45, 4.4]} />
               <sprite material={haloMat} scale={[7, 7, 1]} position={[0, H - 5.7, 4.4]} />
               {lampLight && <pointLight ref={light} color="#ffc27a" distance={70} decay={1.6} position={[0, H - 6.3, 4.4]} intensity={0} />}

@@ -1,6 +1,7 @@
 // Plot (singleton row id=1): zod schemas for PUT /api/plot, area helper + response type. Safe to import in the UI.
 import type { Plot } from "@prisma/client";
 import { z } from "zod";
+import "./messages";
 import { zRequiredText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";
 import { isWebUrl, zDimension } from "@/lib/validation";

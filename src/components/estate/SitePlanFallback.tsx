@@ -33,7 +33,7 @@ export function SitePlanFallback({ layout, reason }: { layout: SiteLayout; reaso
                 strokeWidth={0.35}
                 strokeDasharray={empty || slot.status === "vacant" ? "1 0.7" : undefined}
               />
-              <text x={X((slot.rect.x0 + slot.rect.x1) / 2 - 2)} y={Y((slot.rect.z0 + slot.rect.z1) / 2)} fontSize={2.2} fill={empty ? PAL.marigold : "#3a2a1c"} textAnchor="middle" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
+              <text x={X((slot.rect.x0 + slot.rect.x1) / 2 - 2)} y={Y((slot.rect.z0 + slot.rect.z1) / 2)} fontSize={2.2} fill={empty ? PAL.marigold : slot.status === "vacant" ? PAL.sky : "#3a2a1c"} textAnchor="middle" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
                 {slot.unit?.name ?? `+ ${slot.slot}`}
               </text>
             </g>

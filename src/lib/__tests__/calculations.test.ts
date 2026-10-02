@@ -296,10 +296,10 @@ describe("Rent schedule: next payment, due day clamping, late fees", () => {
     expect(nextPaymentFor(oldLease, paid([1, 2024]), s31, D("2024-02-01")).dueDate).toBe(ISO("2024-02-29"));
   });
 
-  it("never falls due before the lease start (payment logged for a period before the start)", () => {
-    // lease starts 10/1/2025; a payment was logged for 11/2024 → next period 12/2024 due 5/12/2024 → clamped to 10/1/2025
+  it("never asks for a period or due date before the lease start (payment logged for a period before the start)", () => {
+    // lease starts 10/1/2025; a payment was logged for 11/2024 → next period clamped to 1/2025, due max(5/1, 10/1) = 10/1/2025
     const n = nextPaymentFor(lease, paid([11, 2024]), settings, D("2025-01-05"));
-    expect(n).toMatchObject({ dueDate: ISO("2025-01-10"), periodMonth: 12, periodYear: 2024, isOverdue: false });
+    expect(n).toMatchObject({ dueDate: ISO("2025-01-10"), periodMonth: 1, periodYear: 2025, isOverdue: false });
   });
 
   it("due today is not overdue", () => {

@@ -10,7 +10,9 @@ import type { Tier } from "./Effects";
 import type { Env } from "./env";
 import { tileXRange } from "./Island";
 import { G, PAL, VEHICLE_CLIP, std } from "./materials";
+import { Baked } from "./Baked";
 import { Cow, Dog, Pedestrians } from "./People";
+import { ball, box, rod, type Part } from "./bake";
 import { Birds, Petals } from "./SkyLife";
 import { glowTex } from "./textures";
 import { FLAT, damp, type World } from "./util";
@@ -39,11 +41,15 @@ const VEHICLES: VehicleSpec[] = [
   { kind: "auto", dir: -1, speed: 15.5, period: 21, offset: 13, len: 8.6, width: 4.3, edge: 0.6 },
 ];
 
-function Box({ p, s, c, r, m, cast = false }: { p: V3; s: V3; c?: string; r?: V3; m?: THREE.Material; cast?: boolean }) {
-  return <mesh geometry={G.box()} material={m ?? std(c!, { rough: 0.6, clip: true })} position={p} scale={s} rotation={r} castShadow={cast} />;
+// Vehicle bodies are baked (bake.ts) into one vertex-coloured, edge-clipped mesh each; wheels spin separately and
+// the head / tail lamps keep their own emissive materials so they can switch on at dusk.
+const VMAT = () => std("#ffffff", { vertexColors: true, rough: 0.55, clip: true });
+
+function Body({ parts, cast = true }: { parts: Part[]; cast?: boolean }) {
+  return <Baked parts={parts} cast={cast} material={VMAT()} />;
 }
-function Ball({ p, s, c, m }: { p: V3; s: number | V3; c?: string; m?: THREE.Material }) {
-  return <mesh geometry={G.sphere()} material={m ?? std(c!, { rough: 0.6, clip: true })} position={p} scale={s} />;
+function Lamp({ p, s, m, round }: { p: V3; s: V3; m: THREE.Material; round?: boolean }) {
+  return <mesh geometry={round ? G.sphere() : G.box()} material={m} position={p} scale={s} />;
 }
 
 interface Lights {
@@ -52,59 +58,70 @@ interface Lights {
   pool: THREE.MeshBasicMaterial;
 }
 
+const wheelParts = (r: number, w: number): Part[] => [rod([0, 0, 0], [r * 2, w, r * 2], "#1b1b1d"), box([0, 0, 0], [r * 1.5, w + 0.04, r * 0.28], "#9a9a9a")];
+const WHEELS = new Map<string, Part[]>();
+const wheelOf = (r: number, w: number) => {
+  const k = `${r}|${w}`;
+  if (!WHEELS.has(k)) WHEELS.set(k, wheelParts(r, w));
+  return WHEELS.get(k)!;
+};
+
 /** A wheel spinning about its axle (local Z of the vehicle); registers its spinner for the traffic loop. */
 function Wheel({ p, r, w, reg }: { p: V3; r: number; w: number; reg: (o: THREE.Object3D | null) => void }) {
   return (
     <group position={p} rotation={[Math.PI / 2, 0, 0]}>
       <group ref={reg}>
-        <mesh geometry={G.cyl()} material={std("#1b1b1d", { rough: 0.9, clip: true })} scale={[r * 2, w, r * 2]} />
-        <mesh geometry={G.box()} material={std("#9a9a9a", { rough: 0.4, metal: 0.5, clip: true })} scale={[r * 1.5, w + 0.04, r * 0.28]} />
+        <Body parts={wheelOf(r, w)} cast={false} />
       </group>
     </group>
   );
 }
 
-function Rider({ p, shirt, wrap, lean = 0 }: { p: V3; shirt: string; wrap: string; lean?: number }) {
-  return (
-    <group position={p} rotation={[0, 0, -lean]}>
-      <Box p={[0, 1.0, 0]} s={[0.6, 1.5, 0.9]} c={shirt} />
-      <Ball p={[0.05, 2.05, 0]} s={0.66} c={PAL.skin} />
-      <Ball p={[-0.03, 2.18, 0]} s={[0.7, 0.5, 0.68]} c={PAL.hair} />
-      <Box p={[0.55, 1.25, 0.32]} s={[1.0, 0.22, 0.22]} r={[0, 0, -0.5]} c={PAL.skin} />
-      <Box p={[0.55, 1.25, -0.32]} s={[1.0, 0.22, 0.22]} r={[0, 0, -0.5]} c={PAL.skin} />
-      <Box p={[0.45, 0.2, 0.25]} s={[1.0, 0.36, 0.32]} c={wrap} />
-      <Box p={[0.45, 0.2, -0.25]} s={[1.0, 0.36, 0.32]} c={wrap} />
-    </group>
-  );
-}
+const rider = (p: V3, shirt: string, wrap: string, skin: string, lean: number): Part[] => {
+  const [x, y, z] = p;
+  return [
+    box([x, y + 1.0, z], [0.6, 1.5, 0.9], shirt, [0, 0, -lean]),
+    ball([x + 0.05, y + 2.05, z], 0.66, skin),
+    ball([x - 0.03, y + 2.18, z], [0.7, 0.5, 0.68], PAL.hair),
+    box([x + 0.55, y + 1.25, z + 0.32], [1.0, 0.22, 0.22], skin, [0, 0, -0.5]),
+    box([x + 0.55, y + 1.25, z - 0.32], [1.0, 0.22, 0.22], skin, [0, 0, -0.5]),
+    box([x + 0.45, y + 0.2, z + 0.25], [1.0, 0.36, 0.32], wrap),
+    box([x + 0.45, y + 0.2, z - 0.25], [1.0, 0.36, 0.32], wrap),
+  ];
+};
+
+const YEL = "#f2c230";
+const BLK = "#1d1d1f";
+const AUTO: Part[] = [
+  box([0.2, 1.05, 0], [7.4, 0.4, 3.9], "#2a2a2a"),
+  box([-0.7, 2.05, 0], [5.4, 1.6, 4.1], YEL),
+  box([2.95, 2.35, 0], [2.0, 2.2, 2.5], YEL),
+  box([-0.7, 2.95, 0], [5.42, 0.24, 4.12], "#2e8b57"),
+  box([3.7, 3.7, 0], [0.12, 1.4, 2.2], "#7fa3b5"),
+  box([0.3, 5.15, 0], [7.0, 0.3, 4.3], BLK),
+  rod([0.3, 5.3, 0], [6.9, 4.3, 1.1], BLK, [Math.PI / 2, 0, 0]),
+  box([-3.3, 4.0, 0], [0.2, 2.3, 4.1], BLK),
+  ...(
+    [
+      [3.55, 1.2],
+      [3.55, -1.2],
+      [-3.2, 2.0],
+      [-3.2, -2.0],
+    ] as const
+  ).map(([x, z]) => box([x, 4.05, z], [0.14, 2.1, 0.14], BLK)),
+  box([-1.9, 3.5, 0], [0.5, 1.5, 3.7], "#6b2a1a"),
+  box([1.9, 3.55, 0], [0.8, 1.3, 0.75], "#b59a68"),
+  ball([1.95, 4.5, 0], 0.66, PAL.skin),
+  ball([1.9, 4.65, 0], [0.7, 0.45, 0.68], PAL.hair),
+];
 
 function Auto({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }) {
-  const yellow = "#f2c230";
-  const black = "#1d1d1f";
   return (
     <group>
-      <Box p={[0.2, 1.05, 0]} s={[7.4, 0.4, 3.9]} c="#2a2a2a" />
-      <Box p={[-0.7, 2.05, 0]} s={[5.4, 1.6, 4.1]} c={yellow} cast />
-      <Box p={[2.95, 2.35, 0]} s={[2.0, 2.2, 2.5]} c={yellow} />
-      <Box p={[-0.7, 2.95, 0]} s={[5.42, 0.24, 4.12]} c="#2e8b57" />
-      <Box p={[3.7, 3.7, 0]} s={[0.12, 1.4, 2.2]} m={std("#8fb6c9", { rough: 0.15, metal: 0.3, clip: true })} />
-      <Box p={[0.3, 5.15, 0]} s={[7.0, 0.3, 4.3]} c={black} cast />
-      <mesh geometry={G.cyl()} material={std(black, { rough: 0.7, clip: true })} position={[0.3, 5.3, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[6.9, 4.3, 1.1]} />
-      <Box p={[-3.3, 4.0, 0]} s={[0.2, 2.3, 4.1]} c={black} />
-      {[
-        [3.55, 1.2],
-        [3.55, -1.2],
-        [-3.2, 2.0],
-        [-3.2, -2.0],
-      ].map(([x, z], i) => (
-        <Box key={i} p={[x, 4.05, z]} s={[0.14, 2.1, 0.14]} c={black} />
-      ))}
-      <Box p={[-1.9, 3.5, 0]} s={[0.5, 1.5, 3.7]} c="#6b2a1a" />
-      <Box p={[1.9, 3.55, 0]} s={[0.8, 1.3, 0.75]} c="#b59a68" />
-      <Ball p={[1.95, 4.5, 0]} s={0.66} c={PAL.skin} />
-      <Ball p={[4.0, 2.75, 0]} s={0.42} m={L.head} />
-      <Box p={[-3.45, 1.9, 1.6]} s={[0.1, 0.3, 0.5]} m={L.tail} />
-      <Box p={[-3.45, 1.9, -1.6]} s={[0.1, 0.3, 0.5]} m={L.tail} />
+      <Body parts={AUTO} />
+      <Lamp p={[4.0, 2.75, 0]} s={[0.42, 0.42, 0.42]} m={L.head} round />
+      <Lamp p={[-3.45, 1.9, 1.6]} s={[0.1, 0.3, 0.5]} m={L.tail} />
+      <Lamp p={[-3.45, 1.9, -1.6]} s={[0.1, 0.3, 0.5]} m={L.tail} />
       <Wheel p={[3.0, 0.72, 0]} r={0.72} w={0.5} reg={reg} />
       <Wheel p={[-2.3, 0.72, 1.75]} r={0.72} w={0.5} reg={reg} />
       <Wheel p={[-2.3, 0.72, -1.75]} r={0.72} w={0.5} reg={reg} />
@@ -112,50 +129,56 @@ function Auto({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }
   );
 }
 
+const FRAME = "#5b1a1a";
+const MOPED: Part[] = [
+  box([0, 1.6, 0], [3.4, 0.25, 0.3], FRAME, [0, 0, 0.12]),
+  box([1.8, 2.4, 0], [0.2, 2.0, 0.2], "#444", [0, 0, -0.3]),
+  box([2.15, 3.35, 0], [0.2, 0.2, 2.0], "#333"),
+  box([0.4, 2.15, 0], [1.3, 0.7, 0.6], FRAME),
+  box([-0.6, 2.55, 0], [1.6, 0.3, 0.75], "#1c1c1c"),
+  box([-1.9, 2.5, 0], [1.3, 0.15, 1.2], "#444"),
+  rod([-1.9, 3.25, 0.45], [0.75, 1.3, 0.75], "#c9ccd1"),
+  rod([-1.9, 3.25, -0.45], [0.75, 1.3, 0.75], "#c9ccd1"),
+  ...rider([-0.5, 2.55, 0], "#f4f1ea", "#2f6fb5", PAL.skin, 0.12),
+];
+
 function Moped({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }) {
-  const frame = "#5b1a1a";
   return (
     <group>
+      <Body parts={MOPED} />
+      <Lamp p={[2.35, 3.05, 0]} s={[0.36, 0.36, 0.36]} m={L.head} round />
+      <Lamp p={[-2.6, 2.2, 0]} s={[0.1, 0.22, 0.3]} m={L.tail} />
       <Wheel p={[2.0, 0.9, 0]} r={0.9} w={0.3} reg={reg} />
       <Wheel p={[-2.0, 0.9, 0]} r={0.9} w={0.3} reg={reg} />
-      <Box p={[0, 1.6, 0]} s={[3.4, 0.25, 0.3]} r={[0, 0, 0.12]} c={frame} />
-      <Box p={[1.8, 2.4, 0]} s={[0.2, 2.0, 0.2]} r={[0, 0, -0.3]} c="#444" />
-      <Box p={[2.15, 3.35, 0]} s={[0.2, 0.2, 2.0]} c="#333" />
-      <Box p={[0.4, 2.15, 0]} s={[1.3, 0.7, 0.6]} c={frame} cast />
-      <Box p={[-0.6, 2.55, 0]} s={[1.6, 0.3, 0.75]} c="#1c1c1c" />
-      <Box p={[-1.9, 2.5, 0]} s={[1.3, 0.15, 1.2]} c="#444" />
-      {[0.45, -0.45].map((z) => (
-        <mesh key={z} geometry={G.cyl()} material={std("#c9ccd1", { rough: 0.25, metal: 0.8, clip: true })} position={[-1.9, 3.25, z]} scale={[0.75, 1.3, 0.75]} />
-      ))}
-      <Ball p={[2.35, 3.05, 0]} s={0.36} m={L.head} />
-      <Box p={[-2.6, 2.2, 0]} s={[0.1, 0.22, 0.3]} m={L.tail} />
-      <Rider p={[-0.5, 2.55, 0]} shirt="#f4f1ea" wrap="#2f6fb5" lean={0.12} />
     </group>
   );
 }
 
+const BFRAME = "#1f4f8a";
+const BICYCLE: Part[] = [
+  box([0, 1.9, 0], [3.2, 0.14, 0.14], BFRAME),
+  box([-0.6, 1.5, 0], [0.14, 1.6, 0.14], BFRAME, [0, 0, 0.35]),
+  box([1.45, 2.1, 0], [0.14, 1.9, 0.14], BFRAME, [0, 0, -0.3]),
+  box([1.75, 3.05, 0], [0.12, 0.12, 1.6], "#333"),
+  box([-0.9, 2.6, 0], [0.8, 0.18, 0.4], "#1c1c1c"),
+  box([-0.6, 3.7, 0], [0.6, 1.5, 0.85], "#e0a020", [0, 0, -0.25]),
+  ball([-0.35, 4.72, 0], 0.64, PAL.skinDark),
+  ball([-0.43, 4.86, 0], [0.68, 0.48, 0.66], PAL.hair),
+  box([0.4, 3.75, 0.3], [1.6, 0.2, 0.2], PAL.skinDark, [0, 0, -0.6]),
+  box([0.4, 3.75, -0.3], [1.6, 0.2, 0.2], PAL.skinDark, [0, 0, -0.6]),
+];
+const PEDAL_LEG: Part[] = [box([0.35, -0.75, 0], [0.26, 1.6, 0.26], "#24324a", [0, 0, 0.45])];
+
 function Bicycle({ reg, pedals }: { reg: (o: THREE.Object3D | null) => void; pedals: RefObject<THREE.Group | null> }) {
-  const frame = "#1f4f8a";
   return (
     <group>
+      <Body parts={BICYCLE} />
       <Wheel p={[1.75, 1.1, 0]} r={1.1} w={0.12} reg={reg} />
       <Wheel p={[-1.75, 1.1, 0]} r={1.1} w={0.12} reg={reg} />
-      <Box p={[0, 1.9, 0]} s={[3.2, 0.14, 0.14]} c={frame} cast />
-      <Box p={[-0.6, 1.5, 0]} s={[0.14, 1.6, 0.14]} r={[0, 0, 0.35]} c={frame} />
-      <Box p={[1.45, 2.1, 0]} s={[0.14, 1.9, 0.14]} r={[0, 0, -0.3]} c={frame} />
-      <Box p={[1.75, 3.05, 0]} s={[0.12, 0.12, 1.6]} c="#333" />
-      <Box p={[-0.9, 2.6, 0]} s={[0.8, 0.18, 0.4]} c="#1c1c1c" />
-      <group position={[-0.6, 2.7, 0]} rotation={[0, 0, -0.25]}>
-        <Box p={[0, 1.0, 0]} s={[0.6, 1.5, 0.85]} c="#e0a020" />
-        <Ball p={[0.1, 2.05, 0]} s={0.64} c={PAL.skinDark} />
-        <Ball p={[0.02, 2.2, 0]} s={[0.68, 0.48, 0.66]} c={PAL.hair} />
-        <Box p={[0.8, 1.15, 0.3]} s={[1.6, 0.2, 0.2]} r={[0, 0, -0.35]} c={PAL.skinDark} />
-        <Box p={[0.8, 1.15, -0.3]} s={[1.6, 0.2, 0.2]} r={[0, 0, -0.35]} c={PAL.skinDark} />
-      </group>
       <group ref={pedals} position={[-0.3, 2.65, 0]}>
         {[0.28, -0.28].map((z, i) => (
-          <group key={z} rotation={[0, 0, i * Math.PI]}>
-            <Box p={[0.35, -0.75, z]} s={[0.26, 1.6, 0.26]} r={[0, 0, 0.45]} c="#24324a" />
+          <group key={z} position={[0, 0, z]} rotation={[0, 0, i * Math.PI]}>
+            <Body parts={PEDAL_LEG} cast={false} />
           </group>
         ))}
       </group>
@@ -163,20 +186,24 @@ function Bicycle({ reg, pedals }: { reg: (o: THREE.Object3D | null) => void; ped
   );
 }
 
+const CAR_BODY = "#f2f2ef";
+const GLASS = "#26323d";
+const CAR: Part[] = [
+  box([0, 1.75, 0], [11.4, 1.9, 5.0], CAR_BODY),
+  box([-0.8, 3.45, 0], [6.4, 1.6, 4.6], CAR_BODY),
+  box([-0.8, 3.45, 0], [6.0, 1.25, 4.68], GLASS),
+  box([2.55, 3.35, 0], [0.12, 1.2, 4.3], GLASS, [0, 0, 0.55]),
+  box([0, 0.95, 0], [11.6, 0.5, 5.1], "#3a3a3a"),
+];
+
 function Car({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }) {
-  const body = "#f2f2ef";
-  const glass = std("#26323d", { rough: 0.15, metal: 0.4, clip: true });
   return (
     <group>
-      <Box p={[0, 1.75, 0]} s={[11.4, 1.9, 5.0]} c={body} cast />
-      <Box p={[-0.8, 3.45, 0]} s={[6.4, 1.6, 4.6]} c={body} cast />
-      <Box p={[-0.8, 3.45, 0]} s={[6.0, 1.25, 4.68]} m={glass} />
-      <Box p={[2.55, 3.35, 0]} s={[0.12, 1.2, 4.3]} r={[0, 0, 0.55]} m={glass} />
-      <Box p={[0, 0.95, 0]} s={[11.6, 0.5, 5.1]} c="#3a3a3a" />
-      <Ball p={[5.65, 2.1, 1.7]} s={[0.25, 0.4, 0.8]} m={L.head} />
-      <Ball p={[5.65, 2.1, -1.7]} s={[0.25, 0.4, 0.8]} m={L.head} />
-      <Box p={[-5.72, 2.2, 1.8]} s={[0.1, 0.4, 0.8]} m={L.tail} />
-      <Box p={[-5.72, 2.2, -1.8]} s={[0.1, 0.4, 0.8]} m={L.tail} />
+      <Body parts={CAR} />
+      <Lamp p={[5.65, 2.1, 1.7]} s={[0.25, 0.4, 0.8]} m={L.head} round />
+      <Lamp p={[5.65, 2.1, -1.7]} s={[0.25, 0.4, 0.8]} m={L.head} round />
+      <Lamp p={[-5.72, 2.2, 1.8]} s={[0.1, 0.4, 0.8]} m={L.tail} />
+      <Lamp p={[-5.72, 2.2, -1.8]} s={[0.1, 0.4, 0.8]} m={L.tail} />
       {[
         [3.6, 2.3],
         [3.6, -2.3],
@@ -189,23 +216,24 @@ function Car({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void })
   );
 }
 
+const BUS: Part[] = [
+  box([0, 4.4, 0], [30, 7.0, 7.6], "#f1ead8"),
+  box([0, 2.2, 0], [30.05, 1.5, 7.65], "#b3262b"),
+  box([0, 5.4, 0], [27, 2.3, 7.7], GLASS),
+  box([0, 8.0, 0], [29.6, 0.3, 7.3], "#d9d2bf"),
+  box([15.03, 5.0, 0], [0.1, 3.4, 6.6], GLASS),
+  box([15.05, 7.25, 0], [0.12, 0.8, 5.0], "#141414"),
+  box([0, 3.1, 0], [30.06, 0.25, 7.66], "#e0a020"),
+];
+
 function Bus({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }) {
-  const cream = "#f1ead8";
-  const red = "#b3262b";
-  const glass = std("#26323d", { rough: 0.15, metal: 0.4, clip: true });
   return (
     <group>
-      <Box p={[0, 4.4, 0]} s={[30, 7.0, 7.6]} c={cream} cast />
-      <Box p={[0, 2.2, 0]} s={[30.05, 1.5, 7.65]} c={red} />
-      <Box p={[0, 5.4, 0]} s={[27, 2.3, 7.7]} m={glass} />
-      <Box p={[0, 8.0, 0]} s={[29.6, 0.3, 7.3]} c="#d9d2bf" />
-      <Box p={[15.03, 5.0, 0]} s={[0.1, 3.4, 6.6]} m={glass} />
-      <Box p={[15.05, 7.25, 0]} s={[0.12, 0.8, 5.0]} c="#141414" />
-      <Box p={[0, 3.1, 0]} s={[30.06, 0.25, 7.66]} c="#e0a020" />
-      <Ball p={[15.1, 2.3, 2.9]} s={[0.25, 0.6, 0.9]} m={L.head} />
-      <Ball p={[15.1, 2.3, -2.9]} s={[0.25, 0.6, 0.9]} m={L.head} />
-      <Box p={[-15.05, 2.4, 3.0]} s={[0.1, 0.6, 0.8]} m={L.tail} />
-      <Box p={[-15.05, 2.4, -3.0]} s={[0.1, 0.6, 0.8]} m={L.tail} />
+      <Body parts={BUS} />
+      <Lamp p={[15.1, 2.3, 2.9]} s={[0.25, 0.6, 0.9]} m={L.head} round />
+      <Lamp p={[15.1, 2.3, -2.9]} s={[0.25, 0.6, 0.9]} m={L.head} round />
+      <Lamp p={[-15.05, 2.4, 3.0]} s={[0.1, 0.6, 0.8]} m={L.tail} />
+      <Lamp p={[-15.05, 2.4, -3.0]} s={[0.1, 0.6, 0.8]} m={L.tail} />
       {[
         [10.5, 3.3],
         [10.5, -3.3],

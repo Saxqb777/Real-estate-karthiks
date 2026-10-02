@@ -7,8 +7,7 @@ import { summarizePayments } from "@/lib/schemas/payment";
 import { tenantUpdateSchema } from "@/lib/schemas/tenant";
 
 /** Tenant profile: all leases (active first) with payment stats, plus totals. */
-export const GET = handler(async (_req, ctx) => {
-  const id = await param(ctx, "id");
+async function loadDetail(id: string) {
   const tenant = await prisma.tenant.findUnique({
     where: { id },
     include: {
@@ -26,7 +25,7 @@ export const GET = handler(async (_req, ctx) => {
     .map(({ payments, ...l }) => ({ ...l, isActive: l.endDate === null, ...summarizePayments(payments) }))
     .sort(compareLeases);
   const active = leases.find((l) => l.isActive);
-  return json({
+  return {
     ...tenant,
     leases,
     leasesCount: leases.length,
@@ -34,14 +33,18 @@ export const GET = handler(async (_req, ctx) => {
       ? { id: active.id, unitId: active.unit.id, unitName: active.unit.name, startDate: active.startDate, monthlyRent: active.monthlyRent }
       : null,
     paymentsTotal: sumAmounts(leases.map((l) => ({ amount: l.paymentsTotal }))),
-  });
-});
+  };
+}
 
+export const GET = handler(async (_req, ctx) => json(await loadDetail(await param(ctx, "id"))));
+
+/** Partial update; returns the same profile as GET so the UI can swap it in place. */
 export const PUT = handler(async (req, ctx) => {
   const id = await param(ctx, "id");
   const data = await parseBody(req, tenantUpdateSchema);
   if (!(await prisma.tenant.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Tenant");
-  return json(await prisma.tenant.update({ where: { id }, data }));
+  await prisma.tenant.update({ where: { id }, data });
+  return json(await loadDetail(id));
 });
 
 /** Tenants with lease history are kept for the records — deleting them is refused. */

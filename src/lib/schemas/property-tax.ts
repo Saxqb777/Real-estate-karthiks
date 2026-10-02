@@ -2,6 +2,7 @@
 // Pure — safe to import in the UI. The Paid ⇄ linked Expense logic lives in src/lib/property-tax.ts (server).
 import type { PropertyTax } from "@prisma/client";
 import { z } from "zod";
+import "./messages";
 import { todayIST } from "@/lib/dates";
 import { zDateOrNull, zId, zInt, zPositiveMoney } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";

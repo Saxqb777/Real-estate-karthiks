@@ -1,7 +1,9 @@
 // Payment input schemas + pure rent-period helpers (shared by /api/payments, /api/leases and the UI).
 import type { Payment } from "@prisma/client";
 import { z } from "zod";
+import "./messages";
 import { sumAmounts } from "@/lib/calculations";
+import { addDays, formatDate, periodLabel, todayIST } from "@/lib/dates";
 import { zDate, zInt, zPositiveMoney, zText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
@@ -10,14 +12,15 @@ export const PAYMENT_METHODS = ["cash", "bank", "upi", "other"] as const;
 export type PaymentMethodValue = (typeof PAYMENT_METHODS)[number];
 
 export { MONTH_NAMES, periodLabel } from "@/lib/dates";
-import { periodLabel } from "@/lib/dates";
 
 const blankToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
 
 export const paymentCreateSchema = z.object({
   leaseId: z.string({ message: "Choose a lease" }).trim().min(1, "Choose a lease"),
   amount: zRequired(zPositiveMoney),
-  paymentDate: zRequired(zDate),
+  paymentDate: zRequired(
+    zDate.refine((d) => d.getTime() <= todayIST().getTime(), "can't be in the future — record rent on the day it was received"),
+  ),
   periodMonth: zRequired(zInt(1, 12)),
   periodYear: zRequired(zInt(2000, 2100)),
   method: z.preprocess(
@@ -46,26 +49,35 @@ const toDate = (d: DateLike) => (typeof d === "string" ? new Date(d) : d);
 /** Months since year 0 — makes periods comparable with < / >. */
 export const periodIndex = (p: Period) => p.year * 12 + (p.month - 1);
 
-
 /** Period containing a date-only value (UTC). */
 export function periodOf(d: DateLike): Period {
   const dt = toDate(d);
   return { month: dt.getUTCMonth() + 1, year: dt.getUTCFullYear() };
 }
 
-/** First and last rent periods a lease may be paid for (last = null while the lease is active). */
+/**
+ * First and last rent periods a lease may be paid for (last = null while the lease is active).
+ * endDate is the move-out day (exclusive), so the last period is the month of the day before it:
+ * moving out on 1/3 means February is the last month. A lease that ends on its start day has last < first.
+ */
 export function leasePeriodBounds(lease: { startDate: DateLike; endDate: DateLike | null }) {
-  return { first: periodOf(lease.startDate), last: lease.endDate ? periodOf(lease.endDate) : null };
+  return {
+    first: periodOf(lease.startDate),
+    last: lease.endDate ? periodOf(addDays(toDate(lease.endDate), -1)) : null,
+  };
 }
 
 /** Why a rent period can't be recorded against this lease, or null when it's fine. */
 export function paymentPeriodError(lease: { startDate: DateLike; endDate: DateLike | null }, p: Period): string | null {
   const { first, last } = leasePeriodBounds(lease);
+  if (last && periodIndex(last) < periodIndex(first)) {
+    return `This lease ended on the day it started (${formatDate(lease.startDate)}), so no rent can be recorded against it.`;
+  }
   if (periodIndex(p) < periodIndex(first)) {
     return `Rent period ${periodLabel(p)} is before this lease started (${periodLabel(first)}). Choose ${periodLabel(first)} or later.`;
   }
   if (last && periodIndex(p) > periodIndex(last)) {
-    return `Rent period ${periodLabel(p)} is after this lease ended (${periodLabel(last)}). Choose ${periodLabel(last)} or earlier.`;
+    return `Rent period ${periodLabel(p)} is after the tenant moved out on ${formatDate(lease.endDate)} — this lease's last month is ${periodLabel(last)}. Choose ${periodLabel(last)} or earlier.`;
   }
   return null;
 }

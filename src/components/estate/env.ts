@@ -41,28 +41,27 @@ interface Key {
   windows: number;
   stars: number;
   cloud: string;
-  exposure: number;
 }
 
 // Hand-tuned palette keys (hour of day in IST). Laterite earth, lime plaster and coconut green read well in all of them.
 const KEYS: Key[] = [
-  { h: 0, skyTop: "#04070f", skyHorizon: "#1b2a4d", skyBottom: "#06080f", hemiSky: "#3a4f86", hemiGround: "#1a1210", hemi: 0.75, key: "#9fb4ff", keyI: 0.75, fill: "#ffb36b", fillI: 0.1, night: 1, lamps: 1, windows: 1, stars: 1, cloud: "#3a4566", exposure: 1.05 },
-  { h: 4.3, skyTop: "#070b18", skyHorizon: "#21305a", skyBottom: "#070910", hemiSky: "#3c4f86", hemiGround: "#1a1210", hemi: 0.75, key: "#9fb4ff", keyI: 0.7, fill: "#ffb36b", fillI: 0.1, night: 1, lamps: 1, windows: 0.75, stars: 0.9, cloud: "#3d4869", exposure: 1.05 },
-  { h: 5.25, skyTop: "#27396b", skyHorizon: "#c88f98", skyBottom: "#1d1f33", hemiSky: "#7b84b8", hemiGround: "#4a2e26", hemi: 0.9, key: "#ffb7a0", keyI: 0.9, fill: "#8fa2e0", fillI: 0.25, night: 0.6, lamps: 0.75, windows: 0.55, stars: 0.35, cloud: "#c99aa6", exposure: 1.05 },
-  { h: 6.1, skyTop: "#4b72b8", skyHorizon: "#ffbf95", skyBottom: "#4a4660", hemiSky: "#a9b8e0", hemiGround: "#7a4a36", hemi: 1.0, key: "#ffc49a", keyI: 1.9, fill: "#9fb6ff", fillI: 0.35, night: 0.15, lamps: 0.15, windows: 0.2, stars: 0, cloud: "#ffd6c2", exposure: 1.0 },
-  { h: 7.4, skyTop: "#4f8fd6", skyHorizon: "#f3e6d6", skyBottom: "#78a8d8", hemiSky: "#c4dcf2", hemiGround: "#9a5d40", hemi: 1.45, key: "#ffe0b8", keyI: 2.8, fill: "#ffe9d2", fillI: 0.95, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#fff3e6", exposure: 1.0 },
-  { h: 10.5, skyTop: "#3f86d4", skyHorizon: "#d4ebf8", skyBottom: "#6aa3dc", hemiSky: "#cfe4f6", hemiGround: "#a3613f", hemi: 1.5, key: "#fff1dc", keyI: 3.1, fill: "#fff0de", fillI: 0.95, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#ffffff", exposure: 0.98 },
-  { h: 13.5, skyTop: "#3a82d2", skyHorizon: "#d8ecf8", skyBottom: "#6ea7de", hemiSky: "#d6e9f7", hemiGround: "#a3613f", hemi: 1.5, key: "#fff6ea", keyI: 3.3, fill: "#fff2e2", fillI: 0.9, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#ffffff", exposure: 0.95 },
-  { h: 15.8, skyTop: "#457fc9", skyHorizon: "#efe4d2", skyBottom: "#7c9fca", hemiSky: "#d8e2ee", hemiGround: "#a3613f", hemi: 1.35, key: "#ffe6c0", keyI: 3.0, fill: "#ffe8cc", fillI: 0.8, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#fff6ea", exposure: 0.98 },
-  { h: 17.2, skyTop: "#4d6fb4", skyHorizon: "#ffc485", skyBottom: "#5d4a5c", hemiSky: "#d6c9d8", hemiGround: "#94553a", hemi: 0.95, key: "#ffbc73", keyI: 2.7, fill: "#8fa5e6", fillI: 0.45, night: 0.05, lamps: 0, windows: 0.1, stars: 0, cloud: "#ffe0bd", exposure: 1.0 },
-  { h: 18.15, skyTop: "#38407e", skyHorizon: "#ff9a62", skyBottom: "#2e2238", hemiSky: "#a495c4", hemiGround: "#6a3a2c", hemi: 0.9, key: "#ff9a5a", keyI: 2.0, fill: "#7f8ee0", fillI: 0.55, night: 0.35, lamps: 0.6, windows: 0.7, stars: 0.05, cloud: "#ffb59a", exposure: 1.02 },
-  { h: 18.85, skyTop: "#1b2253", skyHorizon: "#c86a78", skyBottom: "#161426", hemiSky: "#6c70a8", hemiGround: "#3a2420", hemi: 0.85, key: "#b5a6ff", keyI: 0.95, fill: "#ff9d6b", fillI: 0.25, night: 0.75, lamps: 1, windows: 1, stars: 0.45, cloud: "#a87a96", exposure: 1.05 },
-  { h: 19.7, skyTop: "#060a17", skyHorizon: "#22305c", skyBottom: "#070910", hemiSky: "#3d5089", hemiGround: "#1c1411", hemi: 0.8, key: "#a3b6ff", keyI: 0.8, fill: "#ffb36b", fillI: 0.12, night: 1, lamps: 1, windows: 1, stars: 1, cloud: "#3b4668", exposure: 1.05 },
-  { h: 24, skyTop: "#04070f", skyHorizon: "#1b2a4d", skyBottom: "#06080f", hemiSky: "#3a4f86", hemiGround: "#1a1210", hemi: 0.75, key: "#9fb4ff", keyI: 0.75, fill: "#ffb36b", fillI: 0.1, night: 1, lamps: 1, windows: 1, stars: 1, cloud: "#3a4566", exposure: 1.05 },
+  { h: 0, skyTop: "#04070f", skyHorizon: "#1b2a4d", skyBottom: "#06080f", hemiSky: "#3a4f86", hemiGround: "#1a1210", hemi: 0.75, key: "#9fb4ff", keyI: 0.75, fill: "#ffb36b", fillI: 0.1, night: 1, lamps: 1, windows: 1, stars: 1, cloud: "#3a4566" },
+  { h: 4.3, skyTop: "#070b18", skyHorizon: "#21305a", skyBottom: "#070910", hemiSky: "#3c4f86", hemiGround: "#1a1210", hemi: 0.75, key: "#9fb4ff", keyI: 0.7, fill: "#ffb36b", fillI: 0.1, night: 1, lamps: 1, windows: 0.75, stars: 0.9, cloud: "#3d4869" },
+  { h: 5.25, skyTop: "#27396b", skyHorizon: "#c88f98", skyBottom: "#1d1f33", hemiSky: "#7b84b8", hemiGround: "#4a2e26", hemi: 0.9, key: "#ffb7a0", keyI: 0.9, fill: "#8fa2e0", fillI: 0.25, night: 0.6, lamps: 0.75, windows: 0.55, stars: 0.35, cloud: "#c99aa6" },
+  { h: 6.1, skyTop: "#4b72b8", skyHorizon: "#ffbf95", skyBottom: "#4a4660", hemiSky: "#a9b8e0", hemiGround: "#7a4a36", hemi: 1.0, key: "#ffc49a", keyI: 1.9, fill: "#9fb6ff", fillI: 0.35, night: 0.15, lamps: 0.15, windows: 0.2, stars: 0, cloud: "#ffd6c2" },
+  { h: 7.4, skyTop: "#4f8fd6", skyHorizon: "#f3e6d6", skyBottom: "#78a8d8", hemiSky: "#c4dcf2", hemiGround: "#9a5d40", hemi: 1.45, key: "#ffe0b8", keyI: 2.8, fill: "#ffe9d2", fillI: 0.95, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#fff3e6" },
+  { h: 10.5, skyTop: "#3f86d4", skyHorizon: "#d4ebf8", skyBottom: "#6aa3dc", hemiSky: "#cfe4f6", hemiGround: "#a3613f", hemi: 1.5, key: "#fff1dc", keyI: 3.1, fill: "#fff0de", fillI: 0.95, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#ffffff" },
+  { h: 13.5, skyTop: "#3a82d2", skyHorizon: "#d8ecf8", skyBottom: "#6ea7de", hemiSky: "#d6e9f7", hemiGround: "#a3613f", hemi: 1.5, key: "#fff6ea", keyI: 3.3, fill: "#fff2e2", fillI: 0.9, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#ffffff" },
+  { h: 15.8, skyTop: "#457fc9", skyHorizon: "#efe4d2", skyBottom: "#7c9fca", hemiSky: "#d8e2ee", hemiGround: "#a3613f", hemi: 1.35, key: "#ffe6c0", keyI: 3.0, fill: "#ffe8cc", fillI: 0.8, night: 0, lamps: 0, windows: 0, stars: 0, cloud: "#fff6ea" },
+  { h: 17.2, skyTop: "#4d6fb4", skyHorizon: "#ffc485", skyBottom: "#5d4a5c", hemiSky: "#d6c9d8", hemiGround: "#94553a", hemi: 0.95, key: "#ffbc73", keyI: 2.7, fill: "#8fa5e6", fillI: 0.45, night: 0.05, lamps: 0, windows: 0.1, stars: 0, cloud: "#ffe0bd" },
+  { h: 18.15, skyTop: "#38407e", skyHorizon: "#ff9a62", skyBottom: "#2e2238", hemiSky: "#a495c4", hemiGround: "#6a3a2c", hemi: 0.9, key: "#ff9a5a", keyI: 2.0, fill: "#7f8ee0", fillI: 0.55, night: 0.35, lamps: 0.6, windows: 0.7, stars: 0.05, cloud: "#ffb59a" },
+  { h: 18.85, skyTop: "#1b2253", skyHorizon: "#c86a78", skyBottom: "#161426", hemiSky: "#6c70a8", hemiGround: "#3a2420", hemi: 0.85, key: "#b5a6ff", keyI: 0.95, fill: "#ff9d6b", fillI: 0.25, night: 0.75, lamps: 1, windows: 1, stars: 0.45, cloud: "#a87a96" },
+  { h: 19.7, skyTop: "#060a17", skyHorizon: "#22305c", skyBottom: "#070910", hemiSky: "#3d5089", hemiGround: "#1c1411", hemi: 0.8, key: "#a3b6ff", keyI: 0.8, fill: "#ffb36b", fillI: 0.12, night: 1, lamps: 1, windows: 1, stars: 1, cloud: "#3b4668" },
+  { h: 24, skyTop: "#04070f", skyHorizon: "#1b2a4d", skyBottom: "#06080f", hemiSky: "#3a4f86", hemiGround: "#1a1210", hemi: 0.75, key: "#9fb4ff", keyI: 0.75, fill: "#ffb36b", fillI: 0.1, night: 1, lamps: 1, windows: 1, stars: 1, cloud: "#3a4566" },
 ];
 
 const COLOR_FIELDS = ["skyTop", "skyHorizon", "skyBottom", "hemiSky", "hemiGround", "key", "fill", "cloud"] as const;
-const NUM_FIELDS = ["hemi", "keyI", "fillI", "night", "lamps", "windows", "stars", "exposure"] as const;
+const NUM_FIELDS = ["hemi", "keyI", "fillI", "night", "lamps", "windows", "stars"] as const;
 type ColorField = (typeof COLOR_FIELDS)[number];
 type NumField = (typeof NUM_FIELDS)[number];
 

@@ -1,6 +1,7 @@
 // Tenant input schemas (shared by /api/tenants and the UI forms).
 import type { Tenant } from "@prisma/client";
 import { z } from "zod";
+import "./messages";
 import { zEmailOrNull, zRequiredText, zText } from "@/lib/validation";
 import type { LeaseDTO, LeaseStats } from "./lease";
 import type { Serialized } from "@/lib/types";
@@ -53,7 +54,7 @@ export interface TenantActiveLease {
 /** GET /api/tenants → { items: TenantListItem[] }; POST /api/tenants → TenantListItem */
 export type TenantListItem = TenantDTO & { leasesCount: number; activeLease: TenantActiveLease | null };
 
-/** GET /api/tenants/[id] (PUT returns a plain TenantDTO). Leases: active first, then newest. */
+/** GET / PUT /api/tenants/[id]. Leases: active first, then newest. */
 export type TenantDetail = TenantListItem & {
   leases: (LeaseDTO & LeaseStats & { unit: { id: string; name: string; position: "front" | "back" | null } })[];
   paymentsTotal: number;

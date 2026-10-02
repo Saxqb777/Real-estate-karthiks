@@ -2,6 +2,7 @@
 // Pure — safe to import in the UI.
 import type { ActionItem, Prisma } from "@prisma/client";
 import { z } from "zod";
+import "./messages";
 import { todayIST } from "@/lib/dates";
 import { zDateOrNull, zIdOrNull, zRequiredText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";

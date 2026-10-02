@@ -339,9 +339,15 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
   const fitSum = fitSet.reduce((s, k) => s + d[k], 0);
   if (fitSum + gapNeeded > depth) {
     const s = (depth - gapNeeded) / fitSum;
-    for (const k of fitSet) {
-      d[k] *= s;
-      if (real[k]) warnings.push(`"${bySlot[k]!.name}" footprint depth ${formatFeetInches(req[k].d)} does not fit the ${formatFeetInches(depth)} plot — drawn scaled to ${formatFeetInches(d[k])}.`);
+    for (const k of fitSet) d[k] *= s;
+    const realFit = fitSet.filter((k) => real[k]);
+    if (realFit.length === 2) {
+      warnings.push(
+        `Front + back footprint depths (${formatFeetInches(req.front.d)} + ${formatFeetInches(req.back.d)}) and a ${formatFeetInches(gapNeeded)} courtyard do not fit the ${formatFeetInches(depth)} plot — both drawn scaled.`,
+      );
+    } else if (realFit.length === 1) {
+      const k = realFit[0];
+      warnings.push(`"${bySlot[k]!.name}" footprint depth ${formatFeetInches(req[k].d)} does not fit the ${formatFeetInches(depth)} plot — drawn scaled to ${formatFeetInches(d[k])}.`);
     }
   }
   for (const k of SLOT_NAMES) {

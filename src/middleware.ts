@@ -21,5 +21,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Everything except Next internals and static files
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:png|jpg|jpeg|svg|webp|glb|gltf|hdr)$).*)"],
+  // Static files are skipped, but never anything under /api (always auth-checked).
+  matcher: ["/api/:path*", "/((?!api/|_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:png|jpg|jpeg|svg|webp|glb|gltf|hdr)$).*)"],
 };

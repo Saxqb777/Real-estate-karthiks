@@ -1,5 +1,6 @@
 // GET/PUT/DELETE /api/actions/[id] — PUT is partial; sending isDone keeps doneAt in step.
 import { handler, json, notFound, param, parseBody } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { actionInclude, actionUpdateSchema, doneState, toActionDTO } from "@/lib/schemas/action";
 
@@ -16,7 +17,7 @@ export const PUT = handler(async (req, ctx) => {
     const cur = await tx.actionItem.findUnique({ where: { id }, select: { isDone: true, doneAt: true } });
     if (!cur) throw notFound("Action");
     if (data.unitId && !(await tx.unit.findUnique({ where: { id: data.unitId }, select: { id: true } }))) {
-      throw notFound("Unit");
+      throw fieldError(404, "unitId", "Unit not found");
     }
     return tx.actionItem.update({
       where: { id },

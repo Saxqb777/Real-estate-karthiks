@@ -1,4 +1,5 @@
-import { ApiError, handler, json, parseBody, parseQuery } from "@/lib/api";
+import { handler, json, parseBody, parseQuery } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { sumAmounts } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
 import { createPaymentWithInvoice } from "@/lib/invoice";
@@ -33,10 +34,12 @@ export const GET = handler(async (req) => {
 export const POST = handler(async (req) => {
   const data = await parseBody(req, paymentCreateSchema);
   const payment = await prisma.$transaction(async (tx) => {
+    // Share-lock the lease so its dates can't change (PUT / move-out lock it FOR UPDATE) until this payment is saved.
+    await tx.$queryRaw`SELECT 1 FROM lease WHERE id = ${data.leaseId} FOR SHARE`;
     const lease = await tx.lease.findUnique({ where: { id: data.leaseId }, select: { startDate: true, endDate: true } });
-    if (!lease) throw new ApiError(404, "Lease not found", [{ field: "leaseId", message: "Lease not found" }]);
+    if (!lease) throw fieldError(404, "leaseId", "Lease not found");
     const periodError = paymentPeriodError(lease, { month: data.periodMonth, year: data.periodYear });
-    if (periodError) throw new ApiError(400, periodError, [{ field: "periodMonth", message: periodError }]);
+    if (periodError) throw fieldError(400, "periodMonth", periodError);
 
     const { id } = await createPaymentWithInvoice(data, tx);
     return tx.payment.findUniqueOrThrow({ where: { id }, include: paymentInclude });

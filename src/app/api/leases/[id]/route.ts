@@ -1,8 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
-import { ApiError, handler, json, notFound, param, parseBody } from "@/lib/api";
+import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
-import { leaseConflictMessage, leaseDetailInclude, leaseRuleIssues, leaseUpdateSchema } from "@/lib/schemas/lease";
+import {
+  leaseConflictMessage,
+  leaseDeleteBlockedMessage,
+  leaseDetailInclude,
+  leaseRuleIssues,
+  leaseUpdateSchema,
+} from "@/lib/schemas/lease";
 import { paymentsOutsideLease, periodLabel, summarizePayments } from "@/lib/schemas/payment";
 
 async function leaseDetail(id: string) {
@@ -20,6 +27,8 @@ export const PUT = handler(async (req, ctx) => {
   const body = await parseBody(req, leaseUpdateSchema);
 
   await prisma.$transaction(async (tx) => {
+    // Lock the lease first: payment writes take a share lock on it, so no payment can slip in outside the new dates.
+    await tx.$queryRaw`SELECT 1 FROM lease WHERE id = ${id} FOR UPDATE`;
     const existing = await tx.lease.findUnique({
       where: { id },
       include: { payments: { select: { periodMonth: true, periodYear: true } } },
@@ -61,6 +70,9 @@ export const PUT = handler(async (req, ctx) => {
       if (unitChanged && !unit.isActive) {
         throw fieldError(409, "unitId", `${unit.name} is marked inactive — reactivate it before moving a lease onto it`);
       }
+      if (endChanged && merged.endDate === null && !unit.isActive) {
+        throw fieldError(409, "endDate", `${unit.name} is marked inactive — reactivate it before re-opening this lease`);
+      }
       const clash = leaseConflictMessage(merged, unit.leases, unit.name);
       if (clash) throw fieldError(409, unitChanged ? "unitId" : startChanged ? "startDate" : "endDate", clash);
     }
@@ -92,6 +104,19 @@ export const PUT = handler(async (req, ctx) => {
   return json(await leaseDetail(id));
 });
 
-function fieldError(status: number, field: string, message: string) {
-  return new ApiError(status, message, [{ field, message }]);
-}
+/** Remove a lease entered by mistake. Refused while it has payments (they'd vanish with it — and their invoices). */
+export const DELETE = handler(async (_req, ctx) => {
+  const id = await param(ctx, "id");
+  await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT 1 FROM lease WHERE id = ${id} FOR UPDATE`; // no payment can be added mid-check
+    const lease = await tx.lease.findUnique({
+      where: { id },
+      select: { tenant: { select: { name: true } }, unit: { select: { name: true } }, _count: { select: { payments: true } } },
+    });
+    if (!lease) throw notFound("Lease");
+    const blocked = leaseDeleteBlockedMessage(lease.tenant.name, lease.unit.name, lease._count.payments);
+    if (blocked) throw conflict(blocked);
+    await tx.lease.delete({ where: { id } });
+  });
+  return json({ ok: true });
+});

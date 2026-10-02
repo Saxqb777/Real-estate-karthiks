@@ -33,7 +33,7 @@ export const POST = handler(async (req) => {
     return json({
       sent: false,
       skipped: true,
-      reason: "RESEND_API_KEY is not configured",
+      reason: "Email sending isn't set up on the server yet (RESEND_API_KEY is missing), so nothing was sent. Here is what the email would say.",
       preview: { to, subject: email.subject, text: email.text },
     });
   }

@@ -96,6 +96,7 @@ export default function EstateScene(props: EstateSceneProps) {
   const [zoomFocus, setZoomFocus] = useState(false);
   const [autoTier, setAutoTier] = useState<Tier>("high");
   const [labels, setLabels] = useState<LabelSpec[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const registry = useRef(new Map<string, HTMLElement>());
   const debugEl = useRef<HTMLDivElement>(null);
 
@@ -138,7 +139,7 @@ export default function EstateScene(props: EstateSceneProps) {
   return (
     <div
       ref={root}
-      className={`${s.root} ${className ?? ""}`}
+      className={`${s.root} ${props.wheelZoom === "always" ? "" : s.pageScroll} ${className ?? ""}`}
       onPointerDown={(e) => {
         down.current = { x: e.clientX, y: e.clientY };
         setZoomFocus(true);
@@ -170,6 +171,7 @@ export default function EstateScene(props: EstateSceneProps) {
               life={life}
               zoomEnabled={props.wheelZoom === "always" || zoomFocus}
               onLabels={setLabels}
+              onWarnings={setWarnings}
               registry={registry}
             />
             {props.debug && <DebugStats target={debugEl} tier={tier} />}
@@ -181,6 +183,11 @@ export default function EstateScene(props: EstateSceneProps) {
       )}
       {props.debug && <div ref={debugEl} className={s.debug} />}
       {ready && webgl && <OverlayLabels labels={labels} registry={registry} onBuild={props.onEmptySlotClick} />}
+      {mode === "preview" && webgl && (warnings.length > 0 || ("usingDefaults" in plot && plot.usingDefaults)) && (
+        <div className={s.warnings} role="status">
+          {warnings.length ? warnings.map((w) => <div key={w}>{w}</div>) : <div>Drawn from the site-plan defaults — enter the plot sizes to make it exact.</div>}
+        </div>
+      )}
       {hud && webgl && (
         <div className={s.hud}>
           <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => setLifeState(!life)} title="Street life: traffic, people, animals, birds">
@@ -220,6 +227,7 @@ interface ContentsProps extends EstateSceneProps {
   life: boolean;
   zoomEnabled: boolean;
   onLabels: (labels: LabelSpec[]) => void;
+  onWarnings: (warnings: string[]) => void;
   registry: RefObject<Map<string, HTMLElement>>;
 }
 
@@ -241,11 +249,14 @@ function SceneContents({
   zoomEnabled,
   intro,
   onLabels,
+  onWarnings,
   registry,
   cameraView,
 }: ContentsProps) {
   const env = useRef(createEnv());
-  const { layout } = useAnimatedLayout(plot, units, !reduced);
+  const { layout, target } = useAnimatedLayout(plot, units, !reduced);
+  const warnSig = target.warnings.join("\n");
+  useEffect(() => onWarnings(warnSig ? warnSig.split("\n") : []), [warnSig, onWarnings]);
   const world = useMemo(() => makeWorld(layout), [layout]);
   const [hovered, setHovered] = useState<SlotName | null>(null);
   const interactive = mode !== "login";
@@ -308,7 +319,7 @@ function SceneContents({
       <PoleAndLamp layout={layout} world={world} env={env} lampLight={tier !== "low"} />
       <Milestone layout={layout} world={world} />
       <Puddle layout={layout} world={world} env={env} />
-      <PlotGround layout={layout} world={world} />
+      <PlotGround layout={layout} world={world} animate={animate} />
       <Greenery layout={layout} world={world} grassCount={counts.grass} />
       <Palms layout={layout} world={world} animate={animate} count={counts.palms} />
       {layout.slots.map((slot, i) => (
@@ -324,7 +335,7 @@ function SceneContents({
           highlighted={hot.has(slot.slot)}
           interactive={interactive}
           reduced={reduced}
-          life={life && animate}
+          life={life}
           rise={animate}
           onHover={setHovered}
           onSelect={onSelectUnit}
@@ -334,7 +345,7 @@ function SceneContents({
         />
       ))}
       <Dimensions layout={layout} world={world} show={showDimensions} highlight={highlightField} reduced={reduced} />
-      <Life layout={layout} world={world} env={env} enabled={life && animate} tier={tier} mobile={mobile} />
+      <Life layout={layout} world={world} env={env} enabled={life} tier={tier} mobile={mobile} />
       <Clouds layout={layout} env={env} count={counts.clouds} animate={animate} />
       <Fireflies layout={layout} world={world} env={env} count={counts.flies} animate={animate} />
     </>
@@ -345,14 +356,11 @@ function SceneContents({
       <EnvDriver env={env} timeOfDay={timeOfDay} instant={reduced} />
       <SkyDome env={env} />
       <Lights env={env} radius={layout.radius} shadowSize={tier === "high" ? 2048 : 1024} shadows />
-      {tier === "low" ? (
-        body
-      ) : (
-        <Selection>
-          <Effects tier={tier} preview={mode === "preview"} />
-          {body}
-        </Selection>
-      )}
+      {/* the tree shape stays the same across tiers so dropping to "low" never remounts the world */}
+      <Selection enabled={tier !== "low"}>
+        {tier !== "low" && <Effects tier={tier} preview={mode === "preview"} />}
+        {body}
+      </Selection>
       <CameraRig layout={layout} world={world} mode={mode} selectedSlot={selectedSlot} intro={intro ?? mode === "hero"} reduced={reduced} zoomEnabled={zoomEnabled} view={cameraView} />
       <LabelProjector anchors={anchors} registry={registry} occluders={occluders} />
     </>

@@ -4,15 +4,27 @@ import { parseDateInput, todayIST } from "./dates";
 
 /** Accepts "1,00,000", "₹ 25,000", "8.5%" etc. by stripping ₹, %, commas and spaces before coercion. */
 export const cleanNumeric = (v: unknown) => (typeof v === "string" ? v.replace(/[₹%,\s]/g, "") : v);
-const stripMoney = cleanNumeric;
 
-/** Non-negative INR amount, up to 2 decimals. */
-export const zMoney = z.preprocess(stripMoney, z.coerce
-  .number({ message: "must be a number" })
-  .refine((n) => isFinite(n), "must be a finite number")
+/**
+ * Strict number input: accepts numbers and plain decimal strings ("1,00,000", "₹ 25,000.50", "-3", "8.5%").
+ * Rejects booleans, arrays, hex ("0x10"), exponents ("1e3") and blanks with "must be a number".
+ */
+const strictNumeric = (v: unknown) => {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const t = cleanNumeric(v) as string;
+    return /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : v;
+  }
+  return v;
+};
+/** Strict finite number (see strictNumeric). */
+export const zNum = z.preprocess(strictNumeric, z.number({ message: "must be a number" }).refine((n) => isFinite(n), "must be a finite number"));
+
+/** Non-negative INR amount, up to 2 decimals (checked after rounding so it always fits the DB column). */
+export const zMoney = zNum
   .refine((n) => n >= 0, "cannot be negative")
-  .refine((n) => n <= 1e12, "is unrealistically large")
-  .transform((n) => Math.round(n * 100) / 100));
+  .transform((n) => Math.round(n * 100) / 100)
+  .refine((n) => n < 1e12, "is unrealistically large");
 
 /** Strictly positive INR amount. */
 export const zPositiveMoney = zMoney.refine((n) => n > 0, "must be greater than 0");
@@ -42,22 +54,24 @@ export const zText = (max = 2000) =>
 /** Required trimmed text. */
 export const zRequiredText = (label: string, max = 200) =>
   z
-    .string({ message: `${label} is required` })
+    .string({ error: (i) => (i.input === undefined || i.input === null ? `${label} is required` : `${label} must be text`) })
     .trim()
     .min(1, `${label} is required`)
     .max(max, `${label} must be at most ${max} characters`);
 
-export const zId = z.string({ message: "id is required" }).trim().min(1, "id is required");
+export const zId = z
+  .string({ error: (i) => (i.input === undefined || i.input === null ? "id is required" : "id must be text") })
+  .trim()
+  .min(1, "id is required");
 
 /** Optional id that may be "" / null → null (e.g. unitId for whole plot). */
 export const zIdOrNull = z.preprocess((v) => (v === "" || v === undefined ? null : v), zId.nullable());
 
 export const zInt = (min: number, max: number) =>
-  z.coerce
-    .number({ message: "must be a number" })
-    .int("must be a whole number")
-    .min(min, `must be at least ${min}`)
-    .max(max, `must be at most ${max}`);
+  zNum
+    .refine((n) => Number.isInteger(n), "must be a whole number")
+    .refine((n) => n >= min, `must be at least ${min}`)
+    .refine((n) => n <= max, `must be at most ${max}`);
 
 /** Boolean that also accepts "true" / "false" strings, with a readable message. */
 export const zFlag = z.preprocess(
@@ -115,8 +129,8 @@ export const zHexColor = z
 
 /** Decimal that may be null (e.g. optional dimensions). */
 export const zNumberOrNull = z.preprocess(
-  (v) => (v === "" || v === undefined ? null : stripMoney(v)),
-  z.coerce.number({ message: "must be a number" }).finite().min(0, "cannot be negative").nullable(),
+  (v) => (v === "" || v === undefined ? null : strictNumeric(v)),
+  z.number({ message: "must be a number" }).finite().min(0, "cannot be negative").nullable(),
 );
 
 /** Optional non-negative measurement (feet / sqft): "" / null → null, rounded to 2dp. */

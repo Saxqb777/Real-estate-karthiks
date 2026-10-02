@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
-import { ApiError, conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
+import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
 import { leaseDetailInclude, leaseMoveOutSchema, leaseRuleIssues } from "@/lib/schemas/lease";
@@ -11,6 +12,7 @@ export const POST = handler(async (req, ctx) => {
   const body = await parseBody(req, leaseMoveOutSchema);
 
   const lease = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT 1 FROM lease WHERE id = ${id} FOR UPDATE`; // serialise with payment writes + other edits
     const existing = await tx.lease.findUnique({
       where: { id },
       include: {
@@ -44,7 +46,7 @@ export const POST = handler(async (req, ctx) => {
       const message =
         `Rent is already recorded for ${labels.join(", ")}${outside.length > 3 ? ", …" : ""}, after a move-out on ${formatDate(body.endDate)}. ` +
         `Pick a later move-out date, or delete those payments first.`;
-      throw new ApiError(409, message, [{ field: "endDate", message }]);
+      throw fieldError(409, "endDate", message);
     }
 
     return tx.lease.update({

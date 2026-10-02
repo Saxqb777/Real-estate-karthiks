@@ -63,3 +63,27 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   (zMoney accepts "1,00,000" / "₹ 25,000"), `Serialized<T>` in `src/lib/types.ts`, `periodLabel` in `src/lib/dates.ts`.
 - `/styleguide` shows every component; `/lab` is the 3D scene sandbox (query params switch states).
 - API errors: `{ error, issues?: [{field, message}] }`.
+
+## 3D scene usage
+```tsx
+import EstateSceneLazy from "@/components/estate/EstateSceneLazy";
+import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
+<EstateSceneLazy className={s.hero} plot={data.plot} units={sceneUnitsFromBreakdown(data.units)}
+  mode="hero" selectedUnitId={sel} onSelectUnit={setSel} onEmptySlotClick={(slot) => …} showLabels />
+```
+- `highlightField`: frontWidthFt | backWidthFt | depthFt | areaSqft | footprintWidthFt[:front|back|<unitId>] | footprintDepthFt[:…] | floors:… | position
+- Extra props: life, quality, hud, wheelZoom, intro, cameraView, debug, timeOfDay (auto|dawn|morning|afternoon|evening|day|dusk|night).
+- Visual review: `/lab?units=2&state=overdue&state2=vacant&time=night&dims=1&hl=depthFt&mode=preview&panel=0&intro=0&q=high`.
+
+## Local dev servers (agents)
+- `scripts/dev-server.sh <name> <port>` starts a private dev server with its own build dir (.next-<name>); stop with
+  `scripts/dev-server.sh stop <port>`. Screenshots: `BASE=http://localhost:<port> node scripts/shot.mjs <outDir> <paths…>`.
+
+## Calculation rule decisions (round 2)
+- Lease endDate = LAST DAY of tenancy (inclusive). Occupied interval = [startDate, endDate + 1 day). Last rent month = month of endDate.
+  Next lease may start the day after. UI label: "Last day of tenancy".
+- "Current" lease = startDate ≤ today ≤ endDate (or no endDate). Future-start lease = "incoming". Rent roll counts current leases only.
+- Arrears = every unpaid or part-paid month from lease start to the current period (paid amount per period vs monthlyRent).
+- CAGR shown only when holding ≥ 1 year; otherwise null with note "under 1 year".
+- Holding years = investment-weighted average (explained in show-the-maths). Rent lost before first lease uses the next lease's rent (noted).
+- Total Return = appreciation (active units) + all rent collected (spec), explained in show-the-maths.

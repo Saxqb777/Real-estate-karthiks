@@ -1,6 +1,7 @@
 // GET/PUT/DELETE /api/expenses/[id] — expenses auto-created by a Paid Property Tax row are read-only here (409).
 import type { Prisma } from "@prisma/client";
 import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { expenseInclude, expenseUpdateSchema, linkedExpenseMessage, toExpenseDTO } from "@/lib/schemas/expense";
 
@@ -28,10 +29,10 @@ export const PUT = handler(async (req, ctx) => {
   await prisma.$transaction(async (tx) => {
     await assertEditable(tx, id);
     if (data.categoryId && !(await tx.expenseCategory.findUnique({ where: { id: data.categoryId }, select: { id: true } }))) {
-      throw notFound("Expense category");
+      throw fieldError(404, "categoryId", "Expense category not found");
     }
     if (data.unitId && !(await tx.unit.findUnique({ where: { id: data.unitId }, select: { id: true } }))) {
-      throw notFound("Unit");
+      throw fieldError(404, "unitId", "Unit not found");
     }
     await tx.expense.update({ where: { id }, data });
   });

@@ -2,6 +2,7 @@
 // Pure — safe to import in the UI.
 import type { ExpenseCategory } from "@prisma/client";
 import { z } from "zod";
+import "./messages";
 import { sumAmounts } from "@/lib/calculations";
 import { zHexColor, zRequiredText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";
@@ -68,7 +69,7 @@ export const defaultCategoryRenameMessage = (name: string) =>
 export const defaultCategoryDeleteMessage = (name: string) => `"${name}" is a built-in category and can't be deleted.`;
 
 export const categoryInUseMessage = (name: string, count: number) =>
-  `Category ${name} has ${count} expense${count === 1 ? "" : "s"}; move ${count === 1 ? "it" : "them"} first.`;
+  `Category "${name}" has ${count} expense${count === 1 ? "" : "s"}. Move ${count === 1 ? "it" : "them"} to another category first.`;
 
 /** Sort: built-in categories first, then by name (case-insensitive). */
 export function compareCategories(a: { isDefault: boolean; name: string }, b: { isDefault: boolean; name: string }): number {

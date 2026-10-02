@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
-import { ApiError, handler, json, parseBody, parseQuery } from "@/lib/api";
+import { handler, json, parseBody, parseQuery } from "@/lib/api";
+import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { compareLeases, leaseConflictMessage, leaseCreateSchema, leaseListQuerySchema } from "@/lib/schemas/lease";
 import { summarizePayments } from "@/lib/schemas/payment";
@@ -56,7 +57,3 @@ export const POST = handler(async (req) => {
   });
   return json({ ...lease, isActive: lease.endDate === null, ...summarizePayments([]) }, 201);
 });
-
-function fieldError(status: number, field: string, message: string) {
-  return new ApiError(status, message, [{ field, message }]);
-}

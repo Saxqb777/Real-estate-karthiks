@@ -12,9 +12,8 @@ export const GET = handler(async (_req, ctx) => {
 export const PUT = handler(async (req, ctx) => {
   const id = await param(ctx, "id");
   const data = await parseBody(req, offerUpdateSchema);
-  const { count } = await prisma.offer.updateMany({ where: { id }, data });
-  if (!count) throw notFound("Offer");
-  return json(await prisma.offer.findUniqueOrThrow({ where: { id } }));
+  if (!(await prisma.offer.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Offer");
+  return json(await prisma.offer.update({ where: { id }, data }));
 });
 
 export const DELETE = handler(async (_req, ctx) => {

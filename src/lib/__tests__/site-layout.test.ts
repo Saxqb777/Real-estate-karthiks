@@ -224,7 +224,8 @@ describe("computeSiteLayout — slots and edge cases", () => {
     expect(b.depthFt).toBeCloseTo(50 * (72.66 / 78), 6);
     expect(b.rect.z0 - f.rect.z1).toBeCloseTo(4, 6);
     expect(b.rect.z1).toBeCloseTo(76.66, 6);
-    expect(L.warnings.length).toBe(3);
+    expect(L.warnings).toHaveLength(2); // one width warning + one combined depth warning
+    expect(L.warnings[0]).toContain("Front + back footprint depths (28' + 50')");
   });
 
   it("an empty slot gets only the room left over by a real unit, or is dropped", () => {

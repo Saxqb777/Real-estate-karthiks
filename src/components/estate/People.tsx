@@ -1,25 +1,16 @@
 "use client";
-// Low-poly street life: pedestrians (veshti + umbrella, saree, a running kid, a vegetable vendor with a cart),
-// a stray dog napping by the gate, and a zebu cow grazing on the far verge. Frame-rate independent (clock based).
+// Low-poly street life: pedestrians (veshti + umbrella, saree with jasmine, a running kid, a vegetable vendor with
+// a cart), a stray dog napping by the gate, and a zebu cow with painted horns grazing on the far verge.
+// Each rigid part is baked into one vertex-coloured mesh (bake.ts) → a handful of draw calls per character.
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import type { SiteLayout } from "@/lib/site-layout";
+import { ball, box, cone, rod, type Part } from "./bake";
+import { Baked } from "./Baked";
 import { tileXRange } from "./Island";
-import { G, PAL, std } from "./materials";
+import { PAL } from "./materials";
 import { smoothstep, type World } from "./util";
-
-type V3 = [number, number, number];
-
-function Box({ p, s, c, r, cast = false, flat = false }: { p: V3; s: V3; c: string; r?: V3; cast?: boolean; flat?: boolean }) {
-  return <mesh geometry={G.box()} material={std(c, { rough: 0.85, flat })} position={p} scale={s} rotation={r} castShadow={cast} />;
-}
-function Ball({ p, s, c, cast = false }: { p: V3; s: number | V3; c: string; cast?: boolean }) {
-  return <mesh geometry={G.sphere()} material={std(c, { rough: 0.8 })} position={p} scale={s} castShadow={cast} />;
-}
-function Rod({ p, s, c, r }: { p: V3; s: V3; c: string; r?: V3 }) {
-  return <mesh geometry={G.cyl()} material={std(c, { rough: 0.7 })} position={p} scale={s} rotation={r} />;
-}
 
 // ───────────────────────────── person rig ─────────────────────────────
 
@@ -45,41 +36,40 @@ export interface Outfit {
   jasmine?: boolean;
 }
 
+function personParts(o: Outfit) {
+  const skin = o.skin ?? PAL.skin;
+  const long = o.wrap === "veshti" || o.wrap === "saree";
+  const leg: Part[] = [box([0, -1.2, 0], [0.3, 2.4, 0.3], o.wrap === "shorts" || o.wrap === "lungi" ? skin : o.bottom), box([0, -2.42, 0.12], [0.3, 0.16, 0.5], "#2b211b")];
+  if (o.wrap === "shorts") leg.push(box([0, -0.35, 0], [0.36, 0.75, 0.36], o.bottom));
+  const body: Part[] = [box([0, 3.6, 0], [0.92, 1.75, 0.5], o.top), ball([0, 4.92, 0], 0.72, skin), ball([0, 5.05, -0.06], [0.76, 0.6, 0.74], PAL.hair)];
+  if (long) body.push(rod([0, 1.55, 0], [1.0, 2.3, 0.78], o.bottom));
+  if (o.wrap === "lungi") body.push(rod([0, 2.05, 0], [0.98, 1.3, 0.75], o.bottom));
+  if (o.wrap === "saree") body.push(box([0.12, 3.75, 0.05], [0.35, 2.0, 0.56], o.bottom, [0, 0, 0.5]));
+  if (o.hair === "bun") body.push(ball([0, 4.95, -0.42], 0.34, PAL.hair));
+  if (o.jasmine) body.push(ball([0, 5.12, -0.4], [0.42, 0.14, 0.2], "#fbfbf4"));
+  if (o.umbrella) body.push(rod([0.35, 5.6, 0.1], [0.06, 2.4, 0.06], "#3a2a1c"), cone([0.35, 7.0, 0.1], [3.6, 0.9, 3.6], "#141414"));
+  const arm = (c: string): Part[] => [box([0, -0.8, 0], [0.22, 1.6, 0.24], c)];
+  return { leg, body, armL: arm(skin), armR: arm(o.wrap === "saree" ? o.bottom : skin) };
+}
+
 /** Faces +Z; legs swing about X. Height ≈ 5.4 ft at scale 1. */
 export function Person({ rig, outfit, scale = 1 }: { rig: Rig; outfit: Outfit; scale?: number }) {
-  const skin = outfit.skin ?? PAL.skin;
-  const long = outfit.wrap === "veshti" || outfit.wrap === "saree";
+  const parts = useMemo(() => personParts(outfit), [outfit]);
   return (
     <group scale={scale}>
       <group ref={rig.body}>
         {[rig.legL, rig.legR].map((leg, i) => (
           <group key={i} ref={leg} position={[i ? 0.2 : -0.2, 2.65, 0]}>
-            <Box p={[0, -1.2, 0]} s={[0.3, 2.4, 0.3]} c={outfit.wrap === "shorts" ? skin : outfit.wrap === "lungi" ? skin : outfit.bottom} />
-            {outfit.wrap === "shorts" && <Box p={[0, -0.35, 0]} s={[0.36, 0.75, 0.36]} c={outfit.bottom} />}
-            <Box p={[0, -2.42, 0.12]} s={[0.3, 0.16, 0.5]} c="#2b211b" />
+            <Baked parts={parts.leg} />
           </group>
         ))}
-        {long && (
-          <mesh geometry={G.cyl()} material={std(outfit.bottom, { rough: 0.9 })} position={[0, 1.55, 0]} scale={[1.0, 2.3, 0.78]} castShadow />
-        )}
-        {outfit.wrap === "lungi" && <mesh geometry={G.cyl()} material={std(outfit.bottom, { rough: 0.9 })} position={[0, 2.05, 0]} scale={[0.98, 1.3, 0.75]} castShadow />}
-        <Box p={[0, 3.6, 0]} s={[0.92, 1.75, 0.5]} c={outfit.top} cast />
-        {outfit.wrap === "saree" && <Box p={[0.12, 3.75, 0.05]} s={[0.35, 2.0, 0.56]} r={[0, 0, 0.5]} c={outfit.bottom} />}
-        {[rig.armL, rig.armR].map((arm, i) => (
-          <group key={i} ref={arm} position={[i ? 0.6 : -0.6, 4.35, 0]}>
-            <Box p={[0, -0.8, 0]} s={[0.22, 1.6, 0.24]} c={i === 1 && outfit.wrap === "saree" ? outfit.bottom : skin} />
-          </group>
-        ))}
-        <Ball p={[0, 4.92, 0]} s={0.72} c={skin} />
-        <Ball p={[0, 5.05, -0.06]} s={[0.76, 0.6, 0.74]} c={PAL.hair} />
-        {outfit.hair === "bun" && <Ball p={[0, 4.95, -0.42]} s={0.34} c={PAL.hair} />}
-        {outfit.jasmine && <Ball p={[0, 5.12, -0.4]} s={[0.42, 0.14, 0.2]} c="#fbfbf4" cast={false} />}
-        {outfit.umbrella && (
-          <group position={[0.35, 0, 0.1]}>
-            <Rod p={[0, 5.6, 0]} s={[0.06, 2.4, 0.06]} c="#3a2a1c" />
-            <mesh geometry={G.cone()} material={std("#141414", { rough: 0.6, flat: true })} position={[0, 7.0, 0]} scale={[3.6, 0.9, 3.6]} />
-          </group>
-        )}
+        <Baked parts={parts.body} cast />
+        <group ref={rig.armL} position={[-0.6, 4.35, 0]}>
+          <Baked parts={parts.armL} />
+        </group>
+        <group ref={rig.armR} position={[0.6, 4.35, 0]}>
+          <Baked parts={parts.armR} />
+        </group>
       </group>
     </group>
   );
@@ -117,6 +107,24 @@ const PEDS: PedSpec[] = [
   { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: PAL.skinDark }, scale: 1, speed: 2.4, dir: -1, lane: "far", offset: 19, wait: 12, cart: true },
   { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "bun", jasmine: true, skin: PAL.skinDark }, scale: 0.95, speed: 2.9, dir: 1, lane: "far", offset: 27, wait: 10 },
 ];
+
+const CART: Part[] = [
+  box([0, 2.3, 0], [3.0, 0.3, 4.2], "#7a4a26"),
+  box([0, 2.75, -1.95], [3.0, 0.6, 0.2], "#6b3f22"),
+  rod([-1.2, 3.05, -2.6], [0.12, 1.6, 0.12], "#6b3f22", [0.9, 0, 0]),
+  rod([1.2, 3.05, -2.6], [0.12, 1.6, 0.12], "#6b3f22", [0.9, 0, 0]),
+  ...(
+    [
+      [-0.8, -1, "#3f8a35"],
+      [0.6, -0.8, "#c0392b"],
+      [-0.2, 0.4, "#e67e22"],
+      [0.9, 0.8, "#3f8a35"],
+      [-0.9, 1.2, "#f1c40f"],
+      [0.1, -0.2, "#7cae3a"],
+    ] as const
+  ).map(([x, z, c]) => ball([x, 2.75, z], 0.8, c)),
+];
+const CART_WHEELS: Part[] = [-1.65, 1.65].flatMap((x) => [rod([x, 0, 0], [2.2, 0.2, 2.2], "#3e2414", [0, 0, Math.PI / 2]), box([x * 1.06, 0, 0], [0.06, 1.8, 0.25], "#9a7b52")]);
 
 function Pedestrian({ spec, layout, world }: { spec: PedSpec; layout: SiteLayout; world: World }) {
   const rig = useRig();
@@ -157,39 +165,20 @@ function Pedestrian({ spec, layout, world }: { spec: PedSpec; layout: SiteLayout
     g.rotation.y += (heading - g.rotation.y) * 0.15;
     if (stopped) poseWalk(rig, 0, 0, 0);
     else poseWalk(rig, (s / (spec.scale * 1.6)) * Math.PI, spec.amp ?? 0.42, spec.amp ? 0.25 : 0.1, !!spec.cart);
-    if (cartWheels.current) cartWheels.current.children.forEach((w) => (w.rotation.x = s / 1.1));
+    if (cartWheels.current) cartWheels.current.rotation.x = s / 1.1;
   });
 
   return (
-    <group>
-      <group ref={root}>
-        <Person rig={rig} outfit={spec.outfit} />
-        {spec.cart && (
-          <group position={[0, 0, 3.2]}>
-            <Box p={[0, 2.3, 0]} s={[3.0, 0.3, 4.2]} c="#7a4a26" cast />
-            <Box p={[0, 2.75, -1.95]} s={[3.0, 0.6, 0.2]} c="#6b3f22" />
-            <Rod p={[-1.2, 3.05, -2.6]} s={[0.12, 1.6, 0.12]} r={[0.9, 0, 0]} c="#6b3f22" />
-            <Rod p={[1.2, 3.05, -2.6]} s={[0.12, 1.6, 0.12]} r={[0.9, 0, 0]} c="#6b3f22" />
-            {[
-              [-0.8, -1, "#3f8a35"],
-              [0.6, -0.8, "#c0392b"],
-              [-0.2, 0.4, "#e67e22"],
-              [0.9, 0.8, "#3f8a35"],
-              [-0.9, 1.2, "#f1c40f"],
-              [0.1, -0.2, "#7cae3a"],
-            ].map(([x, zz, c], i) => (
-              <Ball key={i} p={[x as number, 2.75, zz as number]} s={0.8} c={c as string} />
-            ))}
-            <group ref={cartWheels}>
-              {[-1.65, 1.65].map((x) => (
-                <group key={x} position={[x, 1.1, 0]}>
-                  <mesh geometry={G.cyl()} material={std("#3e2414", { rough: 0.8 })} rotation={[0, 0, Math.PI / 2]} scale={[2.2, 0.2, 2.2]} castShadow />
-                </group>
-              ))}
-            </group>
+    <group ref={root}>
+      <Person rig={rig} outfit={spec.outfit} />
+      {spec.cart && (
+        <group position={[0, 0, 3.2]}>
+          <Baked parts={CART} cast />
+          <group ref={cartWheels} position={[0, 1.1, 0]}>
+            <Baked parts={CART_WHEELS} />
           </group>
-        )}
-      </group>
+        </group>
+      )}
     </group>
   );
 }
@@ -206,6 +195,18 @@ export function Pedestrians({ layout, world, count }: { layout: SiteLayout; worl
 
 // ───────────────────────────── stray dog ─────────────────────────────
 
+const COAT = "#c48a52";
+const DOG_BODY: Part[] = [box([0, 1.35, 0], [1.9, 0.75, 0.62], COAT)];
+const DOG_HEAD: Part[] = [
+  box([0.25, 0.1, 0], [0.62, 0.55, 0.5], COAT),
+  box([0.68, -0.02, 0], [0.36, 0.28, 0.32], "#a8713f"),
+  box([0.85, 0.02, 0], [0.08, 0.1, 0.12], "#1a1410"),
+  cone([0.15, 0.48, 0.16], [0.22, 0.32, 0.18], "#8f5f33"),
+  cone([0.15, 0.48, -0.16], [0.22, 0.32, 0.18], "#8f5f33"),
+];
+const DOG_TAIL: Part[] = [box([-0.32, 0, 0], [0.7, 0.12, 0.12], COAT)];
+const DOG_LEG: Part[] = [box([0, -0.5, 0], [0.17, 1.0, 0.17], COAT)];
+
 export function Dog({ layout, world }: { layout: SiteLayout; world: World }) {
   const g = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
@@ -218,9 +219,8 @@ export function Dog({ layout, world }: { layout: SiteLayout; world: World }) {
   const a = gate ? (gate.a.x + gate.b.x) / 2 - 1.5 : layout.plot.polygon[0].x + 2;
   const b = layout.plot.rightX + 5;
   const nap = 16;
-  const trot = (Math.abs(b - a) / 5.5) as number;
+  const trot = Math.abs(b - a) / 5.5;
   const period = (nap + trot) * 2;
-  const coat = "#c48a52";
   useFrame(({ clock }) => {
     const t = clock.elapsedTime % period;
     let x: number;
@@ -260,16 +260,12 @@ export function Dog({ layout, world }: { layout: SiteLayout; world: World }) {
   return (
     <group ref={g}>
       <group ref={body}>
-        <Box p={[0, 1.35, 0]} s={[1.9, 0.75, 0.62]} c={coat} cast />
+        <Baked parts={DOG_BODY} cast />
         <group ref={head} position={[1.05, 1.65, 0]}>
-          <Box p={[0.25, 0.1, 0]} s={[0.62, 0.55, 0.5]} c={coat} />
-          <Box p={[0.68, -0.02, 0]} s={[0.36, 0.28, 0.32]} c="#a8713f" />
-          <Box p={[0.85, 0.02, 0]} s={[0.08, 0.1, 0.12]} c="#1a1410" cast={false} />
-          <mesh geometry={G.cone()} material={std("#8f5f33")} position={[0.15, 0.48, 0.16]} scale={[0.22, 0.32, 0.18]} />
-          <mesh geometry={G.cone()} material={std("#8f5f33")} position={[0.15, 0.48, -0.16]} scale={[0.22, 0.32, 0.18]} />
+          <Baked parts={DOG_HEAD} />
         </group>
         <group ref={tail} position={[-0.95, 1.55, 0]}>
-          <Box p={[-0.32, 0, 0]} s={[0.7, 0.12, 0.12]} c={coat} />
+          <Baked parts={DOG_TAIL} />
         </group>
       </group>
       <group ref={legs}>
@@ -280,7 +276,7 @@ export function Dog({ layout, world }: { layout: SiteLayout; world: World }) {
           [-0.7, -0.2],
         ].map(([x, zz], i) => (
           <group key={i} position={[x, 1.05, zz]}>
-            <Box p={[0, -0.5, 0]} s={[0.17, 1.0, 0.17]} c={coat} />
+            <Baked parts={DOG_LEG} />
           </group>
         ))}
       </group>
@@ -290,6 +286,34 @@ export function Dog({ layout, world }: { layout: SiteLayout; world: World }) {
 
 // ───────────────────────────── zebu cow ─────────────────────────────
 
+const WHITE = "#ece6da";
+const SHADE = "#cfc6b6";
+const COW_BODY: Part[] = [
+  box([0, 3.0, 0], [4.2, 1.9, 1.55], WHITE),
+  box([0, 2.25, 0], [3.6, 0.5, 1.3], SHADE),
+  ball([1.45, 4.05, 0], [1.1, 0.9, 0.9], WHITE),
+  ...(
+    [
+      [1.6, 0.5],
+      [1.6, -0.5],
+      [-1.6, 0.5],
+      [-1.6, -0.5],
+    ] as const
+  ).flatMap(([x, z], i) => [box([x, 1.1, z], [0.36, 2.2, 0.36], i < 2 ? WHITE : SHADE), box([x, 0.12, z], [0.4, 0.24, 0.4], "#3a2e26")]),
+];
+const COW_HEAD: Part[] = [
+  box([0.55, 0, 0], [1.2, 0.85, 0.75], WHITE),
+  box([0.3, -0.55, 0], [0.9, 0.5, 0.25], SHADE),
+  box([1.65, 0.05, 0], [0.95, 0.75, 0.66], WHITE),
+  box([2.17, -0.07, 0], [0.3, 0.42, 0.56], "#d9b8a6"),
+  ...[0.36, -0.36].flatMap((hz, i) => [
+    cone([1.4, 0.65, hz], [0.16, 0.7, 0.16], "#d8c7a6", [hz > 0 ? -0.35 : 0.35, 0, 0]),
+    cone([1.4, 1.03, hz * 1.35], [0.1, 0.26, 0.1], i ? "#2f6fb5" : "#c2185b", [hz > 0 ? -0.35 : 0.35, 0, 0]),
+    box([1.4, 0.17, hz * 1.55], [0.25, 0.14, 0.4], SHADE),
+  ]),
+];
+const COW_TAIL: Part[] = [box([0, -1.1, 0], [0.1, 2.2, 0.1], SHADE), box([0, -2.25, 0], [0.22, 0.45, 0.22], "#3a2e26")];
+
 export function Cow({ layout, world }: { layout: SiteLayout; world: World }) {
   const g = useRef<THREE.Group>(null);
   const neck = useRef<THREE.Group>(null);
@@ -298,11 +322,8 @@ export function Cow({ layout, world }: { layout: SiteLayout; world: World }) {
   const z = (st.farShoulder[0] + st.farShoulder[1]) / 2 - 0.2;
   const [, x1] = tileXRange(layout, z);
   const x = Math.min(x1 - 9, layout.plot.rightX + 2);
-  const white = "#ece6da";
-  const shade = "#cfc6b6";
-  const seed = useMemo(() => Math.random() * 10, []);
   useFrame(({ clock }) => {
-    const t = clock.elapsedTime + seed;
+    const t = clock.elapsedTime + 3.7;
     const graze = Math.sin(t * 0.35) > -0.2;
     if (neck.current) neck.current.rotation.z += ((graze ? -0.85 : 0.05) + Math.sin(t * 3) * (graze ? 0.05 : 0) - neck.current.rotation.z) * 0.04;
     if (tail.current) tail.current.rotation.x = Math.sin(t * 1.7) * 0.5 + Math.sin(t * 5.1) * 0.12;
@@ -310,38 +331,12 @@ export function Cow({ layout, world }: { layout: SiteLayout; world: World }) {
   });
   return (
     <group ref={g} position={[world.x(x), 0, world.z(z)]} rotation={[0, -0.35, 0]}>
-      <Box p={[0, 3.0, 0]} s={[4.2, 1.9, 1.55]} c={white} cast />
-      <Box p={[0, 2.25, 0]} s={[3.6, 0.5, 1.3]} c={shade} />
-      <Ball p={[1.45, 4.05, 0]} s={[1.1, 0.9, 0.9]} c={white} />
-      {[
-        [1.6, 0.5],
-        [1.6, -0.5],
-        [-1.6, 0.5],
-        [-1.6, -0.5],
-      ].map(([lx, lz], i) => (
-        <group key={i}>
-          <Box p={[lx, 1.1, lz]} s={[0.36, 2.2, 0.36]} c={i < 2 ? white : shade} />
-          <Box p={[lx, 0.12, lz]} s={[0.4, 0.24, 0.4]} c="#3a2e26" />
-        </group>
-      ))}
+      <Baked parts={COW_BODY} cast />
       <group ref={neck} position={[2.0, 3.4, 0]}>
-        <Box p={[0.55, 0, 0]} s={[1.2, 0.85, 0.75]} c={white} />
-        <Box p={[0.3, -0.55, 0]} s={[0.9, 0.5, 0.25]} c={shade} />
-        <group position={[1.35, 0.05, 0]}>
-          <Box p={[0.3, 0, 0]} s={[0.95, 0.75, 0.66]} c={white} />
-          <Box p={[0.82, -0.12, 0]} s={[0.3, 0.42, 0.56]} c="#d9b8a6" />
-          {[0.36, -0.36].map((hz, i) => (
-            <group key={hz}>
-              <mesh geometry={G.cone()} material={std("#d8c7a6")} position={[0.05, 0.6, hz]} rotation={[hz > 0 ? -0.35 : 0.35, 0, 0]} scale={[0.16, 0.7, 0.16]} castShadow />
-              <mesh geometry={G.cone()} material={std(i ? "#2f6fb5" : "#c2185b")} position={[0.05, 0.98, hz * 1.35]} rotation={[hz > 0 ? -0.35 : 0.35, 0, 0]} scale={[0.1, 0.26, 0.1]} />
-              <Box p={[0.05, 0.12, hz * 1.55]} s={[0.25, 0.14, 0.4]} c={shade} />
-            </group>
-          ))}
-        </group>
+        <Baked parts={COW_HEAD} />
       </group>
       <group ref={tail} position={[-2.1, 3.6, 0]}>
-        <Box p={[0, -1.1, 0]} s={[0.1, 2.2, 0.1]} c={shade} />
-        <Box p={[0, -2.25, 0]} s={[0.22, 0.45, 0.22]} c="#3a2e26" />
+        <Baked parts={COW_TAIL} />
       </group>
     </group>
   );

@@ -2,7 +2,8 @@
 // A lease covers [startDate, endDate): endDate is the move-out day; null endDate = active, open-ended.
 import type { Lease, Payment, Prisma, Tenant, Unit } from "@prisma/client";
 import { z } from "zod";
-import { formatDate } from "@/lib/dates";
+import "./messages";
+import { formatDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import { zBool, zDate, zDateOrNull, zMoney, zPositiveMoney, zText } from "@/lib/validation";
 import type { PaymentStats } from "./payment";
@@ -13,6 +14,13 @@ const blankToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v
 const zRef = (msg: string) => z.string({ message: msg }).trim().min(1, msg);
 /** Optional money that may be "" / null → null. */
 const zMoneyOrNull = z.preprocess((v) => (v === "" || v === undefined ? null : v), zMoney.nullable());
+
+// endDate null = active lease (see schema.prisma), so a move-out / refund date is a past event, never a plan.
+const notFuture = (d: Date | null) => d === null || d.getTime() <= todayIST().getTime();
+const END_IN_FUTURE = "can't be in the future — leave it empty while the tenant still lives there, and record the move-out when they leave";
+const REFUND_IN_FUTURE = "can't be in the future — record the refund once it's paid";
+const zEndDate = zDateOrNull.refine(notFuture, END_IN_FUTURE);
+const zRefundDate = zDateOrNull.refine(notFuture, REFUND_IN_FUTURE);
 
 // ---- Rules (pure; also usable client-side for instant feedback) ---------------------------------
 
@@ -89,6 +97,14 @@ export function leaseConflictMessage(
   return `These dates overlap ${hit.tenant.name}'s lease on ${unitName} (${leaseSpanLabel(hit)}). Leases on the same unit can't overlap — a new lease may start on the previous lease's move-out date.`;
 }
 
+/** Why a lease can't be deleted (it has recorded rent), or null. */
+export function leaseDeleteBlockedMessage(tenantName: string, unitName: string, paymentsCount: number): string | null {
+  if (!paymentsCount) return null;
+  const n = `${paymentsCount} rent payment${paymentsCount === 1 ? "" : "s"}`;
+  const them = paymentsCount === 1 ? "that payment" : "those payments";
+  return `${tenantName}'s lease on ${unitName} has ${n} recorded, so it's kept for your records. If it was entered by mistake, delete ${them} first.`;
+}
+
 /** Sort order for lease lists: active first, then newest start date first. */
 export function compareLeases(a: LeaseSpan, b: LeaseSpan): number {
   return Number(a.endDate !== null) - Number(b.endDate !== null) || ms(b.startDate) - ms(a.startDate);
@@ -100,11 +116,11 @@ const leaseFields = {
   unitId: zRef("Choose a unit"),
   tenantId: zRef("Choose a tenant"),
   startDate: zRequired(zDate),
-  endDate: zDateOrNull,
+  endDate: zEndDate,
   monthlyRent: zRequired(zPositiveMoney),
   securityDeposit: zMoney,
   depositRefundedAmount: zMoneyOrNull,
-  depositRefundDate: zDateOrNull,
+  depositRefundDate: zRefundDate,
   reminderEnabled: zBool,
   moveOutNotes: zText(2000),
 };
@@ -127,9 +143,9 @@ export const leaseUpdateSchema = z.object(leaseFields).partial();
 
 /** POST /api/leases/[id]/move-out */
 export const leaseMoveOutSchema = z.object({
-  endDate: zRequired(zDate, "is required (the move-out date)"),
+  endDate: zRequired(zDate.refine(notFuture, END_IN_FUTURE), "is required (the move-out date)"),
   depositRefundedAmount: zMoneyOrNull.optional(),
-  depositRefundDate: zDateOrNull.optional(),
+  depositRefundDate: zRefundDate.optional(),
   moveOutNotes: zText(2000).optional(),
 });
 

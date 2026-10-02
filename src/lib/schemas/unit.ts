@@ -2,12 +2,13 @@
 // Pure — safe to import in the UI (type-only Prisma imports).
 import type { Lease, Offer, Tenant, Unit } from "@prisma/client";
 import { z } from "zod";
+import "./messages";
 import type { Serialized } from "@/lib/types";
 import {
-  cleanNumeric,
   zDimension,
   zFlag,
   zInt,
+  zNum,
   zPastDate,
   zPositiveMoney,
   zRequired,
@@ -36,29 +37,21 @@ const zPosition = z.preprocess(
 );
 
 /** Percent per year, e.g. 8.5 = 8.5%. */
-const zAppreciationRate = z.preprocess(
-  cleanNumeric,
-  z.coerce
-    .number({ message: "must be a number" })
-    .min(-50, "must be at least -50%")
-    .max(100, "must be at most 100%")
-    .transform((n) => Math.round(n * 1000) / 1000),
-);
+const zAppreciationRate = zNum
+  .refine((n) => n >= -50, "must be at least -50%")
+  .refine((n) => n <= 100, "must be at most 100%")
+  .transform((n) => Math.round(n * 1000) / 1000);
 
-const zBuiltUpSqft = z.preprocess(
-  cleanNumeric,
-  z.coerce
-    .number({ message: "must be a number" })
-    .positive("must be greater than 0")
-    .max(1_000_000, "is unrealistically large")
-    .transform((n) => Math.round(n * 100) / 100),
-);
+const zBuiltUpSqft = zNum
+  .refine((n) => n > 0, "must be greater than 0")
+  .refine((n) => n <= 1_000_000, "is unrealistically large")
+  .transform((n) => Math.round(n * 100) / 100);
 
 const unitFields = {
   name: zRequiredText("Name", 80),
   type: zRequiredText("Type", 40),
   address: zText(300),
-  floors: zInt(1, 10),
+  floors: zRequired(zInt(1, 10)),
   builtUpSqft: zRequired(zBuiltUpSqft),
   purchaseDate: zRequired(zPastDate),
   purchasePrice: zRequired(zPositiveMoney),
@@ -112,6 +105,10 @@ export const UNIT_POSITION_LOCK = 7_310_001;
 
 export function positionTakenMessage(position: UnitPosition, holderName: string): string {
   return `The ${position} position is already taken by active unit "${holderName}". Clear its position or mark it inactive first.`;
+}
+
+export function unitDeactivateBlockedMessage(unitName: string, tenantName: string): string {
+  return `"${unitName}" still has an active lease (${tenantName}). Record the move-out first, then mark the unit inactive.`;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;

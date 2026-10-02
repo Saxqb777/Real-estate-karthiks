@@ -19,8 +19,9 @@
 //  • Rent Collected   = Σ ALL payments (every lease, every unit, active or not).
 //  • Total Expenses   = Σ ALL expenses (includes the Expense rows auto-created for Paid property tax).
 //  • Net Profit       = rentCollected − totalExpenses.   Total Return = appreciation (active) + rentCollected.
-//  • Active lease     = endDate null. Security deposits held = Σ securityDeposit; rent roll = Σ monthlyRent,
-//    both over ALL active leases. overdueCount / overdueAmount = count / Σ amountDue of overdue next payments.
+//  • Active lease     = endDate null (same as /api/leases?status=active). Security deposits held = Σ securityDeposit;
+//    rent roll = Σ monthlyRent; overdueCount / overdueAmount = count / Σ amountDue of overdue next payments — all over
+//    active leases on ACTIVE units (an open lease left on a deactivated unit stays on that unit's card only).
 //  • Per sqft         = invested / Σ builtUpSqft and bestOfferTotal / Σ builtUpSqft (active units; null when sqft = 0).
 //  • Vacancy (derived, never stored) — half-open day intervals:
 //      owned [purchaseDate, today); each lease occupies [startDate, endDate ?? today) clipped to owned
@@ -33,11 +34,13 @@
 //  • Next payment (per active lease): last paid period = max(periodYear×12 + periodMonth) of its payments; the next
 //    period is the month after it, due on Settings.rentDueDay clamped to the month length (31 → 28/29/30).
 //    No payments → the first period is the lease start month, due max(due day of start month, startDate).
-//    The due date is never before the lease start (guards payments recorded for periods before the start).
+//    Neither the period nor the due date is ever before the lease start (POST /api/payments rejects such periods).
 //    Overdue = dueDate < today; daysOverdue = today − dueDate (0 when not overdue).
-//    Late fee: lateFeeEnabled AND today > dueDate + lateFeeGraceDays → flat lateFeeAmount added to amountDue.
+//    Late fee: lateFeeEnabled AND lateFeeAmount > 0 AND today > dueDate + lateFeeGraceDays → flat fee added to amountDue.
 //  • rentState: no active lease → "none"; overdue → "overdue"; due within 0..5 days → "due-soon"; else "paid".
-//    Unit status: inactive → "inactive"; has an active lease → "occupied"; else "vacant".
+//    Unit status: inactive → "inactive"; a lease covers today (startDate ≤ today < endDate ?? ∞) → "occupied"; else
+//    "vacant" — the same day rule as Vacancy, so a signed lease that starts later is still "vacant" (its tenant shows
+//    as activeLease) and a move-out recorded in advance keeps the unit "occupied" until that day.
 //    A unit's activeLease / nextPayment = its active lease with the latest startDate.
 //  • monthlyByYear: income by paymentDate (cash basis), expenses by expenseDate; one YearSeries per calendar year
 //    with any payment or expense, plus today's year (ascending); 12 months each, `cumulative` = running net in-year.
@@ -191,8 +194,8 @@ export function round6(n: number): number {
   return Math.round(n * 1e6) / 1e6;
 }
 
-/** Day number since the epoch for a date-only value. */
-const dayNum = (d: Date) => Math.round(d.getTime() / MS_PER_DAY);
+/** Day number since the epoch (UTC calendar day — floors like stripTime, so a stray time of day never shifts it). */
+const dayNum = (d: Date) => Math.floor(d.getTime() / MS_PER_DAY);
 const fromDayNum = (n: number) => new Date(n * MS_PER_DAY);
 const isoDay = (n: number) => fromDayNum(n).toISOString();
 const ratio = (a: number, b: number) => (b > 0 ? round6(a / b) : 0);
@@ -340,15 +343,16 @@ export function nextPaymentFor(
   today: Date,
 ): NextPayment {
   const start = stripTime(lease.startDate);
-  const index = payments.length
-    ? Math.max(...payments.map((p) => p.periodYear * 12 + (p.periodMonth - 1))) + 1
-    : start.getUTCFullYear() * 12 + start.getUTCMonth();
+  const startIndex = start.getUTCFullYear() * 12 + start.getUTCMonth();
+  const lastPaid = payments.reduce((m, p) => Math.max(m, p.periodYear * 12 + (p.periodMonth - 1)), -Infinity);
+  const index = Math.max(startIndex, lastPaid + 1);
   const periodYear = Math.floor(index / 12);
   const periodMonth = (index % 12) + 1;
   const due = Math.max(dayNum(dueDateFor(periodYear, periodMonth, settings.rentDueDay)), dayNum(start));
   const daysPastDue = dayNum(today) - due;
   const isOverdue = daysPastDue > 0;
-  const lateFeeApplied = settings.lateFeeEnabled && daysPastDue > Math.max(0, settings.lateFeeGraceDays);
+  const lateFeeApplied =
+    settings.lateFeeEnabled && settings.lateFeeAmount > 0 && daysPastDue > Math.max(0, settings.lateFeeGraceDays);
   const lateFee = lateFeeApplied ? round2(settings.lateFeeAmount) : 0;
   return {
     leaseId: lease.id,
@@ -369,8 +373,9 @@ export function rentStateFor(next: NextPayment | null, today: Date): RentState {
   return dayNum(new Date(next.dueDate)) - dayNum(today) <= 5 ? "due-soon" : "paid";
 }
 
-export function unitStatusFor(isActive: boolean, hasActiveLease: boolean): UnitStatus {
-  return !isActive ? "inactive" : hasActiveLease ? "occupied" : "vacant";
+/** occupiedToday = some lease covers today (see RULES: Unit status). */
+export function unitStatusFor(isActive: boolean, occupiedToday: boolean): UnitStatus {
+  return !isActive ? "inactive" : occupiedToday ? "occupied" : "vacant";
 }
 
 // ───────────────────────────── plot ─────────────────────────────
@@ -497,11 +502,15 @@ export function buildDashboard(input: DashboardInput, today: Date, now: Date): D
     (e) => e.unitId as string,
   );
 
-  // Next payment for EVERY active lease (KPIs count all of them, unit cards show their own).
+  // Next payment for every active lease (unit cards show their own); KPIs count only those on active units.
+  const activeUnitIds = new Set(input.units.filter((u) => u.isActive).map((u) => u.id));
   const activeLeases = input.leases.filter((l) => l.endDate === null);
+  const portfolioLeases = activeLeases.filter((l) => activeUnitIds.has(l.unitId));
   const nextByLease = new Map(
     activeLeases.map((l) => [l.id, nextPaymentFor(l, paymentsByLease.get(l.id) ?? [], settings, t)]),
   );
+  const tDay = dayNum(t);
+  const coversToday = (l: LeaseInput) => dayNum(l.startDate) <= tDay && (l.endDate === null || dayNum(l.endDate) > tDay);
 
   const unitRows = [...input.units].sort(compareUnits).map((u) => {
     const leases = leasesByUnit.get(u.id) ?? [];
@@ -524,7 +533,7 @@ export function buildDashboard(input: DashboardInput, today: Date, now: Date): D
       position: u.position,
       floors: u.floors,
       isActive: u.isActive,
-      status: unitStatusFor(u.isActive, active !== null),
+      status: unitStatusFor(u.isActive, leases.some(coversToday)),
       rentState: rentStateFor(nextPayment, t),
       builtUpSqft: u.builtUpSqft,
       footprintWidthFt: u.footprintWidthFt,
@@ -578,7 +587,7 @@ export function buildDashboard(input: DashboardInput, today: Date, now: Date): D
   const holdingYears = weightedHoldingYears(activeRows.map((r) => ({ purchasePrice: r.breakdown.purchasePrice, yearsHeld: r.yearsHeld })));
   const rentCollected = sumAmounts(input.payments);
   const totalExpenses = sumAmounts(input.expenses);
-  const overdue = [...nextByLease.values()].filter((n) => n.isOverdue);
+  const overdue = portfolioLeases.flatMap((l) => nextByLease.get(l.id) ?? []).filter((n) => n.isOverdue);
   const pendingActions = input.actions.filter((a) => !a.isDone);
   const occupancyPct = ratio(daysOccupied, daysOwned);
   const vacantDays = act.reduce((s, u) => s + u.vacantDays, 0);
@@ -598,7 +607,7 @@ export function buildDashboard(input: DashboardInput, today: Date, now: Date): D
     rentCollected,
     totalExpenses,
     netProfit: round2(rentCollected - totalExpenses),
-    securityDepositsHeld: sumAmounts(activeLeases.map((l) => ({ amount: l.securityDeposit }))),
+    securityDepositsHeld: sumAmounts(portfolioLeases.map((l) => ({ amount: l.securityDeposit }))),
     totalReturn: round2(appreciation + rentCollected),
     totalBuiltUpSqft,
     boughtAtPerSqft: totalBuiltUpSqft > 0 ? round2(invested / totalBuiltUpSqft) : null,
@@ -606,7 +615,7 @@ export function buildDashboard(input: DashboardInput, today: Date, now: Date): D
     occupancyPct,
     vacantDays,
     unrealizedLoss,
-    monthlyRentRoll: sumAmounts(activeLeases.map((l) => ({ amount: l.monthlyRent }))),
+    monthlyRentRoll: sumAmounts(portfolioLeases.map((l) => ({ amount: l.monthlyRent }))),
     overdueCount: overdue.length,
     overdueAmount: sumAmounts(overdue.map((n) => ({ amount: n.amountDue }))),
     pendingActions: pendingActions.length,
