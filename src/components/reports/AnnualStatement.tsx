@@ -8,7 +8,9 @@ import {
   CategoryBars,
   Checks,
   Doc,
+  Dash,
   DocHeader,
+  Drill,
   Equation,
   More,
   Money,
@@ -33,7 +35,15 @@ type DepositRow = AnnualReport["deposits"]["rows"][number];
 
 const MODE_NAME = { fy: "Indian financial year (Apr – Mar)", calendar: "Calendar year (Jan – Dec)" } as const;
 
-export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocMode }) {
+export interface AnnualStatementProps {
+  data: AnnualReport;
+  mode: DocMode;
+  /** screen: open another report */
+  onUnit?: (unitId: string) => void;
+  onLedger?: (leaseId: string) => void;
+}
+
+export function AnnualStatement({ data, mode, onUnit, onLedger }: AnnualStatementProps) {
   const t = data.totals;
   const scope = <Scope>{data.label}</Scope>;
   const throughKey = data.through.slice(0, 7);
@@ -47,7 +57,14 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
     {
       key: "unit",
       header: "Unit",
-      cell: (u: UnitRow) => (u.unitId ? u.unitName : <Two top="Whole plot" bottom="Not tagged to one unit" />),
+      cell: (u: UnitRow) =>
+        u.unitId ? (
+          <Drill onClick={onUnit && (() => onUnit(u.unitId!))} hint={`Open ${u.unitName}'s story`}>
+            {u.unitName}
+          </Drill>
+        ) : (
+          <Two top="Whole plot" bottom="Not tagged to one unit" />
+        ),
       footer: <TotalLabel sub={data.label}>Total</TotalLabel>,
     },
     {
@@ -56,7 +73,7 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
       num: true,
       wide: true,
       cell: (u: UnitRow) =>
-        u.unitId ? <Two top={<Money v={u.rentExpected} />} bottom={u.collectionPct === null ? "nothing due" : `${pct(u.collectionPct)} received`} /> : <span className={s.dash}>—</span>,
+        u.unitId ? <Two top={<Money v={u.rentExpected} />} bottom={u.collectionPct === null ? "nothing due" : `${pct(u.collectionPct)} received`} /> : <Dash why="Rent always belongs to a unit" />,
       footer: <Two top={<Money v={t.rentExpected} />} bottom={t.collectionPct === null ? "nothing due" : `${pct(t.collectionPct)} received`} />,
     },
     { key: "rent", header: "Rent collected", num: true, cell: (u: UnitRow) => <Money v={u.rentCollected} tone="inc" />, footer: <Money v={t.rentCollected} tone="inc" /> },
@@ -109,7 +126,16 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
     {
       key: "who",
       header: "Tenant",
-      cell: (r: DepositRow) => <Two top={r.tenantName} bottom={`${r.unitName} · taken ${d(r.receivedDate)}`} />,
+      cell: (r: DepositRow) => (
+        <Two
+          top={
+            <Drill onClick={onLedger && (() => onLedger(r.leaseId))} hint={`Open ${r.tenantName}'s rent ledger`}>
+              {r.tenantName}
+            </Drill>
+          }
+          bottom={`${r.unitName} · taken ${d(r.receivedDate)}`}
+        />
+      ),
       footer: <TotalLabel sub={`${data.deposits.rows.length} ${data.deposits.rows.length === 1 ? "deposit" : "deposits"}`}>Held on {d(data.through)}</TotalLabel>,
     },
     { key: "dep", header: "Deposit", num: true, cell: (r: DepositRow) => <Money v={r.deposit} /> },
@@ -118,9 +144,9 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
       header: "Paid back",
       num: true,
       wide: true,
-      cell: (r: DepositRow) => (r.refunded > 0 ? <Two top={<Money v={r.refunded} />} bottom={r.refundDate ? d(r.refundDate) : undefined} /> : <span className={s.dash}>—</span>),
+      cell: (r: DepositRow) => (r.refunded > 0 ? <Two top={<Money v={r.refunded} />} bottom={r.refundDate ? d(r.refundDate) : undefined} /> : <Dash why="Nothing paid back" />),
     },
-    { key: "kept", header: "Kept back", num: true, wide: true, cell: (r: DepositRow) => (r.kept > 0 ? <Money v={r.kept} /> : <span className={s.dash}>—</span>) },
+    { key: "kept", header: "Kept back", num: true, wide: true, cell: (r: DepositRow) => (r.kept > 0 ? <Money v={r.kept} /> : <Dash why="Nothing kept back" />) },
     {
       key: "held",
       header: `Held on ${d(data.through)}`,
@@ -131,7 +157,7 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
         ) : r.held > 0 ? (
           <Money v={r.held} />
         ) : (
-          <span className={s.dash}>—</span>
+          <Dash why="Not held any more" />
         ),
       footer: <Money v={data.deposits.closing} />,
     },
@@ -282,7 +308,8 @@ export function AnnualStatement({ data, mode }: { data: AnnualReport; mode: DocM
                   <ul className={s.vacList}>
                     {o.vacantPeriods.map((v) => (
                       <li key={v.start}>
-                        Empty {d(v.start)} – {v.ongoing ? `${d(v.lastDay)} (still empty)` : d(v.lastDay)} · {days(v.days)}
+                        Empty {d(v.start)} – {d(v.lastDay)}
+                        {v.ongoing ? (data.isPartial ? " (still empty)" : " (still empty when the year ended)") : ""} · {days(v.days)}
                         {v.noRentHistory ? (
                           <> · no rent history, so no loss counted</>
                         ) : (

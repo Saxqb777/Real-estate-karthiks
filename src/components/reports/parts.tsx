@@ -3,7 +3,7 @@
 //   mode "screen" → the dark, interactive version inside Data → Reports
 //   mode "print"  → the light A4 version (portal, only visible when printing)
 // Numbers are printed exactly as the API sends them (formatting only — never re-computed here).
-import { Check, ChevronDown, IndianRupee, Landmark, CalendarDays, ShieldCheck, TriangleAlert, Wallet } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, IndianRupee, Landmark, CalendarDays, ShieldCheck, TriangleAlert, Wallet } from "lucide-react";
 import { createContext, useContext, useState, type CSSProperties, type ReactNode } from "react";
 import { AnimatedNumber, cx } from "@/components/ui";
 import { fmt, inr } from "@/components/hud/format";
@@ -477,6 +477,27 @@ export function More({ label, children, defaultOpen = false }: { label: (open: b
       </button>
       {open && <div className={s.moreBody}>{children}</div>}
     </div>
+  );
+}
+
+/** A name that opens another report (screen only — plain text in print). */
+export function Drill({ onClick, children, hint }: { onClick?: () => void; children: ReactNode; hint: string }) {
+  const mode = useDocMode();
+  if (mode === "print" || !onClick) return <>{children}</>;
+  return (
+    <button type="button" className={s.drill} onClick={onClick} title={hint}>
+      {children}
+      <ChevronRight aria-hidden className={s.drillChev} />
+    </button>
+  );
+}
+
+/** "—" with the reason on hover (missing data is never silent). */
+export function Dash({ why }: { why: string }) {
+  return (
+    <span className={s.dash} title={why}>
+      —
+    </span>
   );
 }
 

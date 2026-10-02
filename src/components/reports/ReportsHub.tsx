@@ -101,6 +101,9 @@ export function ReportsHub() {
   const rec = loaded ? (loaded as { reconciliation: { ledgerBalanced: boolean } }).reconciliation : null;
   const generated = loaded ? formatDate((loaded as { today: string }).today) : "";
 
+  const openUnit = (id: string) => update({ kind: "unit", unitId: id });
+  const openLedger = (id: string) => update({ kind: "ledger", leaseId: id });
+
   const print = () => printDocument(`${brand} — ${docName} — ${generated}`);
 
   // ---- render
@@ -149,9 +152,9 @@ export function ReportsHub() {
   } else {
     content = (
       <div className={cx(s.docWrap, !fresh && s.stale)} aria-busy={!fresh || undefined}>
-        {kind === "annual" && annual.data && <AnnualStatement data={annual.data} mode="screen" />}
-        {kind === "unit" && unit.data && <UnitStory data={unit.data} mode="screen" />}
-        {kind === "ledger" && ledger.data && <RentLedgerReport data={ledger.data} mode="screen" />}
+        {kind === "annual" && annual.data && <AnnualStatement data={annual.data} mode="screen" onUnit={openUnit} onLedger={openLedger} />}
+        {kind === "unit" && unit.data && <UnitStory data={unit.data} mode="screen" onLedger={openLedger} />}
+        {kind === "ledger" && ledger.data && <RentLedgerReport data={ledger.data} mode="screen" onUnit={openUnit} />}
       </div>
     );
   }

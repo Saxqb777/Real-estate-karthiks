@@ -70,7 +70,9 @@ export function QuestLog({ state, takenPositions, onClose, side = "left", classN
     >
       <div className={s.progress}>
         <SegmentedBar value={state.done} max={state.total} segments={state.total} tone="marigold" size="sm" valueLabel={null} aria-label="Setup progress" />
-        <span className={s.progressText}>{state.complete ? "Setup complete" : `${state.total - state.done} ${state.total - state.done === 1 ? "step" : "steps"} to a working estate`}</span>
+        <span className={s.progressText}>
+          {state.complete ? "Setup complete" : `${state.total - state.done} ${state.total - state.done === 1 ? "step" : "steps"} to a working estate`}
+        </span>
       </div>
       <ol className={s.list}>
         {state.quests.map((q, i) => {

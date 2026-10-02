@@ -22,15 +22,15 @@
   inset: 0;
   height: 100%;
 }
+/* focus dimming, softened: the scene's own dim (brightness .6) turns the night world nearly black */
+.world[data-dim] canvas {
+  filter: saturate(0.72) brightness(0.8) sepia(0.08) !important;
+}
+/* option B: the world boxed between the HUD pieces (resizes in one step — a WebGL canvas shouldn't animate its size) */
 .framed .world {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  transition:
-    top var(--dur-3) var(--ease-out),
-    left var(--dur-3) var(--ease-out),
-    right var(--dur-3) var(--ease-out),
-    bottom var(--dur-3) var(--ease-out);
 }
 
 /* ---------------- HUD grid (pointer events only on the pieces) */
@@ -49,6 +49,10 @@
   row-gap: 10px;
   padding: 10px 14px 12px;
   pointer-events: none;
+}
+/* the quest log reads better a little wider */
+.hud[data-quests] {
+  --left-w: clamp(336px, 27vw, 368px);
 }
 /* an open side panel keeps its full height; the dock slides up between the panels */
 .hud[data-left]:not([data-right]) {
@@ -87,6 +91,16 @@
 }
 .topLeft {
   flex: 1 1 auto;
+}
+.chipGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.chipGroup > * {
+  pointer-events: auto;
 }
 .topRight {
   flex: none;
@@ -380,6 +394,12 @@
   flex: none;
   height: 42dvh;
   min-height: 250px;
+  transition: height var(--dur-3) var(--ease-out);
+}
+/* charts need the room: the world steps back while the Charts tab is open */
+.mobile[data-sheet="charts"] .mWorld {
+  height: 30dvh;
+  min-height: 210px;
 }
 .mScene {
   position: absolute;

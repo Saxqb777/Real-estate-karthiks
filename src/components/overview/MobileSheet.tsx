@@ -81,7 +81,18 @@ export function MobileSheet({ data, tab, onTab, period, detail, onCloseDetail, u
         return <Dock data={data} period={period} defaultTab="income" hotkeys={false} className={s.dock} onOpenUnit={(id) => (go("units"), onUnit(id))} />;
       case "units": {
         const u = unitId ? data.units.find((x) => x.id === unitId) : null;
-        if (u) return <UnitPanel data={data} unitId={u.id} period={period} side="inline" className={s.fill} onClose={() => onUnit(null)} onOpenUnit={(id) => onUnit(id)} />;
+        if (u)
+          return (
+            <UnitPanel
+              data={data}
+              unitId={u.id}
+              period={period}
+              side="inline"
+              className={s.fill}
+              onClose={() => onUnit(null)}
+              onOpenUnit={(id) => onUnit(id)}
+            />
+          );
         return <UnitList units={data.units} onPick={onUnit} />;
       }
       case "todo":
@@ -178,7 +189,13 @@ function UnitList({ units, onPick }: { units: UnitBreakdown[]; onPick: (id: stri
                   {positionLabel(u.position) && <span className={s.unitPos}>{positionLabel(u.position)}</span>}
                 </span>
                 <span className={s.unitSub}>
-                  {lease ? `${lease.tenantName} · ${formatINR(lease.monthlyRent)}/month` : u.incomingLease ? `${u.incomingLease.tenantName} moving in` : vacant ? `Empty ${vacant.days} days` : "Empty"}
+                  {lease
+                    ? `${lease.tenantName} · ${formatINR(lease.monthlyRent)}/month`
+                    : u.incomingLease
+                      ? `${u.incomingLease.tenantName} moving in`
+                      : vacant
+                        ? `Empty ${vacant.days} days`
+                        : "Empty"}
                 </span>
               </span>
               <span className={s.unitPills}>

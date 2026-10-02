@@ -8,6 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { createPortal } from "react-dom";
 import type { ObjectScreenFn, SceneInsets } from "@/components/estate/EstateSceneLazy";
 import { Button, Kbd, cx, useIsClient } from "@/components/ui";
+import { useEscape } from "@/components/hud";
 import type { UnitBreakdown } from "@/lib/dashboard-types";
 import s from "./tour.module.css";
 
@@ -105,8 +106,8 @@ export function Tutorial({ open, onClose, locate, units, insets, rootEl }: Tutor
       title: "The mailbox takes rent",
       body: (
         <>
-          Click it to record rent and see receipts. The <b>notice board</b> holds your to-dos, the <b>pole</b> has the electricity numbers, and the
-          stamp on the gate pillar is <b>property tax</b>.
+          Click it to record rent and see receipts. The <b>notice board</b> holds your to-dos, the <b>pole</b> has the electricity numbers, and the stamp on the
+          gate pillar is <b>property tax</b>.
         </>
       ),
       find: () => circle(locate?.("mailbox") ?? null, 54, 14),
@@ -128,7 +129,8 @@ export function Tutorial({ open, onClose, locate, units, insets, rootEl }: Tutor
       title: "Charts, and the time machine",
       body: (
         <>
-          Charts open from this tray (keys <Kbd>1</Kbd>–<Kbd>6</Kbd>). Drag the timeline to any past date — the houses and every number go back with it. <b>Live</b> returns to today.
+          Charts open from this tray (keys <Kbd>1</Kbd>–<Kbd>6</Kbd>). Drag the timeline to any past date — the houses and every number go back with it.{" "}
+          <b>Live</b> returns to today.
         </>
       ),
       find: () => rectHole(document.querySelector('[data-tour="bottom"]'), 6),
@@ -193,15 +195,15 @@ export function Tutorial({ open, onClose, locate, units, insets, rootEl }: Tutor
   const next = useCallback(() => (last ? onClose() : setI((n) => n + 1)), [last, onClose]);
   const back = useCallback(() => setI((n) => Math.max(0, n - 1)), []);
 
+  useEscape(open, onClose);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      else if (e.key === "ArrowRight" || e.key === "Enter") next();
+      if (e.key === "ArrowRight" || e.key === "Enter") next();
       else if (e.key === "ArrowLeft") back();
       else return;
       e.preventDefault();
-      e.stopPropagation();
+      e.stopImmediatePropagation();
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);

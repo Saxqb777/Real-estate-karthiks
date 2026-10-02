@@ -1,6 +1,20 @@
 "use client";
 // ⌘K commands that only make sense on the game screen (the quick-add forms register their own via <QuickAddHost/>).
-import { BarChart3, CalendarClock, CalendarRange, CircleHelp, Coins, Eye, EyeOff, Home, PanelLeft, PlayCircle, Ruler, ScrollText, SlidersHorizontal } from "lucide-react";
+import {
+  BarChart3,
+  CalendarClock,
+  CalendarRange,
+  CircleHelp,
+  Coins,
+  Eye,
+  EyeOff,
+  Home,
+  PanelLeft,
+  PlayCircle,
+  Ruler,
+  ScrollText,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useMemo } from "react";
 import { useRegisterCommands, type Command } from "@/components/ui";
 import { quickAdd, type YearMode } from "@/components/forms";
@@ -24,12 +38,33 @@ export interface OverviewCommandOptions {
 
 const GO: { id: string; title: string; href: string; subtitle: string; keywords: string[]; icon: "data" | "config" }[] = [
   { id: "payments", title: "Data → Payments", href: "/data#payments", subtitle: "Every rent receipt", keywords: ["rent", "receipts", "invoice"], icon: "data" },
-  { id: "expenses", title: "Data → Expenses", href: "/data#expenses", subtitle: "Money spent, by category", keywords: ["spend", "bills", "repairs"], icon: "data" },
+  {
+    id: "expenses",
+    title: "Data → Expenses",
+    href: "/data#expenses",
+    subtitle: "Money spent, by category",
+    keywords: ["spend", "bills", "repairs"],
+    icon: "data",
+  },
   { id: "todos", title: "Data → To-dos", href: "/data#todos", subtitle: "The notice board list", keywords: ["tasks", "actions"], icon: "data" },
-  { id: "reports", title: "Data → Reports", href: "/data#reports", subtitle: "Printable statements", keywords: ["annual", "statement", "print", "pdf"], icon: "data" },
+  {
+    id: "reports",
+    title: "Data → Reports",
+    href: "/data#reports",
+    subtitle: "Printable statements",
+    keywords: ["annual", "statement", "print", "pdf"],
+    icon: "data",
+  },
   { id: "plot", title: "Config → Plot", href: "/config#plot", subtitle: "Plot size in feet", keywords: ["dimensions", "site plan", "land"], icon: "config" },
   { id: "units", title: "Config → Units", href: "/config#units", subtitle: "Houses, sizes, prices", keywords: ["build", "house", "unit"], icon: "config" },
-  { id: "settings", title: "Config → Settings", href: "/config#settings", subtitle: "Rent due day, late fee, email", keywords: ["late fee", "due day", "email"], icon: "config" },
+  {
+    id: "settings",
+    title: "Config → Settings",
+    href: "/config#settings",
+    subtitle: "Rent due day, late fee, email",
+    keywords: ["late fee", "due day", "email"],
+    icon: "config",
+  },
 ];
 
 export function useOverviewCommands(o: OverviewCommandOptions) {
@@ -63,7 +98,15 @@ export function useOverviewCommands(o: OverviewCommandOptions) {
         });
     }
     list.push(
-      { id: "ov:property", group: "Overview", title: "Open the Property panel", subtitle: "Worth, cash flow, occupancy · P", keywords: ["totals", "portfolio", "net cash", "value"], icon: <PanelLeft />, perform: o.openProperty },
+      {
+        id: "ov:property",
+        group: "Overview",
+        title: "Open the Property panel",
+        subtitle: "Worth, cash flow, occupancy · P",
+        keywords: ["totals", "portfolio", "net cash", "value"],
+        icon: <PanelLeft />,
+        perform: o.openProperty,
+      },
       {
         id: "ov:yearmode",
         group: "Overview",
@@ -86,16 +129,64 @@ export function useOverviewCommands(o: OverviewCommandOptions) {
         }),
       );
     DOCK_TABS.forEach((t, i) =>
-      list.push({ id: `ov:chart:${t.id}`, group: "Charts", title: `Chart: ${t.label}`, subtitle: `Key ${i + 1}`, keywords: ["chart", "graph", t.short], icon: <BarChart3 />, perform: () => o.openChart(t.id) }),
+      list.push({
+        id: `ov:chart:${t.id}`,
+        group: "Charts",
+        title: `Chart: ${t.label}`,
+        subtitle: `Key ${i + 1}`,
+        keywords: ["chart", "graph", t.short],
+        icon: <BarChart3 />,
+        perform: () => o.openChart(t.id),
+      }),
     );
-    if (o.backToToday) list.push({ id: "ov:live", group: "Overview", title: "Back to today", subtitle: "Leave the time scrubber", keywords: ["live", "now", "today", "as of"], icon: <CalendarClock />, perform: o.backToToday });
+    if (o.backToToday)
+      list.push({
+        id: "ov:live",
+        group: "Overview",
+        title: "Back to today",
+        subtitle: "Leave the time scrubber",
+        keywords: ["live", "now", "today", "as of"],
+        icon: <CalendarClock />,
+        perform: o.backToToday,
+      });
     list.push(
-      { id: "ov:hud", group: "Overview", title: o.hudHidden ? "Show the HUD" : "Hide the HUD — just the world", subtitle: "F", keywords: ["full screen", "world", "clean", "hide"], icon: o.hudHidden ? <Eye /> : <EyeOff />, perform: () => o.setHudHidden(!o.hudHidden) },
-      { id: "ov:help", group: "Help", title: "Help & shortcuts", subtitle: "?", keywords: ["help", "keys", "shortcuts", "what can I click"], icon: <CircleHelp />, perform: o.openHelp },
-      { id: "ov:tour", group: "Help", title: "Replay the tour", keywords: ["tutorial", "intro", "guide", "onboarding"], icon: <PlayCircle />, perform: o.replayTour },
+      {
+        id: "ov:hud",
+        group: "Overview",
+        title: o.hudHidden ? "Show the HUD" : "Hide the HUD — just the world",
+        subtitle: "F",
+        keywords: ["full screen", "world", "clean", "hide"],
+        icon: o.hudHidden ? <Eye /> : <EyeOff />,
+        perform: () => o.setHudHidden(!o.hudHidden),
+      },
+      {
+        id: "ov:help",
+        group: "Help",
+        title: "Help & shortcuts",
+        subtitle: "?",
+        keywords: ["help", "keys", "shortcuts", "what can I click"],
+        icon: <CircleHelp />,
+        perform: o.openHelp,
+      },
+      {
+        id: "ov:tour",
+        group: "Help",
+        title: "Replay the tour",
+        keywords: ["tutorial", "intro", "guide", "onboarding"],
+        icon: <PlayCircle />,
+        perform: o.replayTour,
+      },
     );
     for (const g of GO)
-      list.push({ id: `ov:go:${g.id}`, group: "Go to", title: g.title, subtitle: g.subtitle, keywords: g.keywords, href: g.href, icon: g.icon === "data" ? <ScrollText /> : g.id === "plot" ? <Ruler /> : <SlidersHorizontal /> });
+      list.push({
+        id: `ov:go:${g.id}`,
+        group: "Go to",
+        title: g.title,
+        subtitle: g.subtitle,
+        keywords: g.keywords,
+        href: g.href,
+        icon: g.icon === "data" ? <ScrollText /> : g.id === "plot" ? <Ruler /> : <SlidersHorizontal />,
+      });
     return list;
   }, [data, o]);
   useRegisterCommands(commands);

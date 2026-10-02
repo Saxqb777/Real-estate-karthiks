@@ -34,7 +34,10 @@ type QuestData = Pick<DashboardData, "plot" | "units" | "unitsNotYetOwned" | "ti
 
 export function buildQuests(data: QuestData, tenantCount: number | null): QuestState {
   const p = data.plot;
-  const units = [...data.units.map((u) => ({ name: u.name, position: u.position })), ...data.unitsNotYetOwned.map((u) => ({ name: u.name, position: u.position }))];
+  const units = [
+    ...data.units.map((u) => ({ name: u.name, position: u.position })),
+    ...data.unitsNotYetOwned.map((u) => ({ name: u.name, position: u.position })),
+  ];
   const leases = data.timeline.units.flatMap((u) => u.leases.map((l) => ({ ...l, unitName: u.unitName })));
   const paid = data.recentPayments[0];
   const where = (u: { name: string; position: "front" | "back" | null }) => (u.position ? `${u.name} · ${u.position === "front" ? "front" : "back"}` : u.name);
@@ -45,7 +48,7 @@ export function buildQuests(data: QuestData, tenantCount: number | null): QuestS
     {
       id: "plot",
       title: "Set your plot size",
-      text: "Front, back and depth in feet — or use the numbers from your site drawing.",
+      text: "Front, back and depth in feet — or your drawing’s numbers.",
       done: !p.usingDefaults,
       doneNote: `${formatFeetInches(p.frontWidthFt)} front · ${formatFeetInches(p.depthFt)} deep · ${formatIndianNumber(p.areaSqft)} sq ft`,
       cta: "Set plot",
@@ -53,7 +56,7 @@ export function buildQuests(data: QuestData, tenantCount: number | null): QuestS
     {
       id: "unit1",
       title: "Build unit 1",
-      text: "The first house: its name, size and the price you paid.",
+      text: "Its name, size and the price you paid.",
       done: units.length >= 1,
       doneNote: units[0] ? where(units[0]) : undefined,
       cta: "Build",
@@ -70,28 +73,28 @@ export function buildQuests(data: QuestData, tenantCount: number | null): QuestS
     {
       id: "tenant",
       title: "Add a tenant",
-      text: "Name and phone number of the person who rents.",
+      text: "Name and phone of the person renting.",
       done: tenants > 0,
       doneNote: tenants > 0 ? `${tenants} ${tenants === 1 ? "tenant" : "tenants"}` : undefined,
-      cta: "Add tenant",
+      cta: "Add",
     },
     {
       id: "lease",
       title: "Sign a lease",
-      text: "Who lives in which unit, the monthly rent and the deposit.",
+      text: "Who lives where, the rent and the deposit.",
       done: leases.length > 0,
       doneNote: leases[0] ? `${leases[0].tenantName} · ${leases[0].unitName} · ${formatINR(leases[0].monthlyRent)}/month` : undefined,
       locked: units.length < 1 ? "Needs a unit" : tenants < 1 ? "Needs a tenant" : undefined,
-      cta: "Sign lease",
+      cta: "Sign",
     },
     {
       id: "rent",
       title: "Record your first rent",
-      text: "From now on, tap the mailbox at the gate to record rent.",
+      text: "Later, just tap the mailbox at the gate.",
       done: hasRent,
       doneNote: paid ? `${formatINR(paid.amount)} on ${formatDate(paid.paymentDate)}` : undefined,
       locked: leases.length < 1 ? "Needs a lease" : undefined,
-      cta: "Record rent",
+      cta: "Record",
     },
   ];
   for (const q of quests) if (q.done) q.locked = undefined;

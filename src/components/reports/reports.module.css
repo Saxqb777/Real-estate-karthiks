@@ -1895,3 +1895,37 @@ a.receipt:hover {
 .paper .stripTrack {
   height: 14px;
 }
+
+/* =========================================================== drill links (screen) */
+.drill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  text-decoration: underline dotted var(--r-line-strong);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition: color var(--dur-1) var(--ease-out);
+}
+.drill:hover {
+  color: var(--r-accent);
+  text-decoration-color: var(--r-accent);
+}
+.drillChev {
+  width: 0.95em;
+  height: 0.95em;
+  opacity: 0;
+  transform: translateX(-3px);
+  transition:
+    opacity var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
+}
+.drill:hover .drillChev,
+.drill:focus-visible .drillChev {
+  opacity: 1;
+  transform: none;
+}

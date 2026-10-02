@@ -7,6 +7,7 @@ import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { ObjectScreenFn, SceneObjectKind } from "@/components/estate/EstateSceneLazy";
 import { Button, IconButton, Kbd, cx, useIsClient } from "@/components/ui";
+import { useEscape } from "@/components/hud";
 import type { UnitBreakdown } from "@/lib/dashboard-types";
 import s from "./help.module.css";
 
@@ -51,7 +52,13 @@ interface HudLabel {
 function worldSpots(units: UnitBreakdown[], mobile: boolean): Spot[] {
   const out: Spot[] = [];
   for (const u of units) {
-    out.push({ key: `unit:${u.id}`, kind: "unit", unitId: u.id, title: u.name, opens: mobile ? "Tap: details · hold: actions" : "Click: details · right-click: actions" });
+    out.push({
+      key: `unit:${u.id}`,
+      kind: "unit",
+      unitId: u.id,
+      title: u.name,
+      opens: mobile ? "Tap · hold for actions" : "Click: details · right-click: actions",
+    });
     if (u.activeLease) out.push({ key: `tenant:${u.id}`, kind: "tenant", unitId: u.id, title: "Tenant", opens: "Profile · tap to call" });
     if (u.status === "vacant" && u.isActive) out.push({ key: `tolet:${u.id}`, kind: "tolet", unitId: u.id, title: "TO-LET board", opens: "Sign a new lease" });
   }
@@ -76,12 +83,14 @@ function placeWorld(spots: Spot[], locate: ObjectScreenFn | null): Placed[] {
   const cx = found.length ? found.reduce((a, f) => a + f.p.x, 0) / found.length : vw / 2;
   const out: Placed[] = [];
   for (const side of ["left", "right"] as const) {
-    const list = found.filter((f) => (f.p.x < cx) === (side === "left")).sort((a, b) => a.p.y - b.p.y);
+    const list = found.filter((f) => f.p.x < cx === (side === "left")).sort((a, b) => a.p.y - b.p.y);
     let lastY = -Infinity;
     for (const { sp, p } of list) {
       const ly = Math.max(p.y - LABEL_H / 2, lastY + LABEL_H + 6);
       lastY = ly;
-      const lx = side === "left" ? p.x - 44 : p.x + 44;
+      // keep the whole label on screen (its width is estimated from the text)
+      const w = Math.max(sp.title.length * 8.2, sp.opens.length * 6.3) + 22;
+      const lx = side === "left" ? Math.max(p.x - 44, w + 6) : Math.min(p.x + 44, vw - w - 6);
       out.push({ key: sp.key, x: p.x, y: p.y, lx, ly, side, title: sp.title, opens: sp.opens });
     }
   }
@@ -134,14 +143,15 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
     };
   }, [open, units, locate, mobile]);
 
+  // Esc joins the HUD's one Esc stack (so it never also closes a panel underneath); "?" toggles it off
+  useEscape(open, onClose);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || e.key === "?") {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }
+      if (e.key !== "?") return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      onClose();
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
@@ -149,7 +159,8 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
 
   if (!isClient) return null;
 
-  const keys: [ReactNode, string][] = mobile
+  // [key, what it does, full row?]
+  const keys: [ReactNode, string, boolean?][] = mobile
     ? [
         ["Tap a house", "its tenant, rent and value"],
         ["Hold a house", "the action wheel"],
@@ -158,8 +169,8 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
         ["Drag the timeline", "see any past date"],
       ]
     : [
-        ["Click a house", "its tenant, rent and value"],
-        ["Right-click a house", "action wheel — keys 1–6"],
+        ["Click a house", "its tenant, rent and value", true],
+        ["Right-click a house", "action wheel — then keys 1–6", true],
         [<Kbd key="p">P</Kbd>, "property totals"],
         [
           <span key="n" className={s.keyRange}>
@@ -167,17 +178,18 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
           </span>,
           "charts",
         ],
-        [<Kbd key="f">F</Kbd>, "hide / show the HUD"],
-        [<Kbd key="k" keys={["mod", "k"]} />, "commands: record rent, add expense…"],
+        [<Kbd key="f">F</Kbd>, "just the world"],
+        [<Kbd key="k" keys={["mod", "k"]} />, "commands"],
         [<Kbd key="e">Esc</Kbd>, "back one step"],
+        [<Kbd key="q">?</Kbd>, "this help"],
         [
           <span key="a" className={s.keyRange}>
             <Kbd>←</Kbd>
             <Kbd>→</Kbd>
           </span>,
-          "on the timeline: a month at a time",
+          "on the timeline: one month at a time (Shift: a year)",
+          true,
         ],
-        [<Kbd key="q">?</Kbd>, "this help"],
       ];
 
   return createPortal(
@@ -230,17 +242,19 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
             </header>
             <p className={s.lead}>Everything in the world that glows when you point at it opens something. The labels show what.</p>
             <dl className={s.keys}>
-              {keys.map(([k, v], n) => (
-                <div key={n} className={s.keyRow}>
+              {keys.map(([k, v, wide], n) => (
+                <div key={n} className={cx(s.keyRow, wide && s.keyWide)}>
                   <dt>{k}</dt>
                   <dd>{v}</dd>
                 </div>
               ))}
             </dl>
             <div className={s.cardActions}>
-              <Button size="sm" variant="secondary" icon={<PlayCircle />} onClick={onReplayTour}>
-                Replay the tour
-              </Button>
+              {!mobile && (
+                <Button size="sm" variant="secondary" icon={<PlayCircle />} onClick={onReplayTour}>
+                  Replay the tour
+                </Button>
+              )}
               <span className={s.flex} />
               <Button size="sm" variant="primary" onClick={onClose}>
                 Got it

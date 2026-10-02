@@ -9,7 +9,9 @@ import { cx } from "@/components/ui";
 import {
   Checks,
   Doc,
+  Dash,
   DocHeader,
+  Drill,
   Equation,
   Facts,
   Money,
@@ -40,7 +42,7 @@ const LEASE_STATE = { current: { tone: "teal", label: "Current" }, incoming: { t
 /** Rows whose due date has passed count towards "rent fell due" (same rule as the API's totals). */
 const isDue = (r: RentLedgerRow, today: string) => r.dueDate < today;
 
-export function RentLedgerReport({ data, mode }: { data: RentLedger; mode: DocMode }) {
+export function RentLedgerReport({ data, mode, onUnit }: { data: RentLedger; mode: DocMode; onUnit?: (unitId: string) => void }) {
   const l = data.lease;
   const t = data.totals;
   const dueRows = data.rows.filter((r) => isDue(r, data.today));
@@ -70,7 +72,7 @@ export function RentLedgerReport({ data, mode }: { data: RentLedger; mode: DocMo
       header: "Paid",
       num: true,
       width: "13%",
-      cell: (r: RentLedgerRow) => (r.paid > 0 ? <Money v={r.paid} tone="inc" /> : <span className={s.dash}>—</span>),
+      cell: (r: RentLedgerRow) => (r.paid > 0 ? <Money v={r.paid} tone="inc" /> : <Dash why="Nothing received for this month" />),
       footer: <Money v={t.paid} tone="inc" />,
     },
     {
@@ -93,7 +95,7 @@ export function RentLedgerReport({ data, mode }: { data: RentLedger; mode: DocMo
       key: "rcpt",
       header: "Receipts",
       wide: true,
-      cell: (r: RentLedgerRow) => (r.payments.length ? <Receipts payments={r.payments} /> : <span className={s.dash}>—</span>),
+      cell: (r: RentLedgerRow) => (r.payments.length ? <Receipts payments={r.payments} /> : <Dash why="No payment, so no receipt" />),
     },
   ];
 
@@ -101,7 +103,14 @@ export function RentLedgerReport({ data, mode }: { data: RentLedger; mode: DocMo
     <Doc mode={mode}>
       <DocHeader
         kind="Rent ledger"
-        title={`${l.tenant.name} · ${l.unit.name}`}
+        title={
+          <>
+            {l.tenant.name} ·{" "}
+            <Drill onClick={onUnit && (() => onUnit(l.unit.id))} hint={`Open ${l.unit.name}'s story`}>
+              {l.unit.name}
+            </Drill>
+          </>
+        }
         sub={
           <>
             {fmt(l.monthlyRent, "inr")} a month · from {d(l.start)} {l.end ? `· last day of tenancy ${d(l.end)}` : "· open-ended"}
@@ -194,11 +203,11 @@ export function RentLedgerReport({ data, mode }: { data: RentLedger; mode: DocMo
           cols={4}
           items={[
             { label: "Taken", value: <Two top={<Money v={data.deposit.deposit} />} bottom={d(data.deposit.receivedDate)} /> },
-            { label: "Paid back", value: data.deposit.refunded > 0 ? <Two top={<Money v={data.deposit.refunded} />} bottom={d(data.deposit.refundDate)} /> : <span className={s.dash}>—</span> },
-            { label: "Kept back", value: data.deposit.kept > 0 ? <Money v={data.deposit.kept} /> : <span className={s.dash}>—</span> },
+            { label: "Paid back", value: data.deposit.refunded > 0 ? <Two top={<Money v={data.deposit.refunded} />} bottom={d(data.deposit.refundDate)} /> : <Dash why="Nothing paid back yet" /> },
+            { label: "Kept back", value: data.deposit.kept > 0 ? <Money v={data.deposit.kept} /> : <Dash why="Nothing kept back" /> },
             {
               label: data.deposit.awaitingRefund > 0 ? "To refund" : "Still held",
-              value: data.deposit.awaitingRefund > 0 ? <Money v={data.deposit.awaitingRefund} tone="exp" /> : data.deposit.held > 0 ? <Money v={data.deposit.held} /> : <span className={s.dash}>—</span>,
+              value: data.deposit.awaitingRefund > 0 ? <Money v={data.deposit.awaitingRefund} tone="exp" /> : data.deposit.held > 0 ? <Money v={data.deposit.held} /> : <Dash why="Not held any more" />,
             },
           ]}
         />

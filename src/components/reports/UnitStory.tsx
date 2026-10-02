@@ -10,7 +10,9 @@ import {
   CategoryBars,
   Checks,
   Doc,
+  Dash,
   DocHeader,
+  Drill,
   Equation,
   Facts,
   Keep,
@@ -55,7 +57,7 @@ const STORY_ICON: Record<Story["kind"], ReactNode> = {
 
 const LEASE_STATE = { current: { tone: "teal", label: "Current" }, incoming: { tone: "sky", label: "Moving in" }, ended: { tone: "grey", label: "Ended" } } as const;
 
-export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
+export function UnitStory({ data, mode, onLedger }: { data: UnitReport; mode: DocMode; onLedger?: (leaseId: string) => void }) {
   const u = data.unit;
   const now = data.now;
   const t = data.totals;
@@ -96,7 +98,10 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
         <Two
           top={
             <span className={s.withTag}>
-              {l.tenantName} <Tag tone={LEASE_STATE[l.state].tone}>{LEASE_STATE[l.state].label}</Tag>
+              <Drill onClick={onLedger && (() => onLedger(l.leaseId))} hint={`Open ${l.tenantName}'s rent ledger`}>
+                {l.tenantName}
+              </Drill>{" "}
+              <Tag tone={LEASE_STATE[l.state].tone}>{LEASE_STATE[l.state].label}</Tag>
             </span>
           }
           bottom={`${d(l.start)} – ${l.end ? d(l.end) : "open-ended"} · ${fmt(l.months, "count")} ${l.months === 1 ? "month" : "months"}`}
@@ -111,7 +116,7 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
       key: "unpaid",
       header: "Unpaid",
       num: true,
-      cell: (l: LeaseRow) => (l.rentUnpaid > 0 ? <Money v={l.rentUnpaid} tone="exp" /> : <span className={s.dash}>—</span>),
+      cell: (l: LeaseRow) => (l.rentUnpaid > 0 ? <Money v={l.rentUnpaid} tone="exp" /> : <Dash why="Nothing unpaid" />),
     },
     {
       key: "dep",
@@ -136,7 +141,7 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
 
   const offerCols = [
     { key: "date", header: "Date", width: "96px", cell: (o: OfferRow) => <span className="num">{d(o.date)}</span> },
-    { key: "note", header: "From", cell: (o: OfferRow) => o.notes ?? <span className={s.dash}>—</span> },
+    { key: "note", header: "From", cell: (o: OfferRow) => o.notes ?? <Dash why="No note recorded" /> },
     {
       key: "amt",
       header: "Offer",
@@ -263,7 +268,14 @@ export function UnitStory({ data, mode }: { data: UnitReport; mode: DocMode }) {
                 + late fees <Money v={now.nextPayment.arrears.lateFees} tone="exp" /> = <Money v={now.nextPayment.arrears.totalWithFees} tone="exp" />
               </>
             )}
-            . The rent ledger shows each month.
+            .{" "}
+            {now.activeLease && onLedger && mode === "screen" ? (
+              <Drill onClick={() => onLedger(now.activeLease!.id)} hint="Open the rent ledger">
+                See each month in the rent ledger
+              </Drill>
+            ) : (
+              "The rent ledger shows each month."
+            )}
           </Note>
         )}
       </Section>

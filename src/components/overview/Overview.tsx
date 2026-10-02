@@ -73,7 +73,17 @@ export function Overview({ layout = "immersive" }: OverviewProps) {
   return (
     <Screen flush contained={false} className={s.screen}>
       <QuickAddHost />
-      {isClient && <Game data={data} asOf={asOf} setAsOf={setAsOf} loading={dash.refreshing} error={!data ? dash.error?.message : undefined} retry={dash.reload} layout={layout} />}
+      {isClient && (
+        <Game
+          data={data}
+          asOf={asOf}
+          setAsOf={setAsOf}
+          loading={dash.refreshing}
+          error={!data ? dash.error?.message : undefined}
+          retry={dash.reload}
+          layout={layout}
+        />
+      )}
     </Screen>
   );
 }
@@ -135,7 +145,9 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     else if (wasIncomplete.current) {
       wasIncomplete.current = false;
       setQuestOpen(false);
-      toast.success("Setup complete", { description: "Your estate is running — click a house any time to see how it's doing." });
+      toast.success("Setup complete", {
+        description: "Your estate is running — click a house any time to see how it's doing.",
+      });
     }
   }, [quests, questsLoaded]);
   const takenPositions = useMemo(
@@ -178,13 +190,20 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     }
   };
 
-  // pinned property panel opens with the page
+  // 📌 pinned panels come back with the page (the right one by its last target)
+  const [lastPanel, setLastPanel] = useFlag(LAST_PANEL_KEY);
+  useEffect(() => {
+    if (panel && pinRight) setLastPanel(JSON.stringify(panel));
+  }, [panel, pinRight, setLastPanel]);
   const pinInit = useRef(false);
   useEffect(() => {
     if (pinInit.current || !data) return;
     pinInit.current = true;
-    if (pinProperty && !mobile) setPropertyOpen(true);
-  }, [data, pinProperty, mobile, setPropertyOpen]);
+    if (mobile) return;
+    if (pinProperty) setPropertyOpen(true);
+    const t = parsePanel(lastPanel);
+    if (t && isPinned(t.kind) && (t.kind !== "unit" || data.units.some((u) => u.id === t.unitId))) openPanel(t);
+  }, [data, pinProperty, mobile, setPropertyOpen, lastPanel, openPanel]);
 
   // a panel whose unit doesn't exist on the as-of date closes
   useEffect(() => {
@@ -209,7 +228,11 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
         const u = data.units.find((x) => x.id === obj.unitId);
         openUnit(obj.unitId);
         if (u && data.isLive && !u.activeLease && u.status !== "incoming")
-          forms.open({ kind: "lease", title: `New lease · ${u.name}`, props: { defaults: { unitId: u.id } } });
+          forms.open({
+            kind: "lease",
+            title: `New lease · ${u.name}`,
+            props: { defaults: { unitId: u.id } },
+          });
         return;
       }
       if (narrow && DIRECT.includes(obj.kind)) {
@@ -220,6 +243,19 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     },
     [data, markExplored, openUnit, forms, inspect, narrow, pinProperty, setPropertyOpen],
   );
+
+  // hover hint after a short beat (the outline is instant) so sweeping the mouse across the world stays calm
+  const hoverTimer = useRef(0);
+  const setHover = inspect.onObjectHover;
+  const onObjectHover = useCallback(
+    (obj: SceneObject | null) => {
+      window.clearTimeout(hoverTimer.current);
+      if (!obj) setHover(null);
+      else hoverTimer.current = window.setTimeout(() => setHover(obj), 240);
+    },
+    [setHover],
+  );
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   const onChip = (t: ChipTarget) => {
     if (t.kind === "dock") setTab(t.tab);
@@ -238,14 +274,13 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   };
 
   // ---------------------------------------------------------------- keys + commands
-  const tourRunning = tourOpen;
   useHotkeys(
     {
       p: () => (hudHidden ? (setHudHidden(false), openProperty()) : toggleProperty()),
       f: () => setHudHidden((h) => !h),
       "?": () => setHelpOpen((o) => !o),
     },
-    !tourRunning && !mobile,
+    !tourOpen && !helpOpen && !mobile,
   );
   const backToToday = useCallback(() => setAsOf(null), [setAsOf]);
   useOverviewCommands({
@@ -294,7 +329,24 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
 
   // ---------------------------------------------------------------- unexplored hints (max 3 at once, world + dock + property)
   const vacant = units.some((u) => u.status === "vacant" && u.isActive);
-  const candidates = hasUnits && live ? ["unit", "mailbox", "property", "income", "noticeboard", ...(vacant ? ["tolet"] : []), "pole", "spending", "taxstamp", "units", "occupancy", "growth", "payments"] : [];
+  const candidates =
+    hasUnits && live
+      ? [
+          "unit",
+          "mailbox",
+          "property",
+          "income",
+          "noticeboard",
+          ...(vacant ? ["tolet"] : []),
+          "pole",
+          "spending",
+          "taxstamp",
+          "units",
+          "occupancy",
+          "growth",
+          "payments",
+        ]
+      : [];
   // a kind can mark several objects (both houses): keep the total number of dots on screen at 3
   const cost = (k: string) => (k === "unit" ? units.length : k === "tolet" ? units.filter((u) => u.status === "vacant" && u.isActive).length : 1);
   const dots = new Set<string>();
@@ -336,7 +388,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   const insets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, right: rightEl, bottom: bottomEl });
 
   const selected = panel?.kind === "unit" ? panel.unitId : null;
-  const dimmed = !hudHidden && !tourOpen && (Boolean(tab) || Boolean(panel) || propertyOpen);
+  const dimmed = !mobile && !hudHidden && !tourOpen && (Boolean(tab) || Boolean(panel) || propertyOpen);
   const getObjectScreen = useCallback((fn: ObjectScreenFn | null) => {
     setLocate(() => fn);
     // test handle (dev builds only): lets browser checks find a house on screen
@@ -358,7 +410,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       }}
       onEmptySlotClick={data && live ? (slot) => quickAdd("unit", { defaults: { position: slot } }) : undefined}
       onObjectClick={onObjectClick}
-      onObjectHover={inspect.onObjectHover}
+      onObjectHover={onObjectHover}
       onUnitContextMenu={inspect.onUnitContextMenu}
       insets={framed ? ZERO : insets}
       dimmed={dimmed}
@@ -369,17 +421,18 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     />
   );
 
-  const scrubber = data && hasUnits ? (
-    <TimeScrubber
-      timeline={data.timeline}
-      asOf={asOf}
-      onChange={setAsOf}
-      loading={loading}
-      yearMode={data.yearMode}
-      compact={mobile}
-      onUse={() => markExplored("scrubber")}
-    />
-  ) : null;
+  const scrubber =
+    data && hasUnits ? (
+      <TimeScrubber
+        timeline={data.timeline}
+        asOf={asOf}
+        onChange={setAsOf}
+        loading={loading}
+        yearMode={data.yearMode}
+        compact={mobile}
+        onUse={() => markExplored("scrubber")}
+      />
+    ) : null;
 
   const asOfChip =
     data && !data.isLive ? (
@@ -394,9 +447,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       </button>
     ) : null;
 
-  const tourEl = (
-    <Tutorial open={tourOpen} onClose={endTour} locate={locate} units={units} insets={insets} rootEl={rootEl} />
-  );
+  const tourEl = <Tutorial open={tourOpen} onClose={endTour} locate={locate} units={units} insets={insets} rootEl={rootEl} />;
   const helpEl = (
     <HelpOverlay
       open={helpOpen}
@@ -438,9 +489,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
         quests={showQuests && questFlag !== "hidden" ? quests : null}
         takenPositions={takenPositions}
         onHideQuests={() => setQuestFlag("hidden")}
-        help={
-          <IconButton size="sm" label="Help" icon={<CircleHelp />} variant="secondary" className={s.mHelp} onClick={() => setHelpOpen(true)} />
-        }
+        help={<IconButton size="sm" label="Help" icon={<CircleHelp />} variant="secondary" className={s.mHelp} onClick={() => setHelpOpen(true)} />}
       >
         {overlay}
         {helpEl}
@@ -454,7 +503,17 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       <div
         ref={setRootEl}
         className={s.world}
-        style={framed ? { top: insets.top, right: insets.right, bottom: insets.bottom, left: insets.left } : undefined}
+        data-dim={dimmed || undefined}
+        style={
+          framed
+            ? {
+                top: insets.top,
+                right: insets.right,
+                bottom: insets.bottom,
+                left: insets.left,
+              }
+            : undefined
+        }
       >
         {scene}
       </div>
@@ -465,6 +524,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
             key="hud"
             className={s.hud}
             data-left={leftOpen || undefined}
+            data-quests={leftOpen && !propertyOpen ? true : undefined}
             data-right={panel ? true : undefined}
             data-dock={tab ? true : undefined}
             initial={{ opacity: 0 }}
@@ -473,35 +533,53 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
             transition={{ duration: 0.2 }}
           >
             {/* ---- top strip */}
-            <div ref={setTopEl} className={s.top}>
-              <div className={s.topLeft} data-tour="chips">
-                <button
-                  type="button"
-                  className={cx(s.chipBtn, propertyOpen && s.chipBtnOn)}
-                  onClick={toggleProperty}
-                  aria-pressed={propertyOpen}
-                  data-help="Property totals (P)"
-                >
-                  <PanelLeft aria-hidden />
-                  <span>Property</span>
-                  <Kbd>P</Kbd>
-                  {propertyDot && <span className={s.dot} aria-label="not opened yet" />}
-                </button>
-                {showQuests && (
-                  <button type="button" className={cx(s.chipBtn, s.questBtn, questOpen && s.chipBtnOn)} onClick={toggleQuest} aria-pressed={questOpen} data-help="Setup steps left">
-                    <Swords aria-hidden />
-                    <span>Setup</span>
-                    <b className="num">
-                      {quests!.done}/{quests!.total}
-                    </b>
+            <motion.div
+              ref={setTopEl}
+              className={s.top}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.4,
+                delay: 0.15,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              <div className={s.topLeft}>
+                <div className={s.chipGroup} data-tour="chips">
+                  <button
+                    type="button"
+                    className={cx(s.chipBtn, propertyOpen && s.chipBtnOn)}
+                    onClick={toggleProperty}
+                    aria-pressed={propertyOpen}
+                    data-help="Property totals (P)"
+                  >
+                    <PanelLeft aria-hidden />
+                    <span>Property</span>
+                    <Kbd>P</Kbd>
+                    {propertyDot && <span className={s.dot} aria-label="not opened yet" />}
                   </button>
-                )}
-                {data && hasUnits && (
-                  <div className={s.chips} data-help="What needs you — click one">
-                    <StatusChips data={data} taxes={tax.data?.items} onSelect={onChip} max={maxChips} />
-                  </div>
-                )}
-                {!data && !error && <span className={s.loadingNote}>Loading your estate…</span>}
+                  {showQuests && (
+                    <button
+                      type="button"
+                      className={cx(s.chipBtn, s.questBtn, questOpen && s.chipBtnOn)}
+                      onClick={toggleQuest}
+                      aria-pressed={questOpen}
+                      data-help="Setup steps left"
+                    >
+                      <Swords aria-hidden />
+                      <span>Setup</span>
+                      <b className="num">
+                        {quests!.done}/{quests!.total}
+                      </b>
+                    </button>
+                  )}
+                  {data && hasUnits && (
+                    <div className={s.chips} data-help="What needs you — click one">
+                      <StatusChips data={data} taxes={tax.data?.items} onSelect={onChip} max={maxChips} />
+                    </div>
+                  )}
+                  {!data && !error && <span className={s.loadingNote}>Loading your estate…</span>}
+                </div>
               </div>
               <div className={s.topRight}>
                 {asOfChip}
@@ -511,11 +589,25 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
                   </div>
                 )}
                 <div className={s.tools}>
-                  <IconButton size="sm" variant="secondary" label="Help & shortcuts (?)" icon={<CircleHelp />} onClick={() => setHelpOpen(true)} data-help="This help (?)" />
-                  <IconButton size="sm" variant="secondary" label="Hide the HUD (F)" icon={<Maximize />} onClick={() => setHudHidden(true)} data-help="Just the world (F)" />
+                  <IconButton
+                    size="sm"
+                    variant="secondary"
+                    label="Help & shortcuts (?)"
+                    icon={<CircleHelp />}
+                    onClick={() => setHelpOpen(true)}
+                    data-help="This help (?)"
+                  />
+                  <IconButton
+                    size="sm"
+                    variant="secondary"
+                    label="Hide the HUD (F)"
+                    icon={<Maximize />}
+                    onClick={() => setHudHidden(true)}
+                    data-help="Just the world (F)"
+                  />
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* ---- left: quest log or property */}
             <AnimatePresence>
@@ -550,14 +642,35 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
 
             {/* ---- bottom: dock + time (nothing to chart before the first unit) */}
             {data && hasUnits && (
-              <div ref={setBottomEl} className={s.bottom} data-tour="bottom">
+              <motion.div
+                ref={setBottomEl}
+                className={s.bottom}
+                data-tour="bottom"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.45,
+                  delay: 0.25,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              >
                 <div data-help="Charts (keys 1–6)">
-                  <Dock className={s.dock} data={data} period={period} tab={tab} onTabChange={onTabChange} onDrill={onDrill} onOpenUnit={openUnit} hints={dockHints} hotkeys={!tourOpen} />
+                  <Dock
+                    className={s.dock}
+                    data={data}
+                    period={period}
+                    tab={tab}
+                    onTabChange={onTabChange}
+                    onDrill={onDrill}
+                    onOpenUnit={openUnit}
+                    hints={dockHints}
+                    hotkeys={!tourOpen && !helpOpen}
+                  />
                 </div>
                 <div className={s.scrub} data-help="Drag back in time · ▶ plays the years">
                   {scrubber}
                 </div>
-              </div>
+              </motion.div>
             )}
           </motion.div>
         )}
@@ -590,9 +703,40 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   );
 }
 
+// ---------------------------------------------------------------- pinned right panel
+
+const LAST_PANEL_KEY = "pe.overview.panel";
+const PANEL_KINDS = ["unit", "mailbox", "noticeboard", "pole", "tax"];
+
+function parsePanel(raw: string | null): PanelTarget | null {
+  if (!raw) return null;
+  try {
+    const t = JSON.parse(raw) as PanelTarget;
+    if (!t || !PANEL_KINDS.includes(t.kind)) return null;
+    if (t.kind === "unit" && typeof t.unitId !== "string") return null;
+    return t;
+  } catch {
+    return null;
+  }
+}
+
+/** Same store as the HUD's usePinned (read once at load). */
+function isPinned(id: string): boolean {
+  try {
+    return (window.localStorage.getItem("pe.hud.pins") ?? "").split(",").includes(id);
+  } catch {
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------- insets
 
-type InsetEls = { top?: HTMLElement | null; left?: HTMLElement | null; right?: HTMLElement | null; bottom?: HTMLElement | null };
+type InsetEls = {
+  top?: HTMLElement | null;
+  left?: HTMLElement | null;
+  right?: HTMLElement | null;
+  bottom?: HTMLElement | null;
+};
 
 /** Pixels of the world box covered by HUD elements (measured live — panels, the dock tray and the strip all move). */
 function useInsets(root: HTMLElement | null, els: InsetEls): SceneInsets {
@@ -608,7 +752,9 @@ function useInsets(root: HTMLElement | null, els: InsetEls): SceneInsets {
         right: right ? Math.round(Math.max(0, R.right - right.getBoundingClientRect().left)) : 0,
         bottom: bottom ? Math.round(Math.max(0, R.bottom - bottom.getBoundingClientRect().top)) : 0,
       };
-      setInsets((p) => (Math.abs(p.top - next.top) + Math.abs(p.left - next.left) + Math.abs(p.right - next.right) + Math.abs(p.bottom - next.bottom) < 2 ? p : next));
+      setInsets((p) =>
+        Math.abs(p.top - next.top) + Math.abs(p.left - next.left) + Math.abs(p.right - next.right) + Math.abs(p.bottom - next.bottom) < 2 ? p : next,
+      );
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -646,7 +792,27 @@ interface MobileGameProps {
   children: React.ReactNode;
 }
 
-function MobileGame({ data, error, retry, scene, scrubber, asOfChip, setRootEl, setTopEl, setBottomEl, period, taxes, inspect, onChip, openUnit, quests, takenPositions, onHideQuests, help, children }: MobileGameProps) {
+function MobileGame({
+  data,
+  error,
+  retry,
+  scene,
+  scrubber,
+  asOfChip,
+  setRootEl,
+  setTopEl,
+  setBottomEl,
+  period,
+  taxes,
+  inspect,
+  onChip,
+  openUnit,
+  quests,
+  takenPositions,
+  onHideQuests,
+  help,
+  children,
+}: MobileGameProps) {
   const { panel, closePanel, propertyOpen, setPropertyOpen } = inspect;
   const [tab, setTab] = useState<SheetTab>("portfolio");
   const [unitSel, setUnitSel] = useState<string | null>(null);
@@ -673,7 +839,7 @@ function MobileGame({ data, error, retry, scene, scrubber, asOfChip, setRootEl, 
   }, [propertyOpen, setPropertyOpen]);
 
   return (
-    <div className={s.mobile}>
+    <div className={s.mobile} data-sheet={tab}>
       <div className={s.mWorld}>
         <div ref={setRootEl} className={s.mScene}>
           {scene}

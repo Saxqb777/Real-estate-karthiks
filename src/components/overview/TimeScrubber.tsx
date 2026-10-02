@@ -100,9 +100,7 @@ export function TimeScrubber({ timeline, asOf, onChange, loading, yearMode, comp
   const markers = useMemo(() => {
     if (start === null) return [];
     const list = compact ? timeline.markers.filter((m) => m.kind === "purchase" || m.kind === "lease-start" || m.kind === "lease-end") : timeline.markers;
-    return list
-      .map((m, i) => ({ m, i, r: (dayStart(Date.parse(m.date)) - start) / span }))
-      .filter((x) => x.r >= 0 && x.r <= 1);
+    return list.map((m, i) => ({ m, i, r: (dayStart(Date.parse(m.date)) - start) / span })).filter((x) => x.r >= 0 && x.r <= 1);
   }, [timeline.markers, start, span, compact]);
 
   /** px → date, with a gentle snap to markers within 6px */
