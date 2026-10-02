@@ -337,10 +337,10 @@ function ClothesLine({ slot, world, y, animate }: { slot: BuildingSlot; world: W
   const clothes = useMemo(() => {
     const out: { geo: THREE.PlaneGeometry; base: Float32Array; x: number; w: number; h: number; color: string }[] = [];
     let cursor = 0.5;
-    const widths = [3.2, 1.6, 1.4, 1.2];
+    const widths = [1.1, 1.5, 1.3, 1.0, 1.2];
     widths.forEach((w, i) => {
       if (cursor + w > len - 0.3) return;
-      const h = i === 0 ? 3.0 : i === 1 ? 2.6 : 1.7;
+      const h = i === 0 ? 3.2 : i === 1 ? 2.4 : 1.5;
       const geo = new THREE.PlaneGeometry(w, h, 6, 5);
       geo.translate(0, -h / 2, 0);
       out.push({ geo, base: Float32Array.from(geo.attributes.position.array as Float32Array), x: cursor + w / 2, w, h, color: CLOTH_COLORS[i] });

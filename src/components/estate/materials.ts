@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 /** Materials of the actual site: lime plaster, terracotta, laterite, red oxide, coconut green. */
 export const PAL = {
-  plaster: "#f3e6cd",
+  plaster: "#f6e4c4",
   plasterWarm: "#efdcbc",
   cornice: "#fbf3e4",
   plinth: "#9a5a43",

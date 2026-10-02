@@ -86,7 +86,7 @@ export function Table<T>({
     setSort((s) => (s?.key !== key ? { key, dir: "desc" } : s.dir === "desc" ? { key, dir: "asc" } : null));
 
   const alignClass = (c: Column<T>) =>
-    cx(c.numeric && styles.numCell, c.align === "right" && styles.right, c.align === "center" && styles.center, c.wrap && styles.wrap);
+    cx(c.numeric && styles.numCell, c.align === "right" && styles.right, c.align === "center" && styles.center, c.wrap && styles.wrapText);
 
   const hasFooter = !hideFooter && columns.some((c) => c.footer !== undefined);
   const showSkeleton = loading && (!rows || rows.length === 0);

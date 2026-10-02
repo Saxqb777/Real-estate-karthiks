@@ -20,10 +20,10 @@ export function tileXRange(layout: SiteLayout, z: number): [number, number] {
 }
 
 const BANDS = [
-  { inset: 0, top: 0, bottom: -1.1, color: "#7c4a30", bevel: 0.35, vRep: 1.1 },
-  { inset: 0.45, top: -1.1, bottom: -5.2, color: "#b8582f", bevel: 0.3, vRep: 4 },
-  { inset: 1.3, top: -5.2, bottom: -8.4, color: "#8a3c25", bevel: 0.3, vRep: 3.2 },
-  { inset: 2.8, top: -8.4, bottom: -11.6, color: "#6a5650", bevel: 0.55, vRep: 3.2 },
+  { inset: 0, top: 0, bottom: -1.2, color: "#4e3322", bevel: 0.35, vRep: 1.2 },
+  { inset: 0.5, top: -1.2, bottom: -5.6, color: "#cf6a35", bevel: 0.3, vRep: 4.4 },
+  { inset: 1.4, top: -5.6, bottom: -8.6, color: "#8b3a24", bevel: 0.3, vRep: 3 },
+  { inset: 3.0, top: -8.6, bottom: -12, color: "#5f5754", bevel: 0.6, vRep: 3.4 },
 ];
 
 export function Tile({ layout, world }: { layout: SiteLayout; world: World }) {

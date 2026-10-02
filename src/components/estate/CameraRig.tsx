@@ -27,9 +27,9 @@ interface Flight {
 }
 
 const VIEW: Record<SceneMode, { phi: number; theta: number; fit: number }> = {
-  hero: { phi: 1.0, theta: -0.5, fit: 0.8 },
-  preview: { phi: 0.78, theta: -0.42, fit: 0.8 },
-  login: { phi: 1.04, theta: -0.7, fit: 0.9 },
+  hero: { phi: 1.0, theta: -0.5, fit: 0.66 },
+  preview: { phi: 0.8, theta: -0.42, fit: 0.7 },
+  login: { phi: 1.04, theta: -0.7, fit: 0.78 },
 };
 
 function poseOf(camera: THREE.Camera, target: THREE.Vector3): Pose {
@@ -76,7 +76,7 @@ export function CameraRig({
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
     const R = layout.radius * v.fit + layout.maxHeightFt * 0.15;
     const dist = R / Math.sin(Math.min(vfov, hfov) / 2);
-    const target = new THREE.Vector3(0, Math.min(8, layout.maxHeightFt * 0.25), world.z(layout.center.z) + (mode === "preview" ? 6 : 9));
+    const target = new THREE.Vector3(1.5, Math.min(8, layout.maxHeightFt * 0.25), world.z(layout.center.z) + (mode === "preview" ? 5 : 6));
     return { target, radius: dist, phi: v.phi, theta: v.theta };
   }, [layout.radius, layout.maxHeightFt, layout.center.z, mode, size.width, size.height, world]);
 

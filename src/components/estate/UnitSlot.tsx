@@ -167,7 +167,7 @@ const RING_FRAG = /* glsl */ `
   void main() {
     vec2 p = (vUv - 0.5) * 2.0 * uHalf;
     float d = sdRoundBox(p, uBox, 1.4);
-    float line = 1.0 - smoothstep(0.08, 0.26, abs(d));
+    float line = 1.0 - smoothstep(0.14, 0.38, abs(d));
     float halo = exp(-max(d, 0.0) * 1.1) * step(0.0, d) * 0.28 + exp(-abs(d) * 2.6) * 0.25;
     float inner = (1.0 - smoothstep(-2.2, 0.0, -d)) * 0.0;
     float corner = max(uBox.x - abs(p.x), uBox.y - abs(p.y));
@@ -179,8 +179,8 @@ const RING_FRAG = /* glsl */ `
       float t = fract(uTime * 0.55);
       rip = (1.0 - smoothstep(0.0, 0.5, abs(d - t * 6.5))) * (1.0 - t) * 0.8;
     }
-    float a = (line * dash + bracket * 1.2 + halo + rip + inner) * beat * (0.85 + uBoost * 0.6);
-    vec3 c = uColor * (1.2 + bracket * 1.2 + uBoost * 0.8);
+    float a = (line * dash * 1.3 + bracket * 1.4 + halo + rip + inner) * beat * (1.0 + uBoost * 0.6);
+    vec3 c = uColor * (1.5 + bracket * 1.3 + uBoost * 0.8);
     gl_FragColor = vec4(c * a, a);
   }
 `;

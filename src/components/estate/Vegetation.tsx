@@ -116,9 +116,8 @@ function palmSpots(layout: SiteLayout): Pt[] {
   const st = layout.site.street;
   // mostly behind / beside the buildings so they frame the view instead of hiding the facades
   const spots: Pt[] = [
-    { x: leftX(33) - 9.5, z: 33 },
     { x: leftX(D - 4) - 8, z: D - 4 },
-    { x: leftX(14) - 13, z: 14 },
+    { x: leftX(D * 0.62) - 12.5, z: D * 0.62 },
     { x: R + 7, z: 5 },
     { x: R + 10.5, z: 23 },
     { x: R + 7.5, z: 42 },
