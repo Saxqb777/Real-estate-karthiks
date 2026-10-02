@@ -497,6 +497,157 @@ export const glowTex = () =>
     { repeat: false, srgb: false },
   );
 
+/** Green notice board with pinned notes (one per open to-do, up to 6) and a Tamil + English header. */
+export const noticeTex = (notes: number, tamil: boolean) =>
+  make(
+    `notice-${notes}-${tamil}`,
+    256,
+    192,
+    (ctx, w, h) => {
+      ctx.fillStyle = "#24493a";
+      ctx.fillRect(0, 0, w, h);
+      const r = rng(61);
+      speckle(ctx, w, h, 1400, ["#1d3d30", "#2d5846", "#335f4c"], [1, 2], 0.6, 62);
+      ctx.fillStyle = "#e8dcc0";
+      ctx.fillRect(0, 0, w, 34);
+      ctx.fillStyle = "#3e2414";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `700 ${tamil ? 22 : 24}px ${tamil ? cssFont("--font-tamil", "sans-serif") : cssFont("--font-display", "sans-serif")}`;
+      ctx.fillText(tamil ? "அறிவிப்பு · NOTICE" : "NOTICE", w / 2, 18);
+      const spots = [
+        [24, 48],
+        [104, 44],
+        [176, 52],
+        [36, 116],
+        [116, 112],
+        [180, 120],
+      ];
+      const colors = ["#fbf6e8", "#f6df8a", "#f4f1ea", "#f7c6c6", "#fbf6e8", "#cfe8f6"];
+      for (let i = 0; i < Math.min(6, notes); i++) {
+        const [x, y] = spots[i];
+        const pw = 54 + r() * 10;
+        const ph = 58 + r() * 8;
+        ctx.save();
+        ctx.translate(x + pw / 2, y + ph / 2);
+        ctx.rotate((r() - 0.5) * 0.16);
+        ctx.fillStyle = "rgba(0,0,0,0.28)";
+        ctx.fillRect(-pw / 2 + 3, -ph / 2 + 4, pw, ph);
+        ctx.fillStyle = colors[i];
+        ctx.fillRect(-pw / 2, -ph / 2, pw, ph);
+        ctx.fillStyle = "rgba(40,40,40,0.55)";
+        for (let l = 0; l < 4; l++) ctx.fillRect(-pw / 2 + 7, -ph / 2 + 14 + l * 10, pw * (0.5 + r() * 0.35), 3);
+        ctx.fillStyle = i % 2 ? "#c22d2d" : "#2f6fb5";
+        ctx.beginPath();
+        ctx.arc(0, -ph / 2 + 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    },
+    { repeat: false },
+  );
+
+/** Round municipal property-tax stamp (rubber-stamp ink on a brass plaque). state: paid ✓ / due / plain. */
+export const taxStampTex = (state: "paid" | "due" | "plain", tamil: boolean) =>
+  make(
+    `tax-${state}-${tamil}`,
+    256,
+    256,
+    (ctx, w) => {
+      const c = w / 2;
+      const ink = state === "due" ? "#b3262b" : state === "paid" ? "#1f6b4f" : "#7a2a1a";
+      const g = ctx.createRadialGradient(c * 0.8, c * 0.7, 10, c, c, c);
+      g.addColorStop(0, "#f2d488");
+      g.addColorStop(0.7, "#d4a744");
+      g.addColorStop(1, "#8a6420");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(c, c, c - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#f6efdc";
+      ctx.beginPath();
+      ctx.arc(c, c, c - 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.arc(c, c, c - 34, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(c, c, c - 48, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = ink;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `700 26px ${cssFont("--font-display", "sans-serif")}`;
+      ctx.fillText("PROPERTY TAX", c, c - 52);
+      if (tamil) {
+        ctx.font = `700 26px ${cssFont("--font-tamil", "sans-serif")}`;
+        ctx.fillText("சொத்து வரி", c, c - 14);
+      }
+      ctx.font = `700 ${state === "plain" ? 54 : 46}px ${cssFont("--font-display", "sans-serif")}`;
+      ctx.fillText(state === "paid" ? "PAID ✓" : state === "due" ? "DUE" : "₹", c, tamil ? c + 34 : c + 12);
+      // worn ink
+      const r = rng(71);
+      ctx.globalCompositeOperation = "destination-out";
+      for (let i = 0; i < 260; i++) {
+        ctx.globalAlpha = 0.35 * r();
+        ctx.fillRect(r() * w, r() * w, 2 + r() * 4, 2 + r() * 4);
+      }
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+    },
+    { repeat: false },
+  );
+
+/** Chalk "Moving in D/M" slate that replaces the TO-LET board once a lease is signed. */
+export const movingInTex = (date: string, tamil: boolean) =>
+  make(
+    `movein-${date}-${tamil}`,
+    512,
+    256,
+    (ctx, w, h) => {
+      ctx.fillStyle = "#23302c";
+      ctx.fillRect(0, 0, w, h);
+      speckle(ctx, w, h, 2600, ["#2e3d38", "#1b2623", "#3a4a44"], [1, 3], 0.6, 81);
+      ctx.strokeStyle = "#d9b26a";
+      ctx.lineWidth = 12;
+      ctx.strokeRect(8, 8, w - 16, h - 16);
+      ctx.fillStyle = "#f4efe2";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `700 64px ${cssFont("--font-display", "Impact, sans-serif")}`;
+      ctx.fillText("MOVING IN", w / 2, h * (tamil ? 0.3 : 0.34));
+      ctx.fillStyle = "#ffb547";
+      ctx.font = `700 ${tamil ? 84 : 100}px ${cssFont("--font-display", "Impact, sans-serif")}`;
+      ctx.fillText(date, w / 2, h * (tamil ? 0.62 : 0.7));
+      if (tamil) {
+        ctx.fillStyle = "#cfc6b4";
+        ctx.font = `700 30px ${cssFont("--font-tamil", "sans-serif")}`;
+        ctx.fillText("புதிய குடித்தனம்", w / 2, h * 0.87);
+      }
+    },
+    { repeat: false },
+  );
+
+/** Soft contact-shadow blob (alpha falloff; tint it with the material colour). */
+export const blobTex = () =>
+  make(
+    "blob",
+    64,
+    64,
+    (ctx, w) => {
+      const g = ctx.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+      g.addColorStop(0, "rgba(255,255,255,0.9)");
+      g.addColorStop(0.45, "rgba(255,255,255,0.55)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, w);
+    },
+    { repeat: false, srgb: false },
+  );
+
 /** Wrought-iron gate: bars, rails and a sunburst top, on transparent. */
 export const gateTex = () =>
   make(

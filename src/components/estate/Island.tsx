@@ -1,16 +1,13 @@
 "use client";
-// The floating laterite tile (soil strata edge), the street in front of the plot, the EB pole + street lamp,
-// a milestone with the town name (from the plot data) and a rain puddle.
-import { Line } from "@react-three/drei";
+// The floating laterite tile (soil strata edge), the street in front of the plot, a milestone with the town name
+// (from the plot data) and a rain puddle. The EB poles live in Fixtures.tsx (they are clickable).
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { offsetPolygon, type Pt, type SiteLayout } from "@/lib/site-layout";
 import type { Env } from "./env";
-import { box, rod, type Part } from "./bake";
-import { Baked, vcMaterial } from "./Baked";
 import { G, PAL, std } from "./materials";
-import { asphaltTex, earthTex, glowTex, milestoneTex, plasterTex, strataTex, withRepeat } from "./textures";
+import { asphaltTex, earthTex, milestoneTex, plasterTex, strataTex, withRepeat } from "./textures";
 import { FLAT, planShape, rng, type World } from "./util";
 
 /** x of a polygon edge (a → b) at plan z. */
@@ -152,94 +149,6 @@ export function Street({ layout, world }: { layout: SiteLayout; world: World }) 
           scale={[Math.abs(s.b.x - s.a.x) + 0.6, 0.16, st.drain[1] - st.drain[0] + 0.2]}
           receiveShadow
         />
-      ))}
-    </group>
-  );
-}
-
-/** Concrete EB pole with cross-arm, insulators, a street lamp (switches on at dusk) and sagging wires. */
-export function PoleAndLamp({ layout, world, env, lampLight }: { layout: SiteLayout; world: World; env: RefObject<Env>; lampLight: boolean }) {
-  const st = layout.site.street;
-  const zPole = (st.nearShoulder[0] + st.nearShoulder[1]) / 2 + 0.4;
-  const [tx0, tx1] = tileXRange(layout, zPole);
-  const poles = [layout.plot.polygon[0].x - 3.2, Math.min(tx1 - 4, layout.plot.rightX + 10)];
-  const H = 26;
-  const light = useRef<THREE.PointLight>(null);
-  const bulbMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#fff3d6", emissive: "#ffcf87", emissiveIntensity: 0, toneMapped: false }), []);
-  const haloMat = useMemo(() => new THREE.SpriteMaterial({ map: glowTex(), color: "#ffc677", transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }), []);
-  useEffect(() => () => [bulbMat, haloMat].forEach((m) => m.dispose()), [bulbMat, haloMat]);
-  useFrame(() => {
-    const l = env.current.lamps;
-    bulbMat.emissiveIntensity = 0.2 + l * 6;
-    haloMat.opacity = l * 0.55;
-    if (light.current) light.current.intensity = l * 520;
-  });
-
-  const wireY = H - 1.2;
-  const wires = useMemo(() => {
-    const out: [number, number, number][][] = [];
-    const ends = [tx0 + 0.6, ...poles, tx1 - 0.6];
-    for (const dz of [-0.9, 0, 0.9]) {
-      for (let s = 0; s < ends.length - 1; s++) {
-        const a = ends[s];
-        const b = ends[s + 1];
-        const pts: [number, number, number][] = [];
-        for (let i = 0; i <= 16; i++) {
-          const t = i / 16;
-          const sag = Math.sin(t * Math.PI) * (Math.abs(b - a) * 0.035);
-          pts.push([world.x(a + (b - a) * t), wireY + 0.2 - sag, world.z(zPole) + dz]);
-        }
-        out.push(pts);
-      }
-    }
-    // service drop to the front building
-    const f = layout.slots.find((s) => s.slot === "front" && s.unit);
-    if (f) {
-      const a: [number, number, number] = [world.x(poles[0]), wireY - 1.5, world.z(zPole)];
-      const b: [number, number, number] = [world.x(f.rect.x0 + 0.6), f.heightFt + 1, world.z(f.rect.z0 + 0.6)];
-      const pts: [number, number, number][] = [];
-      for (let i = 0; i <= 12; i++) {
-        const t = i / 12;
-        pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - Math.sin(t * Math.PI) * 1.2, a[2] + (b[2] - a[2]) * t]);
-      }
-      out.push(pts);
-    }
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tx0, tx1, poles[0], poles[1], zPole, world, layout.slots]);
-
-  const poleParts = useMemo<Part[]>(
-    () =>
-      poles.flatMap((x, i) => {
-        const X = world.x(x);
-        const Z = world.z(zPole);
-        const parts: Part[] = [
-          rod([X, H / 2, Z], [0.75, H, 0.75], "#b9b3aa"),
-          box([X, wireY, Z], [0.3, 0.3, 3.4], "#5b5b5b"),
-          ...[-0.9, 0, 0.9].map((dz) => rod([X, wireY + 0.35, Z + dz], [0.2, 0.45, 0.2], "#e8e2d6")),
-        ];
-        if (i === 0) parts.push(box([X, H - 5.6, Z + 2.2], [0.22, 0.22, 4.4], "#2b2b2b", [0.12, 0, 0]), box([X, H - 5.25, Z + 4.4], [0.85, 0.32, 1.7], "#2b2b2b"));
-        return parts;
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [poles[0], poles[1], zPole, world, H, wireY],
-  );
-  return (
-    <group>
-      <Baked parts={poleParts} cast material={vcMaterial(0.8)} />
-      {poles.map((x, i) => (
-        <group key={i} position={[world.x(x), 0, world.z(zPole)]}>
-          {i === 0 && (
-            <>
-              <mesh geometry={G.box()} material={bulbMat} scale={[0.62, 0.08, 1.3]} position={[0, H - 5.45, 4.4]} />
-              <sprite material={haloMat} scale={[7, 7, 1]} position={[0, H - 5.7, 4.4]} />
-              {lampLight && <pointLight ref={light} color="#ffc27a" distance={70} decay={1.6} position={[0, H - 6.3, 4.4]} intensity={0} />}
-            </>
-          )}
-        </group>
-      ))}
-      {wires.map((pts, i) => (
-        <Line key={i} points={pts} color="#141414" lineWidth={1.1} transparent opacity={0.85} />
       ))}
     </group>
   );

@@ -150,6 +150,31 @@ export function FigLine({ label, sub, swatch, size = "sm", chevron, onClick, hin
   );
 }
 
+/** Compact cell (label over figure) for a row of 2–3 supporting figures. Wrap cells in <FigCells>. */
+export function FigCell({ label, onClick, hint = "Click for breakdown", ...fig }: Omit<FigProps, "size" | "className"> & { label: ReactNode }) {
+  const inner = (
+    <>
+      <span className={s.miniLabel}>{label}</span>
+      <Fig {...fig} size="sm" compact={fig.compact ?? true} />
+    </>
+  );
+  return onClick ? (
+    <button type="button" className={s.mini} onClick={onClick} title={hint}>
+      {inner}
+    </button>
+  ) : (
+    <div className={s.mini}>{inner}</div>
+  );
+}
+
+export function FigCells({ children, cols = 3 }: { children: ReactNode; cols?: 2 | 3 }) {
+  return (
+    <div className={s.miniGrid} style={cols === 2 ? { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } : undefined}>
+      {children}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- scope chip
 
 export interface ScopeChipProps {

@@ -144,11 +144,11 @@ export function useRegisterSpot(spot: Spot | null) {
  * An interactive world object: outline on hover, pointer cursor, click / right-click / long-press.
  * Children are the visuals; `hit` adds an invisible, more generous hit proxy (small objects are hard to click).
  */
-export function Hotspot({ spot, children, hit, outline = true }: { spot: Spot; children: ReactNode; hit?: ReactNode; outline?: boolean }) {
+export function Hotspot({ spot, children, hit, outline = true, selected = false }: { spot: Spot; children: ReactNode; hit?: ReactNode; outline?: boolean; selected?: boolean }) {
   const api = useScene();
   useRegisterSpot(spot);
   const handlers = useSpotHandlers(spot);
-  const on = api.hovered === spot.key;
+  const on = api.hovered === spot.key || selected;
   return (
     <group {...handlers}>
       <Select enabled={outline && on && api.interactive}>{children}</Select>
