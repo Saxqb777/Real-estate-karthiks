@@ -108,7 +108,7 @@ export function parseLabParams(sp: Record<string, string | string[] | undefined>
     mode: pick("mode", MODES, D.mode),
     dims: flag("dims", D.dims),
     labels: flag("labels", D.labels),
-    hl: FIELDS.includes(g("hl") ?? "") ? (g("hl") as string) : D.hl,
+    hl: FIELDS.includes(g("hl") ?? "") ? (g("hl") ?? "") : D.hl,
     life: flag("life", D.life),
     quality: pick("q", ["auto", "high", "mid", "low"] as const, D.quality),
     panel: flag("panel", D.panel),
@@ -142,6 +142,7 @@ export function toParams(c: LabConfig): string {
   put("life", c.life, D.life);
   put("q", c.quality, D.quality);
   put("panel", c.panel, D.panel);
+  put("intro", c.intro, D.intro);
   put("sel", c.sel, D.sel);
   return p.toString();
 }

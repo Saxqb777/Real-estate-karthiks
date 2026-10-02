@@ -4,7 +4,8 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--s-3) var(--s-6);
-  padding: var(--s-2) 0 var(--s-5);
+  padding: 2px 0 0;
+  flex: none;
 }
 .titles {
   display: flex;
@@ -31,7 +32,7 @@
 }
 .title {
   font-family: var(--ff-display);
-  font-size: clamp(28px, 4vw, 38px);
+  font-size: clamp(26px, 3vw, 34px);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.005em;

@@ -1,9 +1,10 @@
 // Pattukottai Estates UI kit — import everything from "@/components/ui".
 export { cx } from "./cx";
-export { useIsClient, useIsMac, useFocusTrap, useScrollLock } from "./hooks";
+export { useIsClient, useIsMac, useFocusTrap, useScrollLock, isFocusTrapActive } from "./hooks";
 
 export { Panel, type PanelProps } from "./Panel";
 export { PageHeader, type PageHeaderProps } from "./PageHeader";
+export { Screen, ScrollArea, type ScreenProps, type ScrollAreaProps } from "./Screen";
 export { Button, LinkButton, IconButton, buttonClass, type ButtonProps, type LinkButtonProps, type IconButtonProps, type ButtonVariant, type ButtonSize } from "./Button";
 
 export { Field, FormGrid, useField, type FieldProps, type FormGridProps } from "./Field";
@@ -34,6 +35,7 @@ export { SegmentedBar, type SegmentedBarProps } from "./SegmentedBar";
 export { LevelBadge, tierFor, type LevelBadgeProps, type Tier } from "./LevelBadge";
 
 export { Modal, Drawer, type ModalProps, type DrawerProps } from "./Modal";
+export { InspectCard, type InspectCardProps } from "./InspectCard";
 export { ConfirmDialog, ConfirmHost, confirmDialog, type ConfirmDialogProps, type ConfirmOptions } from "./ConfirmDialog";
 export { Toaster } from "./Toaster";
 export { toast, dismissToast, type ToastKind, type ToastOptions, type ToastItem } from "./toast";

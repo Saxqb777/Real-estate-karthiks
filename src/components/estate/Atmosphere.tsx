@@ -35,7 +35,8 @@ const SKY_FRAG = /* glsl */ `
   void main() {
     vec3 d = normalize(vDir);
     float h = d.y;
-    vec3 col = h > 0.0 ? mix(uHorizon, uTop, pow(clamp(h, 0.0, 1.0), 0.5)) : mix(uHorizon, uBottom, pow(clamp(-h * 2.4, 0.0, 1.0), 0.65));
+    // the camera mostly looks below the horizon, so the lower half carries a long horizon → ground-haze gradient
+    vec3 col = h > 0.0 ? mix(uHorizon, uTop, pow(clamp(h, 0.0, 1.0), 0.5)) : mix(uHorizon, uBottom, smoothstep(0.0, 0.9, pow(clamp(-h, 0.0, 1.0), 0.75)));
     float sd = max(dot(d, uSunDir), 0.0);
     col += uSunColor * (pow(sd, 6.0) * 0.28 + pow(sd, 48.0) * 0.5) * uSunVis;
     col += uSunColor * smoothstep(0.9986, 0.9993, sd) * 6.0 * uSunVis;

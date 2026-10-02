@@ -78,21 +78,21 @@ export const plasterTex = () =>
 /** Red laterite earth with patchy coconut-grove grass (tile top). */
 export const earthTex = () =>
   make("earth", 512, 512, (ctx, w, h) => {
-    ctx.fillStyle = "#9a5636";
+    ctx.fillStyle = "#b4673f";
     ctx.fillRect(0, 0, w, h);
     const r = rng(11);
     for (let i = 0; i < 90; i++) {
       const x = r() * w;
       const y = r() * h;
       const rad = 30 + r() * 90;
-      const c = ["#6f8a3f", "#5f7d36", "#7f9a4a", "#58733a", "#8a9c4c"][Math.floor(r() * 5)];
+      const c = ["#7f9c47", "#6d8c3e", "#91aa52", "#68853f", "#9aab55"][Math.floor(r() * 5)];
       wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, c, 0.55));
     }
     for (let i = 0; i < 40; i++) {
       const x = r() * w;
       const y = r() * h;
       const rad = 18 + r() * 40;
-      wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, "#a45a35", 0.6));
+      wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, "#bd6b40", 0.6));
     }
     speckle(ctx, w, h, 9000, ["#4f6a2e", "#8fa55a", "#7b4127", "#b8714a"], [1, 3], 0.45, 12);
   });

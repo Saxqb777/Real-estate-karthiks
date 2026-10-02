@@ -4,6 +4,10 @@
   overflow: auto;
   overscroll-behavior-x: contain;
 }
+.fill {
+  flex: 1;
+  min-height: 0;
+}
 .table {
   width: 100%;
   border-collapse: separate;
@@ -137,10 +141,13 @@
 }
 
 .tfoot .td {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: var(--bg-1);
   height: 44px;
   border-top: 1px solid var(--line-strong);
   border-bottom: 0;
-  background: rgba(0, 0, 0, 0.18);
   font-weight: 700;
 }
 

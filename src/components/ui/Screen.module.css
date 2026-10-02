@@ -1,0 +1,36 @@
+/* One-screen page frame: fills the shell's <main>, never grows the page. */
+.screen {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: 16px var(--page-pad) 18px;
+}
+.contained {
+  max-width: var(--page-max);
+}
+.flush {
+  padding: 0;
+}
+@media (max-width: 767px) {
+  .screen {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    gap: var(--s-3);
+  }
+}
+
+/* Internal scroll region (the page itself never scrolls). */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.fade {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+}

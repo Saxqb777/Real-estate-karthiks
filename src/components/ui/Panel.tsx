@@ -19,6 +19,8 @@ export interface PanelProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
   band?: boolean;
   /** Hover affordance for clickable panels. */
   interactive?: boolean;
+  /** Grow to fill the parent flex column; the body scrolls internally (one-screen layouts). */
+  fill?: boolean;
   as?: "section" | "div" | "article" | "aside";
   titleAs?: "h2" | "h3";
 }
@@ -35,6 +37,7 @@ export function Panel({
   brackets = variant !== "sunken",
   band = false,
   interactive = false,
+  fill = false,
   as: Tag = "section",
   titleAs: Title = "h2",
   className,
@@ -51,6 +54,7 @@ export function Panel({
         brackets && styles.brackets,
         band && styles.band,
         interactive && styles.interactive,
+        fill && styles.fill,
         padding === "none" && styles.flush,
         padding === "sm" && styles["pad-sm"],
         padding === "lg" && styles["pad-lg"],

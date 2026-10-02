@@ -20,7 +20,7 @@ export function PlotGround({ layout, world }: { layout: SiteLayout; world: World
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   useEffect(() => () => Object.values(geos).forEach((g) => g.dispose()), [geos]);
-  const yardMat = std("#a7633f", { map: withRepeat(plasterTex(), 1 / 7, 1 / 7), rough: 1, polygonOffset: 1 });
+  const yardMat = std("#b8714a", { map: withRepeat(plasterTex(), 1 / 7, 1 / 7), rough: 1, polygonOffset: 1 });
   const paveMat = std("#ffffff", { map: withRepeat(pavingTex(), 1 / 8, 1 / 8), rough: 0.8, polygonOffset: 2 });
 
   return (

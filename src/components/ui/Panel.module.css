@@ -90,6 +90,18 @@
 .interactive {
   cursor: pointer;
 }
+
+/* fill: take the remaining height of a flex column; body scrolls inside */
+.fill {
+  flex: 1;
+  min-height: 0;
+}
+.fill > .body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
 .interactive:hover {
   border-color: var(--line-strong);
   transform: translateY(-1px);

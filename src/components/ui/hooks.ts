@@ -28,6 +28,11 @@ export function focusables(root: HTMLElement): HTMLElement[] {
 /** Stack of active traps — only the top-most handles Tab / Escape (nested dialogs). */
 const trapStack: HTMLElement[] = [];
 
+/** true while a modal / drawer / palette holds focus (non-modal UI should then ignore Esc). */
+export function isFocusTrapActive(): boolean {
+  return trapStack.length > 0;
+}
+
 /**
  * Trap Tab focus inside `ref` while active, call onEscape on Esc, focus the first
  * `[data-autofocus]` (else the first focusable not inside `[data-no-autofocus]`) on open,

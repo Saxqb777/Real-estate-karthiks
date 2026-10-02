@@ -2,19 +2,18 @@
 // A front/back slot on the plot: the townhouse plus its status language (DESIGN.md "The world"):
 //   occupied + paid → teal ring · due within 5 days → marigold ring · overdue → coral pulsing ring + "!" quest marker
 //   vacant → blueprint hologram + TO-LET board · inactive → desaturated · no unit → wireframe slot with "+ Build unit".
-import { Html, Line } from "@react-three/drei";
+import { Line } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Select } from "@react-three/postprocessing";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
-import { formatINR } from "@/lib/format";
-import type { BuildingSlot, SlotName } from "@/lib/site-layout";
+import { formatFeetInches, type BuildingSlot, type SlotName } from "@/lib/site-layout";
 import type { Env } from "./env";
 import { G, PAL, std } from "./materials";
 import { Townhouse } from "./Townhouse";
 import { glowTex, toLetTex } from "./textures";
+import type { LabelSpec, Tone, V3 } from "./Overlay";
 import { FLAT, easeOutBack, type World } from "./util";
-import s from "./estate.module.css";
 
 export type SceneMode = "hero" | "preview" | "login";
 
@@ -26,7 +25,6 @@ export interface UnitSlotProps {
   selected: boolean;
   hovered: boolean;
   highlighted: boolean;
-  showLabel: boolean;
   interactive: boolean;
   reduced: boolean;
   life: boolean;
@@ -39,22 +37,55 @@ export interface UnitSlotProps {
 
 export function statusLook(slot: BuildingSlot) {
   const u = slot.unit;
-  if (!u || slot.status === "empty") return { ring: null, label: "Empty slot", tone: "faint" as const };
-  if (slot.status === "inactive") return { ring: null, label: "Inactive", tone: "faint" as const };
-  if (slot.status === "vacant") return { ring: PAL.sky, label: u.vacantDays ? `Vacant · ${u.vacantDays} days` : "Vacant", tone: "sky" as const };
-  if (u.rentState === "overdue") return { ring: PAL.coral, label: u.daysOverdue ? `Overdue · ${u.daysOverdue} days` : "Overdue", tone: "coral" as const };
-  if (u.rentState === "due-soon") return { ring: PAL.marigold, label: "Rent due soon", tone: "marigold" as const };
-  return { ring: PAL.teal, label: "Rent paid", tone: "teal" as const };
+  if (!u || slot.status === "empty") return { ring: null, label: "Empty slot", tone: "faint" as Tone };
+  if (slot.status === "inactive") return { ring: null, label: "Inactive", tone: "faint" as Tone };
+  if (slot.status === "vacant") return { ring: PAL.sky, label: u.vacantDays ? `Vacant · ${u.vacantDays} days` : "Vacant", tone: "sky" as Tone };
+  if (u.rentState === "overdue") return { ring: PAL.coral, label: u.daysOverdue ? `Overdue · ${u.daysOverdue} days` : "Rent overdue", tone: "coral" as Tone };
+  if (u.rentState === "due-soon") return { ring: PAL.marigold, label: "Rent due soon", tone: "marigold" as Tone };
+  return { ring: PAL.teal, label: "Rent paid", tone: "teal" as Tone };
 }
 
-const toneClass = { teal: s.toneTeal, marigold: s.toneMarigold, coral: s.toneCoral, sky: s.toneSky, faint: s.toneFaint };
+/** Label specs + anchors for a slot (cards on hover/selection, compact tags when labels are on, build buttons). */
+export function slotLabels(slot: BuildingSlot, world: World, o: { hovered: boolean; selected: boolean; showLabel: boolean; interactive: boolean; canBuild: boolean }): { spec: LabelSpec; anchor: V3 }[] {
+  const cx = world.x((slot.rect.x0 + slot.rect.x1) / 2);
+  const cz = world.z((slot.rect.z0 + slot.rect.z1) / 2);
+  if (!o.interactive) return [];
+  if (slot.status === "empty" || !slot.unit) {
+    return o.canBuild ? [{ spec: { key: `build:${slot.slot}`, kind: "build", slot: slot.slot }, anchor: [cx, 14, cz] }] : [];
+  }
+  const u = slot.unit;
+  const look = statusLook(slot);
+  const top = slot.heightFt + slot.parapetFt + (u.rentState === "overdue" && slot.status === "occupied" ? 12.5 : 4.5);
+  const anchor: V3 = [cx, top, cz];
+  if (o.hovered || o.selected) {
+    return [
+      {
+        spec: {
+          key: `card:${slot.slot}`,
+          kind: "card",
+          slot: slot.slot,
+          name: u.name,
+          tone: look.tone,
+          status: look.label,
+          tenant: u.tenantName ?? null,
+          rent: u.monthlyRent ?? null,
+          occupied: slot.status === "occupied",
+          vacant: slot.status === "vacant",
+          meta: `${slot.floors} floor${slot.floors === 1 ? "" : "s"} · ${formatFeetInches(slot.widthFt)} × ${formatFeetInches(slot.depthFt)}`,
+        },
+        anchor,
+      },
+    ];
+  }
+  return o.showLabel ? [{ spec: { key: `tag:${slot.slot}`, kind: "tag", name: u.name, tone: look.tone }, anchor }] : [];
+}
 
 export function UnitSlot(p: UnitSlotProps) {
   if (p.slot.status === "empty") return <EmptySlot {...p} />;
   return <BuiltSlot {...p} />;
 }
 
-function BuiltSlot({ slot, world, env, mode, selected, hovered, highlighted, showLabel, interactive, reduced, life, rise, index, onHover, onSelect }: UnitSlotProps) {
+function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interactive, reduced, life, rise, index, onHover, onSelect }: UnitSlotProps) {
   const u = slot.unit!;
   const look = statusLook(slot);
   const group = useRef<THREE.Group>(null);
@@ -90,8 +121,6 @@ function BuiltSlot({ slot, world, env, mode, selected, hovered, highlighted, sho
       }
     : {};
 
-  const showFull = interactive && mode !== "login" && (hovered || selected);
-  const showTag = interactive && mode !== "login" && showLabel && !showFull;
   return (
     <group>
       <Select enabled={(hovered || selected) && interactive}>
@@ -125,37 +154,6 @@ function BuiltSlot({ slot, world, env, mode, selected, hovered, highlighted, sho
       <mesh position={[cx, totalH / 2, cz]} scale={[slot.widthFt + 1, totalH + 1, slot.depthFt + 1]} geometry={G.box()} {...handlers}>
         <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
       </mesh>
-      {(showFull || showTag) && (
-        <Html position={[cx, totalH + (u.rentState === "overdue" && slot.status === "occupied" ? 12.5 : 4.5), cz]} center zIndexRange={[40, 10]} style={{ pointerEvents: "none" }}>
-          {showFull ? (
-            <div className={`${s.card} ${toneClass[look.tone]}`}>
-              <div className={s.cardHead}>
-                <span className={s.cardSlot}>{slot.slot}</span>
-                <span className={s.cardName}>{u.name}</span>
-              </div>
-              <div className={s.cardStatus}>
-                <i className={s.dot} />
-                {look.label}
-              </div>
-              {slot.status === "occupied" && (
-                <div className={s.cardRow}>
-                  <span>{u.tenantName || "Tenant"}</span>
-                  <b>{u.monthlyRent ? `${formatINR(u.monthlyRent)}/mo` : "—"}</b>
-                </div>
-              )}
-              {slot.status === "vacant" && <div className={s.cardRow}>Ready to let</div>}
-              <div className={s.cardMeta}>
-                {slot.floors} floor{slot.floors === 1 ? "" : "s"} · {Math.round(slot.widthFt)}′ × {Math.round(slot.depthFt)}′
-              </div>
-            </div>
-          ) : (
-            <div className={`${s.tag} ${toneClass[look.tone]}`}>
-              <i className={s.dot} />
-              {u.name}
-            </div>
-          )}
-        </Html>
-      )}
     </group>
   );
 }
@@ -410,11 +408,6 @@ function EmptySlot({ slot, world, mode, interactive, reduced, onEmptyClick }: Un
           >
             <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
           </mesh>
-          <Html position={[0, h + 3.5, 0]} center zIndexRange={[40, 10]}>
-            <button type="button" className={`${s.build} ${hover ? s.buildHot : ""}`} onClick={() => onEmptyClick!(slot.slot)}>
-              <span className={s.buildPlus}>+</span> Build {slot.slot} unit
-            </button>
-          </Html>
         </>
       )}
     </group>

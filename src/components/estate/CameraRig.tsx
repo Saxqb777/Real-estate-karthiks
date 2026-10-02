@@ -27,7 +27,7 @@ interface Flight {
 }
 
 const VIEW: Record<SceneMode, { phi: number; theta: number; fit: number }> = {
-  hero: { phi: 0.98, theta: -0.62, fit: 0.84 },
+  hero: { phi: 1.0, theta: -0.5, fit: 0.8 },
   preview: { phi: 0.78, theta: -0.42, fit: 0.8 },
   login: { phi: 1.04, theta: -0.7, fit: 0.9 },
 };

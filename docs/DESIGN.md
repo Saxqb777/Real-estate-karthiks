@@ -194,3 +194,30 @@ The owner wants to understand how every figure is worked out. Every KPI / total 
 - The explanations come from the calculations module (single source of truth): buildDashboard returns an `explain` map keyed by KPI
   with {title, plain, formula, steps:[{label, expression, value}], inputs:[{kind, id, label, value}], notes:[]}, so the maths shown
   is exactly the maths used.
+
+## DATA CLARITY CONTRACT (owner: the old site's reports had discrepancies and confusing formats — never again)
+The spec describes the old site's data; presentation must be rethought so nothing is confusing or contradictory.
+1. **Three kinds of numbers, never mixed, always visually tagged:**
+   - **Cash** (real money that moved: rent, expenses, net cash, deposits) — solid figures, ₹ icon chip, teal/coral.
+   - **Paper value** (estimates & offers: worth now, best offer, gain, multiplier, CAGR) — marked "est." / "offer" tag, value shown
+     with a dotted underline; estimates never look like cash.
+   - **Occupancy** (days, vacancy, rent lost) — calendar chip; "rent lost" is an opportunity cost, never subtracted from cash.
+   The HUD groups figures into these three buckets with consistent headers: CASH FLOW · PROPERTY VALUE · OCCUPANCY.
+2. **Every number states its scope and date**: a small scope chip — ALL TIME / 2026 / OCT 2026 / AS OF 2/10/2026. No unlabeled totals.
+   One global period control (All time · Year · Month) drives the HUD; the time scrubber sets "as of".
+3. **One definition per metric, one source**: all figures come from src/lib/calculations.ts; a metric shown in two places is the same
+   value (same function, same scope). A glossary (ⓘ) defines every term in plain English. Fixed vocabulary — never synonyms:
+   "Invested", "Worth now (est.)", "Best offer", "Gain", "Rent collected", "Expenses", "Net cash", "Deposits held", "Rent lost (vacant)".
+4. **Deposits are not income**: security deposits are shown as money held on behalf of tenants (a liability), separate from rent;
+   refunds shown against them.
+5. **Reconciliation is visible**: totals show their arithmetic inline (Net cash = Rent collected − Expenses), table footers show totals that
+   match the HUD, and a small "Ledger balanced ✓" check (computed: Σ unit rows + whole-plot rows = totals) appears on reports. If anything
+   doesn't reconcile, show a coral warning — never silently.
+6. **Formats, everywhere identical**: ₹ with Indian grouping (₹12,34,567). Compact (₹45.2 L / ₹1.25 Cr) only for big HUD figures, with the
+   exact value on hover/tap. Whole rupees unless paise exist. Dates D/M/YYYY; months "Oct 2026"; percentages 1 decimal; multiplier "×1.44".
+   Negative = minus sign + coral. Zero shown as ₹0, missing data shown as "—" with a reason on hover ("no offer yet").
+7. **Colour = meaning, consistently**: income teal, expense coral, paper value marigold, occupancy sky; each expense category keeps its own
+   colour in every chart, table chip and legend. Charts start at zero, label values directly, show empty months as zero, tooltips with exact ₹.
+8. **Reports** (Data → Reports, printable, light theme for print/PDF): Annual statement per year (cash flow by month and by unit, expense by
+   category, deposits ledger, occupancy), Unit report (purchase → today story), Rent ledger per lease (expected vs received per month,
+   arrears). Every report shows "Generated D/M/YYYY", scope, and reconciles with the dashboard.

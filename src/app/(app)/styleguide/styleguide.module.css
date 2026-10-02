@@ -1,12 +1,12 @@
 .layout {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 188px minmax(0, 1fr);
   gap: 28px;
-  align-items: start;
 }
 .toc {
-  position: sticky;
-  top: calc(var(--bar-h) + 24px);
+  align-self: start;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -42,9 +42,10 @@
   flex-direction: column;
   gap: 28px;
   min-width: 0;
+  padding: 10px 10px 48px 4px;
 }
 .section {
-  scroll-margin-top: calc(var(--bar-h) + 20px);
+  scroll-margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -218,6 +219,21 @@
   position: relative;
   z-index: 1;
   max-width: 300px;
+}
+.marker {
+  position: absolute;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  translate: -50% -50%;
+  border: 2px solid var(--marigold);
+  border-radius: 50%;
+  background: rgba(255, 181, 71, 0.18);
+  box-shadow: 0 0 0 4px rgba(255, 181, 71, 0.12);
+  cursor: pointer;
+}
+.marker:hover {
+  background: var(--marigold);
 }
 
 .demoBar {

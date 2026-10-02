@@ -11,7 +11,11 @@ import { MobileTabBar } from "./MobileTabBar";
 import { NAV } from "./nav";
 import styles from "./Shell.module.css";
 
-/** Authenticated app frame: HUD bar, page area, phone tab bar, toasts, confirm dialogs, ⌘K palette. */
+/**
+ * Authenticated app frame (one screen, never scrolls): HUD bar, page area, phone tab bar,
+ * toasts, confirm dialogs, ⌘K palette. Pages render inside <main> — a flex column filling the
+ * rest of the viewport — and should use <Screen> (or flex: 1 for full-bleed) + internal scrolling.
+ */
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const defaults = useMemo<Command[]>(
@@ -45,9 +49,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             key={pathname}
             className={styles.main}
             tabIndex={-1}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
           >
             {children}
           </motion.main>

@@ -30,6 +30,7 @@ import {
   Field,
   FormGrid,
   IconButton,
+  InspectCard,
   Input,
   Kbd,
   LevelBadge,
@@ -38,6 +39,8 @@ import {
   NumberInput,
   PageHeader,
   Panel,
+  Screen,
+  ScrollArea,
   SegmentedBar,
   Select,
   Skeleton,
@@ -149,7 +152,12 @@ export default function StyleguidePage() {
   const [modal, setModal] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [inspect, setInspect] = useState<{ x: number; y: number; unit: "Front" | "Back" } | null>(null);
   const palette = useCommandPalette();
+  const openInspect = (e: React.MouseEvent<HTMLButtonElement>, unit: "Front" | "Back") => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setInspect({ x: r.left + r.width / 2, y: r.top + r.height / 2, unit });
+  };
 
   useRegisterCommands([
     {
@@ -212,7 +220,7 @@ export default function StyleguidePage() {
   );
 
   return (
-    <>
+    <Screen>
       <PageHeader
         eyebrow="Design system · v1"
         title="HUD style guide"
@@ -238,7 +246,7 @@ export default function StyleguidePage() {
           ))}
         </nav>
 
-        <div className={styles.sections}>
+        <ScrollArea className={styles.sections} fade onScroll={() => inspect && setInspect(null)}>
           {/* ------------------------------------------------ tokens */}
           <Section id="tokens" n={1} title="Tokens" note="warm-dark neutrals · one accent · meaning colours">
             <Panel eyebrow="Colour" title="Palette">
@@ -727,6 +735,8 @@ export default function StyleguidePage() {
               </Panel>
             </div>
             <div className={styles.scene}>
+              <button type="button" className={styles.marker} style={{ left: "30%", top: "62%" }} onClick={(e) => openInspect(e, "Front")} aria-label="Inspect front unit" />
+              <button type="button" className={styles.marker} style={{ left: "70%", top: "70%" }} onClick={(e) => openInspect(e, "Back")} aria-label="Inspect back unit" />
               <Panel variant="glass" eyebrow="Over the 3D scene" title="Front unit" padding="sm" className={styles.sceneHud} actions={<StatusPill status="paid" size="sm" />}>
                 <div className="cluster" style={{ justifyContent: "space-between" }}>
                   <span className="dim">R. Senthil Kumar</span>
@@ -742,7 +752,7 @@ export default function StyleguidePage() {
           <Section id="data" n={11} title="Data hooks" note="src/lib/client.ts — live against /api/settings">
             <LiveApiDemo />
           </Section>
-        </div>
+        </ScrollArea>
       </div>
 
       <Modal
@@ -813,6 +823,39 @@ export default function StyleguidePage() {
         </div>
       </Drawer>
 
+      <InspectCard
+        open={Boolean(inspect)}
+        anchor={inspect}
+        onClose={() => setInspect(null)}
+        onExpand={() => {
+          setInspect(null);
+          setDrawer(true);
+        }}
+        eyebrow="Inspect · unit"
+        title={`${inspect?.unit ?? "Front"} unit`}
+        aside={<StatusPill status={inspect?.unit === "Back" ? "overdue" : "paid"} size="sm" />}
+        actions={
+          <>
+            <Button size="sm" variant="primary" icon={<IndianRupee />} onClick={() => toast.coin("Rent collected · Front unit", { amount: 18000 })}>
+              Record rent
+            </Button>
+            <Button size="sm" variant="secondary" icon={<ReceiptIndianRupee />} onClick={() => setDrawer(true)}>
+              Expense
+            </Button>
+          </>
+        }
+      >
+        <div className="stack" style={{ ["--gap" as string]: "10px" }}>
+          <div className="cluster" style={{ justifyContent: "space-between" }}>
+            <span className="dim">{inspect?.unit === "Back" ? "M. Lakshmi" : "R. Senthil Kumar"}</span>
+            <span className="num" style={{ fontSize: 20 }}>
+              {inspect?.unit === "Back" ? "₹16,500" : "₹18,000"}
+            </span>
+          </div>
+          <SegmentedBar label="Occupancy" value={inspect?.unit === "Back" ? 0.71 : 0.94} tone="teal" size="sm" />
+        </div>
+      </InspectCard>
+
       <ConfirmDialog
         open={confirm}
         onClose={() => setConfirm(false)}
@@ -826,7 +869,7 @@ export default function StyleguidePage() {
         }
         confirmLabel="Delete unit"
       />
-    </>
+    </Screen>
   );
 }
 

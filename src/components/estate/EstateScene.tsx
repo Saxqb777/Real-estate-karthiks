@@ -11,14 +11,15 @@ import type { PlotGeometry } from "@/lib/dashboard-types";
 import { computeSiteLayout, highlightedSlots, type SceneUnit, type SlotName } from "@/lib/site-layout";
 import { EnvDriver, Lights, SkyDome } from "./Atmosphere";
 import { CameraRig, FOV } from "./CameraRig";
-import { Dimensions } from "./Dimensions";
+import { Dimensions, dimensionLabels } from "./Dimensions";
 import { Effects, type Tier } from "./Effects";
 import { createEnv, type TimeOfDay } from "./env";
 import { Milestone, PoleAndLamp, Puddle, Street, Tile } from "./Island";
+import { LabelProjector, OverlayLabels, type LabelSpec, type V3 } from "./Overlay";
 import { Life } from "./Life";
 import { PlotGround } from "./PlotGround";
 import { SitePlanFallback } from "./SitePlanFallback";
-import { UnitSlot, type SceneMode } from "./UnitSlot";
+import { UnitSlot, slotLabels, type SceneMode } from "./UnitSlot";
 import { useAnimatedLayout } from "./useAnimatedLayout";
 import { Greenery, Palms } from "./Vegetation";
 import { makeWorld, prefersReducedMotion } from "./util";
@@ -89,6 +90,8 @@ export default function EstateScene(props: EstateSceneProps) {
   const [lifeState, setLifeState] = useState<boolean | null>(null);
   const [zoomFocus, setZoomFocus] = useState(false);
   const [autoTier, setAutoTier] = useState<Tier>("high");
+  const [labels, setLabels] = useState<LabelSpec[]>([]);
+  const registry = useRef(new Map<string, HTMLElement>());
 
   useEffect(() => {
     setWebgl(hasWebGL());
@@ -157,6 +160,8 @@ export default function EstateScene(props: EstateSceneProps) {
               mobile={mobile}
               life={life}
               zoomEnabled={props.wheelZoom === "always" || zoomFocus}
+              onLabels={setLabels}
+              registry={registry}
             />
             {!props.quality && tier !== "low" && (
               <PerformanceMonitor flipflops={1} onDecline={() => setAutoTier((t) => (t === "high" ? "mid" : "low"))} />
@@ -164,6 +169,7 @@ export default function EstateScene(props: EstateSceneProps) {
           </Canvas>
         </SceneBoundary>
       )}
+      {ready && webgl && <OverlayLabels labels={labels} registry={registry} onBuild={props.onEmptySlotClick} />}
       {hud && webgl && (
         <div className={s.hud}>
           <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => setLifeState(!life)} title="Street life: traffic, people, animals, birds">
@@ -182,6 +188,8 @@ interface ContentsProps extends EstateSceneProps {
   mobile: boolean;
   life: boolean;
   zoomEnabled: boolean;
+  onLabels: (labels: LabelSpec[]) => void;
+  registry: React.RefObject<Map<string, HTMLElement>>;
 }
 
 function SceneContents({
@@ -201,6 +209,8 @@ function SceneContents({
   life,
   zoomEnabled,
   intro,
+  onLabels,
+  registry,
 }: ContentsProps) {
   const env = useRef(createEnv());
   const { layout } = useAnimatedLayout(plot, units, !reduced);
@@ -219,6 +229,27 @@ function SceneContents({
   const hot = new Set(highlightedSlots(layout, highlightField));
   const counts = tier === "high" ? { palms: 14, grass: 260 } : tier === "mid" ? { palms: 11, grass: 150 } : { palms: 8, grass: 70 };
   const animate = !reduced;
+
+  // labels: specs go to the DOM overlay only when their content changes; anchors are read every frame
+  const anchors = useRef(new Map<string, V3>());
+  const entries = [
+    ...layout.slots.flatMap((slot) =>
+      slotLabels(slot, world, {
+        hovered: hovered === slot.slot,
+        selected: selectedSlot === slot.slot,
+        showLabel: showLabels,
+        interactive,
+        canBuild: !!onEmptySlotClick,
+      }),
+    ),
+    ...dimensionLabels(layout, world, showDimensions, highlightField),
+  ];
+  anchors.current = new Map(entries.map((e) => [e.spec.key, e.anchor]));
+  const specs = entries.map((e) => e.spec);
+  const sig = JSON.stringify(specs);
+  useEffect(() => {
+    onLabels(JSON.parse(sig) as LabelSpec[]);
+  }, [sig, onLabels]);
 
   const body = (
     <>
@@ -241,7 +272,6 @@ function SceneContents({
           selected={selectedSlot === slot.slot}
           hovered={hovered === slot.slot}
           highlighted={hot.has(slot.slot)}
-          showLabel={showLabels}
           interactive={interactive}
           reduced={reduced}
           life={life && animate}
@@ -270,6 +300,7 @@ function SceneContents({
         </Selection>
       )}
       <CameraRig layout={layout} world={world} mode={mode} selectedSlot={selectedSlot} intro={intro ?? mode === "hero"} reduced={reduced} zoomEnabled={zoomEnabled} />
+      <LabelProjector anchors={anchors} registry={registry} />
     </>
   );
 }

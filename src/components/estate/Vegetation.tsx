@@ -114,19 +114,19 @@ function palmSpots(layout: SiteLayout): Pt[] {
   const R = layout.plot.rightX;
   const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
   const st = layout.site.street;
+  // mostly behind / beside the buildings so they frame the view instead of hiding the facades
   const spots: Pt[] = [
-    { x: leftX(5) - 7.5, z: 5 },
-    { x: leftX(22) - 10.5, z: 22 },
-    { x: leftX(41) - 7, z: 41 },
-    { x: leftX(60) - 10, z: 60 },
-    { x: leftX(D - 2) - 6.5, z: D - 2 },
-    { x: R + 7.5, z: 13 },
-    { x: R + 10, z: 36 },
-    { x: R + 6.5, z: D * 0.78 },
-    { x: (R + leftX(D)) / 2 + 5, z: D + 6 },
-    { x: (R + leftX(D)) / 2 - 7, z: D + 5 },
-    { x: FL.x - 9, z: (st.farShoulder[0] + st.farShoulder[1]) / 2 - 1.5 },
-    { x: R + 9, z: st.farShoulder[0] + 0.5 },
+    { x: leftX(33) - 9.5, z: 33 },
+    { x: leftX(D - 4) - 8, z: D - 4 },
+    { x: leftX(14) - 13, z: 14 },
+    { x: R + 7, z: 5 },
+    { x: R + 10.5, z: 23 },
+    { x: R + 7.5, z: 42 },
+    { x: R + 11, z: 58 },
+    { x: R + 7, z: D - 3 },
+    { x: (R + leftX(D)) / 2 + 6, z: D + 6 },
+    { x: (R + leftX(D)) / 2 - 6, z: D + 5 },
+    { x: R + 14, z: (st.farShoulder[0] + st.farShoulder[1]) / 2 - 1 },
   ];
   const rear = layout.rearYard.z1 - layout.rearYard.z0;
   if (rear > 6.5) spots.push({ x: leftX(D - rear / 2) + 4.2, z: D - rear / 2 });
@@ -164,7 +164,7 @@ export function Palms({ layout, world, animate, count }: { layout: SiteLayout; w
             return {
               yaw: (k / nF) * Math.PI * 2 + r() * 0.4,
               pitch: dead ? -1.15 - r() * 0.3 : k % 3 === 0 ? 0.55 + r() * 0.3 : -0.05 - r() * 0.45,
-              len: dead ? 6.5 : 8.5 + r() * 3,
+              len: dead ? 5.2 : 6.6 + r() * 2.4,
               dead,
             };
           }),

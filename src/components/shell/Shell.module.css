@@ -13,25 +13,29 @@
 .skip:focus {
   top: 12px;
 }
+/* ONE-SCREEN RULE: the shell is exactly the viewport; the body never scrolls.
+   Pages fill .main (flex column) and scroll inside their own panels; .main only scrolls as a fallback. */
 .shell {
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .main {
+  position: relative;
   flex: 1;
-  width: 100%;
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 22px var(--page-pad) 56px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
   outline: none;
-  min-width: 0;
 }
 
 /* ---------- HUD bar ---------- */
 .bar {
-  position: sticky;
-  top: 0;
+  position: relative;
+  flex: none;
   z-index: var(--z-bar);
   background: linear-gradient(180deg, #1b1814 0%, #141210 100%);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.38);
@@ -212,7 +216,7 @@
   min-width: 0;
 }
 
-/* clock */
+/* clock — Tamil time-of-day word (src/lib/day-phase.ts, shared with the 3D lighting) + time + sun/moon arc */
 .clock {
   --phase: var(--marigold);
   display: flex;
@@ -224,41 +228,71 @@
   border-right: 1px solid var(--line);
 }
 .clock[data-phase="dawn"] {
-  --phase: #f2a46b;
+  --phase: #f4a77a;
 }
-.clock[data-phase="dusk"] {
+.clock[data-phase="afternoon"] {
+  --phase: #ffd27f;
+}
+.clock[data-phase="evening"] {
   --phase: var(--saffron);
 }
 .clock[data-phase="night"] {
-  --phase: #b9c6dc;
+  --phase: #c3cee0;
 }
-.phaseIcon {
+.arc {
   flex: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  color: var(--phase);
-  border: 1px solid color-mix(in srgb, var(--phase) 35%, transparent);
-  background: color-mix(in srgb, var(--phase) 9%, transparent);
-  border-radius: var(--radius-xs);
+  width: 40px;
+  height: 24px;
+  overflow: visible;
 }
-.phaseIcon svg {
-  width: 17px;
-  height: 17px;
+.arcPath {
+  fill: none;
+  stroke: var(--line-bright);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 2.5;
+}
+.horizon {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.sun circle {
+  fill: var(--phase);
+}
+.sun .sunHalo {
+  fill: none;
+  stroke: var(--phase);
+  stroke-opacity: 0.35;
+}
+.moon circle {
+  fill: var(--phase);
+}
+.moon .moonCut {
+  fill: #181512;
 }
 .clockText {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  min-width: 0;
 }
-.time {
+.clockTop {
   display: flex;
   align-items: baseline;
+  gap: 8px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.tamilPhase {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--phase);
+  line-height: 1;
+}
+.time {
   font-family: var(--ff-display);
-  font-size: 21px;
+  font-size: 19px;
   font-weight: 700;
-  line-height: 0.95;
+  line-height: 0.9;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -271,20 +305,11 @@
     opacity: 0.35;
   }
 }
-.secs {
+.ampm {
   margin-left: 3px;
-  font-size: 13px;
-  color: var(--text-faint);
-}
-.tz {
-  margin-left: 6px;
-  padding: 2px 4px 1px;
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   color: var(--text-dim);
-  border: 1px solid var(--line-strong);
-  border-radius: 2px;
-  align-self: center;
 }
 .date {
   display: flex;
@@ -297,6 +322,7 @@
   text-transform: uppercase;
   color: var(--text-faint);
   line-height: 1;
+  white-space: nowrap;
 }
 .dot {
   width: 3px;
@@ -304,28 +330,13 @@
   background: var(--phase);
   transform: rotate(45deg);
 }
-.meter {
-  display: grid;
-  grid-template-columns: repeat(24, 1fr);
-  gap: 1px;
-  width: 100%;
-  min-width: 96px;
-  height: 3px;
-  margin-top: 1px;
-}
-.meter span {
-  background: rgba(243, 233, 216, 0.08);
-}
-.meter span[data-p="day"] {
-  background: rgba(255, 181, 71, 0.26);
-}
-.meter span[data-p="dawn"],
-.meter span[data-p="dusk"] {
-  background: rgba(200, 105, 63, 0.55);
-}
-.meter span[data-now] {
-  background: var(--plaster);
-  transform: scaleY(2.2);
+.tz {
+  padding: 2px 3px 1px;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
 }
 
 /* command button */
@@ -381,9 +392,7 @@
 }
 @media (max-width: 1060px) {
   .navIndex,
-  .date,
-  .meter,
-  .secs {
+  .date {
     display: none;
   }
   .brandName {
@@ -402,9 +411,6 @@
   }
   .cmdkIcon {
     display: inline-flex !important;
-  }
-  .tz {
-    display: none;
   }
 }
 
@@ -441,32 +447,28 @@
     gap: 6px;
     border-right: 0;
   }
-  .phaseIcon {
-    width: auto;
-    height: auto;
-    border: 0;
-    background: none;
+  .arc {
+    width: 30px;
+    height: 18px;
   }
-  .phaseIcon svg {
-    width: 15px;
-    height: 15px;
+  .clockTop {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+  .tamilPhase {
+    font-size: 11px;
   }
   .time {
-    font-size: 17px;
+    font-size: 16px;
   }
   .band {
     height: 4px;
     background-size: 12px 4px;
   }
-  .main {
-    padding: 14px var(--page-pad) calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom));
-  }
-
   .tabbar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: relative;
+    flex: none;
     z-index: var(--z-bar);
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -538,7 +540,7 @@
   }
 }
 @media (max-width: 370px) {
-  .phaseIcon {
+  .arc {
     display: none;
   }
 }

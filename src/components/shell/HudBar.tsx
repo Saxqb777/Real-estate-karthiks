@@ -8,7 +8,7 @@ import { useState } from "react";
 import { IconButton, Kbd, useCommandPalette } from "@/components/ui";
 import { logout, useApi } from "@/lib/client";
 import { BrandMark } from "./BrandMark";
-import { dayPhaseAt, istTime } from "./day-phase";
+import { dayPhaseAt, hourInIST } from "@/lib/day-phase";
 import { IstClock, useEpochSecond } from "./IstClock";
 import { isActive, NAV } from "./nav";
 import styles from "./Shell.module.css";
@@ -18,11 +18,11 @@ export function useBrandName(): string {
   return data?.brandName?.trim() || "Pattukottai Estates";
 }
 
-/** Brand mark whose windows light up at dusk/night (IST). */
+/** Brand mark whose windows light up in the evening, at night and before dawn (IST). */
 function LiveMark() {
   const sec = useEpochSecond();
-  const phase = sec ? dayPhaseAt(istTime(new Date(sec * 1000)).fractional) : "night";
-  return <BrandMark className={styles.mark} lit={phase === "dusk" || phase === "night"} />;
+  const phase = sec ? dayPhaseAt(hourInIST(new Date(sec * 1000))).phase : "night";
+  return <BrandMark className={styles.mark} lit={phase === "evening" || phase === "night" || phase === "dawn"} />;
 }
 
 /** Top HUD bar: brand, nav with sliding marker, IST clock, ⌘K, sign out. */

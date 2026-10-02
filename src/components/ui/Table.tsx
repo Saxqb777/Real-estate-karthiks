@@ -39,6 +39,8 @@ export interface TableProps<T> {
   defaultSort?: { key: string; dir: "asc" | "desc" };
   /** Hide the footer row even if columns define footers. */
   hideFooter?: boolean;
+  /** Fill the parent flex column (e.g. a <Panel fill padding="none">) and scroll inside with a sticky header. */
+  fill?: boolean;
   className?: string;
 }
 
@@ -58,6 +60,7 @@ export function Table<T>({
   maxHeight,
   defaultSort,
   hideFooter,
+  fill,
   className,
 }: TableProps<T>) {
   const [sort, setSort] = useState<Sort>(defaultSort ?? null);
@@ -96,7 +99,7 @@ export function Table<T>({
   };
 
   return (
-    <div className={cx(styles.wrap, className)} style={{ maxHeight }} aria-busy={loading || undefined}>
+    <div className={cx(styles.wrap, fill && styles.fill, className)} style={{ maxHeight }} aria-busy={loading || undefined}>
       <table className={cx(styles.table, dense && styles.dense)}>
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead>
