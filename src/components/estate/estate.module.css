@@ -35,6 +35,18 @@
   animation: fadeIn 900ms ease-out both;
 }
 
+/* focus dimming: the world steps back while a panel is read (labels stay crisp) */
+.canvas {
+  transition: filter 650ms ease;
+}
+.dimmed .canvas {
+  filter: saturate(0.5) brightness(0.62);
+}
+.dimmed .overlay {
+  opacity: 0.55;
+  transition: opacity 650ms ease;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -209,6 +221,86 @@
   margin-top: 4px;
   color: var(--text-faint, #6f675c);
   font-size: 11px;
+}
+
+/* next-step hint inside a card / tip: appears after a short beat so a quick sweep of the mouse stays calm */
+.cardHint {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--line, rgba(243, 233, 216, 0.09));
+  color: var(--text-faint, #6f675c);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  animation: hintIn 220ms ease-out 320ms both;
+}
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+/* ── world-object tooltip (mailbox, notice board, pole, …) ── */
+.tip {
+  position: relative;
+  min-width: 132px;
+  padding: 7px 10px 7px;
+  color: var(--text, #f2eadd);
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: 12px;
+  line-height: 1.3;
+  background: var(--panel-glass, rgba(22, 19, 16, 0.86));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong, rgba(243, 233, 216, 0.18));
+  border-left: 2px solid var(--tone);
+  border-radius: 5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  animation: pop 160ms ease-out both;
+}
+.tipTitle {
+  font-family: var(--font-display, sans-serif);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tipSub {
+  margin-top: 1px;
+  color: var(--text-dim, #a89e8f);
+}
+
+/* ── "unexplored" marker: a small marigold diamond above objects never opened yet ── */
+.unexplored {
+  position: relative;
+  display: block;
+  width: 9px;
+  height: 9px;
+  background: var(--marigold, #ffb547);
+  border: 1.5px solid #1d1404;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.22);
+}
+.unexplored::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 1px solid rgba(255, 181, 71, 0.55);
+  border-radius: 3px;
+  animation: ping 3.2s ease-out infinite;
+}
+@keyframes ping {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  45%,
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
 }
 
 /* ── compact always-on name tag ── */
@@ -445,6 +537,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .unexplored::after,
+  .cardHint,
+  .tip,
   .card,
   .fadeIn,
   .skeletonPlan path,

@@ -295,7 +295,7 @@ function ObjectCard({ obj, data, onClose, onExpand, openForm }: { obj: SceneObje
       title={parts?.title ?? ""}
       aside={parts?.aside}
       actions={parts?.actions}
-      width={308}
+      width={326}
     >
       {parts?.body}
       {parts && <p className={s.cardHint}>Enter to expand · Esc to close</p>}

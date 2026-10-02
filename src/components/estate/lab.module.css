@@ -142,3 +142,58 @@
     max-height: 45vh;
   }
 }
+
+/* contract v2 overlays: the free area the camera frames into, and the last reported screen point */
+.free {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px dashed rgba(255, 181, 71, 0.45);
+  border-radius: 6px;
+}
+.free span {
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  font-family: var(--font-display, sans-serif);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 181, 71, 0.7);
+}
+.mark {
+  position: absolute;
+  z-index: 4;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.mark::before,
+.mark::after {
+  content: "";
+  position: absolute;
+  background: #ff5d73;
+}
+.mark::before {
+  left: -9px;
+  top: -1px;
+  width: 18px;
+  height: 2px;
+}
+.mark::after {
+  left: -1px;
+  top: -9px;
+  width: 2px;
+  height: 18px;
+}
+.mark span {
+  position: absolute;
+  left: 10px;
+  top: -20px;
+  padding: 1px 5px;
+  font: 600 10px/1.4 ui-monospace, monospace;
+  color: #fff;
+  background: rgba(255, 93, 115, 0.85);
+  border-radius: 3px;
+  white-space: nowrap;
+}

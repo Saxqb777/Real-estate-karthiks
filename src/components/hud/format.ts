@@ -12,23 +12,26 @@ export const BUCKETS: Record<Bucket, { label: string; tone: "teal" | "marigold" 
   occupancy: { label: "Occupancy", tone: "sky", note: "Days let and days empty" },
 };
 
+/** Negative = a real minus sign (−), never a hyphen. */
+const minus = (s: string) => (s.startsWith("-") ? `−${s.slice(1)}` : s);
+
 /** Whole rupees unless paise exist (contract §6). */
 export function inr(n: number | null | undefined): string {
   if (n === null || n === undefined || !isFinite(n)) return "—";
-  return formatINR(n, Math.round(n * 100) % 100 !== 0);
+  return minus(formatINR(n, Math.round(n * 100) % 100 !== 0));
 }
 
 /** ₹45.2 L / ₹1.25 Cr for big HUD figures; exact value goes in the tooltip. */
-export const inrCompact = (n: number | null | undefined) => formatINRCompact(n);
+export const inrCompact = (n: number | null | undefined) => minus(formatINRCompact(n));
 
 /** Print a figure in its explain format. `compact` only affects money ≥ ₹1 L. */
 export function fmt(value: number | null | undefined, format: ExplainFormat, compact = false): string {
   if (value === null || value === undefined || !isFinite(value)) return "—";
   switch (format) {
     case "inr":
-      return compact && Math.abs(value) >= 1e5 ? formatINRCompact(value) : inr(value);
+      return compact && Math.abs(value) >= 1e5 ? inrCompact(value) : inr(value);
     case "pct":
-      return formatPercent(value, 1);
+      return minus(formatPercent(value, 1));
     case "multiplier":
       return `×${value.toFixed(2)}`;
     case "days":
@@ -36,7 +39,7 @@ export function fmt(value: number | null | undefined, format: ExplainFormat, com
     case "years":
       return `${value.toFixed(1)} yrs`;
     case "count":
-      return formatIndianNumber(value);
+      return minus(formatIndianNumber(value));
     case "inrPerSqft":
       return `${inr(value)}/sqft`;
   }

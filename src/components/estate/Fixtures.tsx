@@ -94,26 +94,28 @@ function Mailbox({ layout, world, mail }: { layout: SiteLayout; world: World; ma
 
 function NoticeBoard({ layout, world, notes, tamil }: { layout: SiteLayout; world: World; notes: number; tamil: boolean }) {
   const nb = layout.fixtures.noticeBoard;
-  const onWall = nb.on === "wall";
   const w = nb.widthFt;
-  const h = onWall ? 2.1 : 2.6;
-  const y = onWall ? WALL_H - h / 2 - 0.5 : 4.7;
-  const X = world.x(nb.x);
-  const Z = world.z(nb.z - (onWall ? 0.28 + 0.1 : 0.36));
+  const h = 2.3;
+  const y = WALL_H - h / 2 - 0.35;
+  // mounted on the outer (left) face of the side compound wall, facing the lane (world −X)
+  const X = world.x(nb.x - 0.28 - 0.12);
+  const Z = world.z(nb.z);
   const face = useMemo(() => std("#ffffff", { map: noticeTex(Math.max(0, Math.min(6, Math.round(notes))), tamil), rough: 0.9 }), [notes, tamil]);
   const frame = useMemo<Part[]>(
     () => [
       box([0, y, -0.06], [w + 0.36, h + 0.36, 0.16], "#5a3519"),
       box([0, y + h / 2 + 0.36, 0.1], [w + 0.9, 0.12, 0.6], "#8f3424", [-0.25, 0, 0]), // little tiled hood
       box([0, y + h / 2 + 0.2, -0.05], [w + 0.5, 0.16, 0.2], "#6b3f22"),
+      box([-w / 2 + 0.2, (y - h / 2) / 2, -0.05], [0.18, y - h / 2, 0.18], "#5a3519"),
+      box([w / 2 - 0.2, (y - h / 2) / 2, -0.05], [0.18, y - h / 2, 0.18], "#5a3519"),
     ],
     [w, h, y],
   );
-  const anchor = useMemo<V3>(() => [X, y + h / 2 + 1.1, Z], [X, y, h, Z]);
+  const anchor = useMemo<V3>(() => [X - 0.6, y + h / 2 + 1.2, Z], [X, y, h, Z]);
   return (
-    <Hotspot spot={{ key: "noticeboard", kind: "noticeboard", anchor }} hit={<mesh geometry={G.box()} position={[X, y, Z + 0.3]} scale={[w + 1.4, h + 1.6, 1.4]} visible={false} />}>
-      <group position={[X, 0, Z]}>
-        <Baked parts={frame} material={vcMaterial(0.8)} />
+    <Hotspot spot={{ key: "noticeboard", kind: "noticeboard", anchor }} hit={<mesh geometry={G.box()} position={[X - 0.5, y - 0.6, Z]} scale={[1.6, h + 2.6, w + 1.6]} visible={false} />}>
+      <group position={[X, 0, Z]} rotation={[0, -Math.PI / 2, 0]}>
+        <Baked parts={frame} material={vcMaterial(0.8)} cast />
         <mesh geometry={G.plane()} material={face} position={[0, y, 0.03]} scale={[w, h, 1]} />
       </group>
     </Hotspot>
@@ -125,13 +127,13 @@ function NoticeBoard({ layout, world, notes, tamil }: { layout: SiteLayout; worl
 function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: World; state: "paid" | "due" | "plain"; tamil: boolean }) {
   const t = layout.fixtures.taxStamp;
   const X = world.x(t.x);
-  const Z = world.z(t.z - PILLAR / 2 - 0.05);
-  const y = 3.7;
+  const Z = world.z(t.z - (t.on === "wall" ? 0.38 : PILLAR / 2 + 0.05));
+  const y = t.on === "wall" ? 5.4 : 3.7;
   const face = useMemo(() => new THREE.MeshStandardMaterial({ map: taxStampTex(state, tamil), roughness: 0.45, metalness: 0.25, transparent: true }), [state, tamil]);
   useEffect(() => () => face.dispose(), [face]);
   const disc = useMemo(() => new THREE.CircleGeometry(0.5, 28), []);
   useEffect(() => () => disc.dispose(), [disc]);
-  const anchor = useMemo<V3>(() => [X, y + 1.4, Z], [X, Z]);
+  const anchor = useMemo<V3>(() => [X, y + 1.4, Z], [X, y, Z]);
   return (
     <Hotspot spot={{ key: "taxstamp", kind: "taxstamp", anchor }} hit={<mesh geometry={G.box()} position={[X, y, Z]} scale={[2.0, 2.0, 1.4]} visible={false} />}>
       <group position={[X, y, Z]}>

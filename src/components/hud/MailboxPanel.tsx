@@ -8,7 +8,6 @@ import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
 import { BucketHead, Fig, FigCell, FigCells, Rupees, ScopeChip } from "./Figure";
 import { useFormDrawer } from "./FormDrawer";
 import { explainKey, firstName, inr } from "./format";
-import { RentStatePill } from "./UnitPanel";
 import type { PeriodKind } from "./types";
 import s from "./hud.module.css";
 import b from "./bits.module.css";
@@ -83,11 +82,10 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, side = "right"
                       <span className={b.payerName}>
                         {firstName(u.activeLease!.tenantName)} <span className={b.payerUnit}>· {u.name}</span>
                       </span>
-                      <span className={b.payerDue}>
+                      <span className={cx(b.payerDue, late && b.lateText)}>
                         {np ? (late ? `${np.arrears.months.length} months owed · ${inr(np.arrears.totalWithFees)}` : `${np.label} · due ${formatDate(np.dueDate)}`) : "Up to date"}
                       </span>
                     </button>
-                    <RentStatePill unit={u} />
                     <Button
                       size="sm"
                       variant={late ? "primary" : "secondary"}

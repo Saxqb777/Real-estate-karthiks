@@ -1,19 +1,23 @@
 "use client";
 // A front/back slot on the plot: the townhouse plus its status language (DESIGN.md "The world"):
 //   occupied + paid → teal ring · due within 5 days → marigold ring · overdue → coral pulsing ring + "!" quest marker
-//   vacant → blueprint hologram + TO-LET board · inactive → desaturated · no unit → wireframe slot with "+ Build unit".
+//   vacant → blueprint hologram + TO-LET board · incoming (lease signed, starts later) → blueprint + "Moving in D/M" board
+//   inactive → desaturated · no unit → wireframe slot with "+ Build unit".
+// The house, its board and its tenant are clickable world objects (Interact.tsx).
 import { Line } from "@react-three/drei";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { Select } from "@react-three/postprocessing";
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 import { formatFeetInches, type BuildingSlot, type SlotName } from "@/lib/site-layout";
 import type { Env } from "./env";
+import { useTamilFont } from "./Fixtures";
+import { Hotspot, spotKey, useScene, type V3 } from "./Interact";
 import { G, PAL, std } from "./materials";
+import { TenantFigure } from "./People";
 import { Townhouse } from "./Townhouse";
-import { glowTex, kolamTex, toLetTex } from "./textures";
-import type { LabelSpec, Tone, V3 } from "./Overlay";
-import { FLAT, easeOutBack, type World } from "./util";
+import { glowTex, kolamTex, movingInTex, toLetTex } from "./textures";
+import type { LabelSpec, Tone } from "./Overlay";
+import { FLAT, easeOutBack, planShape, type World } from "./util";
 
 export type SceneMode = "hero" | "preview" | "login";
 
@@ -23,34 +27,53 @@ export interface UnitSlotProps {
   env: RefObject<Env>;
   mode: SceneMode;
   selected: boolean;
-  hovered: boolean;
   highlighted: boolean;
   interactive: boolean;
   reduced: boolean;
   life: boolean;
   rise: boolean;
   index: number;
-  onHover: (slot: SlotName | null) => void;
-  onSelect?: (id: string) => void;
   onEmptyClick?: (slot: SlotName) => void;
-  /** where the TO-LET board stands (plan ft) — the unit's gate on the street */
+  /** where the unit's gate is on the street (plan ft): its TO-LET board stands there, its kolam is drawn there */
   signAt?: { x: number; z: number };
-  /** registers the building hit box (used to fade labels hidden behind buildings) */
+  /** hang the TO-LET board on the building's side wall instead (a back house, seen over the side passage) */
+  boardOnWall?: boolean;
+  /** registers the building hit volume (used to fade labels hidden behind buildings) */
   occluder?: (o: THREE.Object3D | null) => void;
+}
+
+/** "1/11" from an ISO date-only string (UTC parts, like formatDate). */
+export function dayMonth(iso: string | null | undefined): string {
+  if (!iso) return "soon";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "soon" : `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 }
 
 export function statusLook(slot: BuildingSlot) {
   const u = slot.unit;
   if (!u || slot.status === "empty") return { ring: null, label: "Empty slot", tone: "faint" as Tone };
   if (slot.status === "inactive") return { ring: null, label: "Inactive", tone: "faint" as Tone };
+  if (slot.status === "incoming") return { ring: PAL.sky, label: `Moving in ${dayMonth(u.moveInDate)}`, tone: "sky" as Tone };
   if (slot.status === "vacant") return { ring: PAL.sky, label: u.vacantDays ? `Vacant · ${u.vacantDays} days` : "Vacant", tone: "sky" as Tone };
-  if (u.rentState === "overdue") return { ring: PAL.coral, label: u.daysOverdue ? `Overdue · ${u.daysOverdue} days` : "Rent overdue", tone: "coral" as Tone };
+  if (u.rentState === "overdue") return { ring: PAL.coral, label: u.daysOverdue ? `Rent ${u.daysOverdue} days late` : "Rent overdue", tone: "coral" as Tone };
   if (u.rentState === "due-soon") return { ring: PAL.marigold, label: "Rent due soon", tone: "marigold" as Tone };
   return { ring: PAL.teal, label: "Rent paid", tone: "teal" as Tone };
 }
 
-/** Label specs + anchors for a slot (cards on hover/selection, compact tags when labels are on, build buttons). */
-export function slotLabels(slot: BuildingSlot, world: World, o: { hovered: boolean; selected: boolean; showLabel: boolean; interactive: boolean; canBuild: boolean }): { spec: LabelSpec; anchor: V3 }[] {
+/** Roof-top anchor of a slot (cards, tooltips, `screen` coords). */
+export function slotAnchor(slot: BuildingSlot, world: World): V3 {
+  const cx = world.x((slot.rect.x0 + slot.rect.x1) / 2);
+  const cz = world.z((slot.rect.z0 + slot.rect.z1) / 2);
+  const marker = slot.unit?.rentState === "overdue" && slot.status === "occupied";
+  return [cx, slot.heightFt + slot.parapetFt + (marker ? 12.5 : 4.5), cz];
+}
+
+/** Label specs + anchors for a slot (card on hover / selection, compact tag when labels are on, build button). */
+export function slotLabels(
+  slot: BuildingSlot,
+  world: World,
+  o: { hovered: boolean; selected: boolean; showLabel: boolean; interactive: boolean; canBuild: boolean; meta: boolean },
+): { spec: LabelSpec; anchor: V3 }[] {
   const cx = world.x((slot.rect.x0 + slot.rect.x1) / 2);
   const cz = world.z((slot.rect.z0 + slot.rect.z1) / 2);
   if (!o.interactive) return [];
@@ -59,9 +82,16 @@ export function slotLabels(slot: BuildingSlot, world: World, o: { hovered: boole
   }
   const u = slot.unit;
   const look = statusLook(slot);
-  const top = slot.heightFt + slot.parapetFt + (u.rentState === "overdue" && slot.status === "occupied" ? 12.5 : 4.5);
-  const anchor: V3 = [cx, top, cz];
+  const anchor = slotAnchor(slot, world);
   if (o.hovered || o.selected) {
+    const row =
+      slot.status === "occupied"
+        ? { left: u.tenantName || "Tenant", right: u.monthlyRent ? u.monthlyRent : null }
+        : slot.status === "incoming"
+          ? { left: u.tenantName ? `${u.tenantName} moves in` : "Lease signed", right: u.monthlyRent ? u.monthlyRent : null }
+          : slot.status === "vacant"
+            ? { left: "Ready to let", right: null }
+            : null;
     return [
       {
         spec: {
@@ -71,11 +101,9 @@ export function slotLabels(slot: BuildingSlot, world: World, o: { hovered: boole
           name: u.name,
           tone: look.tone,
           status: look.label,
-          tenant: u.tenantName ?? null,
-          rent: u.monthlyRent ?? null,
-          occupied: slot.status === "occupied",
-          vacant: slot.status === "vacant",
-          meta: `${slot.floors} floor${slot.floors === 1 ? "" : "s"} · ${formatFeetInches(slot.widthFt)} × ${formatFeetInches(slot.depthFt)}`,
+          row,
+          meta: o.meta ? `${slot.floors} floor${slot.floors === 1 ? "" : "s"} · ${formatFeetInches(slot.widthFt)} × ${formatFeetInches(slot.depthFt)}` : null,
+          hint: o.hovered && !o.selected ? "Click for details · right-click for actions" : null,
         },
         anchor,
       },
@@ -89,14 +117,18 @@ export function UnitSlot(p: UnitSlotProps) {
   return <BuiltSlot {...p} />;
 }
 
-function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interactive, reduced, life, rise, index, onHover, onSelect, signAt, occluder }: UnitSlotProps) {
+function BuiltSlot({ slot, world, env, mode, selected, highlighted, interactive, reduced, life, rise, index, signAt, boardOnWall, occluder }: UnitSlotProps) {
   const u = slot.unit!;
   const look = statusLook(slot);
+  const api = useScene();
+  const key = spotKey("unit", u.id);
+  const hovered = api.hovered === key;
   const group = useRef<THREE.Group>(null);
   const born = useRef<number | null>(null);
   const totalH = slot.heightFt + slot.parapetFt;
   const cx = world.x((slot.rect.x0 + slot.rect.x1) / 2);
   const cz = world.z((slot.rect.z0 + slot.rect.z1) / 2);
+  const empty = slot.status === "vacant" || slot.status === "incoming";
 
   useFrame(({ clock }) => {
     const g = group.current;
@@ -110,53 +142,51 @@ function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interacti
     g.scale.y = Math.max(0.001, easeOutBack(t));
   });
 
-  const handlers = interactive
-    ? {
-        onPointerOver: (e: ThreeEvent<PointerEvent>) => {
-          e.stopPropagation();
-          onHover(slot.slot);
-        },
-        onPointerOut: () => onHover(null),
-        onClick: (e: ThreeEvent<MouseEvent>) => {
-          e.stopPropagation();
-          if (e.delta > 6) return;
-          onSelect?.(u.id);
-        },
-      }
-    : {};
+  // hit volume = the real outline (the porch notch stays open, so the tenant standing in it can be clicked)
+  const sig = JSON.stringify([slot.outline, totalH, world.cx, world.cz]);
+  const hitGeo = useMemo(
+    () => new THREE.ExtrudeGeometry(planShape(slot.outline, world), { depth: totalH + 6.5, bevelEnabled: false, curveSegments: 1 }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sig],
+  );
+  useEffect(() => () => hitGeo.dispose(), [hitGeo]);
+  const anchor = useMemo(() => slotAnchor(slot, world), [slot, world]);
 
   return (
     <group>
-      <Select enabled={(hovered || selected) && interactive}>
+      <Hotspot
+        spot={{ key, kind: "unit", unitId: u.id, anchor }}
+        selected={selected}
+        hit={<mesh ref={occluder} geometry={hitGeo} rotation={FLAT} visible={false} />}
+      >
         <group ref={group}>
           <Townhouse
             slot={slot}
             world={world}
             env={env}
             finish={slot.status === "inactive" ? "muted" : "normal"}
-            ghost={slot.status === "vacant"}
+            ghost={empty}
             lived={slot.status === "occupied"}
             clothes={slot.status === "occupied" && life}
             animate={!reduced && life}
           />
         </group>
-      </Select>
+      </Hotspot>
       {look.ring && (
         <StatusRing
           slot={slot}
           world={world}
           color={look.ring}
           pulse={u.rentState === "overdue" && slot.status === "occupied" && !reduced}
-          dashed={slot.status === "vacant"}
+          dashed={empty}
           boost={hovered || selected || highlighted ? 1 : 0}
         />
       )}
       {!look.ring && (highlighted || selected) && <StatusRing slot={slot} world={world} color={PAL.marigold} pulse={false} dashed={false} boost={1} />}
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
-      {slot.status === "vacant" && <ToLetBoard slot={slot} world={world} reduced={reduced} at={signAt} />}
+      {empty && <LetBoard slot={slot} world={world} reduced={reduced} at={signAt} onWall={!!boardOnWall} incoming={slot.status === "incoming"} />}
+      {slot.status === "occupied" && mode !== "preview" && interactive && <TenantFigure slot={slot} world={world} env={env} index={index} />}
       {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x)} z={world.z(signAt.z - 1.2)} env={env} />}
-      {/* invisible hit box: hover / click target for the whole building */}
-      <mesh ref={occluder} visible={false} position={[cx, totalH / 2, cz]} scale={[slot.widthFt + 1, totalH + 1, slot.depthFt + 1]} geometry={G.box()} {...handlers} />
     </group>
   );
 }
@@ -267,45 +297,41 @@ function QuestMarker({ x, y, z, roof, reduced }: { x: number; y: number; z: numb
   );
 }
 
-// ───────────────────────────── vacant: TO-LET board ─────────────────────────────
+// ───────────────────────────── vacant: TO-LET board · incoming: "Moving in D/M" slate ─────────────────────────────
 
-function useTamilFont(): boolean {
-  const [ok, setOk] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    const fam = getComputedStyle(document.body).getPropertyValue("--font-tamil").trim();
-    if (!fam || !document.fonts?.load) return;
-    document.fonts
-      .load(`700 52px ${fam}`, "வாடகைக்கு")
-      .then((faces) => alive && setOk(faces.length > 0))
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return ok;
-}
-
-function ToLetBoard({ slot, world, reduced, at }: { slot: BuildingSlot; world: World; reduced: boolean; at?: { x: number; z: number } }) {
+function LetBoard({ slot, world, reduced, at, onWall, incoming }: { slot: BuildingSlot; world: World; reduced: boolean; at?: { x: number; z: number }; onWall: boolean; incoming: boolean }) {
   const tamil = useTamilFont();
   const ref = useRef<THREE.Group>(null);
-  const face = useMemo(() => std("#ffffff", { map: toLetTex(tamil), rough: 0.7 }), [tamil]);
+  const date = dayMonth(slot.unit?.moveInDate);
+  const face = useMemo(() => std("#ffffff", { map: incoming ? movingInTex(date, tamil) : toLetTex(tamil), rough: 0.7 }), [incoming, date, tamil]);
   const wood = std(PAL.wood, { rough: 0.85 });
   useFrame(({ clock }) => {
-    if (ref.current && !reduced) ref.current.rotation.z = Math.sin(clock.elapsedTime * 1.3) * 0.025;
+    if (ref.current && !reduced) ref.current.rotation.z = Math.sin(clock.elapsedTime * 1.3) * (onWall ? 0.012 : 0.025);
   });
-  // at the unit's gate on the street (fallback: the porch mouth), facing the road
-  const x = world.x(at ? at.x : slot.notch.wide.x0 + (slot.notch.wide.x1 - slot.notch.wide.x0) * 0.45);
-  const z = world.z(at ? at.z : slot.rect.z0 - 2.4);
+  const unitId = slot.unit!.id;
+  // street board at the unit's gate, facing the road — or hung on the side wall facing the passage (world −X)
+  const wallY = Math.min(slot.heightFt - 2.2, slot.floors > 1 ? 10.5 + 2.2 : 5.6);
+  const pos: V3 = onWall
+    ? [world.x(slot.rect.x0 - 0.3), 0, world.z(slot.rect.z0 + Math.min(slot.depthFt * 0.4, 9))]
+    : [world.x(at ? at.x : slot.notch.wide.x0 + (slot.notch.wide.x1 - slot.notch.wide.x0) * 0.45), 0, world.z(at ? at.z : slot.rect.z0 - 2.4)];
+  const rotY = onWall ? -Math.PI / 2 : -0.12;
+  const boardY = onWall ? wallY : 6.0;
+  const anchor = useMemo<V3>(() => [pos[0] - (onWall ? 0.5 : 0), boardY + 2.4, pos[2]], [pos[0], pos[2], boardY, onWall]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <group position={[x, 0, z]} rotation={[0, -0.12, 0]}>
-      {[-2.1, 2.1].map((dx) => (
-        <mesh key={dx} geometry={G.box()} material={wood} scale={[0.3, 7.4, 0.3]} position={[dx, 3.7, 0]} castShadow />
-      ))}
-      <group ref={ref} position={[0, 6.0, 0.2]}>
-        <mesh geometry={G.box()} material={[wood, wood, wood, wood, face, wood]} scale={[5.6, 2.8, 0.16]} castShadow />
+    <Hotspot
+      spot={{ key: spotKey("tolet", unitId), kind: "tolet", unitId, anchor }}
+      hit={<mesh geometry={G.box()} position={[pos[0], onWall ? boardY : 4.4, pos[2]]} scale={[6.4, onWall ? 3.6 : 8.8, 1.6]} rotation={[0, rotY, 0]} visible={false} />}
+    >
+      <group position={pos} rotation={[0, rotY, 0]}>
+        {!onWall &&
+          [-2.1, 2.1].map((dx) => <mesh key={dx} geometry={G.box()} material={wood} scale={[0.3, 7.4, 0.3]} position={[dx, 3.7, 0]} castShadow />)}
+        {onWall &&
+          [-1.9, 1.9].map((dx) => <mesh key={dx} geometry={G.box()} material={wood} scale={[0.08, 1.2, 0.08]} position={[dx, boardY + 1.9, 0.05]} rotation={[0, 0, dx > 0 ? -0.35 : 0.35]} />)}
+        <group ref={ref} position={[0, boardY, onWall ? 0.12 : 0.2]}>
+          <mesh geometry={G.box()} material={[wood, wood, wood, wood, face, wood]} scale={[5.6, 2.8, 0.16]} castShadow />
+        </group>
       </group>
-    </group>
+    </Hotspot>
   );
 }
 

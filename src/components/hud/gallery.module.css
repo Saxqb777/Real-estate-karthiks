@@ -1,0 +1,561 @@
+/* /hud-gallery — review harness; the "game" stage is the reference composition for the Overview. */
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(14, 13, 11, 0.6);
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.kicker {
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--marigold);
+}
+.h1 {
+  font-size: 20px;
+}
+.stages {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stageBtn {
+  height: 30px;
+  padding: 1px 11px 0;
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+.stageBtn:hover {
+  color: var(--text);
+}
+.stageOn {
+  color: var(--text);
+  background: rgba(255, 181, 71, 0.1);
+  box-shadow: inset 0 -2px 0 var(--marigold);
+}
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.loading {
+  padding: 24px;
+}
+.flex {
+  flex: 1;
+}
+
+/* ---------------- game composition */
+.game {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.world {
+  position: absolute;
+  inset: 0;
+  transition: filter 600ms var(--ease-out);
+}
+.worldDim {
+  filter: saturate(0.82) brightness(0.86);
+}
+.scene {
+  position: absolute !important;
+  inset: 0;
+  height: 100%;
+}
+.hud {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr) 372px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "top top top"
+    "left . right"
+    "bottom bottom bottom";
+  gap: 12px;
+  padding: 12px 16px 12px;
+  pointer-events: none;
+}
+.hud > * {
+  pointer-events: auto;
+}
+/* a side panel keeps its full height; the dock slides up between the panels */
+.hud[data-left]:not([data-right]) {
+  grid-template-areas:
+    "top top top"
+    "left . ."
+    "left bottom bottom";
+}
+.hud[data-right]:not([data-left]) {
+  grid-template-areas:
+    "top top top"
+    ". . right"
+    "bottom bottom right";
+}
+.hud[data-left][data-right] {
+  grid-template-areas:
+    "top top top"
+    "left . right"
+    "left bottom right";
+}
+.hudChips {
+  flex: 0 1 auto;
+}
+.hudPeriod {
+  flex: none;
+}
+.hudTop {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  pointer-events: none;
+}
+.hudTop > * {
+  pointer-events: auto;
+}
+.left {
+  grid-area: left;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.right {
+  grid-area: right;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.left > *,
+.right > * {
+  flex: 0 1 auto;
+}
+.bottom {
+  grid-area: bottom;
+  min-width: 0;
+}
+.propChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 8px 0 10px;
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: rgba(27, 23, 19, 0.88);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+  flex: none;
+}
+.propChip svg {
+  width: 15px;
+  height: 15px;
+  color: var(--marigold);
+}
+.propChip kbd {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10.5px;
+}
+.propChipOn {
+  border-color: rgba(255, 181, 71, 0.5);
+  background: rgba(46, 36, 22, 0.92);
+}
+
+/* ---------------- sketch backdrop */
+.sketch {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(90% 70% at 50% 45%, rgba(181, 83, 46, 0.12), transparent 70%),
+    radial-gradient(120% 90% at 50% 20%, #221b15 0%, var(--bg-0) 75%);
+}
+.sketchSvg {
+  position: absolute;
+  inset: 6% 0 4%;
+  width: 100%;
+  height: 90%;
+  max-width: none;
+}
+.road {
+  fill: rgba(243, 233, 216, 0.04);
+}
+.plotShape {
+  fill: rgba(181, 83, 46, 0.14);
+  stroke: rgba(200, 105, 63, 0.7);
+  stroke-width: 0.25;
+  stroke-dasharray: 0.8 0.5;
+}
+.house {
+  fill: rgba(243, 233, 216, 0.08);
+  stroke: rgba(243, 233, 216, 0.4);
+  stroke-width: 0.25;
+}
+.house[data-tone="teal"] {
+  stroke: var(--teal);
+}
+.house[data-tone="coral"] {
+  stroke: var(--coral);
+  fill: rgba(255, 93, 115, 0.06);
+}
+.house[data-tone="sky"] {
+  stroke: var(--sky);
+  stroke-dasharray: 0.8 0.5;
+  fill: rgba(96, 165, 250, 0.05);
+}
+.wall {
+  stroke: rgba(243, 233, 216, 0.4);
+  stroke-width: 0.5;
+}
+.spot {
+  position: absolute;
+  translate: -50% -50%;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px;
+}
+.spotDot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--marigold);
+  background: rgba(255, 181, 71, 0.18);
+  transform: rotate(45deg);
+  transition: transform var(--dur-1) var(--ease-out);
+}
+.spot:hover .spotDot {
+  transform: rotate(45deg) scale(1.3);
+  background: var(--marigold);
+}
+.spotLabel {
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.unexplored {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--marigold);
+  box-shadow: 0 0 0 2px var(--bg-0);
+}
+.sketchNote {
+  position: absolute;
+  left: 50%;
+  top: 58px;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.sketchNote svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---------------- panels row */
+.panelsRow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 14px;
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+.panelCol {
+  flex: none;
+  width: 360px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.panelCol > * {
+  max-height: 100%;
+}
+
+/* ---------------- explain stage */
+.explainStage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 230px minmax(0, 520px) 372px;
+  gap: 18px;
+  padding: 16px 20px;
+  justify-content: center;
+}
+.keyList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.keyList .kicker {
+  margin-bottom: 8px;
+  color: var(--text-faint);
+}
+.keyBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+}
+.keyBtn:hover {
+  color: var(--text);
+  background: rgba(243, 233, 216, 0.04);
+}
+.keyOn {
+  color: var(--text);
+  border-left-color: var(--marigold);
+  background: rgba(255, 181, 71, 0.06);
+}
+.keyScope {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.explainCard {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px;
+  background: var(--panel-strong);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.explainPanel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------- dock stage */
+.dockStage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  background:
+    radial-gradient(90% 70% at 50% 30%, rgba(181, 83, 46, 0.1), transparent 70%),
+    var(--bg-0);
+}
+.dockSide {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.dockSide > aside {
+  width: 360px;
+}
+.dockHint {
+  max-width: 460px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+.dockBottom {
+  flex: none;
+}
+
+/* ---------------- bits */
+.bits {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(440px, 100%), 1fr));
+  align-content: start;
+  gap: 14px;
+  padding: 16px 20px 24px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  min-width: 0;
+}
+.tile:has(.kinds) {
+  grid-column: 1 / -1;
+}
+.tileTitle {
+  font-family: var(--ff-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.tileNote {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.6;
+}
+.kinds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+.kinds > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hintDemo {
+  position: relative;
+}
+.hintBox {
+  position: relative;
+  height: 150px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-xs);
+}
+.hintAnchor {
+  position: absolute;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  translate: -50% 0;
+  background: var(--marigold);
+  transform: rotate(45deg);
+}
+
+/* ---------------- responsive */
+@media (max-width: 1180px) {
+  .hud {
+    grid-template-columns: 320px minmax(0, 1fr) 348px;
+  }
+  .explainStage {
+    grid-template-columns: 200px minmax(0, 1fr) 340px;
+  }
+}
+@media (max-width: 767px) {
+  .top {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .top > :last-child {
+    order: 3;
+  }
+  .brand {
+    display: none;
+  }
+  .hud,
+  .hud[data-left],
+  .hud[data-right] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "top"
+      "main"
+      "bottom";
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .hudChips {
+    order: 3;
+    width: 100%;
+  }
+  .left,
+  .right {
+    grid-area: main;
+  }
+  .hudTop {
+    flex-wrap: wrap;
+  }
+  .hudTop .flex {
+    display: none;
+  }
+  .panelsRow {
+    padding: 10px;
+    scroll-snap-type: x mandatory;
+  }
+  .panelCol {
+    width: calc(100vw - 20px);
+    scroll-snap-align: center;
+  }
+  .explainStage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: 10px;
+    overflow-y: auto;
+  }
+  .keyList {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .keyList .kicker {
+    display: none;
+  }
+  .explainPanel {
+    display: none;
+  }
+  .kinds {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bits {
+    padding: 10px;
+  }
+  .sketchNote {
+    display: none;
+  }
+}

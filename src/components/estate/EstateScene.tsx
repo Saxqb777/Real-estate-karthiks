@@ -2,32 +2,41 @@
 // The interactive 3D estate diorama — the centrepiece. Driven entirely by data:
 // plot widths/depth, each unit's footprint, position, floors, occupancy and rent state map onto the model.
 // Import it through EstateSceneLazy (next/dynamic, ssr: false) so three.js never runs on the server.
+// SCENE CONTRACT v2 (types.ts): world objects report hover / click / right-click with their screen position,
+// the camera frames the plot inside the area the HUD leaves free, and `dimmed` softly dims the world.
 import { PerformanceMonitor } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Selection } from "@react-three/postprocessing";
 import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
 import type { PlotGeometry } from "@/lib/dashboard-types";
-import { computeSiteLayout, highlightedSlots, type SceneUnit, type SlotName } from "@/lib/site-layout";
-import { EnvDriver, Lights, SkyDome } from "./Atmosphere";
-import { CameraRig, FOV } from "./CameraRig";
+import { computeSiteLayout, formatFeetInches, highlightedSlots, type SceneUnit, type SlotName } from "@/lib/site-layout";
+import { formatIndianNumber } from "@/lib/format";
+import { Backdrop, EnvDriver, Lights } from "./Atmosphere";
+import { CameraRig, FOV, NO_INSETS } from "./CameraRig";
 import { Dimensions, dimensionLabels } from "./Dimensions";
 import { Effects, type Tier } from "./Effects";
 import { createEnv, type TimeOfDay } from "./env";
-import { Milestone, PoleAndLamp, Puddle, Street, Tile } from "./Island";
-import { LabelProjector, OverlayLabels, type LabelSpec, type V3 } from "./Overlay";
+import { Fixtures, type WorldCues } from "./Fixtures";
+import { GroundShade } from "./GroundShade";
+import { Milestone, Puddle, Street, Tile } from "./Island";
+import { SceneApiProvider, projectToViewport, spotKey, type SceneApi, type Spot, type V3 } from "./Interact";
+import { LabelProjector, OverlayLabels, type LabelSpec, type Tone } from "./Overlay";
 import { Life } from "./Life";
 import { PlotGround } from "./PlotGround";
 import { SitePlanFallback } from "./SitePlanFallback";
-import { UnitSlot, slotLabels, type SceneMode } from "./UnitSlot";
+import { UnitSlot, dayMonth, slotLabels, type SceneMode } from "./UnitSlot";
 import { useAnimatedLayout } from "./useAnimatedLayout";
 import { Clouds, Fireflies } from "./SkyLife";
 import { Greenery, Palms } from "./Vegetation";
+import { SCENE_OBJECT_INFO, type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind, type ScreenPoint } from "./types";
 import { makeWorld, prefersReducedMotion } from "./util";
 import s from "./estate.module.css";
 
 export type { SceneMode } from "./UnitSlot";
 export type { TimeOfDay } from "./env";
+export type { WorldCues } from "./Fixtures";
+export type { ObjectScreenFn, SceneInsets, SceneObject, SceneObjectKind, ScreenPoint } from "./types";
 
 export interface EstateSceneProps {
   plot: PlotGeometry | Partial<Pick<PlotGeometry, "frontWidthFt" | "backWidthFt" | "depthFt" | "areaSqft" | "townName">>;
@@ -45,7 +54,7 @@ export interface EstateSceneProps {
   className?: string;
   /** Street life (traffic, people, animals, birds). Uncontrolled by default with a toggle in the scene HUD. */
   life?: boolean;
-  /** Force a quality tier (default: auto — high on desktop hero, mid on phones / preview, steps down if slow). */
+  /** Force a quality tier (default: auto — high on desktop hero, mid in preview, low on phones; steps down if slow). */
   quality?: Tier;
   /** Show the small in-scene HUD (Life toggle). Default: hero only. */
   hud?: boolean;
@@ -53,10 +62,34 @@ export interface EstateSceneProps {
   wheelZoom?: "focus" | "always";
   /** Hero fly-in on first load (default true in hero mode). */
   intro?: boolean;
-  /** Override the default camera angle: theta (azimuth, rad, 0 = straight from the street), phi (from vertical), fit (zoom). */
+  /** Override the default camera angle: theta (azimuth, rad, 0 = straight from the street), phi (from vertical), fit (zoom multiplier). */
   cameraView?: { theta?: number; phi?: number; fit?: number };
   /** Show fps / draw calls / triangles (for performance checks). */
   debug?: boolean;
+
+  // ── SCENE CONTRACT v2 ──
+  /** Every interactive world object (house, mailbox, notice board, pole, TO-LET, tenant, tax stamp, plot marker). A house click also calls onSelectUnit. */
+  onObjectClick?: (obj: SceneObject) => void;
+  /** Hover enter (object) / leave (null) — for hint labels in the HUD. */
+  onObjectHover?: (obj: SceneObject | null) => void;
+  /** Right-click (desktop) or long-press (touch) on a house → radial menu. */
+  onUnitContextMenu?: (unitId: string, screen: ScreenPoint) => void;
+  /** Pixels covered by HUD panels; the camera frames the plot in the free area (animated). */
+  insets?: SceneInsets;
+  /** Focus dimming: the world softly dims / desaturates and ambient motion slows (while a panel is read). */
+  dimmed?: boolean;
+  /** Show a small marigold "unexplored" marker above these objects (max 3 shown, in this order). */
+  hintObjects?: SceneObjectKind[];
+  /** Receives a live lookup (kind, unitId?) → viewport px | null, so the HUD can anchor cards; null on unmount. */
+  getObjectScreen?: (fn: ObjectScreenFn | null) => void;
+
+  // ── optional extras ──
+  /** In-world hover tooltips (depth 1 of the inspect pattern). Default true. */
+  tooltips?: boolean;
+  /** Second line of an object's tooltip, e.g. { noticeboard: "2 open to-dos", taxstamp: "2026 due" }. */
+  objectNotes?: Partial<Record<SceneObjectKind, string>>;
+  /** Data shown on the objects themselves: notes on the notice board, a letter in the mailbox, the tax stamp. */
+  cues?: WorldCues;
 }
 
 function hasWebGL(): boolean {
@@ -83,6 +116,11 @@ class SceneBoundary extends Component<{ fallback: ReactNode; children: ReactNode
   }
 }
 
+interface ThreeHandle {
+  camera: THREE.Camera;
+  canvas: HTMLCanvasElement;
+}
+
 export default function EstateScene(props: EstateSceneProps) {
   const { plot, units, mode = "hero", className } = props;
   const root = useRef<HTMLDivElement>(null);
@@ -97,16 +135,20 @@ export default function EstateScene(props: EstateSceneProps) {
   const [autoTier, setAutoTier] = useState<Tier>("high");
   const [labels, setLabels] = useState<LabelSpec[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [hoverCursor, setHoverCursor] = useState(false);
   const registry = useRef(new Map<string, HTMLElement>());
   const debugEl = useRef<HTMLDivElement>(null);
+  const three = useRef<ThreeHandle | null>(null);
+  const spots = useRef(new Map<string, Spot>());
 
   useEffect(() => {
     setWebgl(hasWebGL());
     const rm = prefersReducedMotion();
     setReduced(rm);
-    const small = window.matchMedia?.("(max-width: 720px), (pointer: coarse)").matches ?? false;
+    const phone = window.matchMedia?.("(max-width: 720px) and (pointer: coarse), (max-width: 520px)").matches ?? false;
+    const small = phone || (window.matchMedia?.("(pointer: coarse)").matches ?? false);
     setMobile(small);
-    setAutoTier(mode === "preview" || small ? "mid" : "high");
+    setAutoTier(phone ? "low" : mode === "preview" || small ? "mid" : "high");
     setReady(true);
     const onVis = () => setPageVisible(document.visibilityState !== "hidden");
     document.addEventListener("visibilitychange", onVis);
@@ -123,6 +165,8 @@ export default function EstateScene(props: EstateSceneProps) {
   const hud = props.hud ?? mode === "hero";
   const active = onScreen && pageVisible;
   const fallbackLayout = useMemo(() => (webgl ? null : computeSiteLayout(plot, units)), [webgl, plot, units]);
+  // antialiasing is fixed when the context is created: MSAA only where post-processing (SMAA) won't run
+  const [antialias] = useState(() => tier === "low");
 
   // click on empty space (not a drag) → deselect
   const down = useRef<{ x: number; y: number } | null>(null);
@@ -130,21 +174,38 @@ export default function EstateScene(props: EstateSceneProps) {
   const missed = useCallback(
     (e: MouseEvent) => {
       const d = down.current;
+      if (e.button === 2) return;
       if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
       onSelectUnit?.(null);
     },
     [onSelectUnit],
   );
 
+  // live object → screen lookup for the HUD (anchoring inspect cards)
+  const getObjectScreen = props.getObjectScreen;
+  useEffect(() => {
+    if (!getObjectScreen) return;
+    const fn: ObjectScreenFn = (kind, unitId) => {
+      const h = three.current;
+      if (!h) return null;
+      const spot = spots.current.get(spotKey(kind, unitId)) ?? (unitId ? null : [...spots.current.values()].find((x) => x.kind === kind));
+      return spot ? projectToViewport(spot.anchor, h.camera, h.canvas) : null;
+    };
+    getObjectScreen(fn);
+    return () => getObjectScreen(null);
+  }, [getObjectScreen]);
+
   return (
     <div
       ref={root}
-      className={`${s.root} ${props.wheelZoom === "always" ? "" : s.pageScroll} ${className ?? ""}`}
+      className={`${s.root} ${props.wheelZoom === "always" ? "" : s.pageScroll} ${props.dimmed ? s.dimmed : ""} ${className ?? ""}`}
+      style={hoverCursor ? { cursor: "pointer" } : undefined}
       onPointerDown={(e) => {
         down.current = { x: e.clientX, y: e.clientY };
         setZoomFocus(true);
       }}
       onPointerLeave={() => setZoomFocus(false)}
+      onContextMenu={(e) => e.preventDefault()}
     >
       {!webgl && fallbackLayout && <SitePlanFallback layout={fallbackLayout} reason="this browser or device has WebGL turned off" />}
       {ready && webgl && (
@@ -152,10 +213,10 @@ export default function EstateScene(props: EstateSceneProps) {
           <Canvas
             className={`${s.canvas} ${s.fadeIn}`}
             shadows={{ type: THREE.PCFShadowMap }}
-            dpr={tier === "high" ? [1, 2] : tier === "mid" ? [1, 1.5] : 1}
+            dpr={tier === "high" ? [1, 2] : tier === "mid" ? [1, 1.5] : [1, 1.75]}
             frameloop={active ? "always" : "never"}
             camera={{ fov: FOV, near: 2, far: 6000, position: [-120, 140, 220] }}
-            gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
+            gl={{ antialias, powerPreference: "high-performance", stencil: false }}
             onPointerMissed={missed}
             onCreated={({ gl }) => {
               gl.localClippingEnabled = true;
@@ -173,6 +234,9 @@ export default function EstateScene(props: EstateSceneProps) {
               onLabels={setLabels}
               onWarnings={setWarnings}
               registry={registry}
+              three={three}
+              spots={spots}
+              onCursor={setHoverCursor}
             />
             {props.debug && <DebugStats target={debugEl} tier={tier} />}
             {!props.quality && tier !== "low" && (
@@ -202,6 +266,11 @@ export default function EstateScene(props: EstateSceneProps) {
 /** fps / draw calls / triangles, sampled twice a second (counts every pass of the frame). */
 function DebugStats({ target, tier }: { target: RefObject<HTMLDivElement | null>; tier: Tier }) {
   const acc = useRef({ frames: 0, t: 0, calls: 0, tris: 0 });
+  const state = useThree();
+  useEffect(() => {
+    // debug handle for automated checks (only with debug on)
+    (window as unknown as { __estate?: unknown }).__estate = state;
+  }, [state]);
   useFrame(({ gl }, dt) => {
     const a = acc.current;
     if (gl.info.autoReset) gl.info.autoReset = false;
@@ -212,6 +281,7 @@ function DebugStats({ target, tier }: { target: RefObject<HTMLDivElement | null>
     a.t += dt;
     if (a.t >= 0.5 && target.current) {
       target.current.textContent = `${Math.round(a.frames / a.t)} fps · ${a.calls} calls · ${(a.tris / 1000).toFixed(0)}k tris · ${tier} · dpr ${gl.getPixelRatio()}`;
+      target.current.dataset.calls = String(a.calls);
       a.frames = 0;
       a.t = 0;
     }
@@ -229,7 +299,21 @@ interface ContentsProps extends EstateSceneProps {
   onLabels: (labels: LabelSpec[]) => void;
   onWarnings: (warnings: string[]) => void;
   registry: RefObject<Map<string, HTMLElement>>;
+  three: RefObject<ThreeHandle | null>;
+  spots: RefObject<Map<string, Spot>>;
+  onCursor: (on: boolean) => void;
 }
+
+const OBJECT_HINT: Record<SceneObjectKind, string> = {
+  unit: "Click for details · right-click for actions",
+  mailbox: "Click to record rent",
+  noticeboard: "Click to see to-dos",
+  pole: "Click for consumer no. & pay link",
+  tolet: "Click to start a lease",
+  tenant: "Click for profile & call",
+  taxstamp: "Click to see or mark tax paid",
+  plot: "Click for plot dimensions",
+};
 
 function SceneContents({
   plot,
@@ -252,25 +336,77 @@ function SceneContents({
   onWarnings,
   registry,
   cameraView,
+  insets,
+  dimmed = false,
+  hintObjects,
+  onObjectClick,
+  onObjectHover,
+  onUnitContextMenu,
+  tooltips = true,
+  objectNotes,
+  cues,
+  three,
+  spots,
+  onCursor,
 }: ContentsProps) {
   const env = useRef(createEnv());
   const { layout, target } = useAnimatedLayout(plot, units, !reduced);
   const warnSig = target.warnings.join("\n");
   useEffect(() => onWarnings(warnSig ? warnSig.split("\n") : []), [warnSig, onWarnings]);
   const world = useMemo(() => makeWorld(layout), [layout]);
-  const [hovered, setHovered] = useState<SlotName | null>(null);
   const interactive = mode !== "login";
-
+  const camera = useThree((st) => st.camera);
+  const canvas = useThree((st) => st.gl.domElement);
   useEffect(() => {
-    document.body.style.cursor = hovered && interactive ? "pointer" : "";
+    three.current = { camera, canvas };
     return () => {
-      document.body.style.cursor = "";
+      three.current = null;
     };
-  }, [hovered, interactive]);
+  }, [camera, canvas, three]);
+
+  // ── interaction API for every hotspot ──
+  const [hovered, setHovered] = useState<Spot | null>(null);
+  const [spotVersion, setSpotVersion] = useState(0);
+  const screenOf = useCallback((sp: Spot) => projectToViewport(sp.anchor, camera, canvas) ?? undefined, [camera, canvas]);
+  const cb = useRef({ onObjectClick, onObjectHover, onUnitContextMenu, onSelectUnit });
+  cb.current = { onObjectClick, onObjectHover, onUnitContextMenu, onSelectUnit };
+  const objects = interactive && (mode === "hero" || !!onObjectClick);
+  // stable callbacks (hotspots register once; only `hovered` changes on hover)
+  const fns = useMemo(
+    () => ({
+      setHover: (sp: Spot | null, key?: string) => setHovered((cur) => (sp ? (cur?.key === sp.key ? cur : sp) : cur && (!key || cur.key === key) ? null : cur)),
+      activate: (sp: Spot) => {
+        if (sp.kind === "unit" && sp.unitId) cb.current.onSelectUnit?.(sp.unitId);
+        cb.current.onObjectClick?.({ kind: sp.kind, unitId: sp.unitId, screen: screenOf(sp) });
+      },
+      contextMenu: (sp: Spot) => {
+        const at = screenOf(sp);
+        if (sp.unitId && at) cb.current.onUnitContextMenu?.(sp.unitId, at);
+      },
+      register: (sp: Spot) => {
+        spots.current.set(sp.key, sp);
+        setSpotVersion((v) => v + 1);
+        return () => {
+          if (spots.current.get(sp.key) === sp) spots.current.delete(sp.key);
+          setSpotVersion((v) => v + 1);
+          setHovered((cur) => (cur?.key === sp.key ? null : cur));
+        };
+      },
+    }),
+    [screenOf, spots],
+  );
+  const api = useMemo<SceneApi>(() => ({ env, interactive, objects, hovered: hovered?.key ?? null, ...fns }), [hovered, interactive, objects, fns]);
+  // hover → cursor + HUD callback
+  useEffect(() => {
+    onCursor(!!hovered && interactive);
+    cb.current.onObjectHover?.(hovered ? { kind: hovered.kind, unitId: hovered.unitId, screen: screenOf(hovered) } : null);
+  }, [hovered, interactive, onCursor, screenOf]);
+  useEffect(() => () => onCursor(false), [onCursor]);
 
   const selectedSlot = layout.slots.find((x) => x.unit && x.unit.id === selectedUnitId)?.slot ?? null;
   const hot = new Set(highlightedSlots(layout, highlightField));
-  const counts = tier === "high" ? { palms: 14, grass: 260, clouds: 12, flies: 70 } : tier === "mid" ? { palms: 11, grass: 150, clouds: 8, flies: 40 } : { palms: 8, grass: 70, clouds: 5, flies: 20 };
+  const counts =
+    tier === "high" ? { palms: 14, grass: 260, clouds: 14, flies: 70 } : tier === "mid" ? { palms: 11, grass: 150, clouds: 9, flies: 40 } : { palms: 9, grass: 70, clouds: 6, flies: 22 };
   const animate = !reduced;
   const occluders = useRef(new Set<THREE.Object3D>());
   const occluderFor = useMemo(() => {
@@ -286,25 +422,47 @@ function SceneContents({
   }, []);
   const gate = layout.compoundWalls.find((w) => w.gate === "passage" || w.gate === "main");
   const porchGate = layout.compoundWalls.find((w) => w.gate === "porch");
-  const signAt = (s: SlotName) => {
-    const g = s === "front" ? (porchGate ?? gate) : (gate ?? porchGate);
+  const signAt = (sl: SlotName) => {
+    const g = sl === "front" ? (porchGate ?? gate) : (gate ?? porchGate);
     return g ? { x: (g.a.x + g.b.x) / 2, z: -2.6 } : undefined;
   };
+  // a back house behind a front one hangs its TO-LET board on its side wall (seen over the side passage)
+  const frontBuilt = layout.slots.some((x) => x.slot === "front" && !!x.unit);
 
-  // labels: specs go to the DOM overlay only when their content changes; anchors are read every frame
+  // ── DOM labels: cards / tags / tooltips / hint markers / dimensions (anchors read every frame) ──
   const anchors = useRef(new Map<string, V3>());
-  const entries = [
+  const legacyCards = !onObjectClick; // without an inspect card from the HUD, the selected unit keeps its card
+  const hoveredUnit = hovered?.kind === "unit" ? hovered.unitId : null;
+  const entries: { spec: LabelSpec; anchor: V3 }[] = [
     ...layout.slots.flatMap((slot) =>
       slotLabels(slot, world, {
-        hovered: hovered === slot.slot,
-        selected: selectedSlot === slot.slot,
+        hovered: tooltips && !!slot.unit && hoveredUnit === slot.unit.id && !(slot.unit.id === selectedUnitId && !legacyCards),
+        selected: legacyCards && selectedSlot === slot.slot,
         showLabel: showLabels,
         interactive,
         canBuild: !!onEmptySlotClick,
+        meta: mode === "preview",
       }),
     ),
     ...dimensionLabels(layout, world, showDimensions, highlightField),
   ];
+  if (tooltips && hovered && hovered.kind !== "unit") {
+    const tip = objectTip(hovered, layout, objectNotes?.[hovered.kind] ?? null, cues);
+    entries.push({ spec: { key: `tip:${hovered.key}`, kind: "tip", ...tip }, anchor: hovered.anchor });
+  }
+  if (hintObjects?.length && interactive) {
+    void spotVersion;
+    const seen = new Set<string>();
+    let n = 0;
+    for (const kind of hintObjects) {
+      for (const sp of spots.current.values()) {
+        if (sp.kind !== kind || seen.has(sp.key) || n >= 3) continue;
+        seen.add(sp.key);
+        n++;
+        entries.push({ spec: { key: `hint:${sp.key}`, kind: "hint" }, anchor: [sp.anchor[0], sp.anchor[1] + (sp.kind === "unit" ? -1.5 : 0.6), sp.anchor[2]] });
+      }
+    }
+  }
   anchors.current = new Map(entries.map((e) => [e.spec.key, e.anchor]));
   const specs = entries.map((e) => e.spec);
   const sig = JSON.stringify(specs);
@@ -312,16 +470,18 @@ function SceneContents({
     onLabels(JSON.parse(sig) as LabelSpec[]);
   }, [sig, onLabels]);
 
+  const showFixtures = mode === "hero";
   const body = (
     <>
       <Tile layout={layout} world={world} />
       <Street layout={layout} world={world} />
-      <PoleAndLamp layout={layout} world={world} env={env} lampLight={tier !== "low"} />
       <Milestone layout={layout} world={world} />
       <Puddle layout={layout} world={world} env={env} />
       <PlotGround layout={layout} world={world} animate={animate} />
+      <GroundShade layout={layout} world={world} />
       <Greenery layout={layout} world={world} grassCount={counts.grass} />
-      <Palms layout={layout} world={world} animate={animate} count={counts.palms} />
+      <Palms layout={layout} world={world} env={env} animate={animate} count={counts.palms} />
+      <Fixtures layout={layout} world={world} env={env} cues={cues} lampLight={tier !== "low"} crows={life && animate && tier !== "low" && showFixtures} />
       {layout.slots.map((slot, i) => (
         <UnitSlot
           key={`${slot.slot}-${slot.unit?.id ?? "empty"}`}
@@ -331,38 +491,84 @@ function SceneContents({
           mode={mode}
           index={i}
           selected={selectedSlot === slot.slot}
-          hovered={hovered === slot.slot}
           highlighted={hot.has(slot.slot)}
           interactive={interactive}
           reduced={reduced}
           life={life}
           rise={animate}
-          onHover={setHovered}
-          onSelect={onSelectUnit}
           onEmptyClick={onEmptySlotClick}
           signAt={signAt(slot.slot)}
+          boardOnWall={slot.slot === "back" && frontBuilt}
           occluder={occluderFor(slot.slot)}
         />
       ))}
       <Dimensions layout={layout} world={world} show={showDimensions} highlight={highlightField} reduced={reduced} />
-      <Life layout={layout} world={world} env={env} enabled={life} tier={tier} mobile={mobile} />
-      <Clouds layout={layout} env={env} count={counts.clouds} animate={animate} />
+      <Life layout={layout} world={world} env={env} enabled={life && animate} tier={tier} mobile={mobile} />
       <Fireflies layout={layout} world={world} env={env} count={counts.flies} animate={animate} />
     </>
   );
 
   return (
-    <>
-      <EnvDriver env={env} timeOfDay={timeOfDay} instant={reduced} />
-      <SkyDome env={env} />
+    <SceneApiProvider value={api}>
+      <EnvDriver env={env} timeOfDay={timeOfDay} instant={reduced} dimmed={dimmed} />
+      <Backdrop env={env} insets={insets} />
+      <Clouds layout={layout} env={env} count={counts.clouds} animate={animate} />
       <Lights env={env} radius={layout.radius} shadowSize={tier === "high" ? 2048 : 1024} shadows />
       {/* the tree shape stays the same across tiers so dropping to "low" never remounts the world */}
       <Selection enabled={tier !== "low"}>
         {tier !== "low" && <Effects tier={tier} preview={mode === "preview"} />}
         {body}
       </Selection>
-      <CameraRig layout={layout} world={world} mode={mode} selectedSlot={selectedSlot} intro={intro ?? mode === "hero"} reduced={reduced} zoomEnabled={zoomEnabled} view={cameraView} />
+      <CameraRig
+        layout={layout}
+        world={world}
+        mode={mode}
+        selectedSlot={selectedSlot}
+        intro={intro ?? mode === "hero"}
+        reduced={reduced}
+        zoomEnabled={zoomEnabled}
+        view={cameraView}
+        insets={insets ?? NO_INSETS}
+      />
       <LabelProjector anchors={anchors} registry={registry} occluders={occluders} />
-    </>
+    </SceneApiProvider>
   );
+}
+
+/** Tooltip text for a world object (depth 1 of the inspect pattern: name + one line + next step). */
+function objectTip(sp: Spot, layout: ReturnType<typeof computeSiteLayout>, note: string | null, cues?: WorldCues): { title: string; sub: string; note: string | null; hint: string | null; tone: Tone } {
+  const info = SCENE_OBJECT_INFO[sp.kind];
+  const slot = sp.unitId ? layout.slots.find((x) => x.unit?.id === sp.unitId) : undefined;
+  const unitName = slot?.unit?.name ?? "";
+  switch (sp.kind) {
+    case "tolet": {
+      if (slot?.status === "incoming") {
+        const who = slot.unit?.tenantName;
+        return { title: `Moving in ${dayMonth(slot.unit?.moveInDate)}`, sub: `${unitName}${who ? ` · ${who}` : ""}`, note, hint: "Click to see the lease", tone: "sky" };
+      }
+      return { title: `TO-LET · ${unitName}`, sub: slot?.unit?.vacantDays ? `Vacant ${slot.unit.vacantDays} days` : "Vacant", note, hint: OBJECT_HINT.tolet, tone: "sky" };
+    }
+    case "tenant":
+      return { title: slot?.unit?.tenantName || "Tenant", sub: `Tenant · ${unitName}`, note, hint: OBJECT_HINT.tenant, tone: "teal" };
+    case "plot": {
+      const P = layout.plot;
+      return {
+        title: "Plot",
+        sub: `${formatFeetInches(P.frontWidthFt)} × ${formatFeetInches(P.depthFt)} · ${formatIndianNumber(P.areaSqft)} sq ft`,
+        note,
+        hint: OBJECT_HINT.plot,
+        tone: "marigold",
+      };
+    }
+    case "taxstamp":
+      return { title: "Property tax", sub: cues?.tax === "due" ? "This year's tax is due" : cues?.tax === "paid" ? "This year's tax is paid" : info.opens, note, hint: OBJECT_HINT.taxstamp, tone: cues?.tax === "due" ? "coral" : "marigold" };
+    case "noticeboard":
+      return { title: info.name, sub: cues?.todos !== undefined ? (cues.todos ? `${cues.todos} open to-do${cues.todos === 1 ? "" : "s"}` : "Nothing pending") : info.opens, note, hint: OBJECT_HINT.noticeboard, tone: "marigold" };
+    case "mailbox":
+      return { title: info.name, sub: info.opens, note, hint: OBJECT_HINT.mailbox, tone: "marigold" };
+    case "pole":
+      return { title: "EB meter", sub: info.opens, note, hint: OBJECT_HINT.pole, tone: "marigold" };
+    default:
+      return { title: info.name, sub: info.opens, note, hint: OBJECT_HINT[sp.kind], tone: "marigold" };
+  }
 }

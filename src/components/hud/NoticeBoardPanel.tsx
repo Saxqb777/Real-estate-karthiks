@@ -110,9 +110,11 @@ function Todo({ a, today, onEdit }: { a: ActionDTO; today: string; onEdit: () =>
           {d && <span className={cx(d.late && b.lateText)}> · {d.text}</span>}
         </span>
       </button>
-      <Badge size="sm" tone={PRIORITY_TONE[a.priority]}>
-        {a.priority}
-      </Badge>
+      {a.priority === "High" && (
+        <Badge size="sm" tone={PRIORITY_TONE[a.priority]}>
+          High
+        </Badge>
+      )}
     </li>
   );
 }

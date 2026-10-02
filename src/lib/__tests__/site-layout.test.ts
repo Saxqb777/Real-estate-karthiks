@@ -274,7 +274,94 @@ describe("highlight matching", () => {
   });
 });
 
+describe("street-front fixtures (clickable world objects)", () => {
+  const L = computeSiteLayout(PLOT, [A, B]);
+  const F = L.fixtures;
+  const [FL, FR, , BL] = L.plot.polygon;
+  it("mounts the mailbox on the porch-gate pillar and the tax stamp on the front wall by the passage", () => {
+    const porch = L.compoundWalls.find((w) => w.gate === "porch")!;
+    expect(F.mailbox).toEqual(porch.a);
+    const front = L.slots.find((s) => s.slot === "front")!;
+    expect(F.taxStamp).toEqual({ x: front.rect.x0 + 2.2, z: 0, on: "wall" });
+    expect(F.taxStamp.x).toBeLessThan(front.notch.wide.x0);
+  });
+  it("hangs the notice board on the left wall a few feet from the street, inside the plot depth", () => {
+    expect(F.noticeBoard.z).toBeGreaterThan(2);
+    expect(F.noticeBoard.z).toBeLessThan(10);
+    const xLeft = FL.x + ((BL.x - FL.x) * F.noticeBoard.z) / L.plot.depthFt;
+    expect(F.noticeBoard.x).toBeCloseTo(xLeft, 1);
+    expect(F.noticeBoard.widthFt).toBeGreaterThanOrEqual(2.4);
+  });
+  it("puts the survey stone just outside the back-left corner and the poles on the near shoulder", () => {
+    expect(F.plotMarker.x).toBeLessThan(BL.x);
+    expect(F.plotMarker.z).toBeGreaterThan(BL.z);
+    const [n0, n1] = L.site.street.nearShoulder;
+    for (const p of F.poles) {
+      expect(p.z).toBeGreaterThan(n0);
+      expect(p.z).toBeLessThan(n1);
+    }
+    expect(F.poles[0].x).toBeLessThan(FL.x);
+    expect(F.poles[1].x).toBeGreaterThan(FR.x);
+  });
+  it("falls back to the main gate when no building stands on the street", () => {
+    const L2 = computeSiteLayout(PLOT, [B]);
+    const main = L2.compoundWalls.find((w) => w.gate === "main")!;
+    expect(L2.fixtures.mailbox).toEqual(main.b);
+    expect(L2.fixtures.taxStamp).toEqual({ ...main.a, on: "pillar" });
+  });
+  it("keeps objects apart so each one can be hovered on its own", () => {
+    const pts = [F.mailbox, F.taxStamp, F.noticeBoard, F.poles[0], F.plotMarker];
+    for (let i = 0; i < pts.length; i++)
+      for (let j = i + 1; j < pts.length; j++) expect(Math.hypot(pts[i].x - pts[j].x, pts[i].z - pts[j].z)).toBeGreaterThan(5);
+  });
+});
+
 describe("sceneUnitsFromBreakdown", () => {
+  it("an incoming unit carries the signed tenant, rent and move-in date", () => {
+    const u = {
+      id: "b",
+      name: "Back House",
+      position: "back",
+      floors: 2,
+      isActive: true,
+      status: "incoming",
+      rentState: "none",
+      footprintWidthFt: null,
+      footprintDepthFt: null,
+      activeLease: null,
+      incomingLease: { tenantName: "Selvi", monthlyRent: 11000, startDate: "2026-11-01T00:00:00.000Z" },
+      nextPayment: { daysOverdue: 0 },
+      vacantPeriods: [{ days: 40, ongoing: true }],
+    } as unknown as UnitBreakdown;
+    expect(sceneUnitsFromBreakdown([u])[0]).toMatchObject({
+      status: "incoming",
+      tenantName: "Selvi",
+      monthlyRent: 11000,
+      moveInDate: "2026-11-01T00:00:00.000Z",
+      vacantDays: 40,
+      daysOverdue: 0,
+    });
+  });
+  it("an empty unit's past gap is not counted as vacant days now", () => {
+    const u = {
+      id: "c",
+      name: "C",
+      position: null,
+      floors: 1,
+      isActive: true,
+      status: "vacant",
+      rentState: "none",
+      footprintWidthFt: null,
+      footprintDepthFt: null,
+      activeLease: null,
+      incomingLease: null,
+      nextPayment: null,
+      vacantPeriods: [{ days: 12, ongoing: true }],
+    } as unknown as UnitBreakdown;
+    expect(sceneUnitsFromBreakdown([u])[0].vacantDays).toBe(12);
+    expect(sceneUnitsFromBreakdown([u])[0].moveInDate).toBeUndefined();
+  });
+
   it("maps dashboard units to scene units", () => {
     const u = {
       id: "a",

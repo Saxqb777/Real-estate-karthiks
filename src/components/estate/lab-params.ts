@@ -3,9 +3,14 @@ import type { Tier } from "./Effects";
 import type { TimeOfDay } from "./env";
 import type { SceneMode } from "./UnitSlot";
 import type { SlotName } from "@/lib/site-layout";
+import type { SceneObjectKind } from "./types";
 
-export type LabState = "paid" | "due-soon" | "overdue" | "vacant" | "inactive";
-export const STATES: LabState[] = ["paid", "due-soon", "overdue", "vacant", "inactive"];
+export type LabState = "paid" | "due-soon" | "overdue" | "vacant" | "incoming" | "inactive";
+export const STATES: LabState[] = ["paid", "due-soon", "overdue", "vacant", "incoming", "inactive"];
+/** HUD inset presets (px) for checking the camera framing */
+export type InsetPreset = "none" | "hud" | "panel" | "dock" | "sheet";
+export const INSET_PRESETS: InsetPreset[] = ["none", "hud", "panel", "dock", "sheet"];
+export const HINT_KINDS: SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "tolet", "tenant", "taxstamp", "plot"];
 export const TIMES: TimeOfDay[] = ["auto", "dawn", "morning", "day", "afternoon", "evening", "dusk", "night"];
 export const MODES: SceneMode[] = ["hero", "preview", "login"];
 export const FIELDS = [
@@ -50,6 +55,14 @@ export interface LabConfig {
   /** camera override "theta,phi,fit" (lab only) */
   cam: string;
   debug: boolean;
+  /** contract v2 */
+  insets: InsetPreset;
+  dimmed: boolean;
+  hints: SceneObjectKind[];
+  tips: boolean;
+  todos: number;
+  mail: boolean;
+  tax: "" | "paid" | "due";
 }
 
 export const LAB_DEFAULTS: LabConfig = {
@@ -78,6 +91,13 @@ export const LAB_DEFAULTS: LabConfig = {
   sel: "",
   cam: "",
   debug: false,
+  insets: "none",
+  dimmed: false,
+  hints: [],
+  tips: true,
+  todos: 3,
+  mail: false,
+  tax: "",
 };
 
 /** Parse /lab query params (server or client). */
@@ -121,6 +141,13 @@ export function parseLabParams(sp: Record<string, string | string[] | undefined>
     sel: pick("sel", ["", "a", "b"] as const, D.sel),
     debug: flag("debug", D.debug),
     cam: /^-?[\d.]+(,-?[\d.]+){0,2}$/.test(g("cam") ?? "") ? (g("cam") as string) : D.cam,
+    insets: pick("insets", INSET_PRESETS, D.insets),
+    dimmed: flag("dim", D.dimmed),
+    hints: (g("hints") ?? "").split(",").filter((k): k is SceneObjectKind => HINT_KINDS.includes(k as SceneObjectKind)),
+    tips: flag("tips", D.tips),
+    todos: num("todos", D.todos, 0, 9)!,
+    mail: flag("mail", D.mail),
+    tax: pick("tax", ["", "paid", "due"] as const, D.tax),
   };
 }
 
@@ -153,6 +180,13 @@ export function toParams(c: LabConfig): string {
   put("cam", c.cam, D.cam);
   put("debug", c.debug, D.debug);
   put("sel", c.sel, D.sel);
+  put("insets", c.insets, D.insets);
+  put("dim", c.dimmed, D.dimmed);
+  put("hints", c.hints.join(","), "");
+  put("tips", c.tips, D.tips);
+  put("todos", c.todos, D.todos);
+  put("mail", c.mail, D.mail);
+  put("tax", c.tax, D.tax);
   return p.toString();
 }
 

@@ -1,10 +1,10 @@
 "use client";
 // Coconut palms (Pattukottai is coconut country), hedges and grass — all instanced, swaying with the gusty wind.
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { offsetPolygon, type Pt, type SiteLayout } from "@/lib/site-layout";
-import { windAt } from "./env";
+import { gustAt, type Env } from "./env";
 import { PAL, std } from "./materials";
 import { rng, type World } from "./util";
 
@@ -20,35 +20,51 @@ export function insidePolygon(p: Pt, poly: Pt[]): boolean {
 
 // ── geometry builders ──
 
-const TRUNK_P = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(1.7, 15, 0), new THREE.Vector3(2.5, 30, 0)];
-const trunkCurve = new THREE.QuadraticBezierCurve3(TRUNK_P[0], TRUNK_P[1], TRUNK_P[2]);
+const TRUNK_TOP = new THREE.Vector3(2.6, 30, 0);
+const trunkCurve = new THREE.CubicBezierCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.5, 10, 0), new THREE.Vector3(3.3, 20, 0), TRUNK_TOP);
 
+/** Coconut trunk: a slight S-curve, flared base, leaf-scar rings (grooves) and a fibrous boot under the crown. */
 function trunkGeometry(): THREE.BufferGeometry {
-  const segs = 24;
-  const radial = 7;
+  const rings = 34;
+  const segs = rings * 2;
+  const radial = 9;
   const pos: number[] = [];
   const col: number[] = [];
-  const light = new THREE.Color("#a3845f");
-  const dark = new THREE.Color("#6f5338");
+  const base = new THREE.Color("#6a5a48");
+  const top = new THREE.Color("#a08a68");
+  const groove = new THREE.Color("#4a3c2e");
+  const boot = new THREE.Color("#5b4630");
   const ring = (i: number) => {
     const t = i / segs;
     const c = trunkCurve.getPoint(t);
     const tan = trunkCurve.getTangent(t);
     const n = new THREE.Vector3(0, 0, 1).cross(tan).normalize();
     const b = tan.clone().cross(n).normalize();
-    const r = 0.46 + (1 - t) * 0.26 + Math.max(0, 0.1 - t) * 6;
-    return Array.from({ length: radial }, (_, j) => {
-      const a = (j / radial) * Math.PI * 2;
-      return c.clone().addScaledVector(n, Math.cos(a) * r).addScaledVector(b, Math.sin(a) * r);
-    });
+    const isGroove = i % 2 === 1 && t < 0.93;
+    const r = (0.44 + (1 - t) * 0.2 + Math.max(0, 0.09 - t) * 7 + (t > 0.93 ? 0.16 : 0)) * (isGroove ? 0.9 : 1);
+    const colr = t > 0.93 ? boot : isGroove ? groove : base.clone().lerp(top, t);
+    return {
+      pts: Array.from({ length: radial }, (_, j) => {
+        const a = (j / radial) * Math.PI * 2;
+        return c.clone().addScaledVector(n, Math.cos(a) * r).addScaledVector(b, Math.sin(a) * r);
+      }),
+      colr,
+    };
   };
   for (let i = 0; i < segs; i++) {
     const r0 = ring(i);
     const r1 = ring(i + 1);
-    const c = i % 2 ? dark : light;
     for (let j = 0; j < radial; j++) {
       const k = (j + 1) % radial;
-      for (const v of [r0[j], r1[j], r1[k], r0[j], r1[k], r0[k]]) {
+      const quad: [THREE.Vector3, THREE.Color][] = [
+        [r0.pts[j], r0.colr],
+        [r1.pts[j], r1.colr],
+        [r1.pts[k], r1.colr],
+        [r0.pts[j], r0.colr],
+        [r1.pts[k], r1.colr],
+        [r0.pts[k], r0.colr],
+      ];
+      for (const [v, c] of quad) {
         pos.push(v.x, v.y, v.z);
         col.push(c.r, c.g, c.b);
       }
@@ -61,34 +77,58 @@ function trunkGeometry(): THREE.BufferGeometry {
   return g;
 }
 
-/** A coconut frond along +X (length 1): arching spine with long drooping leaflets. */
+/**
+ * A coconut frond along +X (length 1): the rachis arches up then droops, with ~30 narrow leaflets a side hanging
+ * down in a V (the classic drooping coconut look), darker at the base, yellowing towards the tip.
+ */
 function frondGeometry(): THREE.BufferGeometry {
-  const N = 18;
+  const N = 30;
   const pos: number[] = [];
   const col: number[] = [];
-  const spine = (t: number) => new THREE.Vector3(t, 0.16 * Math.sin(t * Math.PI * 0.85) - 0.38 * t * t, 0);
-  const width = (t: number) => 0.27 * Math.pow(Math.sin(Math.min(1, t * 1.08) * Math.PI), 0.75);
-  const cBase = new THREE.Color("#2c6a37");
-  const cTip = new THREE.Color("#6cb35a");
-  const cEnd = new THREE.Color("#a8b94e");
-  for (let i = 1; i < N; i++) {
-    const t0 = i / N;
-    const t1 = (i + 1) / N;
-    const s0 = spine(t0);
-    const s1 = spine(Math.min(1, t1));
+  const spine = (t: number) => new THREE.Vector3(t * 0.97, 0.2 * Math.sin(t * Math.PI * 0.75) - 0.5 * t * t, 0);
+  const cBase = new THREE.Color("#28562c");
+  const cMid = new THREE.Color("#3f7f3a");
+  const cTip = new THREE.Color("#79a94a");
+  const cOld = new THREE.Color("#a3a650");
+  const push = (v: THREE.Vector3, c: THREE.Color) => {
+    pos.push(v.x, v.y, v.z);
+    col.push(c.r, c.g, c.b);
+  };
+  // rachis (thin ribbon so the frond reads even edge-on)
+  for (let i = 0; i < 12; i++) {
+    const a = spine(i / 12);
+    const b = spine((i + 1) / 12);
+    const w = 0.012 * (1 - i / 12) + 0.004;
+    const c = cBase.clone().lerp(cMid, i / 12);
+    push(new THREE.Vector3(a.x, a.y + w, 0), c);
+    push(new THREE.Vector3(a.x, a.y - w, 0), c);
+    push(new THREE.Vector3(b.x, b.y - w, 0), c);
+    push(new THREE.Vector3(a.x, a.y + w, 0), c);
+    push(new THREE.Vector3(b.x, b.y - w, 0), c);
+    push(new THREE.Vector3(b.x, b.y + w, 0), c);
+  }
+  for (let i = 0; i < N; i++) {
+    const t = 0.07 + (i / (N - 1)) * 0.91;
+    const s = spine(t);
+    const ahead = spine(Math.min(1, t + 0.02)).sub(s).normalize();
+    const L = 0.34 * Math.pow(Math.sin(Math.min(1, t * 1.06) * Math.PI), 0.55) + 0.03;
+    const w = 0.018;
+    const shade = cMid.clone().lerp(cTip, t).lerp(cOld, Math.max(0, t - 0.7) * 1.4);
     for (const side of [-1, 1]) {
-      const tm = (t0 + t1) / 2;
-      const w = width(tm);
-      const tip = spine(tm).add(new THREE.Vector3(0.05, -0.42 * w, side * w));
-      const tipC = cTip.clone().lerp(cEnd, Math.max(0, tm - 0.6) * 1.6);
-      for (const [v, c] of [
-        [s0, cBase],
-        [s1, cBase],
-        [tip, tipC],
-      ] as const) {
-        pos.push(v.x, v.y, v.z);
-        col.push(c.r, c.g, c.b);
-      }
+      // leaflets angle forward and hang down more towards the tip
+      const droop = 0.55 + t * 0.55;
+      const dir = new THREE.Vector3(0.38, -droop, side * 0.82).normalize();
+      const tip = s.clone().addScaledVector(dir, L);
+      const mid = s.clone().addScaledVector(dir, L * 0.5).add(new THREE.Vector3(0, -L * 0.06, 0));
+      const a = s.clone().addScaledVector(ahead, -w);
+      const b = s.clone().addScaledVector(ahead, w);
+      const base = cBase.clone().lerp(shade, 0.35);
+      push(a, base);
+      push(b, base);
+      push(mid, shade);
+      push(b, base);
+      push(tip, shade);
+      push(mid, shade);
     }
   }
   const g = new THREE.BufferGeometry();
@@ -114,10 +154,8 @@ function palmSpots(layout: SiteLayout): Pt[] {
   const R = layout.plot.rightX;
   const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
   const st = layout.site.street;
-  // mostly behind / beside the buildings so they frame the view instead of hiding the facades
+  // on the right and behind the buildings: they frame the view from the front-left instead of hiding the facades
   const spots: Pt[] = [
-    { x: leftX(D - 4) - 8, z: D - 4 },
-    { x: leftX(D * 0.62) - 12.5, z: D * 0.62 },
     { x: R + 7, z: 5 },
     { x: R + 10.5, z: 23 },
     { x: R + 7.5, z: 42 },
@@ -125,7 +163,9 @@ function palmSpots(layout: SiteLayout): Pt[] {
     { x: R + 7, z: D - 3 },
     { x: (R + leftX(D)) / 2 + 6, z: D + 6 },
     { x: (R + leftX(D)) / 2 - 6, z: D + 5 },
+    { x: leftX(D) - 9, z: D + 6.5 },
     { x: R + 14, z: (st.farShoulder[0] + st.farShoulder[1]) / 2 - 1 },
+    { x: leftX(D - 6) - 11, z: D - 6 },
   ];
   const rear = layout.rearYard.z1 - layout.rearYard.z0;
   if (rear > 6.5) spots.push({ x: leftX(D - rear / 2) + 4.2, z: D - rear / 2 });
@@ -133,7 +173,7 @@ function palmSpots(layout: SiteLayout): Pt[] {
   return spots.filter((p) => insidePolygon(p, tileIn));
 }
 
-export function Palms({ layout, world, animate, count }: { layout: SiteLayout; world: World; animate: boolean; count: number }) {
+export function Palms({ layout, world, env, animate, count }: { layout: SiteLayout; world: World; env: RefObject<Env>; animate: boolean; count: number }) {
   const trunkGeo = useMemo(trunkGeometry, []);
   const frondGeo = useMemo(frondGeometry, []);
   const nutGeo = useMemo(() => new THREE.IcosahedronGeometry(0.5, 0), []);
@@ -150,7 +190,7 @@ export function Palms({ layout, world, animate, count }: { layout: SiteLayout; w
     return palmSpots(layout)
       .slice(0, count)
       .map((p) => {
-        const nF = 11 + Math.floor(r() * 3);
+        const nF = 14 + Math.floor(r() * 4);
         return {
           x: world.x(p.x),
           z: world.z(p.z),
@@ -160,10 +200,11 @@ export function Palms({ layout, world, animate, count }: { layout: SiteLayout; w
           phase: r() * 10,
           fronds: Array.from({ length: nF }, (_, k) => {
             const dead = k >= nF - 2;
+            const young = k < 3;
             return {
-              yaw: (k / nF) * Math.PI * 2 + r() * 0.4,
-              pitch: dead ? -1.15 - r() * 0.3 : k % 3 === 0 ? 0.55 + r() * 0.3 : -0.05 - r() * 0.45,
-              len: dead ? 5.2 : 6.6 + r() * 2.4,
+              yaw: (k / nF) * Math.PI * 2 * 2.39 + r() * 0.3, // golden-angle spiral like a real crown
+              pitch: dead ? -1.25 - r() * 0.25 : young ? 0.75 + r() * 0.35 : k % 2 ? 0.05 + r() * 0.3 : -0.25 - r() * 0.45,
+              len: dead ? 6.0 : young ? 6.2 + r() * 1.5 : 8.2 + r() * 2.6,
               dead,
             };
           }),
@@ -175,10 +216,21 @@ export function Palms({ layout, world, animate, count }: { layout: SiteLayout; w
   const frondRef = useRef<THREE.InstancedMesh>(null);
   const nutRef = useRef<THREE.InstancedMesh>(null);
   const frondCount = specs.reduce((n, p) => n + p.fronds.length, 0);
-  const nutCount = specs.length * 5;
+  const nutCount = specs.length * 6;
 
   const tmp = useMemo(
-    () => ({ m: new THREE.Matrix4(), base: new THREE.Matrix4(), crown: new THREE.Matrix4(), q: new THREE.Quaternion(), e: new THREE.Euler(), v: new THREE.Vector3(), s: new THREE.Vector3(), o: new THREE.Object3D() }),
+    () => ({
+      m: new THREE.Matrix4(),
+      base: new THREE.Matrix4(),
+      crown: new THREE.Matrix4(),
+      q: new THREE.Quaternion(),
+      qw: new THREE.Quaternion(),
+      e: new THREE.Euler(),
+      v: new THREE.Vector3(),
+      ax: new THREE.Vector3(),
+      s: new THREE.Vector3(),
+      o: new THREE.Object3D(),
+    }),
     [],
   );
 
@@ -190,42 +242,52 @@ export function Palms({ layout, world, animate, count }: { layout: SiteLayout; w
     const r = rng(99);
     for (const p of specs)
       for (const f of p.fronds) {
-        c.set(f.dead ? "#9a8650" : "#ffffff").multiplyScalar(f.dead ? 1 : 0.85 + r() * 0.3);
+        c.set(f.dead ? "#9c8a55" : "#ffffff").multiplyScalar(f.dead ? 1 : 0.86 + r() * 0.26);
         fr.setColorAt(i++, c);
       }
     if (fr.instanceColor) fr.instanceColor.needsUpdate = true;
   }, [specs]);
 
-  const pose = (t: number) => {
+  const pose = (e: Env | null) => {
     const tr = trunkRef.current;
     const fr = frondRef.current;
     const nr = nutRef.current;
     if (!tr || !fr || !nr) return;
-    const { m, base, crown, q, e, v, s, o } = tmp;
-    const wind = windAt(t);
+    const { m, base, crown, q, qw, e: eu, v, ax, s, o } = tmp;
+    const t = e?.t ?? 0;
+    const [wx, wz] = e?.windDir ?? [1, 0];
+    ax.set(wz, 0, -wx).normalize(); // tilting about this axis leans things downwind
     let fi = 0;
     let ni = 0;
-    specs.forEach((p, i) => {
-      const sway = animate ? wind * 0.035 + Math.sin(t * 1.05 + p.phase) * 0.022 * (0.4 + wind) : 0.02;
-      e.set(0, p.yaw, -(p.lean + sway));
-      q.setFromEuler(e);
+    specs.forEach((p, pi) => {
+      // the gust reaches each palm when its front passes (gustAt), so a wave rolls across the grove
+      const g = e && animate ? gustAt(e, p.x, p.z) : 0.35;
+      const sway = animate ? Math.sin(t * 0.9 + p.phase) * 0.012 * (0.4 + g) : 0;
+      eu.set(0, p.yaw, -p.lean);
+      q.setFromEuler(eu);
+      qw.setFromAxisAngle(ax, g * 0.035 + sway);
+      q.premultiply(qw);
       base.compose(v.set(p.x, 0, p.z), q, s.setScalar(p.s));
-      tr.setMatrixAt(i, base);
-      crown.copy(base).multiply(m.makeTranslation(TRUNK_P[2].x, TRUNK_P[2].y, TRUNK_P[2].z));
+      tr.setMatrixAt(pi, base);
+      // crown bends further than the trunk
+      qw.setFromAxisAngle(ax, g * 0.09 + sway * 2);
+      crown.compose(v.set(p.x, 0, p.z), q.clone().premultiply(qw), s.setScalar(p.s)).multiply(m.makeTranslation(TRUNK_TOP.x, TRUNK_TOP.y, TRUNK_TOP.z));
       for (const f of p.fronds) {
-        const flutter = animate ? Math.sin(t * 2.6 + p.phase + f.yaw * 3) * 0.07 * (0.3 + wind) : 0;
+        const yawW = p.yaw + f.yaw;
+        const along = Math.cos(yawW) * wx - Math.sin(yawW) * wz; // + = frond points downwind
+        const flutter = animate ? Math.sin(t * (2.2 + g * 2.5) + p.phase + f.yaw * 3) * (0.03 + g * 0.09) : 0;
         o.position.set(0, 0, 0);
-        o.rotation.set(0, f.yaw, f.pitch + flutter, "YXZ");
+        o.rotation.set(0, f.yaw, f.pitch + flutter - along * g * 0.22 + (f.dead ? 0 : -g * 0.05), "YXZ");
         o.scale.setScalar(f.len);
         o.updateMatrix();
         m.multiplyMatrices(crown, o.matrix);
         fr.setMatrixAt(fi++, m);
       }
-      for (let k = 0; k < 5; k++) {
-        const a = (k / 5) * Math.PI * 2 + p.phase;
-        o.position.set(Math.cos(a) * 0.65, -0.45 - (k % 2) * 0.35, Math.sin(a) * 0.65);
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2 + p.phase;
+        o.position.set(Math.cos(a) * 0.62, -0.5 - (k % 2) * 0.38, Math.sin(a) * 0.62);
         o.rotation.set(0, 0, 0);
-        o.scale.setScalar(0.85);
+        o.scale.setScalar(0.88);
         o.updateMatrix();
         m.multiplyMatrices(crown, o.matrix);
         nr.setMatrixAt(ni++, m);
@@ -237,21 +299,21 @@ export function Palms({ layout, world, animate, count }: { layout: SiteLayout; w
   };
 
   useEffect(() => {
-    pose(0);
+    pose(env.current);
     trunkRef.current?.computeBoundingSphere();
     frondRef.current?.computeBoundingSphere();
     nutRef.current?.computeBoundingSphere();
   });
-  useFrame(({ clock }) => {
-    if (animate) pose(clock.elapsedTime);
+  useFrame(() => {
+    if (animate) pose(env.current);
   });
 
-  const trunkMat = useMemo(() => std("#ffffff", { vertexColors: true, flat: true, rough: 0.95 }), []);
-  const frondMat = useMemo(() => std("#ffffff", { vertexColors: true, flat: true, side: THREE.DoubleSide, rough: 0.8 }), []);
+  const trunkMat = useMemo(() => std("#ffffff", { vertexColors: true, rough: 0.95 }), []);
+  const frondMat = useMemo(() => std("#ffffff", { vertexColors: true, side: THREE.DoubleSide, rough: 0.75 }), []);
   return (
     <group>
       <instancedMesh ref={trunkRef} args={[trunkGeo, trunkMat, Math.max(1, specs.length)]} castShadow receiveShadow frustumCulled={false} />
-      <instancedMesh ref={frondRef} args={[frondGeo, frondMat, Math.max(1, frondCount)]} castShadow receiveShadow frustumCulled={false} />
+      <instancedMesh ref={frondRef} args={[frondGeo, frondMat, Math.max(1, frondCount)]} castShadow frustumCulled={false} />
       <instancedMesh ref={nutRef} args={[nutGeo, std(PAL.coconut, { flat: true, rough: 0.7 }), Math.max(1, nutCount)]} castShadow frustumCulled={false} />
     </group>
   );
@@ -289,7 +351,13 @@ export function Greenery({ layout, world, grassCount }: { layout: SiteLayout; wo
     const D = P.depthFt;
     const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
     const bushes: { x: number; z: number; s: number; c: number }[] = [];
-    for (let z = 1.5; z < D; z += 2.6 + r() * 1.6) bushes.push({ x: leftX(z) - 1.4 - r() * 0.7, z, s: 1.4 + r() * 1.0, c: r() });
+    // hedge along the left wall, with a gap where the notice board hangs
+    const nb = layout.fixtures.noticeBoard;
+    for (let z = 1.5; z < D; z += 2.6 + r() * 1.6) {
+      const skip = Math.abs(z - nb.z) < nb.widthFt / 2 + 1.6;
+      const b = { x: leftX(z) - 1.4 - r() * 0.7, z, s: 1.4 + r() * 1.0, c: r() };
+      if (!skip) bushes.push(b);
+    }
     for (let x = BL.x + 1; x < BR.x; x += 2.6 + r() * 1.4) bushes.push({ x, z: D + 1.4 + r() * 0.5, s: 1.3 + r() * 0.9, c: r() });
     for (let z = 3; z < D; z += 5 + r() * 4) bushes.push({ x: FR.x + 1.5 + r() * 0.6, z, s: 1.0 + r() * 0.8, c: r() });
     const rear = layout.rearYard.z1 - layout.rearYard.z0;

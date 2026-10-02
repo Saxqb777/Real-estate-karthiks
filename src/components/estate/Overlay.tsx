@@ -12,8 +12,22 @@ export type V3 = [number, number, number];
 export type Tone = "teal" | "marigold" | "coral" | "sky" | "faint";
 
 export type LabelSpec =
-  | { key: string; kind: "card"; slot: SlotName; name: string; tone: Tone; status: string; tenant: string | null; rent: number | null; occupied: boolean; vacant: boolean; meta: string }
+  | {
+      key: string;
+      kind: "card";
+      slot: SlotName;
+      name: string;
+      tone: Tone;
+      status: string;
+      /** tenant / rent line (rent in ₹ per month) */
+      row: { left: string; right: number | null } | null;
+      meta: string | null;
+      /** next-step hint, fades in after a beat (DESIGN.md "Discoverability") */
+      hint: string | null;
+    }
   | { key: string; kind: "tag"; name: string; tone: Tone }
+  | { key: string; kind: "tip"; title: string; sub: string; note: string | null; hint: string | null; tone: Tone }
+  | { key: string; kind: "hint" }
   | { key: string; kind: "dim"; text: string; caption: string | null; hot: boolean }
   | { key: string; kind: "build"; slot: SlotName };
 
@@ -78,29 +92,43 @@ export function OverlayLabels({
           key={l.key}
           ref={reg(l.key)}
           data-fade={l.kind === "dim" && !l.hot ? "1" : undefined}
-          className={`${s.anchor} ${l.kind === "dim" ? (l.hot ? s.zHot : s.zDim) : l.kind === "card" ? s.zCard : ""}`}
+          className={`${s.anchor} ${l.kind === "dim" ? (l.hot ? s.zHot : s.zDim) : l.kind === "card" || l.kind === "tip" ? s.zCard : ""}`}
           style={{ visibility: "hidden" }}
         >
           {l.kind === "card" && (
             <div className={s.above}>
-            <div className={`${s.card} ${toneClass[l.tone]}`}>
-              <div className={s.cardHead}>
-                <span className={s.cardSlot}>{l.slot}</span>
-                <span className={s.cardName}>{l.name}</span>
-              </div>
-              <div className={s.cardStatus}>
-                <i className={s.dot} />
-                {l.status}
-              </div>
-              {l.occupied && (
-                <div className={s.cardRow}>
-                  <span>{l.tenant || "Tenant"}</span>
-                  <b>{l.rent ? `${formatINR(l.rent)}/mo` : "—"}</b>
+              <div className={`${s.card} ${toneClass[l.tone]}`}>
+                <div className={s.cardHead}>
+                  <span className={s.cardName}>{l.name}</span>
+                  <span className={s.cardSlot}>{l.slot}</span>
                 </div>
-              )}
-              {l.vacant && <div className={s.cardRow}>Ready to let</div>}
-              <div className={s.cardMeta}>{l.meta}</div>
+                <div className={s.cardStatus}>
+                  <i className={s.dot} />
+                  {l.status}
+                </div>
+                {l.row && (
+                  <div className={s.cardRow}>
+                    <span>{l.row.left}</span>
+                    {l.row.right !== null && <b>{`${formatINR(l.row.right)}/mo`}</b>}
+                  </div>
+                )}
+                {l.meta && <div className={s.cardMeta}>{l.meta}</div>}
+                {l.hint && <div className={s.cardHint}>{l.hint}</div>}
+              </div>
             </div>
+          )}
+          {l.kind === "tip" && (
+            <div className={s.above}>
+              <div className={`${s.tip} ${toneClass[l.tone]}`}>
+                <div className={s.tipTitle}>{l.title}</div>
+                <div className={s.tipSub}>{l.note ?? l.sub}</div>
+                {l.hint && <div className={s.cardHint}>{l.hint}</div>}
+              </div>
+            </div>
+          )}
+          {l.kind === "hint" && (
+            <div className={s.centered}>
+              <i className={s.unexplored} />
             </div>
           )}
           {l.kind === "tag" && (

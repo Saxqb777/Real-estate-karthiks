@@ -24,6 +24,8 @@ export interface Spot {
 export interface SceneApi {
   env: RefObject<Env>;
   interactive: boolean;
+  /** world objects other than houses are clickable (hero mode, or whenever the host listens for object clicks) */
+  objects: boolean;
   /** key of the hovered hotspot */
   hovered: string | null;
   setHover: (spot: Spot | null, key?: string) => void;
@@ -64,18 +66,20 @@ export function useSpotHandlers(spot: Spot | null) {
   const api = useScene();
   const ref = useRef(spot);
   ref.current = spot;
+  const kind = spot?.kind;
+  const { interactive, objects, setHover, activate, contextMenu } = api;
   return useMemo(() => {
-    if (!api.interactive) return {};
+    if (!interactive || (kind !== "unit" && !objects)) return {};
     const cur = () => ref.current;
     return {
       onPointerOver: (e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
         const s = cur();
-        if (s) api.setHover(s);
+        if (s) setHover(s);
       },
       onPointerOut: () => {
         const s = cur();
-        if (s) api.setHover(null, s.key);
+        if (s) setHover(null, s.key);
       },
       onPointerDown: (e: ThreeEvent<PointerEvent>) => {
         const ne = e.nativeEvent;
@@ -102,7 +106,7 @@ export function useSpotHandlers(spot: Spot | null) {
           gesture.suppressClickUntil = performance.now() + 900;
           gesture.lastLongPress = performance.now();
           navigator.vibrate?.(12);
-          api.contextMenu(s);
+          contextMenu(s);
           done();
         }, LONG_PRESS_MS);
       },
@@ -111,7 +115,7 @@ export function useSpotHandlers(spot: Spot | null) {
         cancelLongPress();
         if (e.delta > 6 || performance.now() < gesture.suppressClickUntil) return;
         const s = cur();
-        if (s) api.activate(s);
+        if (s) activate(s);
       },
       onContextMenu: (e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
@@ -123,21 +127,21 @@ export function useSpotHandlers(spot: Spot | null) {
         const d = gesture.down;
         // right-drag pans the camera: only a still right-click opens the menu
         if (d && d.button === 2 && Math.hypot(e.nativeEvent.clientX - d.x, e.nativeEvent.clientY - d.y) > 6) return;
-        api.contextMenu(s);
+        contextMenu(s);
       },
     };
-  }, [api]);
+  }, [interactive, objects, kind, setHover, activate, contextMenu]);
 }
 
 /** Registers a hotspot's anchor for hint dots, tooltips and getObjectScreen. */
 export function useRegisterSpot(spot: Spot | null) {
-  const api = useScene();
+  const { register } = useScene();
   const sig = spot ? `${spot.key}|${spot.kind}|${spot.unitId ?? ""}|${spot.anchor.map((v) => v.toFixed(2)).join(",")}` : "";
   useEffect(() => {
     if (!spot) return;
-    return api.register(spot);
+    return register(spot);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig, api]);
+  }, [sig, register]);
 }
 
 /**
@@ -149,9 +153,10 @@ export function Hotspot({ spot, children, hit, outline = true, selected = false 
   useRegisterSpot(spot);
   const handlers = useSpotHandlers(spot);
   const on = api.hovered === spot.key || selected;
+  const live = api.interactive && (spot.kind === "unit" || api.objects);
   return (
     <group {...handlers}>
-      <Select enabled={outline && on && api.interactive}>{children}</Select>
+      <Select enabled={outline && on && live}>{children}</Select>
       {hit}
     </group>
   );

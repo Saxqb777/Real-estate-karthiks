@@ -134,10 +134,10 @@ export interface CompoundWall {
 export interface SiteFixtures {
   /** letter box on a gate pillar (the front unit's porch gate, else the main gate) */
   mailbox: Pt;
-  /** notice board on the building's front wall next to the passage gate, or on the compound wall by the gate */
-  noticeBoard: Pt & { widthFt: number; on: "building" | "wall" };
-  /** property-tax stamp plaque on the other gate pillar */
-  taxStamp: Pt;
+  /** notice board on the outer face of the left compound wall, just behind the gate (faces −x, the passer-by side) */
+  noticeBoard: Pt & { widthFt: number };
+  /** property-tax stamp plaque: on the front building's street wall (left of its first window), else on a gate pillar */
+  taxStamp: Pt & { on: "wall" | "pillar" };
   /** survey stone + ranging flag just outside the back-left corner */
   plotMarker: Pt;
   /** EB poles on the near shoulder: [0] carries the street lamp, the meter and the service drop */
@@ -576,37 +576,24 @@ function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: Building
   const [FL, FR, , BL] = polygon;
   const porch = walls.find((w) => w.gate === "porch");
   const passage = walls.find((w) => w.gate === "passage");
-  const main = walls.find((w) => w.gate === "main");
-  const BOARD_W = 3.4;
-  let mailbox: Pt;
-  let taxStamp: Pt;
-  let noticeBoard: SiteFixtures["noticeBoard"];
-  if (porch && frontSlot) {
-    mailbox = { ...porch.a };
-    taxStamp = passage ? { ...passage.a } : { ...porch.b };
-    // the front wall left of its first window (windows are spread evenly along the wall)
-    const x0 = frontSlot.rect.x0;
-    const wallLen = frontSlot.notch.wide.x0 - x0;
-    const n = Math.max(1, Math.floor((wallLen - 1.2) / 6.2));
-    const firstWin = x0 + wallLen / (2 * n) - 1.5;
-    const w = clamp(firstWin - x0 - 1.2, 0, BOARD_W);
-    noticeBoard = w >= 2 ? { x: x0 + 0.6 + w / 2, z: 0, widthFt: r2(w), on: "building" } : { x: (frontSlot.notch.wide.x0 + porch.a.x) / 2, z: 0, widthFt: r2(clamp(porch.a.x - frontSlot.notch.wide.x0 - 0.8, 1.2, BOARD_W)), on: "wall" };
-  } else {
-    const g = main ?? walls.find((w) => w.kind === "gate");
-    const a = g ? g.a : FL;
-    const b = g ? g.b : { x: FL.x + 4, z: 0 };
-    mailbox = { ...b };
-    taxStamp = { ...a };
-    const room = FR.x - b.x - 1.6;
-    const w = clamp(room, 1.2, BOARD_W);
-    noticeBoard = { x: b.x + 0.8 + w / 2, z: 0, widthFt: r2(w), on: "wall" };
-  }
+  const main = walls.find((w) => w.gate === "main") ?? walls.find((w) => w.kind === "gate");
+  // mailbox on the gate the postman reaches first (the front unit's porch gate), tax stamp on the other gate pillar
+  const mailbox = porch ? { ...porch.a } : main ? { ...main.b } : { x: FR.x - 1, z: 0 };
+  const onBoundary = frontSlot && frontSlot.unit && frontSlot.rect.z0 < 0.01 && frontSlot.notch.wide.x0 - frontSlot.rect.x0 > 4;
+  const taxStamp: SiteFixtures["taxStamp"] = onBoundary
+    ? { x: r2(frontSlot.rect.x0 + 2.2), z: 0, on: "wall" }
+    : { ...(passage ? passage.a : main ? main.a : porch ? porch.b : FL), on: "pillar" };
+  // notice board: on the left compound wall a few feet in from the street, where it is seen from the lane
+  const depth = BL.z - FL.z;
+  const zb = Math.min(7, Math.max(2.5, depth * 0.12));
+  const xb = FL.x + ((BL.x - FL.x) * (zb - FL.z)) / (depth || 1);
+  const noticeBoard = { x: r2(xb), z: r2(zb), widthFt: r2(clamp(depth * 0.06, 2.4, 3.6)) };
   // poles stand on the near shoulder, one left of the plot (lamp + meter), one to the right
   const zPole = (street.nearShoulder[0] + street.nearShoulder[1]) / 2 + 0.4;
   const [, tFR, tBR] = tile;
   const tx1 = xAt(tFR, tBR, zPole);
   const poles = [
-    { x: r2(FL.x - 3.2), z: r2(zPole) },
+    { x: r2(FL.x - 6.5), z: r2(zPole) },
     { x: r2(Math.min(tx1 - 4, FR.x + 10)), z: r2(zPole) },
   ];
   return {

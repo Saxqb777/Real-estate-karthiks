@@ -5,7 +5,7 @@
 // only *selected* to the figure's scope here — totals shown are the API's own (never re-added in the UI).
 import { ExternalLink, FileText, Lock, Pencil, Plus, ReceiptIndianRupee } from "lucide-react";
 import { useCallback, useState, type ReactNode } from "react";
-import { Button, EmptyState, LinkButton, Skeleton, cx } from "@/components/ui";
+import { Button, EmptyState, Kbd, LinkButton, Skeleton, cx } from "@/components/ui";
 import { ExpenseForm, METHOD_LABEL, inlineFrame } from "@/components/forms";
 import { useApi } from "@/lib/client";
 import type { DashboardData, Explain, ExplainInput } from "@/lib/dashboard-types";
@@ -20,6 +20,7 @@ import { inr } from "./format";
 import { useEscape } from "./store";
 import type { DrillView, PeriodKind } from "./types";
 import s from "./drill.module.css";
+import hs from "./hud.module.css";
 
 // ---------------------------------------------------------------- stack
 
@@ -135,10 +136,29 @@ export function DrillPanel({ data, drill, rootLabel, children, onOpenUnit, actio
       bodyKey={`d${drill.stack.length}`}
       bodyFlush={flush}
       actions={cur ? undefined : actions}
-      hint={cur ? undefined : panel.hint}
+      hint={cur ? <DrillHint view={cur} /> : panel.hint}
     >
       {cur ? <DrillContent view={cur} data={data} push={drill.push} onOpenUnit={onOpenUnit} /> : children}
     </HudPanel>
+  );
+}
+
+function DrillHint({ view }: { view: DrillView }) {
+  const text =
+    view.kind === "metric"
+      ? "Lines with › open what they're made of"
+      : view.kind === "category" || view.kind === "lease"
+        ? "Click a row to open the record"
+        : view.kind === "expense"
+          ? "Edit here — totals update everywhere"
+          : "";
+  return (
+    <>
+      <span>{text}</span>
+      <span className={hs.hintKey}>
+        <Kbd>Esc</Kbd> back
+      </span>
+    </>
   );
 }
 
