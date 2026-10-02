@@ -48,7 +48,7 @@ export function Clouds({ layout, env, count, animate }: { layout: SiteLayout; en
     return Array.from({ length: count }, (_, i) => {
       const low = i % 3 !== 0;
       const a = low ? r() * Math.PI * 2 : behind + (r() - 0.5) * 2.2;
-      return { a, rad: R * (low ? 0.9 + r() * 1.1 : 1.6 + r() * 0.9), y: low ? -20 - r() * 26 : 40 + r() * 30, s: (low ? 9 : 13) + r() * 10, v: i % 3, spin: (r() - 0.5) * 0.4, speed: 0.006 + r() * 0.01 };
+      return { a, rad: R * (low ? 1.2 + r() * 1.3 : 2.2 + r() * 1.2), y: low ? -38 - r() * 40 : 55 + r() * 35, s: (low ? 4.5 : 7) + r() * 5, v: i % 3, spin: (r() - 0.5) * 0.4, speed: 0.004 + r() * 0.008 };
     });
   }, [count, R]);
   const refs = [useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null)];

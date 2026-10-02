@@ -66,13 +66,13 @@ export const plasterTex = () =>
     ctx.fillStyle = "#f2f2f2";
     ctx.fillRect(0, 0, w, h);
     const r = rng(7);
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < 22; i++) {
       const x = r() * w;
       const y = r() * h;
-      const rad = 20 + r() * 60;
-      wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, r() > 0.5 ? "#dcdcdc" : "#ffffff", 0.35));
+      const rad = 30 + r() * 70;
+      wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, r() > 0.5 ? "#e6e6e6" : "#ffffff", 0.22));
     }
-    speckle(ctx, w, h, 2600, ["#d8d8d8", "#ffffff", "#e4e4e4"], [1, 2], 0.5, 8);
+    speckle(ctx, w, h, 2200, ["#e2e2e2", "#ffffff", "#ebebeb"], [1, 2], 0.45, 8);
   });
 
 /** Red laterite earth with patchy coconut-grove grass (tile top). */
