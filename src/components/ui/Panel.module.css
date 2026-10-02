@@ -1,0 +1,212 @@
+.panel {
+  --bracket: rgba(243, 233, 216, 0.34);
+  --bracket-len: 10px;
+  --pad: var(--s-4);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 120px),
+    var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--inner-hi), var(--shadow-1);
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out);
+}
+
+/* Material grain */
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--noise);
+  opacity: 0.45;
+  z-index: 0;
+}
+
+/* Corner brackets (game frame) — 8 strokes on one pseudo-element */
+.brackets::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  z-index: 2;
+  --c: var(--bracket);
+  --l: var(--bracket-len);
+  --w: 2px;
+  background:
+    linear-gradient(var(--c) 0 0) top left / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) top left / var(--w) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) top right / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) top right / var(--w) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom left / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom left / var(--w) var(--l) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom right / var(--l) var(--w) no-repeat,
+    linear-gradient(var(--c) 0 0) bottom right / var(--w) var(--l) no-repeat;
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+
+.accent-marigold {
+  --bracket: var(--marigold);
+}
+.accent-teal {
+  --bracket: var(--teal);
+}
+.accent-coral {
+  --bracket: var(--coral);
+}
+.accent-laterite {
+  --bracket: var(--terracotta);
+}
+
+.strong {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 120px),
+    var(--panel-strong);
+  border-color: var(--line-strong);
+}
+.sunken {
+  background: var(--sunken);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.sunken::after {
+  opacity: 0.25;
+}
+/* Only for HUD overlays floating on the 3D scene. */
+.glass {
+  background: var(--panel-glass);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+.glass::after {
+  opacity: 0.2;
+}
+
+.interactive {
+  cursor: pointer;
+}
+.interactive:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+  --bracket: var(--marigold);
+}
+
+/* Chettinad tile frieze along the top edge — for one hero panel per page, not every panel */
+.band {
+  padding-top: 6px;
+}
+.bandStrip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--chettinad) 0 0 / 18px 6px repeat-x;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  opacity: 0.9;
+  z-index: 1;
+}
+
+.head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: calc(var(--pad) - 2px) var(--pad) var(--s-3);
+}
+/* hairline with a short marigold lead-in under the header */
+.head::after {
+  content: "";
+  position: absolute;
+  left: var(--pad);
+  right: var(--pad);
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--marigold) 0 22px, transparent 22px 26px, var(--line) 26px);
+}
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--ff-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.pip {
+  width: 5px;
+  height: 5px;
+  background: var(--marigold);
+  transform: rotate(45deg);
+  flex: none;
+}
+.title {
+  font-family: var(--ff-display);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  padding: var(--pad);
+  min-width: 0;
+  flex: 1;
+}
+.flush > .body {
+  padding: 0;
+}
+.foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--pad);
+  border-top: 1px solid var(--line);
+}
+
+.pad-sm {
+  --pad: var(--s-3);
+}
+.pad-lg {
+  --pad: var(--s-6);
+}
+
+@media (max-width: 767px) {
+  .panel {
+    --pad: var(--s-3);
+  }
+  .pad-lg {
+    --pad: var(--s-4);
+  }
+  .title {
+    font-size: var(--fs-lg);
+  }
+}
