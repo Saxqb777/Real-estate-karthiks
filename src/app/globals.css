@@ -8,6 +8,9 @@
  *    Page agents should compose the UI kit (src/components/ui) and, when they need layout, use a page-level
  *    CSS module. Never hard-code colours — use the tokens below (var(--marigold), var(--line), …).
  *
+ * ONE-SCREEN RULE: inside the app shell the body never scrolls — pages fill the area under the HUD bar
+ * (use <Screen>) and scroll inside panels (<ScrollArea>, <Panel fill>, <Table fill>).
+ *
  * LOOK (docs/DESIGN.md, incl. the owner's HARD RULE): a management-game HUD built from warm-dark,
  * solid, slightly textured panels; crisp 1px hairlines; small radii; Rajdhani numerals + tracked
  * uppercase labels; one brand accent (marigold); teal/coral only for meaning. Glow is reserved for
@@ -149,7 +152,6 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scrollbar-gutter: stable;
 }
 html,
 body {

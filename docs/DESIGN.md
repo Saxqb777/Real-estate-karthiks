@@ -227,3 +227,15 @@ The spec describes the old site's data; presentation must be rethought so nothin
 - The toggle lives in the global period control and is remembered per browser. Every scope chip uses the active label.
 - The calculations module groups by a `yearMode: "fy" | "calendar"` parameter (buildDashboard(input, asOf, { yearMode })) and
   /api/dashboard accepts `?yearMode=fy|calendar` (default fy) — the UI never regroups numbers itself.
+
+## NO-CLUTTER RULES (owner: "nothing should feel jumbled")
+- **Show little, reveal more**: the main screen shows only the essentials; everything else is one tap away (inspect card → side panel).
+- **Per HUD panel: 1 hero number + max 3 supporting figures.** Anything more goes into the drill-down.
+- **Max 3 HUD panels visible at once** over the world (left, right, bottom dock); the dock shows one tab at a time.
+- **One accent per panel** (its bucket colour); everything else neutral. No more than one animated/pulsing element in view
+  unless it's an alert.
+- **Alerts are prioritised and capped**: ticker shows the top 3 (overdue > due soon > tasks); "+N more" for the rest.
+- Generous, consistent spacing (8px grid), aligned edges, numbers right-aligned in tables, labels never wrap awkwardly.
+- Empty / zero states are calm ("No expenses yet this FY") — never a wall of ₹0 tiles.
+- Every screen must pass the **3-second test**: a first-time look answers "is everything OK?" (all-green state vs what needs attention).
+- Round-2 review includes a dedicated clutter critic that screenshots each screen and removes anything that isn't earning its place.
