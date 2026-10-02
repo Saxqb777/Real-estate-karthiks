@@ -37,3 +37,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - Keep replies simple, bullet points; explain deeply only when asked.
 - Never ship a change without the owner's final confirmation.
 - Work in steps; stop after each step for review.
+
+## Owner decisions log (keep updated — cross-session memory)
+- Login: username `estates`, random password in env `APP_PASSWORD` (owner has it). Next.js 15, Neon region Singapore.
+- Design = full game-like prototype now (not plain forms). See docs/DESIGN.md — it is the source of truth for UI, including:
+  no-AI-look rules, living world (traffic, people, wind), Tamil day phases (src/lib/day-phase.ts), ONE-SCREEN rule (no long scroll),
+  "inspect like a game" interaction model (hover tooltip → anchored card → side panel), world objects as data entry points,
+  drill-down numbers, radial action menu, time scrubber (as-of date), both quick-edit pop-ups and Data/Config pages.
+- Model: stay on Opus 5.5 (owner's choice). Figma available for review hand-off (screens → Figma for owner mark-up).
+  Higgsfield available but avoid AI-generated imagery (conflicts with no-AI-look); ask before spending credits.
+- Plot dimensions are NOT seeded (DB starts empty); site-plan values are fallbacks + a "use site plan dimensions" option.
