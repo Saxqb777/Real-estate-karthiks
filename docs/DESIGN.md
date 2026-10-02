@@ -96,3 +96,16 @@ The diorama must feel alive, like a tiny Tamil Nadu street scene running in real
 - Small details: a stray dog napping / trotting, a cow by the roadside, a kolam that is freshly drawn in the morning.
 - Everything procedural + instanced, frame-rate independent, paused off-screen, disabled/reduced with prefers-reduced-motion, and
   a "Life" toggle (on by default) in the scene HUD. Must keep 60fps on a normal laptop and stay smooth on a phone (scale down counts on mobile).
+
+## Time of day in Tamil (owner request)
+One shared helper (src/lib/day-phase.ts) maps IST time → phase, used by BOTH the HUD clock and the 3D lighting so they always agree:
+| IST        | Tamil      | English    | Scene                                   |
+|------------|------------|------------|-----------------------------------------|
+| 04:00–06:00| அதிகாலை    | Dawn       | blue hour → pink horizon, birds start   |
+| 06:00–12:00| காலை       | Morning    | warm low sun, long shadows, fresh kolam |
+| 12:00–16:00| மதியம்     | Afternoon  | high bright sun, short shadows, heat    |
+| 16:00–19:00| மாலை       | Evening    | golden hour → dusk, lamps switch on     |
+| 19:00–04:00| இரவு       | Night      | moon, stars, fireflies, lit windows     |
+- HUD clock shows the Tamil word large (Noto Sans Tamil) + English small + time, e.g. "காலை · Morning · 7:42 AM", with a small sun/moon arc.
+- Login page greets with the Tamil greeting for the phase (e.g. "காலை வணக்கம்" / "மாலை வணக்கம்" / "இரவு வணக்கம்").
+- Transitions between phases are smooth (lighting lerps over ~minutes of real time; a manual override lets the owner preview any phase).
