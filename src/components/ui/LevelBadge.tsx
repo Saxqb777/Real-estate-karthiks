@@ -58,7 +58,7 @@ export function LevelBadge({
         </span>
         <span className={styles.shine} aria-hidden />
       </div>
-      {(title || caption || showTier) && (title || caption) && (
+      {(title || caption) && (
         <div className={styles.text}>
           {title && <span className={styles.title}>{title}</span>}
           {showTier && <span className={styles.tierName}>{TIER_LABEL[t]} tier</span>}

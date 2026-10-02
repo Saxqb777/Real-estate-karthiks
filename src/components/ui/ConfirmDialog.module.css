@@ -1,0 +1,30 @@
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+.mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--coral);
+  background: var(--coral-a12);
+  border: 1px solid rgba(255, 93, 115, 0.4);
+  border-radius: var(--radius-xs);
+}
+.mark svg {
+  width: 18px;
+  height: 18px;
+}
+.msg {
+  font-size: var(--fs-base);
+  color: var(--text-dim);
+  line-height: 1.55;
+  padding-top: 6px;
+}
+.msg b,
+.msg strong {
+  color: var(--text);
+}
