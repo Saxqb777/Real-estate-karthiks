@@ -36,6 +36,7 @@ const STATUS: Record<StatusKind, { tone: BadgeTone; label: string; pulse?: boole
   "due-soon": { tone: "marigold", label: "Due soon" },
   overdue: { tone: "coral", label: "Overdue", pulse: true },
   vacant: { tone: "ghost", label: "Vacant" },
+  incoming: { tone: "sky", label: "Moving in" },
   inactive: { tone: "grey", label: "Inactive" },
   none: { tone: "grey", label: "No lease" },
   due: { tone: "marigold", label: "Due" },
@@ -55,7 +56,7 @@ export interface StatusPillProps {
 
 /**
  * The one status language used everywhere (matches the 3D world):
- * occupied/paid teal · due-soon marigold · overdue coral pulse · vacant blueprint ghost · inactive grey.
+ * occupied/paid teal · due-soon marigold · overdue coral pulse · vacant blueprint ghost · incoming sky · inactive grey.
  */
 export function StatusPill({ status, label, size, className }: StatusPillProps) {
   const s = STATUS[status] ?? STATUS.none;
