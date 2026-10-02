@@ -1,0 +1,40 @@
+.trigger {
+  display: inline-flex;
+  max-width: 100%;
+}
+.tip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 6px 9px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+}
+.tip::after {
+  content: "";
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  width: 7px;
+  height: 7px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-strong);
+  transform: translateX(-50%) rotate(45deg);
+}
+.top::after {
+  bottom: -4.5px;
+  border-top: 0;
+  border-left: 0;
+}
+.bottom::after {
+  top: -4.5px;
+  border-bottom: 0;
+  border-right: 0;
+}

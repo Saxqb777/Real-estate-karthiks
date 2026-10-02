@@ -144,3 +144,39 @@ Content that doesn't fit lives in tabs / drawers / panels that scroll *internall
 ### Mobile (<768px)
 - 3D world on top (~45dvh) + a bottom sheet with swipeable tabs (Portfolio · This month · Charts · Units · To-do).
   Still no long page scroll — swipe/tabs, content scrolls inside the sheet.
+
+## Interaction model (owner-approved) — "inspect like a game"
+Owner chose: world objects open data, every number drills down, radial action menu, time scrubber, and both quick-edit pop-ups + Data/Config pages.
+Pop-up style (owner: "think of it like a game") → RPG "inspect" pattern, three depths, never leaving the screen:
+1. **Hover = tooltip** (like an item tooltip): name + 1–2 key figures + state colour. Instant, follows the object.
+2. **Click = inspect card** anchored to the object with a leader line (corner-bracket frame, slides/scales in from the object).
+   Shows the essentials + 2–3 primary actions. Only one open at a time.
+3. **Expand (⤢ or Enter) = side panel** sliding in from the right: full details, history table, inline editing. Esc steps back one depth.
+- Opening an inspect card on a unit nudges the camera so the card never covers the object.
+
+### World objects = data entry points (diegetic UI)
+| 3D object                     | Opens                                         |
+|-------------------------------|-----------------------------------------------|
+| House                         | Unit card (value, offer, gain, tenant, rent)  |
+| Mailbox at the gate           | Payments & invoices (record rent here)        |
+| Notice board by the gate      | To-dos / action items                         |
+| Electric pole + meter         | TNPDCL consumer no. + Pay electricity link    |
+| TO-LET board (vacant unit)    | New lease wizard                              |
+| Tenant figure at the door     | Tenant profile, tap-to-call                   |
+| Plot boundary / ground marker | Plot dimensions (opens Config → Plot)          |
+| Tax stamp on the gate pillar  | Property tax per year (mark paid)             |
+Objects show a subtle interact hint on hover (outline + cursor + tooltip) so they're discoverable; a "?" help overlay lists them.
+
+### Every number drills down
+Any KPI/total is clickable → breakdown card (e.g. Net profit → rent by unit + expenses by category) → click a row → the underlying
+records (payments / expenses) with inline edit. Breadcrumb inside the panel ("Net profit › Expenses › Maintenance").
+
+### Radial action menu
+Right-click (desktop) / long-press (touch) on a house → game-style radial wheel (6 slots, keyboard 1–6):
+Record rent · Add expense · Call tenant · Pay electricity · Add to-do · Move out / New lease (context aware). Opens the right quick form.
+
+### Time scrubber
+A slim timeline in the bottom dock (purchase date → today). Dragging it sets an "as of" date:
+the 3D world shows who lived where on that date (vacant/occupied, tenant names), and every HUD number recomputes "as of" that date
+(calculations module must accept an asOf date — buildDashboard(input, asOf)). A "LIVE" button snaps back to today. Year tick marks, lease
+change markers, play ▶ to animate through time.

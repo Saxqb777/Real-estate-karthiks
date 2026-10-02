@@ -1,0 +1,86 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  min-height: 16px;
+}
+.label {
+  font-family: var(--ff-display);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  line-height: 1.2;
+}
+.req {
+  color: var(--marigold);
+  margin-left: 3px;
+}
+.aside {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: #ff8a9b;
+  line-height: 1.4;
+}
+.error svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin-top: 1px;
+}
+.span2 {
+  grid-column: span 2;
+}
+.spanFull {
+  grid-column: 1 / -1;
+}
+
+.grid {
+  display: grid;
+  gap: var(--s-4) var(--s-4);
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  align-items: start;
+}
+.grid[data-cols="1"] {
+  --cols: 1;
+}
+.grid[data-cols="3"] {
+  --cols: 3;
+}
+.grid[data-cols="4"] {
+  --cols: 4;
+}
+@media (max-width: 1023px) {
+  .grid[data-cols="3"],
+  .grid[data-cols="4"] {
+    --cols: 2;
+  }
+}
+@media (max-width: 639px) {
+  .grid[data-cols] {
+    --cols: 1;
+  }
+  .grid .span2 {
+    grid-column: auto;
+  }
+}

@@ -1,0 +1,163 @@
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    filter var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.45;
+}
+.btn[aria-busy="true"] {
+  opacity: 0.85;
+  cursor: progress;
+}
+.btn svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.label {
+  display: inline-flex;
+  align-items: center;
+  padding-top: 1px; /* Rajdhani sits high */
+}
+
+/* primary — bevelled marigold, like a physical game button */
+.primary {
+  background: var(--marigold-bevel);
+  color: var(--marigold-ink);
+  border-color: #ffcf85;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(122, 58, 0, 0.35),
+    0 1px 0 rgba(0, 0, 0, 0.5);
+}
+.primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+.primary:hover:not(:disabled)::after {
+  transform: translateX(120%);
+  transition: transform 700ms var(--ease-out);
+}
+.primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.primary:active:not(:disabled) {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(122, 58, 0, 0.35);
+}
+
+/* secondary — raised charcoal plate */
+.secondary {
+  background: linear-gradient(180deg, #2b2620, #221e19);
+  border-color: var(--line-strong);
+  color: var(--text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(0, 0, 0, 0.5);
+}
+.secondary:hover:not(:disabled) {
+  border-color: rgba(255, 181, 71, 0.55);
+  color: #fff6e6;
+}
+
+/* ghost — text only until hovered */
+.ghost {
+  background: transparent;
+  color: var(--text-dim);
+}
+.ghost:hover:not(:disabled) {
+  background: rgba(243, 233, 216, 0.06);
+  color: var(--text);
+}
+
+/* danger — coral outline that fills on hover */
+.danger {
+  background: var(--coral-a12);
+  border-color: rgba(255, 93, 115, 0.45);
+  color: #ff8a9b;
+}
+.danger:hover:not(:disabled) {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: #1f0508;
+}
+
+.sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+  gap: 6px;
+}
+.sm svg {
+  width: 14px;
+  height: 14px;
+}
+.lg {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 17px;
+}
+.lg svg {
+  width: 18px;
+  height: 18px;
+}
+.block {
+  display: flex;
+  width: 100%;
+}
+
+/* Icon-only */
+.icon {
+  padding: 0;
+  width: 36px;
+}
+.icon.sm {
+  width: 30px;
+}
+.icon.lg {
+  width: 44px;
+}
+.icon.ghost {
+  color: var(--text-dim);
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
