@@ -1,0 +1,39 @@
+.num {
+  font-family: var(--ff-display);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+  transition: color 700ms var(--ease-out);
+}
+.up {
+  color: var(--teal) !important;
+  transition-duration: 80ms;
+}
+.down {
+  color: var(--coral) !important;
+  transition-duration: 80ms;
+}
+.roll {
+  display: inline-flex;
+  align-items: flex-end;
+  line-height: 1.12;
+}
+.roller {
+  display: inline-block;
+  height: 1.12em;
+  overflow: hidden;
+}
+.strip {
+  display: flex;
+  flex-direction: column;
+}
+.strip > span {
+  display: block;
+  height: 1.12em;
+  line-height: 1.12em;
+  text-align: center;
+}
+.char {
+  display: inline-block;
+  height: 1.12em;
+  line-height: 1.12em;
+}
