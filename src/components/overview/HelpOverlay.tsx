@@ -45,7 +45,7 @@ interface HudLabel {
   lx: number;
   ly: number;
   lw: number;
-  below: boolean;
+  lh: number;
 }
 
 function worldSpots(units: UnitBreakdown[], mobile: boolean): Spot[] {
@@ -98,17 +98,17 @@ function placeHud(): HudLabel[] {
     if (r.width < 4 || r.height < 4) return;
     const text = el.dataset.help ?? "";
     const below = r.top < vh / 2;
-    const lw = Math.min(Math.max(r.width, 190), 280);
-    const lines = Math.ceil((text.length * 6.6) / (lw - 16));
+    const lw = Math.min(Math.max(text.length * 6.7 + 18, 90), 300);
+    const lines = Math.ceil((text.length * 6.7) / (lw - 16));
     const lh = 12 + lines * 16;
     const lx = Math.min(Math.max(r.left, 10), vw - lw - 10);
     let ly = below ? r.bottom + 8 : r.top - 8 - lh;
-    for (let guard = 0; guard < 6; guard++) {
-      const hit = placed.find((p) => lx < p.lx + p.lw + 6 && lx + lw + 6 > p.lx && ly < p.ly + 44 && ly + lh > p.ly);
+    for (let guard = 0; guard < 8; guard++) {
+      const hit = placed.find((p) => lx < p.lx + p.lw + 6 && lx + lw + 6 > p.lx && ly < p.ly + p.lh + 4 && ly + lh + 4 > p.ly);
       if (!hit) break;
-      ly = below ? hit.ly + 44 : hit.ly - lh - 4;
+      ly = below ? hit.ly + hit.lh + 6 : hit.ly - lh - 6;
     }
-    placed.push({ key: `${n}`, box: { x: r.left, y: r.top, w: r.width, h: r.height }, text, lx, ly, lw, below });
+    placed.push({ key: `${n}`, box: { x: r.left, y: r.top, w: r.width, h: r.height }, text, lx, ly, lw, lh });
   });
   return placed;
 }
@@ -197,7 +197,7 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
           {hud.map((h) => (
             <div key={h.key}>
               <span className={s.hudBox} style={{ left: h.box.x - 3, top: h.box.y - 3, width: h.box.w + 6, height: h.box.h + 6 }} />
-              <span className={s.hudLabel} style={{ left: h.lx, top: h.ly, maxWidth: h.lw }}>
+              <span className={s.hudLabel} style={{ left: h.lx, top: h.ly, width: h.lw }}>
                 {h.text}
               </span>
             </div>

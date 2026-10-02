@@ -88,7 +88,16 @@ export function Tutorial({ open, onClose, locate, units, insets, rootEl }: Tutor
           Opens its tenant, rent and what it&rsquo;s worth. <b>Right-click</b> it (press and hold on a phone) for quick actions like Record rent.
         </>
       ),
-      find: () => circle(house ? (locate?.("unit", house.id) ?? null) : null, 92, 70),
+      find: () => {
+        if (!house || !locate) return null;
+        // roof (the unit's anchor) → door (tenant figure / TO-LET board): a circle around the whole house
+        const top = locate("unit", house.id);
+        if (!top) return null;
+        const foot = locate("tenant", house.id) ?? locate("tolet", house.id);
+        const bottomY = foot && foot.y > top.y + 40 ? foot.y + 24 : top.y + 260;
+        const r = Math.max(96, (bottomY - top.y) / 2 + 34);
+        return circle({ x: top.x, y: (top.y + bottomY) / 2 }, r);
+      },
     },
     {
       id: "mailbox",

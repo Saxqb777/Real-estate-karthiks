@@ -95,8 +95,8 @@
   height: 1px;
   background: var(--line-strong);
 }
-.track:focus-visible {
-  box-shadow: 0 0 0 1px var(--marigold);
+.track:focus-visible .knob {
+  box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.45);
 }
 .dragging {
   cursor: grabbing;

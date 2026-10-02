@@ -45,14 +45,16 @@ export function InvoiceScreen({ id }: { id: string }) {
             </span>
           )}
         </div>
-        <div className={s.toolActions}>
-          <span className={s.toolHint}>
-            <Kbd keys={["mod", "p"]} />
-          </span>
-          <Button variant="primary" size="sm" icon={<Printer />} disabled={!inv} onClick={() => printDocument(fileName)}>
-            Print / Save PDF
-          </Button>
-        </div>
+        {!q.error && (
+          <div className={s.toolActions}>
+            <span className={s.toolHint} title="Prints the receipt">
+              <Kbd keys={["mod", "p"]} />
+            </span>
+            <Button variant="primary" size="sm" icon={<Printer />} disabled={!inv} onClick={() => printDocument(fileName)}>
+              Print / Save PDF
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className={s.desk}>

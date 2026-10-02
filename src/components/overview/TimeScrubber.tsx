@@ -143,7 +143,6 @@ export function TimeScrubber({ timeline, asOf, onChange, loading, yearMode, comp
     onUse?.();
     stop();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    track.current?.focus({ preventScroll: true });
     const ms = fromClientX(e.clientX);
     setDrag(ms);
     commit(ms);

@@ -480,7 +480,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
                   className={cx(s.chipBtn, propertyOpen && s.chipBtnOn)}
                   onClick={toggleProperty}
                   aria-pressed={propertyOpen}
-                  data-help="Property — worth, cash flow and occupancy for the whole plot"
+                  data-help="Property totals (P)"
                 >
                   <PanelLeft aria-hidden />
                   <span>Property</span>
@@ -488,7 +488,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
                   {propertyDot && <span className={s.dot} aria-label="not opened yet" />}
                 </button>
                 {showQuests && (
-                  <button type="button" className={cx(s.chipBtn, s.questBtn, questOpen && s.chipBtnOn)} onClick={toggleQuest} aria-pressed={questOpen} data-help="Setup steps still to do">
+                  <button type="button" className={cx(s.chipBtn, s.questBtn, questOpen && s.chipBtnOn)} onClick={toggleQuest} aria-pressed={questOpen} data-help="Setup steps left">
                     <Swords aria-hidden />
                     <span>Setup</span>
                     <b className="num">
@@ -497,7 +497,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
                   </button>
                 )}
                 {data && hasUnits && (
-                  <div className={s.chips} data-help="What needs you — most urgent first. Click one to open it">
+                  <div className={s.chips} data-help="What needs you — click one">
                     <StatusChips data={data} taxes={tax.data?.items} onSelect={onChip} max={maxChips} />
                   </div>
                 )}
@@ -506,7 +506,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
               <div className={s.topRight}>
                 {asOfChip}
                 {data && (
-                  <div data-help="Period for the cash figures · FY = 1 Apr – 31 Mar, Cal = Jan – Dec">
+                  <div data-help="Period for cash figures · FY or calendar">
                     <PeriodControl data={data} period={period} size="sm" />
                   </div>
                 )}
@@ -551,10 +551,10 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
             {/* ---- bottom: dock + time */}
             {data && (
               <div ref={setBottomEl} className={s.bottom} data-tour="bottom">
-                <div data-help="Charts — keys 1–6, Esc closes">
+                <div data-help="Charts (keys 1–6)">
                   <Dock className={s.dock} data={data} period={period} tab={tab} onTabChange={onTabChange} onDrill={onDrill} onOpenUnit={openUnit} hints={dockHints} hotkeys={!tourOpen} />
                 </div>
-                <div className={s.scrub} data-help="Drag to look back in time · ▶ plays the years · Live = today">
+                <div className={s.scrub} data-help="Drag back in time · ▶ plays the years">
                   {scrubber}
                 </div>
               </div>
