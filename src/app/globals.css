@@ -1,42 +1,397 @@
+/*
+ * Pattukottai Estates — global design tokens + base styles.
+ *
+ * STYLING APPROACH (keep it consistent):
+ *  - This file holds ONLY: design tokens (CSS variables), element resets/base styles, the page backdrop,
+ *    and a deliberately tiny set of global utility classes (listed at the bottom).
+ *  - Every component owns a CSS module next to it: src/components/ui/Button.tsx + Button.module.css, etc.
+ *    Page agents should compose the UI kit (src/components/ui) and, when they need layout, use a page-level
+ *    CSS module. Never hard-code colours — use the tokens below (var(--marigold), var(--line), …).
+ *
+ * LOOK (docs/DESIGN.md, incl. the owner's HARD RULE): a management-game HUD built from warm-dark,
+ * solid, slightly textured panels; crisp 1px hairlines; small radii; Rajdhani numerals + tracked
+ * uppercase labels; one brand accent (marigold); teal/coral only for meaning. Glow is reserved for
+ * status signals (overdue pulse, selected unit). Blur is reserved for overlays on the 3D scene
+ * (use --panel-glass / <Panel variant="glass">).
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  /* Surfaces — warm charcoal, darkest → raised */
+  --bg-0: #0e0d0b;
+  --bg-1: #151310;
+  --bg-2: #1c1915;
+  --bg-3: #25211c;
+  --panel: #181512;
+  --panel-strong: #201c18;
+  --panel-glass: rgba(22, 19, 16, 0.74); /* only over the 3D scene */
+  --sunken: rgba(0, 0, 0, 0.28); /* input wells, tracks */
+
+  /* Hairlines (lime-plaster tinted) */
+  --line: rgba(243, 233, 216, 0.09);
+  --line-strong: rgba(243, 233, 216, 0.18);
+  --line-bright: rgba(243, 233, 216, 0.32);
+
+  /* Text */
+  --text: #f2eadd;
+  --text-dim: #a89e8f;
+  --text-faint: #6f675c;
+
+  /* Brand + meaning */
+  --marigold: #ffb547; /* brand / primary / focus */
+  --saffron: #ff8a3d;
+  --teal: #2dd4bf; /* income, positive, occupied, paid */
+  --coral: #ff5d73; /* expense, negative, overdue */
+  --sky: #60a5fa; /* info, vacant blueprint */
+  --violet: #a78bfa; /* rarely — chart series only */
+
+  /* Site materials */
+  --laterite: #b5532e;
+  --terracotta: #c8693f;
+  --palm: #3fa66b;
+  --plaster: #f3e9d8;
+
+  /* Tints for fills behind meaning colours */
+  --marigold-ink: #1d1404; /* text on marigold */
+  --marigold-a08: rgba(255, 181, 71, 0.08);
+  --marigold-a16: rgba(255, 181, 71, 0.16);
+  --teal-a12: rgba(45, 212, 191, 0.12);
+  --coral-a12: rgba(255, 93, 115, 0.12);
+  --sky-a12: rgba(96, 165, 250, 0.12);
+  --laterite-a20: rgba(181, 83, 46, 0.2);
+
+  --brand-gradient: linear-gradient(135deg, var(--marigold), var(--saffron));
+  /* Physical, bevelled marigold (primary buttons, active markers) */
+  --marigold-bevel: linear-gradient(180deg, #ffc76e 0%, #ffb547 48%, #f59a36 100%);
+
+  /* Shape */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-xs: 4px;
+
+  /* Depth */
+  --glow: 0 0 0 1px var(--line-strong), 0 8px 30px rgba(0, 0, 0, 0.45);
+  --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.22);
+  --shadow-pop: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 60px rgba(0, 0, 0, 0.6);
+  --inner-hi: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+
+  /* Type (font variables come from next/font on <html>) */
+  --ff-display: var(--font-display), "Rajdhani", "Arial Narrow", system-ui, sans-serif;
+  --ff-body: var(--font-body), "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ff-tamil: var(--font-tamil), "Noto Sans Tamil", "Latha", sans-serif;
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+  --fs-3xl: 36px;
+  --fs-4xl: 52px;
+  --tracking-label: 0.14em;
+
+  /* Spacing scale (4px base) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+
+  /* Layers */
+  --z-bar: 50;
+  --z-tooltip: 90;
+  --z-overlay: 100;
+  --z-palette: 110;
+  --z-toast: 120;
+
+  /* Shell metrics */
+  --bar-h: 58px;
+  --tabbar-h: 60px;
+  --page-max: 1440px;
+  --page-pad: 24px;
+
+  /* Textures */
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .88 .5 0 0 0 -.16'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Chettinad (Athangudi) tile frieze — laterite field, marigold lozenge, plaster studs */
+  --chettinad: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='8'%3E%3Crect width='24' height='8' fill='%23722f18'/%3E%3Cpath d='M12 .5 15.5 4 12 7.5 8.5 4z' fill='%23ffb547'/%3E%3Cpath d='M12 2.6 13.4 4 12 5.4 10.6 4z' fill='%23722f18'/%3E%3Crect x='2' y='3' width='2' height='2' fill='%23f3e9d8' opacity='.75'/%3E%3Crect x='20' y='3' width='2' height='2' fill='%23f3e9d8' opacity='.75'/%3E%3Crect y='0' width='24' height='.8' fill='%23140c08' opacity='.6'/%3E%3Crect y='7.2' width='24' height='.8' fill='%23140c08' opacity='.6'/%3E%3C/svg%3E");
 }
 
-@media (prefers-color-scheme: dark) {
+@media (max-width: 767px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --page-pad: 14px;
+    --bar-h: 54px;
   }
 }
 
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+  padding: 0;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
 }
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
 }
-
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+button:disabled {
+  cursor: not-allowed;
+}
 a {
   color: inherit;
   text-decoration: none;
 }
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--ff-display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+table {
+  border-collapse: collapse;
+}
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* ---------- Base ---------- */
+body {
+  min-height: 100dvh;
+  font-family: var(--ff-body);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--text);
+  /* Propagates to the canvas; the fixed pseudo-elements below sit on top of it at z-index -1. */
+  background: linear-gradient(180deg, #14120f 0px, var(--bg-0) 560px) var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Survey grid — like the owner's site-plan sheet: fine 24px cells, stronger 120px lines, fading downwards. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(243, 233, 216, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(243, 233, 216, 0.04) 1px, transparent 1px),
+    linear-gradient(to right, rgba(243, 233, 216, 0.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(243, 233, 216, 0.018) 1px, transparent 1px);
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px,
+    24px 24px;
+  background-position: -1px -1px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.55) 55%, rgba(0, 0, 0, 0.15) 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.55) 55%, rgba(0, 0, 0, 0.15) 100%);
+}
+
+/* Film grain + edge vignette */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%),
+    var(--noise);
+  opacity: 0.7;
+}
+
+::selection {
+  background: rgba(255, 181, 71, 0.32);
+  color: #fff8ec;
+}
+
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--marigold);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 233, 216, 0.18) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(243, 233, 216, 0.16);
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 181, 71, 0.45);
+}
+
+/* Native form controls in dark mode */
+option,
+optgroup {
+  background: var(--bg-2);
+  color: var(--text);
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ---------- Motion preferences ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+/* ---------- Print (invoice page etc.) ---------- */
+@media print {
+  body {
+    background: #fff;
+    color: #111;
+  }
+  body::before,
+  body::after,
+  [data-print-hide] {
+    display: none !important;
+  }
+}
+
+/* ---------- Global utilities (keep this list short) ----------
+ * .sr-only    visually hidden, readable by screen readers
+ * .num        Rajdhani tabular numerals (money, counts, dates in tables)
+ * .eyebrow    tracked uppercase display label
+ * .tamil      Tamil script accent
+ * .dim/.faint secondary / tertiary text colour
+ * .pos/.neg   teal / coral meaning colours (income vs expense)
+ * .stack      vertical flex with gap (--gap, default 16px)
+ * .cluster    wrapping horizontal flex with gap (--gap, default 8px)
+ * .grid-auto  responsive auto-fill grid (--min column width, default 260px)
+ */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.num {
+  font-family: var(--ff-display);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.eyebrow {
+  font-family: var(--ff-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+  line-height: 1.2;
+}
+.tamil {
+  font-family: var(--ff-tamil);
+}
+.dim {
+  color: var(--text-dim);
+}
+.faint {
+  color: var(--text-faint);
+}
+.pos {
+  color: var(--teal);
+}
+.neg {
+  color: var(--coral);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap, var(--s-4));
+}
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap, var(--s-2));
+}
+.grid-auto {
+  display: grid;
+  gap: var(--gap, var(--s-4));
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--min, 260px), 100%), 1fr));
 }
