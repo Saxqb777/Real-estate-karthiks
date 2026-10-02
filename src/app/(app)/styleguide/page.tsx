@@ -18,7 +18,7 @@ import {
   Wallet,
   Wrench,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import {
   AnimatedNumber,
   Badge,
@@ -154,7 +154,7 @@ export default function StyleguidePage() {
   const [confirm, setConfirm] = useState(false);
   const [inspect, setInspect] = useState<{ x: number; y: number; unit: "Front" | "Back" } | null>(null);
   const palette = useCommandPalette();
-  const openInspect = (e: React.MouseEvent<HTMLButtonElement>, unit: "Front" | "Back") => {
+  const openInspect = (e: MouseEvent<HTMLButtonElement>, unit: "Front" | "Back") => {
     const r = e.currentTarget.getBoundingClientRect();
     setInspect({ x: r.left + r.width / 2, y: r.top + r.height / 2, unit });
   };

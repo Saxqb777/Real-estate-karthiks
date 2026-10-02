@@ -221,3 +221,9 @@ The spec describes the old site's data; presentation must be rethought so nothin
 8. **Reports** (Data → Reports, printable, light theme for print/PDF): Annual statement per year (cash flow by month and by unit, expense by
    category, deposits ledger, occupancy), Unit report (purchase → today story), Rent ledger per lease (expected vs received per month,
    arrears). Every report shows "Generated D/M/YYYY", scope, and reconciles with the dashboard.
+
+## Year type (owner choice: both, with a toggle)
+- Default **Indian Financial Year** (1 Apr – 31 Mar), labelled "FY 2025-26"; toggle to **Calendar year** ("2026").
+- The toggle lives in the global period control and is remembered per browser. Every scope chip uses the active label.
+- The calculations module groups by a `yearMode: "fy" | "calendar"` parameter (buildDashboard(input, asOf, { yearMode })) and
+  /api/dashboard accepts `?yearMode=fy|calendar` (default fy) — the UI never regroups numbers itself.
