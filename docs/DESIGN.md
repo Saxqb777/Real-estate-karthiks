@@ -239,3 +239,13 @@ The spec describes the old site's data; presentation must be rethought so nothin
 - Empty / zero states are calm ("No expenses yet this FY") — never a wall of ₹0 tiles.
 - Every screen must pass the **3-second test**: a first-time look answers "is everything OK?" (all-green state vs what needs attention).
 - Round-2 review includes a dedicated clutter critic that screenshots each screen and removes anything that isn't earning its place.
+
+## Discoverability & hints (owner: "everything opens with an interactive click, with hints showing")
+- Everything clickable looks clickable: hover → pointer cursor + hairline glow + lift; a short hint label appears after ~300ms
+  ("Click for breakdown", "Click to record rent", "Right-click for actions"). Touch: first tap shows the hint + opens; long-press = radial menu.
+- **First-run tutorial** like a game: a 5–6 step coach-mark tour (spotlight + short text + Next/Skip) the first time the owner logs in —
+  the world, a house, the mailbox, a HUD number (show-the-maths), the dock, ⌘K. Re-playable from the "?" menu. Remembered per browser.
+- **Unexplored hints**: a tiny marigold dot on interactive things never opened yet (houses, mailbox, notice board, pole, each dock tab);
+  it disappears once used. Never more than 3 dots visible at once.
+- **"?" key / button** toggles a help overlay that labels every hotspot in the 3D world and HUD with what it opens + keyboard shortcuts.
+- Every inspect card and panel shows its next step as a hint at the bottom ("Enter to expand · Esc to close · ⓘ how is this calculated").
