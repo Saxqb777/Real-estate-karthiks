@@ -1,0 +1,243 @@
+// Pattukottai Estates — data model.
+// Conventions: camelCase in TypeScript, snake_case in Postgres (@map / @@map).
+// Money = Decimal(14,2) in INR. Date-only fields use @db.Date (no time / timezone).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Position {
+  front
+  back
+}
+
+enum PaymentMethod {
+  cash
+  bank
+  upi
+  other
+}
+
+enum TaxStatus {
+  Paid
+  Due
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+}
+
+/// Single row (id = 1)
+model Settings {
+  id               Int      @id @default(1)
+  brandName        String   @default("Pattukottai Estates") @map("brand_name")
+  subtitle         String?
+  ownerEmail       String?  @map("owner_email")
+  currency         String   @default("INR")
+  dateFormat       String   @default("D/M/YYYY") @map("date_format")
+  rentDueDay       Int      @default(1) @map("rent_due_day")
+  lateFeeEnabled   Boolean  @default(false) @map("late_fee_enabled")
+  lateFeeAmount    Decimal  @default(0) @map("late_fee_amount") @db.Decimal(14, 2)
+  lateFeeGraceDays Int      @default(0) @map("late_fee_grace_days")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+/// Single row (id = 1)
+model Plot {
+  id               Int      @id @default(1)
+  frontWidthFt     Decimal? @map("front_width_ft") @db.Decimal(8, 2)
+  backWidthFt      Decimal? @map("back_width_ft") @db.Decimal(8, 2)
+  depthFt          Decimal? @map("depth_ft") @db.Decimal(8, 2)
+  areaSqft         Decimal? @map("area_sqft") @db.Decimal(10, 2)
+  sitePlanImageUrl String?  @map("site_plan_image_url")
+  /// Single source of truth for the town spelling
+  townName         String   @default("Pattukottai") @map("town_name")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("plot")
+}
+
+model Unit {
+  id                        String    @id @default(cuid())
+  name                      String
+  type                      String    @default("Townhouse")
+  address                   String?
+  floors                    Int       @default(1)
+  builtUpSqft               Decimal   @map("built_up_sqft") @db.Decimal(10, 2)
+  purchaseDate              DateTime  @map("purchase_date") @db.Date
+  purchasePrice             Decimal   @map("purchase_price") @db.Decimal(14, 2)
+  /// Percent per year, e.g. 8.5 = 8.5%
+  annualAppreciationRate    Decimal   @default(0) @map("annual_appreciation_rate") @db.Decimal(6, 3)
+  /// TNPDCL consumer number
+  electricityConsumerNumber String?   @map("electricity_consumer_number")
+  electricityPayUrl         String?   @map("electricity_pay_url")
+  footprintWidthFt          Decimal?  @map("footprint_width_ft") @db.Decimal(8, 2)
+  footprintDepthFt          Decimal?  @map("footprint_depth_ft") @db.Decimal(8, 2)
+  position                  Position?
+  isActive                  Boolean   @default(true) @map("is_active")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  offers       Offer[]
+  leases       Lease[]
+  expenses     Expense[]
+  propertyTax  PropertyTax[]
+  actionItems  ActionItem[]
+
+  @@map("unit")
+}
+
+model Offer {
+  id        String   @id @default(cuid())
+  unitId    String   @map("unit_id")
+  amount    Decimal  @db.Decimal(14, 2)
+  offerDate DateTime @map("offer_date") @db.Date
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId])
+  @@map("offer")
+}
+
+model Tenant {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  email      String?
+  idProofRef String?  @map("id_proof_ref")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  leases Lease[]
+
+  @@map("tenant")
+}
+
+model Lease {
+  id                    String    @id @default(cuid())
+  unitId                String    @map("unit_id")
+  tenantId              String    @map("tenant_id")
+  startDate             DateTime  @map("start_date") @db.Date
+  /// null = active lease
+  endDate               DateTime? @map("end_date") @db.Date
+  monthlyRent           Decimal   @map("monthly_rent") @db.Decimal(14, 2)
+  securityDeposit       Decimal   @default(0) @map("security_deposit") @db.Decimal(14, 2)
+  depositRefundedAmount Decimal?  @map("deposit_refunded_amount") @db.Decimal(14, 2)
+  depositRefundDate     DateTime? @map("deposit_refund_date") @db.Date
+  reminderEnabled       Boolean   @default(false) @map("reminder_enabled")
+  moveOutNotes          String?   @map("move_out_notes")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  payments Payment[]
+
+  @@index([unitId])
+  @@index([tenantId])
+  @@map("lease")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  leaseId       String        @map("lease_id")
+  amount        Decimal       @db.Decimal(14, 2)
+  paymentDate   DateTime      @map("payment_date") @db.Date
+  periodMonth   Int           @map("period_month")
+  periodYear    Int           @map("period_year")
+  method        PaymentMethod @default(cash)
+  notes         String?
+  /// Monotonic counter used to build invoiceNumber
+  invoiceSeq    Int           @unique @default(autoincrement()) @map("invoice_seq")
+  /// Auto generated, e.g. PE-2026-0007
+  invoiceNumber String        @unique @map("invoice_number")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  lease Lease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+
+  @@index([leaseId])
+  @@map("payment")
+}
+
+model ExpenseCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  /// Hex colour, e.g. #4F7CFF
+  color     String   @default("#8B93A7")
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  expenses Expense[]
+
+  @@map("expense_category")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  /// null = whole plot
+  unitId      String?  @map("unit_id")
+  categoryId  String   @map("category_id")
+  expenseDate DateTime @map("expense_date") @db.Date
+  amount      Decimal  @db.Decimal(14, 2)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  unit        Unit?           @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  /// Set when this expense was auto-created by a paid PropertyTax row
+  propertyTax PropertyTax?
+
+  @@index([unitId])
+  @@index([categoryId])
+  @@index([expenseDate])
+  @@map("expense")
+}
+
+model PropertyTax {
+  id          String    @id @default(cuid())
+  unitId      String    @map("unit_id")
+  year        Int
+  amount      Decimal   @db.Decimal(14, 2)
+  paymentDate DateTime? @map("payment_date") @db.Date
+  status      TaxStatus @default(Due)
+  /// Linked auto-created Expense (category "Property Tax") while status = Paid
+  expenseId   String?   @unique @map("expense_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  unit    Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  expense Expense? @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+
+  @@unique([unitId, year])
+  @@map("property_tax")
+}
+
+model ActionItem {
+  id        String    @id @default(cuid())
+  title     String
+  type      String    @default("Custom")
+  priority  Priority  @default(Medium)
+  dueDate   DateTime? @map("due_date") @db.Date
+  isDone    Boolean   @default(false) @map("is_done")
+  doneAt    DateTime? @map("done_at")
+  unitId    String?   @map("unit_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  unit Unit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  @@map("action_item")
+}
