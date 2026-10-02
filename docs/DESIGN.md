@@ -62,3 +62,22 @@ Load via `next/font/google` in `src/app/layout.tsx` as CSS variables `--font-dis
 - Mobile: bottom tab bar, panels stack, 3D hero shorter. No horizontal page scroll at 375px.
 - Pages: `/` Overview (3D hero + HUD + analytics), `/data` (tenants, leases, payments, expenses, property tax, actions),
   `/config` (settings, plot, units, offers, categories), `/invoice/[id]` (printable, light), `/login`.
+
+## HARD RULE: must not look AI-generated (owner request)
+The owner explicitly does not want the generic "AI-made" look. Avoid:
+- Purple/blue neon gradients, gradient text, glowing blobs/orbs in the background, everything-glows.
+- Glassmorphism on every surface — use solid, slightly textured panels; reserve blur for overlays on the 3D scene only.
+- Sparkle ✨ / rocket / emoji icons, "AI magic" iconography, generic stock illustrations.
+- Marketing copy ("Unlock your portfolio's potential", "Welcome back! 👋"). Write plain, specific owner language:
+  "Rent due 5 Oct — Unit A", "₹18,000 collected this month", "Back unit vacant 42 days".
+- Uniform grids of identical rounded cards with an icon in a circle + big number + tiny label. Vary hierarchy:
+  one dominant number per section, supporting figures smaller, tables where tables are clearer.
+- Huge border radii, pill-everything, drop shadows on everything, centered-everything layouts.
+- Default Inter/Poppins look, random accent colours, rainbow charts.
+Do instead — crafted and specific to this place:
+- Materials from the actual site: laterite red earth, terracotta, lime-washed plaster, coconut-palm green, marigold, Chettinad tile accents.
+- Crisp 1px hairlines, tight consistent spacing, small radii (6–10px), real typographic hierarchy (Rajdhani numerals, uppercase tracked labels).
+- Game feel through *specific details* (corner brackets, segmented XP bars, quest log, status markers in the 3D world, ticker-style numbers),
+  not through glow. Glow only for status signals (overdue pulse, selected unit).
+- Restrained palette: mostly warm-dark neutrals, one brand accent (marigold), teal/coral only for meaning (income/expense, ok/overdue).
+- Purposeful asymmetry and density like a real management game screen, not a SaaS landing page.
