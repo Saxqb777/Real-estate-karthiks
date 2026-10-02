@@ -16,12 +16,15 @@ import { insidePolygon } from "./Vegetation";
 function cloudGeometry(seed: number) {
   const r = rng(seed);
   const parts: THREE.BufferGeometry[] = [];
-  const n = 5 + Math.floor(r() * 3);
+  const n = 6 + Math.floor(r() * 3);
   for (let i = 0; i < n; i++) {
     const g = new THREE.IcosahedronGeometry(1, 1);
-    const s = 0.55 + r() * 0.6;
-    g.scale(s * 1.25, s * 0.85, s);
-    g.translate((i - n / 2) * 0.9 + r() * 0.4, Math.sin((i / n) * Math.PI) * 0.45 + r() * 0.2, (r() - 0.5) * 0.9);
+    const core = i === 0;
+    const a = (i / n) * Math.PI * 2 + r();
+    const d = core ? 0 : 0.9 + r() * 0.5;
+    const s = core ? 1.25 : 0.5 + r() * 0.45;
+    g.scale(s * 1.2, s * 0.8, s);
+    g.translate(Math.cos(a) * d * 1.3, (core ? 0.25 : 0) + r() * 0.3 - (1 - s) * 0.4, Math.sin(a) * d * 0.8);
     parts.push(g);
   }
   const merged = mergeGeometries(parts)!;

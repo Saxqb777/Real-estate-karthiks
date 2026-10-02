@@ -11,14 +11,14 @@ import { smoothstep, type World } from "./util";
 
 type V3 = [number, number, number];
 
-function Box({ p, s, c, r, cast = true, flat = false }: { p: V3; s: V3; c: string; r?: V3; cast?: boolean; flat?: boolean }) {
+function Box({ p, s, c, r, cast = false, flat = false }: { p: V3; s: V3; c: string; r?: V3; cast?: boolean; flat?: boolean }) {
   return <mesh geometry={G.box()} material={std(c, { rough: 0.85, flat })} position={p} scale={s} rotation={r} castShadow={cast} />;
 }
-function Ball({ p, s, c, cast = true }: { p: V3; s: number | V3; c: string; cast?: boolean }) {
+function Ball({ p, s, c, cast = false }: { p: V3; s: number | V3; c: string; cast?: boolean }) {
   return <mesh geometry={G.sphere()} material={std(c, { rough: 0.8 })} position={p} scale={s} castShadow={cast} />;
 }
 function Rod({ p, s, c, r }: { p: V3; s: V3; c: string; r?: V3 }) {
-  return <mesh geometry={G.cyl()} material={std(c, { rough: 0.7 })} position={p} scale={s} rotation={r} castShadow />;
+  return <mesh geometry={G.cyl()} material={std(c, { rough: 0.7 })} position={p} scale={s} rotation={r} />;
 }
 
 // ───────────────────────────── person rig ─────────────────────────────
@@ -63,7 +63,7 @@ export function Person({ rig, outfit, scale = 1 }: { rig: Rig; outfit: Outfit; s
           <mesh geometry={G.cyl()} material={std(outfit.bottom, { rough: 0.9 })} position={[0, 1.55, 0]} scale={[1.0, 2.3, 0.78]} castShadow />
         )}
         {outfit.wrap === "lungi" && <mesh geometry={G.cyl()} material={std(outfit.bottom, { rough: 0.9 })} position={[0, 2.05, 0]} scale={[0.98, 1.3, 0.75]} castShadow />}
-        <Box p={[0, 3.6, 0]} s={[0.92, 1.75, 0.5]} c={outfit.top} />
+        <Box p={[0, 3.6, 0]} s={[0.92, 1.75, 0.5]} c={outfit.top} cast />
         {outfit.wrap === "saree" && <Box p={[0.12, 3.75, 0.05]} s={[0.35, 2.0, 0.56]} r={[0, 0, 0.5]} c={outfit.bottom} />}
         {[rig.armL, rig.armR].map((arm, i) => (
           <group key={i} ref={arm} position={[i ? 0.6 : -0.6, 4.35, 0]}>
@@ -77,7 +77,7 @@ export function Person({ rig, outfit, scale = 1 }: { rig: Rig; outfit: Outfit; s
         {outfit.umbrella && (
           <group position={[0.35, 0, 0.1]}>
             <Rod p={[0, 5.6, 0]} s={[0.06, 2.4, 0.06]} c="#3a2a1c" />
-            <mesh geometry={G.cone()} material={std("#141414", { rough: 0.6, flat: true })} position={[0, 7.0, 0]} scale={[3.6, 0.9, 3.6]} castShadow />
+            <mesh geometry={G.cone()} material={std("#141414", { rough: 0.6, flat: true })} position={[0, 7.0, 0]} scale={[3.6, 0.9, 3.6]} />
           </group>
         )}
       </group>
@@ -166,7 +166,7 @@ function Pedestrian({ spec, layout, world }: { spec: PedSpec; layout: SiteLayout
         <Person rig={rig} outfit={spec.outfit} />
         {spec.cart && (
           <group position={[0, 0, 3.2]}>
-            <Box p={[0, 2.3, 0]} s={[3.0, 0.3, 4.2]} c="#7a4a26" />
+            <Box p={[0, 2.3, 0]} s={[3.0, 0.3, 4.2]} c="#7a4a26" cast />
             <Box p={[0, 2.75, -1.95]} s={[3.0, 0.6, 0.2]} c="#6b3f22" />
             <Rod p={[-1.2, 3.05, -2.6]} s={[0.12, 1.6, 0.12]} r={[0.9, 0, 0]} c="#6b3f22" />
             <Rod p={[1.2, 3.05, -2.6]} s={[0.12, 1.6, 0.12]} r={[0.9, 0, 0]} c="#6b3f22" />
@@ -260,13 +260,13 @@ export function Dog({ layout, world }: { layout: SiteLayout; world: World }) {
   return (
     <group ref={g}>
       <group ref={body}>
-        <Box p={[0, 1.35, 0]} s={[1.9, 0.75, 0.62]} c={coat} />
+        <Box p={[0, 1.35, 0]} s={[1.9, 0.75, 0.62]} c={coat} cast />
         <group ref={head} position={[1.05, 1.65, 0]}>
           <Box p={[0.25, 0.1, 0]} s={[0.62, 0.55, 0.5]} c={coat} />
           <Box p={[0.68, -0.02, 0]} s={[0.36, 0.28, 0.32]} c="#a8713f" />
           <Box p={[0.85, 0.02, 0]} s={[0.08, 0.1, 0.12]} c="#1a1410" cast={false} />
-          <mesh geometry={G.cone()} material={std("#8f5f33")} position={[0.15, 0.48, 0.16]} scale={[0.22, 0.32, 0.18]} castShadow />
-          <mesh geometry={G.cone()} material={std("#8f5f33")} position={[0.15, 0.48, -0.16]} scale={[0.22, 0.32, 0.18]} castShadow />
+          <mesh geometry={G.cone()} material={std("#8f5f33")} position={[0.15, 0.48, 0.16]} scale={[0.22, 0.32, 0.18]} />
+          <mesh geometry={G.cone()} material={std("#8f5f33")} position={[0.15, 0.48, -0.16]} scale={[0.22, 0.32, 0.18]} />
         </group>
         <group ref={tail} position={[-0.95, 1.55, 0]}>
           <Box p={[-0.32, 0, 0]} s={[0.7, 0.12, 0.12]} c={coat} />
@@ -310,7 +310,7 @@ export function Cow({ layout, world }: { layout: SiteLayout; world: World }) {
   });
   return (
     <group ref={g} position={[world.x(x), 0, world.z(z)]} rotation={[0, -0.35, 0]}>
-      <Box p={[0, 3.0, 0]} s={[4.2, 1.9, 1.55]} c={white} />
+      <Box p={[0, 3.0, 0]} s={[4.2, 1.9, 1.55]} c={white} cast />
       <Box p={[0, 2.25, 0]} s={[3.6, 0.5, 1.3]} c={shade} />
       <Ball p={[1.45, 4.05, 0]} s={[1.1, 0.9, 0.9]} c={white} />
       {[

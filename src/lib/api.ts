@@ -38,7 +38,12 @@ export function json(data: unknown, status = 200) {
 /** Convert any thrown error into a clear JSON error response. */
 export function errorResponse(err: unknown) {
   if (err instanceof ApiError) {
-    return NextResponse.json({ error: err.message, details: err.details }, { status: err.status });
+    const extra = Array.isArray(err.details)
+      ? { issues: err.details }
+      : err.details !== undefined
+        ? { details: err.details }
+        : {};
+    return NextResponse.json({ error: err.message, ...extra }, { status: err.status });
   }
   if (err instanceof ZodError) {
     const issues = err.issues.map((i) => ({ field: i.path.join(".") || "(body)", message: i.message }));

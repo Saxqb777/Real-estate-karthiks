@@ -2,7 +2,8 @@
 import type { Settings } from "@prisma/client";
 import { z } from "zod";
 import { zEmailOrNull, zInt, zMoney, zRequiredText, zText } from "@/lib/validation";
-import { zFlag, type Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
+import { zFlag } from "@/lib/validation";
 
 export const DATE_FORMATS = ["D/M/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"] as const;
 

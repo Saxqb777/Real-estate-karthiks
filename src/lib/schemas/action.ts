@@ -4,7 +4,8 @@ import type { ActionItem, Prisma } from "@prisma/client";
 import { z } from "zod";
 import { todayIST } from "@/lib/dates";
 import { zDateOrNull, zIdOrNull, zRequiredText } from "@/lib/validation";
-import { zFlag, type Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
+import { zFlag } from "@/lib/validation";
 
 export const PRIORITIES = ["Low", "Medium", "High"] as const;
 export type PriorityValue = (typeof PRIORITIES)[number];

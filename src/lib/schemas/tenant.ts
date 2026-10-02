@@ -3,7 +3,7 @@ import type { Tenant } from "@prisma/client";
 import { z } from "zod";
 import { zEmailOrNull, zRequiredText, zText } from "@/lib/validation";
 import type { LeaseDTO, LeaseStats } from "./lease";
-import type { Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
 
 /**
  * Optional Indian phone number: digits with an optional leading "+" (e.g. +91), spaces and dashes,

@@ -2,7 +2,8 @@
 import type { Expense, Prisma } from "@prisma/client";
 import { z } from "zod";
 import { zDate, zId, zIdOrNull, zInt, zPositiveMoney, zText } from "@/lib/validation";
-import { zRequired, type Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
+import { zRequired } from "@/lib/validation";
 
 const blankToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
 

@@ -6,7 +6,8 @@ import { formatDate } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import { zBool, zDate, zDateOrNull, zMoney, zPositiveMoney, zText } from "@/lib/validation";
 import type { PaymentStats } from "./payment";
-import { zRequired, type Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
+import { zRequired } from "@/lib/validation";
 
 const blankToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
 const zRef = (msg: string) => z.string({ message: msg }).trim().min(1, msg);

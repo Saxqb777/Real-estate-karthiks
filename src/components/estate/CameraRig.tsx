@@ -21,7 +21,8 @@ interface Pose {
 interface Flight {
   from: Pose;
   to: Pose;
-  t: number;
+  /** clock time the flight started (set on its first frame) */
+  start: number | null;
   dur: number;
   ease: (t: number) => number;
 }
@@ -116,7 +117,7 @@ export function CameraRig({
       c?.update();
       return;
     }
-    flight.current = { from: poseOf(camera, c.target), to, t: 0, dur, ease };
+    flight.current = { from: poseOf(camera, c.target), to, start: null, dur, ease };
   };
 
   // first placement (+ hero fly-in)
@@ -125,7 +126,7 @@ export function CameraRig({
     started.current = true;
     if (intro && !reduced) {
       apply({ ...home, radius: home.radius * 1.9, phi: 0.45, theta: home.theta - 1.25 });
-      flight.current = { from: { ...home, radius: home.radius * 1.9, phi: 0.45, theta: home.theta - 1.25 }, to: home, t: 0, dur: 3.2, ease: easeOutCubic };
+      flight.current = { from: { ...home, radius: home.radius * 1.9, phi: 0.45, theta: home.theta - 1.25 }, to: home, start: null, dur: 3.2, ease: easeOutCubic };
     } else {
       apply(home);
     }
@@ -144,13 +145,14 @@ export function CameraRig({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus, home]);
 
-  useFrame((_, dt) => {
+  useFrame(({ clock }) => {
     const c = controls.current;
     const f = flight.current;
     if (!c) return;
     if (f) {
-      f.t = Math.min(1, f.t + Math.min(dt, 0.05) / f.dur);
-      const k = f.ease(f.t);
+      f.start ??= clock.elapsedTime;
+      const t = Math.min(1, (clock.elapsedTime - f.start) / f.dur);
+      const k = f.ease(t);
       const target = f.from.target.clone().lerp(f.to.target, k);
       apply({
         target,
@@ -158,7 +160,7 @@ export function CameraRig({
         phi: THREE.MathUtils.lerp(f.from.phi, f.to.phi, k),
         theta: lerpAngle(f.from.theta, f.to.theta, k),
       });
-      if (f.t >= 1) flight.current = null;
+      if (t >= 1) flight.current = null;
     }
     // keep panning near the plot
     const lim = layout.radius * 0.7;

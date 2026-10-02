@@ -73,3 +73,11 @@ export function addDays(d: Date, n: number): Date {
 }
 
 export const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/** "October 2026" */
+export const periodLabel = (p: { month: number; year: number }) => `${MONTH_NAMES[p.month - 1] ?? "?"} ${p.year}`;

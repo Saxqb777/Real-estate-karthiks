@@ -2,7 +2,8 @@
 import type { Plot } from "@prisma/client";
 import { z } from "zod";
 import { zRequiredText } from "@/lib/validation";
-import { isWebUrl, zDimension, type Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
+import { isWebUrl, zDimension } from "@/lib/validation";
 
 /** https:// link or a site path like /site-plan.png; "" / null → null. */
 const zImageRef = z.preprocess(
@@ -31,11 +32,5 @@ export type PlotUpdate = z.output<typeof plotUpdateSchema>;
 /** GET/PUT /api/plot response. */
 export type PlotDTO = Serialized<Plot>;
 
-/**
- * Trapezoid plot area: (front + back) / 2 × depth, rounded to 2dp.
- * Works in integer hundredths so 22.25 / 23.25 / 76.66 → 1744.02 exactly (no float drift).
- */
-export function plotAreaSqft(frontWidthFt: number, backWidthFt: number, depthFt: number): number {
-  const c = (n: number) => Math.round(n * 100);
-  return Math.round(((c(frontWidthFt) + c(backWidthFt)) * c(depthFt)) / 200) / 100;
-}
+/** Trapezoid plot area — the formula lives in calculations.ts (single source of truth). */
+export { trapezoidArea as plotAreaSqft } from "@/lib/calculations";

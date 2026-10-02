@@ -38,18 +38,19 @@ every entity (unit, tenant, payment) is clickable, and the 3D model is driven by
 - Toasts celebrate events (e.g. "+₹25,000 rent collected" with a coin burst).
 - Respect `prefers-reduced-motion`.
 
-## Tokens (CSS variables in globals.css — use these, never hard-code colours)
+## Tokens (CSS variables in src/app/globals.css — the source of truth; use these, never hard-code colours)
+Warm-dark neutrals (not navy — see HARD RULE):
 ```
---bg-0 #070B16   --bg-1 #0D1426   --bg-2 #121B33
---panel rgba(18,26,48,0.62)   --panel-strong rgba(22,32,58,0.88)
---line rgba(148,170,255,0.14) --line-strong rgba(148,170,255,0.30)
---text #EAF0FF   --text-dim #9AA7C7   --text-faint #5E6B8C
---marigold #FFB547 (brand / primary)   --saffron #FF8A3D
---teal #2DD4BF (income, positive, occupied)   --coral #FF5D73 (expense, negative, overdue)
---sky #60A5FA (info)   --violet #A78BFA   --laterite #B5532E   --palm #3FA66B   --plaster #F3E9D8
---radius 14px  --radius-sm 10px
+--bg-0 #0e0d0b  --bg-1 #151310  --bg-2 #1c1915  --bg-3 #25211c
+--panel #181512  --panel-strong #201c18  --panel-glass rgba(22,19,16,.74) (only over the 3D scene)
+--line rgba(243,233,216,.09)  --line-strong rgba(243,233,216,.18)  --line-bright rgba(243,233,216,.32)
+--text #f2eadd  --text-dim #a89e8f  --text-faint #6f675c
+--marigold #ffb547 (brand / primary)  --saffron #ff8a3d
+--teal #2dd4bf (income, positive, occupied)  --coral #ff5d73 (expense, negative, overdue)
+--sky #60a5fa (info, occupancy, vacant blueprint)  --violet #a78bfa (chart series only)
+--laterite #b5532e  --terracotta #c8693f  --palm #3fa66b  --plaster #f3e9d8
+--radius 10px  --radius-sm 6px  --radius-xs 4px
 ```
-Brand gradient: marigold → saffron. Glow: `0 0 0 1px var(--line-strong), 0 8px 30px rgba(0,0,0,.45)`.
 
 ## Type
 - Display / numbers / labels: **Rajdhani** (600/700; Indian Type Foundry) — uppercase, letter-spaced for labels.

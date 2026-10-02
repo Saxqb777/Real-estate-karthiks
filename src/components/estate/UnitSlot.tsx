@@ -155,9 +155,7 @@ function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interacti
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
       {slot.status === "vacant" && <ToLetBoard slot={slot} world={world} reduced={reduced} at={signAt} />}
       {/* invisible hit box: hover / click target for the whole building */}
-      <mesh ref={occluder} position={[cx, totalH / 2, cz]} scale={[slot.widthFt + 1, totalH + 1, slot.depthFt + 1]} geometry={G.box()} {...handlers}>
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
-      </mesh>
+      <mesh ref={occluder} visible={false} position={[cx, totalH / 2, cz]} scale={[slot.widthFt + 1, totalH + 1, slot.depthFt + 1]} geometry={G.box()} {...handlers} />
     </group>
   );
 }
@@ -391,8 +389,8 @@ function EmptySlot({ slot, world, mode, interactive, reduced, onEmptyClick }: Un
         </group>
       ))}
       {canClick && (
-        <>
           <mesh
+            visible={false}
             geometry={G.box()}
             position={[0, h / 2, 0]}
             scale={[w, h, d]}
@@ -409,10 +407,7 @@ function EmptySlot({ slot, world, mode, interactive, reduced, onEmptyClick }: Un
               e.stopPropagation();
               if (e.delta <= 6) onEmptyClick!(slot.slot);
             }}
-          >
-            <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
-          </mesh>
-        </>
+          />
       )}
     </group>
   );

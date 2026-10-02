@@ -4,7 +4,7 @@ import type { ExpenseCategory } from "@prisma/client";
 import { z } from "zod";
 import { sumAmounts } from "@/lib/calculations";
 import { zHexColor, zRequiredText } from "@/lib/validation";
-import type { Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
 
 /** Colour used when none is given (matches the Prisma default). */
 export const DEFAULT_CATEGORY_COLOR = "#8B93A7";

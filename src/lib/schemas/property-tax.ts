@@ -4,7 +4,8 @@ import type { PropertyTax } from "@prisma/client";
 import { z } from "zod";
 import { todayIST } from "@/lib/dates";
 import { zDateOrNull, zId, zInt, zPositiveMoney } from "@/lib/validation";
-import { zRequired, type Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
+import { zRequired } from "@/lib/validation";
 
 export const TAX_STATUSES = ["Paid", "Due"] as const;
 export type TaxStatusValue = (typeof TAX_STATUSES)[number];

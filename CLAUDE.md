@@ -53,3 +53,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - DATA CLARITY CONTRACT in docs/DESIGN.md is mandatory: cash vs paper value vs occupancy always separated and tagged, scope chip on every
   number, fixed vocabulary, deposits ≠ income, visible reconciliation, identical formats everywhere.
 - Layout: immersive world-as-background (option A), CLEAN by default — panels open on click (house, chips, objects) with pin-to-keep-open; focus dimming; option B (framed) switchable via a layout prop.
+
+## UI conventions (built in round 1)
+- Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
+  AnimatedNumber, StatTile, SegmentedBar, LevelBadge, Modal/Drawer/ConfirmDialog, toast, InspectCard, CommandProvider…);
+  data hooks from `@/lib/client` (`api`, `useApi`, `useMutation`, `invalidate`).
+- Each page's root is `<Screen>` (`flush contained={false}` for the full-bleed 3D overview). Pages must not render `<main>` (shell owns it).
+- Status everywhere uses `<StatusPill>`. Totals use `sumAmounts()`. Shared zod helpers in `src/lib/validation.ts`
+  (zMoney accepts "1,00,000" / "₹ 25,000"), `Serialized<T>` in `src/lib/types.ts`, `periodLabel` in `src/lib/dates.ts`.
+- `/styleguide` shows every component; `/lab` is the 3D scene sandbox (query params switch states).
+- API errors: `{ error, issues?: [{field, message}] }`.

@@ -3,15 +3,14 @@ import type { Payment } from "@prisma/client";
 import { z } from "zod";
 import { sumAmounts } from "@/lib/calculations";
 import { zDate, zInt, zPositiveMoney, zText } from "@/lib/validation";
-import { zRequired, type Serialized } from "./unit";
+import type { Serialized } from "@/lib/types";
+import { zRequired } from "@/lib/validation";
 
 export const PAYMENT_METHODS = ["cash", "bank", "upi", "other"] as const;
 export type PaymentMethodValue = (typeof PAYMENT_METHODS)[number];
 
-export const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+export { MONTH_NAMES, periodLabel } from "@/lib/dates";
+import { periodLabel } from "@/lib/dates";
 
 const blankToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
 
@@ -47,8 +46,6 @@ const toDate = (d: DateLike) => (typeof d === "string" ? new Date(d) : d);
 /** Months since year 0 — makes periods comparable with < / >. */
 export const periodIndex = (p: Period) => p.year * 12 + (p.month - 1);
 
-/** "October 2026" */
-export const periodLabel = (p: Period) => `${MONTH_NAMES[p.month - 1] ?? "?"} ${p.year}`;
 
 /** Period containing a date-only value (UTC). */
 export function periodOf(d: DateLike): Period {

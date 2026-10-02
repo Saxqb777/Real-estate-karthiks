@@ -1,7 +1,7 @@
 // Offers (purchase offers received for a unit): zod schemas for /api/offers + response type. Safe to import in the UI.
 import { z } from "zod";
 import { zId, zPositiveMoney, zText } from "@/lib/validation";
-import { zPastDate, zRequired } from "./unit";
+import { zPastDate, zRequired } from "@/lib/validation";
 
 export type { OfferDTO } from "./unit";
 

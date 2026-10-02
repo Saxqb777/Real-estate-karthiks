@@ -1,14 +1,18 @@
 // Reusable zod building blocks for API input. Money and numbers accept numeric strings too.
 import { z } from "zod";
-import { parseDateInput } from "./dates";
+import { parseDateInput, todayIST } from "./dates";
+
+/** Accepts "1,00,000", "₹ 25,000", "8.5%" etc. by stripping ₹, %, commas and spaces before coercion. */
+export const cleanNumeric = (v: unknown) => (typeof v === "string" ? v.replace(/[₹%,\s]/g, "") : v);
+const stripMoney = cleanNumeric;
 
 /** Non-negative INR amount, up to 2 decimals. */
-export const zMoney = z.coerce
+export const zMoney = z.preprocess(stripMoney, z.coerce
   .number({ message: "must be a number" })
   .refine((n) => isFinite(n), "must be a finite number")
   .refine((n) => n >= 0, "cannot be negative")
   .refine((n) => n <= 1e12, "is unrealistically large")
-  .transform((n) => Math.round(n * 100) / 100);
+  .transform((n) => Math.round(n * 100) / 100));
 
 /** Strictly positive INR amount. */
 export const zPositiveMoney = zMoney.refine((n) => n > 0, "must be greater than 0");
@@ -55,7 +59,44 @@ export const zInt = (min: number, max: number) =>
     .min(min, `must be at least ${min}`)
     .max(max, `must be at most ${max}`);
 
-export const zBool = z.preprocess((v) => (v === "true" ? true : v === "false" ? false : v), z.boolean());
+/** Boolean that also accepts "true" / "false" strings, with a readable message. */
+export const zFlag = z.preprocess(
+  (v) => (v === "true" ? true : v === "false" ? false : v),
+  z.boolean({ message: "must be true or false" }),
+);
+export const zBool = zFlag;
+
+/** Missing / null / blank → "is required" (otherwise z.coerce would turn them into 0 or NaN). */
+export const zRequired = <T extends z.ZodType>(schema: T, message = "is required") =>
+  z.preprocess((v, ctx) => {
+    if (v === undefined || v === null || (typeof v === "string" && v.trim() === "")) {
+      ctx.addIssue({ code: "custom", message });
+      return z.NEVER;
+    }
+    return v;
+  }, schema);
+
+/** Date-only input that is today (IST) or earlier. */
+export const zPastDate = zDate.refine((d) => d.getTime() <= todayIST().getTime(), "cannot be in the future");
+
+export function isWebUrl(v: string): boolean {
+  try {
+    const u = new URL(v);
+    return (u.protocol === "https:" || u.protocol === "http:") && u.hostname !== "";
+  } catch {
+    return false;
+  }
+}
+
+/** Optional http(s) link: "" / null → null. Rejects javascript:, mailto:, bare domains etc. */
+export const zWebUrlOrNull = z.preprocess(
+  (v) => (typeof v === "string" ? (v.trim() === "" ? null : v.trim()) : v === undefined ? null : v),
+  z
+    .string({ message: "must be a web link starting with https://" })
+    .max(2000, "must be at most 2000 characters")
+    .refine(isWebUrl, "must be a valid web link starting with https://")
+    .nullable(),
+);
 
 export const zEmailOrNull = z.preprocess(
   (v) => (typeof v === "string" && v.trim() === "" ? null : v === undefined ? null : v),
@@ -74,6 +115,12 @@ export const zHexColor = z
 
 /** Decimal that may be null (e.g. optional dimensions). */
 export const zNumberOrNull = z.preprocess(
-  (v) => (v === "" || v === undefined ? null : v),
+  (v) => (v === "" || v === undefined ? null : stripMoney(v)),
   z.coerce.number({ message: "must be a number" }).finite().min(0, "cannot be negative").nullable(),
 );
+
+/** Optional non-negative measurement (feet / sqft): "" / null → null, rounded to 2dp. */
+export const zDimension = (max: number) =>
+  zNumberOrNull
+    .refine((n) => n === null || n <= max, `must be at most ${max.toLocaleString("en-IN")}`)
+    .transform((n) => (n === null ? null : Math.round(n * 100) / 100));

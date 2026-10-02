@@ -1,67 +1,24 @@
 // Units: zod schemas for /api/units, response types, and the conflict / delete-protection messages.
-// Also hosts a few generic helpers used by the other schema files (zRequired, zPastDate, zDimension,
-// zWebUrlOrNull, zFlag, Serialized). Pure — safe to import in the UI (type-only Prisma imports).
-import type { Lease, Offer, Prisma, Tenant, Unit } from "@prisma/client";
+// Pure — safe to import in the UI (type-only Prisma imports).
+import type { Lease, Offer, Tenant, Unit } from "@prisma/client";
 import { z } from "zod";
-import { todayIST } from "@/lib/dates";
-import { zDate, zInt, zNumberOrNull, zPositiveMoney, zRequiredText, zText } from "@/lib/validation";
+import type { Serialized } from "@/lib/types";
+import {
+  cleanNumeric,
+  zDimension,
+  zFlag,
+  zInt,
+  zPastDate,
+  zPositiveMoney,
+  zRequired,
+  zRequiredText,
+  zText,
+  zWebUrlOrNull,
+} from "@/lib/validation";
 
-// ---------- generic helpers ----------
-
-/** JSON shape of a Prisma row after serialize(): Decimal → number, Date → ISO string. */
-export type Serialized<T> = T extends Prisma.Decimal
-  ? number
-  : T extends Date
-    ? string
-    : T extends (infer U)[]
-      ? Serialized<U>[]
-      : T extends object
-        ? { [K in keyof T]: Serialized<T[K]> }
-        : T;
-
-/** Missing / null / blank → "is required" (otherwise z.coerce would turn them into 0 or NaN). */
-export const zRequired = <T extends z.ZodType>(schema: T, message = "is required") =>
-  z.preprocess((v, ctx) => {
-    if (v === undefined || v === null || (typeof v === "string" && v.trim() === "")) {
-      ctx.addIssue({ code: "custom", message });
-      return z.NEVER;
-    }
-    return v;
-  }, schema);
-
-/** Date-only input that is today (IST) or earlier. */
-export const zPastDate = zDate.refine((d) => d.getTime() <= todayIST().getTime(), "cannot be in the future");
-
-/** Optional non-negative measurement (feet / sqft): "" / null → null, rounded to 2dp. */
-export const zDimension = (max: number) =>
-  zNumberOrNull
-    .refine((n) => n === null || n <= max, `must be at most ${max.toLocaleString("en-IN")}`)
-    .transform((n) => (n === null ? null : Math.round(n * 100) / 100));
-
-export function isWebUrl(v: string): boolean {
-  try {
-    const u = new URL(v);
-    return (u.protocol === "https:" || u.protocol === "http:") && u.hostname !== "";
-  } catch {
-    return false;
-  }
-}
-
-/** Optional http(s) link: "" / null → null. Rejects javascript:, mailto:, bare domains etc. */
-export const zWebUrlOrNull = z.preprocess(
-  (v) => (typeof v === "string" ? (v.trim() === "" ? null : v.trim()) : v === undefined ? null : v),
-  z
-    .string({ message: "must be a web link starting with https://" })
-    .max(2000, "must be at most 2000 characters")
-    .refine(isWebUrl, "must be a valid web link starting with https://")
-    .nullable(),
-);
-
-/** Boolean that also accepts "true" / "false" strings, with a readable message. */
-export const zFlag = z.preprocess(
-  (v) => (v === "true" ? true : v === "false" ? false : v),
-  z.boolean({ message: "must be true or false" }),
-);
+// Generic helpers now live in src/lib/validation.ts and src/lib/types.ts; re-exported for older imports.
+export type { Serialized } from "@/lib/types";
+export { zRequired, zPastDate, zDimension, isWebUrl, zWebUrlOrNull, zFlag } from "@/lib/validation";
 
 /** Fill a default when the value is missing / null / blank (create forms). */
 const withDefault = <T extends z.ZodType>(schema: T, fallback: unknown) =>
@@ -79,17 +36,23 @@ const zPosition = z.preprocess(
 );
 
 /** Percent per year, e.g. 8.5 = 8.5%. */
-const zAppreciationRate = z.coerce
-  .number({ message: "must be a number" })
-  .min(-50, "must be at least -50%")
-  .max(100, "must be at most 100%")
-  .transform((n) => Math.round(n * 1000) / 1000);
+const zAppreciationRate = z.preprocess(
+  cleanNumeric,
+  z.coerce
+    .number({ message: "must be a number" })
+    .min(-50, "must be at least -50%")
+    .max(100, "must be at most 100%")
+    .transform((n) => Math.round(n * 1000) / 1000),
+);
 
-const zBuiltUpSqft = z.coerce
-  .number({ message: "must be a number" })
-  .positive("must be greater than 0")
-  .max(1_000_000, "is unrealistically large")
-  .transform((n) => Math.round(n * 100) / 100);
+const zBuiltUpSqft = z.preprocess(
+  cleanNumeric,
+  z.coerce
+    .number({ message: "must be a number" })
+    .positive("must be greater than 0")
+    .max(1_000_000, "is unrealistically large")
+    .transform((n) => Math.round(n * 100) / 100),
+);
 
 const unitFields = {
   name: zRequiredText("Name", 80),
