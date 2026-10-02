@@ -1,0 +1,139 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.hex {
+  --size: 64px;
+  --tier: var(--plaster);
+  --tier-dark: #8d8576;
+  position: relative;
+  flex: none;
+  width: var(--size);
+  height: calc(var(--size) * 0.9);
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: linear-gradient(160deg, var(--tier) 0%, var(--tier-dark) 100%);
+  display: grid;
+  place-items: center;
+}
+.hex::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  clip-path: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 50%),
+    var(--bg-1);
+}
+.hex::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  clip-path: inherit;
+  border: 0;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tier) 35%, transparent);
+}
+.shine {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%);
+  transform: translateX(-110%);
+  animation: shine 5.5s var(--ease-in-out) infinite;
+  pointer-events: none;
+}
+@keyframes shine {
+  0%,
+  70% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(110%);
+  }
+}
+.inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.lvl {
+  font-family: var(--ff-display);
+  font-size: calc(var(--size) * 0.14);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--tier);
+  margin-bottom: 2px;
+  padding-left: 0.16em;
+}
+.val {
+  font-family: var(--ff-display);
+  font-size: calc(var(--size) * 0.3);
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.sm .hex {
+  --size: 44px;
+}
+.lg .hex {
+  --size: 88px;
+}
+
+.loss .hex {
+  --tier: var(--coral);
+  --tier-dark: #8f2a3a;
+}
+.bronze .hex {
+  --tier: #e08a5d;
+  --tier-dark: #8a3c1d;
+}
+.silver .hex {
+  --tier: #ece4d6;
+  --tier-dark: #8a8274;
+}
+.gold .hex {
+  --tier: #ffd27f;
+  --tier-dark: #c46d12;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.title {
+  font-family: var(--ff-display);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+}
+.tierName {
+  font-family: var(--ff-display);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.loss .tierName {
+  color: var(--coral);
+}
+.bronze .tierName {
+  color: #e08a5d;
+}
+.silver .tierName {
+  color: #ece4d6;
+}
+.gold .tierName {
+  color: var(--marigold);
+}
+.caption {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
