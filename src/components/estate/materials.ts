@@ -52,7 +52,12 @@ interface StdOpts {
   finish?: Finish;
   toneMapped?: boolean;
   polygonOffset?: number;
+  /** clip against VEHICLE_CLIP (traffic emerging from the tile's cut edge) */
+  clip?: boolean;
 }
+
+/** Shared clipping planes for street traffic; Traffic keeps them on the tile's left/right edges. */
+export const VEHICLE_CLIP = [new THREE.Plane(new THREE.Vector3(1, 0, 0), 1e4), new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1e4)];
 
 const cache = new Map<string, THREE.MeshStandardMaterial>();
 
@@ -87,6 +92,7 @@ export function std(color: string, o: StdOpts = {}): THREE.MeshStandardMaterial 
     o.finish,
     o.toneMapped,
     o.polygonOffset,
+    o.clip ? 1 : 0,
   ].join("|");
   let m = cache.get(key);
   if (m) return m;
@@ -113,6 +119,10 @@ export function std(color: string, o: StdOpts = {}): THREE.MeshStandardMaterial 
     m.polygonOffsetUnits = -o.polygonOffset;
   }
   if (o.finish === "muted") applyMuted(m);
+  if (o.clip) {
+    m.clippingPlanes = VEHICLE_CLIP;
+    m.clipShadows = true;
+  }
   cache.set(key, m);
   return m;
 }

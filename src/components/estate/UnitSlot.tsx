@@ -299,12 +299,12 @@ function ToLetBoard({ slot, world, reduced, at }: { slot: BuildingSlot; world: W
   const x = world.x(at ? at.x : slot.notch.wide.x0 + (slot.notch.wide.x1 - slot.notch.wide.x0) * 0.45);
   const z = world.z(at ? at.z : slot.rect.z0 - 2.4);
   return (
-    <group position={[x, 0, z]} rotation={[0, -0.18, 0]}>
-      {[-1.25, 1.25].map((dx) => (
-        <mesh key={dx} geometry={G.box()} material={wood} scale={[0.22, 5.4, 0.22]} position={[dx, 2.7, 0]} castShadow />
+    <group position={[x, 0, z]} rotation={[0, -0.12, 0]}>
+      {[-2.1, 2.1].map((dx) => (
+        <mesh key={dx} geometry={G.box()} material={wood} scale={[0.3, 7.4, 0.3]} position={[dx, 3.7, 0]} castShadow />
       ))}
-      <group ref={ref} position={[0, 4.3, 0.15]}>
-        <mesh geometry={G.box()} material={[wood, wood, wood, wood, face, wood]} scale={[3.6, 1.8, 0.12]} castShadow />
+      <group ref={ref} position={[0, 6.0, 0.2]}>
+        <mesh geometry={G.box()} material={[wood, wood, wood, wood, face, wood]} scale={[5.6, 2.8, 0.16]} castShadow />
       </group>
     </group>
   );

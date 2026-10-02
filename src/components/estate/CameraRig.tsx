@@ -27,9 +27,9 @@ interface Flight {
 }
 
 const VIEW: Record<SceneMode, { phi: number; theta: number; fit: number }> = {
-  hero: { phi: 1.0, theta: -0.5, fit: 0.66 },
-  preview: { phi: 0.8, theta: -0.42, fit: 0.7 },
-  login: { phi: 1.04, theta: -0.7, fit: 0.78 },
+  hero: { phi: 0.98, theta: -0.3, fit: 0.66 },
+  preview: { phi: 0.8, theta: -0.25, fit: 0.7 },
+  login: { phi: 1.04, theta: -0.45, fit: 0.78 },
 };
 
 function poseOf(camera: THREE.Camera, target: THREE.Vector3): Pose {
@@ -70,9 +70,12 @@ export function CameraRig({
   const flight = useRef<Flight | null>(null);
   const started = useRef(false);
 
+  const vt = view?.theta;
+  const vp = view?.phi;
+  const vf = view?.fit;
   // Fit the whole tile (plot + street) for the current viewport.
   const home = useMemo<Pose>(() => {
-    const v = { ...VIEW[mode], ...view };
+    const v = { ...VIEW[mode], ...(vt !== undefined && { theta: vt }), ...(vp !== undefined && { phi: vp }), ...(vf !== undefined && { fit: vf }) };
     const aspect = size.width / Math.max(1, size.height);
     const vfov = THREE.MathUtils.degToRad(FOV);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
@@ -80,7 +83,7 @@ export function CameraRig({
     const dist = R / Math.sin(Math.min(vfov, hfov) / 2);
     const target = new THREE.Vector3(1.5, Math.min(8, layout.maxHeightFt * 0.25), world.z(layout.center.z) + (mode === "preview" ? 5 : 6));
     return { target, radius: dist, phi: v.phi, theta: v.theta };
-  }, [layout.radius, layout.maxHeightFt, layout.center.z, mode, size.width, size.height, world, view?.theta, view?.phi, view?.fit]);
+  }, [layout.radius, layout.maxHeightFt, layout.center.z, mode, size.width, size.height, world, vt, vp, vf]);
 
   const focus = useMemo<Pose | null>(() => {
     const s = layout.slots.find((x) => x.slot === selectedSlot);

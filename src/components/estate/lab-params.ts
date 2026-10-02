@@ -49,6 +49,7 @@ export interface LabConfig {
   sel: "" | "a" | "b";
   /** camera override "theta,phi,fit" (lab only) */
   cam: string;
+  debug: boolean;
 }
 
 export const LAB_DEFAULTS: LabConfig = {
@@ -76,6 +77,7 @@ export const LAB_DEFAULTS: LabConfig = {
   intro: true,
   sel: "",
   cam: "",
+  debug: false,
 };
 
 /** Parse /lab query params (server or client). */
@@ -117,6 +119,7 @@ export function parseLabParams(sp: Record<string, string | string[] | undefined>
     panel: flag("panel", D.panel),
     intro: flag("intro", D.intro),
     sel: pick("sel", ["", "a", "b"] as const, D.sel),
+    debug: flag("debug", D.debug),
     cam: /^-?[\d.]+(,-?[\d.]+){0,2}$/.test(g("cam") ?? "") ? (g("cam") as string) : D.cam,
   };
 }
@@ -148,6 +151,7 @@ export function toParams(c: LabConfig): string {
   put("panel", c.panel, D.panel);
   put("intro", c.intro, D.intro);
   put("cam", c.cam, D.cam);
+  put("debug", c.debug, D.debug);
   put("sel", c.sel, D.sel);
   return p.toString();
 }

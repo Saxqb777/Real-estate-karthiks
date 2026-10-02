@@ -3,7 +3,7 @@
 // plot widths/depth, each unit's footprint, position, floors, occupancy and rent state map onto the model.
 // Import it through EstateSceneLazy (next/dynamic, ssr: false) so three.js never runs on the server.
 import { PerformanceMonitor } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Selection } from "@react-three/postprocessing";
 import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
@@ -55,6 +55,8 @@ export interface EstateSceneProps {
   intro?: boolean;
   /** Override the default camera angle: theta (azimuth, rad, 0 = straight from the street), phi (from vertical), fit (zoom). */
   cameraView?: { theta?: number; phi?: number; fit?: number };
+  /** Show fps / draw calls / triangles (for performance checks). */
+  debug?: boolean;
 }
 
 function hasWebGL(): boolean {
@@ -95,6 +97,7 @@ export default function EstateScene(props: EstateSceneProps) {
   const [autoTier, setAutoTier] = useState<Tier>("high");
   const [labels, setLabels] = useState<LabelSpec[]>([]);
   const registry = useRef(new Map<string, HTMLElement>());
+  const debugEl = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setWebgl(hasWebGL());
@@ -153,6 +156,9 @@ export default function EstateScene(props: EstateSceneProps) {
             camera={{ fov: FOV, near: 2, far: 6000, position: [-120, 140, 220] }}
             gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
             onPointerMissed={missed}
+            onCreated={({ gl }) => {
+              gl.localClippingEnabled = true;
+            }}
             aria-label="3D model of the plot and its units"
           >
             <SceneContents
@@ -166,12 +172,14 @@ export default function EstateScene(props: EstateSceneProps) {
               onLabels={setLabels}
               registry={registry}
             />
+            {props.debug && <DebugStats target={debugEl} tier={tier} />}
             {!props.quality && tier !== "low" && (
               <PerformanceMonitor flipflops={1} onDecline={() => setAutoTier((t) => (t === "high" ? "mid" : "low"))} />
             )}
           </Canvas>
         </SceneBoundary>
       )}
+      {props.debug && <div ref={debugEl} className={s.debug} />}
       {ready && webgl && <OverlayLabels labels={labels} registry={registry} onBuild={props.onEmptySlotClick} />}
       {hud && webgl && (
         <div className={s.hud}>
@@ -182,6 +190,26 @@ export default function EstateScene(props: EstateSceneProps) {
       )}
     </div>
   );
+}
+
+/** fps / draw calls / triangles, sampled twice a second (counts every pass of the frame). */
+function DebugStats({ target, tier }: { target: RefObject<HTMLDivElement | null>; tier: Tier }) {
+  const acc = useRef({ frames: 0, t: 0, calls: 0, tris: 0 });
+  useFrame(({ gl }, dt) => {
+    const a = acc.current;
+    if (gl.info.autoReset) gl.info.autoReset = false;
+    a.calls = gl.info.render.calls;
+    a.tris = gl.info.render.triangles;
+    gl.info.reset();
+    a.frames++;
+    a.t += dt;
+    if (a.t >= 0.5 && target.current) {
+      target.current.textContent = `${Math.round(a.frames / a.t)} fps · ${a.calls} calls · ${(a.tris / 1000).toFixed(0)}k tris · ${tier} · dpr ${gl.getPixelRatio()}`;
+      a.frames = 0;
+      a.t = 0;
+    }
+  }, -100);
+  return null;
 }
 
 interface ContentsProps extends EstateSceneProps {

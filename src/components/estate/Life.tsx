@@ -9,11 +9,11 @@ import type { SiteLayout } from "@/lib/site-layout";
 import type { Tier } from "./Effects";
 import type { Env } from "./env";
 import { tileXRange } from "./Island";
-import { G, PAL, std } from "./materials";
+import { G, PAL, VEHICLE_CLIP, std } from "./materials";
 import { Cow, Dog, Pedestrians } from "./People";
 import { Birds, Petals } from "./SkyLife";
 import { glowTex } from "./textures";
-import { FLAT, damp, smoothstep, type World } from "./util";
+import { FLAT, damp, type World } from "./util";
 
 type V3 = [number, number, number];
 type Kind = "auto" | "moped" | "bicycle" | "car" | "bus";
@@ -40,10 +40,10 @@ const VEHICLES: VehicleSpec[] = [
 ];
 
 function Box({ p, s, c, r, m }: { p: V3; s: V3; c?: string; r?: V3; m?: THREE.Material }) {
-  return <mesh geometry={G.box()} material={m ?? std(c!, { rough: 0.6 })} position={p} scale={s} rotation={r} castShadow />;
+  return <mesh geometry={G.box()} material={m ?? std(c!, { rough: 0.6, clip: true })} position={p} scale={s} rotation={r} castShadow />;
 }
 function Ball({ p, s, c, m }: { p: V3; s: number | V3; c?: string; m?: THREE.Material }) {
-  return <mesh geometry={G.sphere()} material={m ?? std(c!, { rough: 0.6 })} position={p} scale={s} castShadow={!m} />;
+  return <mesh geometry={G.sphere()} material={m ?? std(c!, { rough: 0.6, clip: true })} position={p} scale={s} castShadow={!m} />;
 }
 
 interface Lights {
@@ -57,8 +57,8 @@ function Wheel({ p, r, w, reg }: { p: V3; r: number; w: number; reg: (o: THREE.O
   return (
     <group position={p} rotation={[Math.PI / 2, 0, 0]}>
       <group ref={reg}>
-        <mesh geometry={G.cyl()} material={std("#1b1b1d", { rough: 0.9 })} scale={[r * 2, w, r * 2]} castShadow />
-        <mesh geometry={G.box()} material={std("#9a9a9a", { rough: 0.4, metal: 0.5 })} scale={[r * 1.5, w + 0.04, r * 0.28]} />
+        <mesh geometry={G.cyl()} material={std("#1b1b1d", { rough: 0.9, clip: true })} scale={[r * 2, w, r * 2]} castShadow />
+        <mesh geometry={G.box()} material={std("#9a9a9a", { rough: 0.4, metal: 0.5, clip: true })} scale={[r * 1.5, w + 0.04, r * 0.28]} />
       </group>
     </group>
   );
@@ -87,9 +87,9 @@ function Auto({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }
       <Box p={[-0.7, 2.05, 0]} s={[5.4, 1.6, 4.1]} c={yellow} />
       <Box p={[2.95, 2.35, 0]} s={[2.0, 2.2, 2.5]} c={yellow} />
       <Box p={[-0.7, 2.95, 0]} s={[5.42, 0.24, 4.12]} c="#2e8b57" />
-      <Box p={[3.7, 3.7, 0]} s={[0.12, 1.4, 2.2]} m={std("#8fb6c9", { rough: 0.15, metal: 0.3 })} />
+      <Box p={[3.7, 3.7, 0]} s={[0.12, 1.4, 2.2]} m={std("#8fb6c9", { rough: 0.15, metal: 0.3, clip: true })} />
       <Box p={[0.3, 5.15, 0]} s={[7.0, 0.3, 4.3]} c={black} />
-      <mesh geometry={G.cyl()} material={std(black, { rough: 0.7 })} position={[0.3, 5.3, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[6.9, 4.3, 1.1]} castShadow />
+      <mesh geometry={G.cyl()} material={std(black, { rough: 0.7, clip: true })} position={[0.3, 5.3, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[6.9, 4.3, 1.1]} castShadow />
       <Box p={[-3.3, 4.0, 0]} s={[0.2, 2.3, 4.1]} c={black} />
       {[
         [3.55, 1.2],
@@ -125,7 +125,7 @@ function Moped({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void 
       <Box p={[-0.6, 2.55, 0]} s={[1.6, 0.3, 0.75]} c="#1c1c1c" />
       <Box p={[-1.9, 2.5, 0]} s={[1.3, 0.15, 1.2]} c="#444" />
       {[0.45, -0.45].map((z) => (
-        <mesh key={z} geometry={G.cyl()} material={std("#c9ccd1", { rough: 0.25, metal: 0.8 })} position={[-1.9, 3.25, z]} scale={[0.75, 1.3, 0.75]} castShadow />
+        <mesh key={z} geometry={G.cyl()} material={std("#c9ccd1", { rough: 0.25, metal: 0.8, clip: true })} position={[-1.9, 3.25, z]} scale={[0.75, 1.3, 0.75]} castShadow />
       ))}
       <Ball p={[2.35, 3.05, 0]} s={0.36} m={L.head} />
       <Box p={[-2.6, 2.2, 0]} s={[0.1, 0.22, 0.3]} m={L.tail} />
@@ -165,7 +165,7 @@ function Bicycle({ reg, pedals }: { reg: (o: THREE.Object3D | null) => void; ped
 
 function Car({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }) {
   const body = "#f2f2ef";
-  const glass = std("#26323d", { rough: 0.15, metal: 0.4 });
+  const glass = std("#26323d", { rough: 0.15, metal: 0.4, clip: true });
   return (
     <group>
       <Box p={[0, 1.75, 0]} s={[11.4, 1.9, 5.0]} c={body} />
@@ -192,7 +192,7 @@ function Car({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void })
 function Bus({ L, reg }: { L: Lights; reg: (o: THREE.Object3D | null) => void }) {
   const cream = "#f1ead8";
   const red = "#b3262b";
-  const glass = std("#26323d", { rough: 0.15, metal: 0.4 });
+  const glass = std("#26323d", { rough: 0.15, metal: 0.4, clip: true });
   return (
     <group>
       <Box p={[0, 4.4, 0]} s={[30, 7.0, 7.6]} c={cream} />
@@ -233,15 +233,23 @@ function Traffic({ layout, world, env, count }: { layout: SiteLayout; world: Wor
   const specs = VEHICLES.slice(0, count);
   const lights = useMemo<Lights>(
     () => ({
-      head: new THREE.MeshStandardMaterial({ color: "#fff7e0", emissive: "#fff1c9", emissiveIntensity: 0.3, toneMapped: false }),
-      tail: new THREE.MeshStandardMaterial({ color: "#7a1010", emissive: "#ff2a2a", emissiveIntensity: 0.2, toneMapped: false }),
-      pool: new THREE.MeshBasicMaterial({ map: glowTex(), color: "#ffe2a6", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+      head: new THREE.MeshStandardMaterial({ color: "#fff7e0", emissive: "#fff1c9", emissiveIntensity: 0.3, toneMapped: false, clippingPlanes: VEHICLE_CLIP }),
+      tail: new THREE.MeshStandardMaterial({ color: "#7a1010", emissive: "#ff2a2a", emissiveIntensity: 0.2, toneMapped: false, clippingPlanes: VEHICLE_CLIP }),
+      pool: new THREE.MeshBasicMaterial({ map: glowTex(), color: "#ffe2a6", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, clippingPlanes: VEHICLE_CLIP }),
     }),
     [],
   );
   useEffect(() => () => Object.values(lights).forEach((m) => m.dispose()), [lights]);
   const states = useRef<VState[]>(specs.map(() => ({ group: null, wheels: [], pedals: { current: null }, shift: 0 })));
   if (states.current.length !== specs.length) states.current = specs.map(() => ({ group: null, wheels: [], pedals: { current: null }, shift: 0 }));
+
+  useEffect(() => {
+    // clip traffic at the tile's cut edges (left/right) so vehicles emerge from the edge
+    const zc = (nearLane + farLane) / 2;
+    const [x0, x1] = tileXRange(layout, zc);
+    VEHICLE_CLIP[0].constant = -world.x(x0 + 0.2);
+    VEHICLE_CLIP[1].constant = world.x(x1 - 0.2);
+  }, [layout, world, nearLane, farLane]);
 
   useFrame(({ clock }, dt) => {
     const e = env.current;
@@ -273,11 +281,8 @@ function Traffic({ layout, world, env, count }: { layout: SiteLayout; world: Wor
       });
       st8.shift = damp(st8.shift, want, 3, Math.min(dt, 0.05));
       const lateral = (sp.edge - st8.shift) * sp.dir; // + = towards the kerb on the vehicle's left
-      const inside = Math.min(p.x - p.x0, p.x1 - p.x);
-      const k = smoothstep(-sp.len / 2, sp.len / 2 + 1.5, inside);
       g.position.set(world.x(p.x), 0.2, world.z(p.z + lateral));
       g.rotation.y = sp.dir > 0 ? 0 : Math.PI;
-      g.scale.setScalar(Math.max(0.001, k));
       const r = sp.kind === "bus" ? 1.5 : sp.kind === "bicycle" ? 1.1 : sp.kind === "car" ? 0.95 : sp.kind === "moped" ? 0.9 : 0.72;
       for (const w of st8.wheels) w.rotation.y = -p.s / r;
       if (st8.pedals.current) st8.pedals.current.rotation.z = -p.s / 1.6;

@@ -121,6 +121,7 @@ export default function EstateLab({ initial }: { initial: LabConfig }) {
         wheelZoom="always"
         intro={c.intro}
         cameraView={cameraView}
+        debug={c.debug}
         key={`${c.mode}-${c.quality}`}
       />
       {c.panel ? (
