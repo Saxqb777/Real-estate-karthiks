@@ -89,3 +89,12 @@ import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
 - CAGR shown only when holding ≥ 1 year; otherwise null with note "under 1 year".
 - Holding years = investment-weighted average (explained in show-the-maths). Rent lost before first lease uses the next lease's rent (noted).
 - Total Return = appreciation (active units) + all rent collected (spec), explained in show-the-maths.
+
+## Deployment (set up during round 2)
+- Neon: init migration + defaults applied to project `solitary-glade-88238517` (12 tables, 6 categories, Settings/Plot rows, NO data).
+- Vercel: team `saxqb777's projects` (team_yKuXQ8P3eoGrvRnTWMIqSiGo), project `pattukottai-estates` (prj_ne43LdS6pow2gGtw0aM0RrGonUin),
+  linked to GitHub saxqb777/real-estate-karthiks (default branch = claude/adoring-franklin-79djqy), region sin1 (next to Neon),
+  Node 22.x, build `npx prisma migrate deploy && npm run build`. Env: DATABASE_URL (Neon pooled, pgbouncer=true), DIRECT_URL,
+  APP_USERNAME, APP_PASSWORD, SESSION_SECRET (production secret differs from local). Vercel Authentication only on previews;
+  production URL is public behind the app's own login.
+- **`commandForIgnoringBuildStep` is set to `exit 0` (builds paused) — set it to null when ready to deploy.**
