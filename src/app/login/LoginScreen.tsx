@@ -2,7 +2,7 @@
 // /login — the title screen: the living diorama turns slowly behind a compact sign-in card that greets the owner in
 // Tamil for the time of day (same day-phase helper as the HUD clock and the 3D lighting).
 import { AlertTriangle, ArrowRight, Check, Eye, EyeOff, KeyRound, User } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useAnimate, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import EstateSceneLazy, { type SceneInsets } from "@/components/estate/EstateSceneLazy";
 import { BrandMark } from "@/components/shell/BrandMark";
@@ -76,12 +76,22 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
   const fail = (text: string, field: "username" | "password" | null) => {
     setError({ text, field });
     setShake((n) => n + 1);
-    requestAnimationFrame(() => {
-      const target = field === "username" ? userRef.current : passRef.current;
-      target?.focus();
-      target?.select();
-    });
   };
+  // a short head-shake of the card on a failed try (not with reduced motion)
+  const [cardScope, animateCard] = useAnimate<HTMLElement>();
+  useEffect(() => {
+    if (!shake || reduce || !cardScope.current) return;
+    void animateCard(cardScope.current, { x: [0, -9, 8, -5, 4, 0] }, { duration: 0.42, ease: "easeOut" });
+  }, [shake, reduce, animateCard, cardScope]);
+
+  // after a failed try (and once the fields are enabled again) put the cursor where the fix goes
+  const errorField = error?.field;
+  useEffect(() => {
+    if (!shake || status !== "idle") return;
+    const target = errorField === "username" ? userRef.current : passRef.current;
+    target?.focus();
+    target?.select();
+  }, [shake, status, errorField]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -119,12 +129,7 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <motion.section
-          className={s.card}
-          aria-labelledby="login-title"
-          animate={{ x: shake && !reduce ? (shake % 2 ? [0, -9, 8, -5, 4, 0] : [0, 9, -8, 5, -4, 0]) : 0 }}
-          transition={{ duration: 0.42, ease: "easeOut" }}
-        >
+        <section ref={cardScope} className={s.card} aria-labelledby="login-title">
           <span className={s.band} aria-hidden />
           <header className={s.brand}>
             <BrandMark size={46} lit={phase.phase === "evening" || phase.phase === "night" || phase.phase === "dawn"} className={s.mark} />
@@ -243,7 +248,7 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
               <Kbd keys={["enter"]} /> to sign in
             </p>
           </form>
-        </motion.section>
+        </section>
       </motion.div>
     </div>
   );

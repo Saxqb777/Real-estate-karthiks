@@ -48,11 +48,28 @@ export function currentDayPhase(now: Date = new Date()): DayPhaseInfo {
   return dayPhaseAt(hourInIST(now));
 }
 
-/** "7:42 AM" in IST. */
+/** "7:42 AM" in IST (integer maths — no floating-point minute drift). */
 export function formatTimeIST(now: Date = new Date()): string {
-  const h = hourInIST(now);
-  const hour = Math.floor(h);
-  const min = Math.floor((h - hour) * 60);
+  const c = clockAt(now, IST_OFFSET_MIN);
+  return `${c.time} ${c.ampm}`;
+}
+
+/** Owner's home clock (UAE, Gulf Standard Time, UTC+4, no DST). The property clock is IST. */
+export const HOME_ZONE = { label: "UAE", name: "Your time", offsetMin: 240 } as const;
+
+/** Clock parts for a fixed UTC offset (minutes): "1:00" "AM", weekday/day/month, fractional hour. */
+export function clockAt(now: Date, offsetMin: number) {
+  const d = new Date(now.getTime() + offsetMin * 60_000);
+  const hour = d.getUTCHours();
+  const min = d.getUTCMinutes();
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${h12}:${String(min).padStart(2, "0")} ${hour < 12 ? "AM" : "PM"}`;
+  return {
+    time: `${h12}:${String(min).padStart(2, "0")}`,
+    ampm: hour < 12 ? "AM" : "PM",
+    hour: hour + min / 60,
+    dateKey: `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`,
+    weekday: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getUTCDay()],
+    day: d.getUTCDate(),
+    month: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getUTCMonth()],
+  };
 }

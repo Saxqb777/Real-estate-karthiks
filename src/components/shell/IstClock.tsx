@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { cx } from "@/components/ui";
-import { dayPhaseAt, formatTimeIST, hourInIST, type DayPhase } from "@/lib/day-phase";
+import { HOME_ZONE, clockAt, dayPhaseAt, formatTimeIST, hourInIST, type DayPhase } from "@/lib/day-phase";
 import styles from "./Shell.module.css";
 
 const subscribeSecond = (cb: () => void) => {
@@ -55,7 +55,10 @@ function SkyArc({ hour, phase }: { hour: number; phase: DayPhase }) {
   );
 }
 
-/** Live IST clock: Tamil time-of-day word (shared with the 3D lighting), English + time, sun/moon arc. */
+/**
+ * Two clocks: Pattukottai (IST — drives the Tamil phase + 3D lighting) and the owner's own time (UAE).
+ * The UAE date is shown only when it differs from the India date (around midnight).
+ */
 export function IstClock() {
   const sec = useEpochSecond();
   const now = sec ? new Date(sec * 1000) : null;
@@ -63,14 +66,20 @@ export function IstClock() {
   const phase: DayPhase = info?.phase ?? "morning";
   const [time, ampm] = now ? formatTimeIST(now).split(" ") : ["--:--", ""];
   const [hh, mm] = time.split(":");
-  const label = info && now ? `${info.tamil} · ${info.english} · ${time} ${ampm} IST, ${istDateLabel(now)}` : "India time";
+  const home = now ? clockAt(now, HOME_ZONE.offsetMin) : null;
+  const ist = now ? clockAt(now, 330) : null;
+  const homeDate = home && ist && home.dateKey !== ist.dateKey ? `${home.weekday} ${home.day} ${home.month}` : null;
+  const label =
+    info && now && home
+      ? `Pattukottai: ${info.tamil} · ${info.english} · ${time} ${ampm} IST, ${istDateLabel(now)}. ${HOME_ZONE.label}: ${home.time} ${home.ampm}`
+      : "India and UAE time";
   return (
     <div className={styles.clock} data-phase={phase} role="timer" aria-label={label}>
       <SkyArc hour={info?.hourIST ?? 9} phase={phase} />
       <div className={styles.clockText} aria-hidden>
         <div className={styles.clockTop}>
           <span className={cx("tamil", styles.tamilPhase)} lang="ta">
-            {info?.tamil ?? " "}
+            {info?.tamil ?? " "}
           </span>
           <span className={styles.time}>
             {hh}
@@ -85,6 +94,20 @@ export function IstClock() {
           {now ? istDateLabel(now) : "IST"}
           <span className={styles.tz}>IST</span>
         </div>
+        <div className={styles.homeMini}>
+          <span className={styles.tz}>{HOME_ZONE.label}</span>
+          {home ? `${home.time} ${home.ampm}` : "--:--"}
+        </div>
+      </div>
+      <div className={styles.home} aria-hidden title={`${HOME_ZONE.name} (${HOME_ZONE.label})`}>
+        <span className={styles.homeTime}>
+          {home?.time ?? "--:--"}
+          <span className={styles.ampm}>{home?.ampm ?? ""}</span>
+        </span>
+        <span className={styles.homeLabel}>
+          {homeDate ?? HOME_ZONE.name}
+          <span className={styles.tz}>{HOME_ZONE.label}</span>
+        </span>
       </div>
     </div>
   );

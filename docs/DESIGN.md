@@ -108,6 +108,9 @@ One shared helper (src/lib/day-phase.ts) maps IST time → phase, used by BOTH t
 | 16:00–19:00| மாலை       | Evening    | golden hour → dusk, lamps switch on     |
 | 19:00–04:00| இரவு       | Night      | moon, stars, fireflies, lit windows     |
 - HUD clock shows the Tamil word large (Noto Sans Tamil) + English small + time, e.g. "காலை · Morning · 7:42 AM", with a small sun/moon arc.
+- **Two clocks (owner lives in the UAE):** the property clock (Pattukottai, IST — drives the Tamil phase + 3D lighting) and, quieter beside it,
+  the owner's own time ("1:01 AM · YOUR TIME [UAE]", `HOME_ZONE` + `clockAt()` in src/lib/day-phase.ts). Mobile: compact "UAE 1:01 AM" under
+  the India time. The login screen shows both too (e.g. "Pattukottai 7:42 AM · UAE 6:12 AM").
 - Login page greets with the Tamil greeting for the phase (e.g. "காலை வணக்கம்" / "மாலை வணக்கம்" / "இரவு வணக்கம்").
 - Transitions between phases are smooth (lighting lerps over ~minutes of real time; a manual override lets the owner preview any phase).
 

@@ -7,7 +7,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 LOGDIR=/tmp/claude-0/-home-user-Real-estate-karthiks/6fff8b1b-9614-559a-8719-d09defb144d9/scratchpad
 if [ "${1:-}" = "stop" ]; then
-  pids=$(lsof -ti:"$2" 2>/dev/null || true); [ -n "$pids" ] && kill $pids || true; echo "stopped :$2"; exit 0
+  # Kill the whole `next dev` tree (the parent respawns its worker if only the listener dies).
+  pids=$(ps -eo pid,args | awk -v p="next dev -p $2" 'index($0, p) && !/awk/ && !/dev-server.sh/ {print $1}')
+  [ -n "$pids" ] && kill $pids 2>/dev/null || true
+  sleep 1
+  left=$(lsof -ti:"$2" 2>/dev/null || true); [ -n "$left" ] && kill -9 $left 2>/dev/null || true
+  echo "stopped :$2"; exit 0
 fi
 NAME=$1; PORT=$2; DB=${3:-estates_dev}
 export DATABASE_URL="postgresql://estates:estates@localhost:5432/$DB" DIRECT_URL="postgresql://estates:estates@localhost:5432/$DB"

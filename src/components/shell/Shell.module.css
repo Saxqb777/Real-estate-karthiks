@@ -339,6 +339,50 @@
   border-radius: 2px;
 }
 
+/* second clock — the owner's own time (UAE), quieter than the property clock */
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-left: 12px;
+  margin-left: 2px;
+  border-left: 1px solid var(--line);
+  line-height: 1;
+  white-space: nowrap;
+}
+.homeTime {
+  font-family: var(--ff-display);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.homeLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.homeMini {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 /* command button */
 .cmdk {
   display: flex;
@@ -394,6 +438,13 @@
   .navIndex,
   .date {
     display: none;
+  }
+  .homeLabel {
+    font-size: 0;
+    gap: 0;
+  }
+  .homeLabel .tz {
+    font-size: 9.5px;
   }
   .brandName {
     font-size: 15px;
@@ -455,6 +506,18 @@
     flex-direction: column;
     align-items: flex-end;
     gap: 3px;
+  }
+  .home {
+    display: none;
+  }
+  .homeMini {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 10px;
+  }
+  .homeMini .tz {
+    font-size: 8.5px;
+    padding: 1px 2px 0;
   }
   .tamilPhase {
     font-size: 11px;
