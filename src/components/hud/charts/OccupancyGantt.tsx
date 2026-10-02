@@ -1,7 +1,7 @@
 "use client";
 // Dock tab 4 — Occupancy: who lived where, purchase → today (data.timeline). Tenant bars in occupancy blue, empty
 // stretches hatched with the rent they lost (an opportunity cost, never cash), year ticks and a today marker.
-import { useState } from "react";
+import { useId, useState } from "react";
 import { cx } from "@/components/ui";
 import type { Timeline, VacantPeriod } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
@@ -19,7 +19,6 @@ export interface OccupancyGanttProps {
   className?: string;
 }
 
-const LABEL_W = 92;
 const M = { r: 14, t: 18, b: 6 };
 const DAY = 86_400_000;
 
@@ -32,18 +31,23 @@ const shortYear = (label: string) => label.replace(/^FY (\d{4})-(\d{2})$/, (_, a
 export function OccupancyGantt({ timeline, asOf, isLive, onLease, onUnit, className }: OccupancyGanttProps) {
   const [box, size] = useSize<HTMLDivElement>();
   const [hover, setHover] = useState<Hover | null>(null);
+  const hatchId = `pe-hatch-${useId().replace(/:/g, "")}`;
   const units = timeline.units.filter((u) => u.isActive);
   if (!timeline.range.start || units.length === 0) return <div className={s.empty}>No units yet — the occupancy story starts with your first purchase.</div>;
 
   const t0 = new Date(timeline.range.start).getTime();
   const t1 = new Date(timeline.range.end).getTime() + DAY;
-  const W = Math.max(size.w, 300);
+  const W = Math.max(size.w, 260);
   const H = Math.max(size.h, 100);
+  const LABEL_W = W < 520 ? 66 : 92;
   const pw = W - LABEL_W - M.r;
   const x = (iso: string | number) => LABEL_W + ((Math.min(Math.max(typeof iso === "number" ? iso : new Date(iso).getTime(), t0), t1) - t0) / (t1 - t0)) * pw;
   const rowH = Math.min(46, (H - M.t - M.b) / units.length);
   const barH = Math.min(24, rowH - 12);
   const asOfX = x(new Date(asOf).getTime() + DAY / 2);
+  // label every n-th year tick so labels never collide (lines stay for every year)
+  const tickGap = timeline.yearTicks.length > 1 ? x(timeline.yearTicks[1].date) - x(timeline.yearTicks[0].date) : pw;
+  const every = Math.max(1, Math.ceil(60 / Math.max(tickGap, 1)));
 
   return (
     <div className={cx(s.chart, className)}>
@@ -61,17 +65,19 @@ export function OccupancyGantt({ timeline, asOf, isLive, onLease, onUnit, classN
         {size.w > 0 && (
           <svg width={W} height={H} role="img" aria-label="Who lived in each unit over time">
             <defs>
-              <pattern id="pe-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <pattern id={hatchId} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="6" height="6" fill="rgba(243,233,216,0.03)" />
                 <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(243,233,216,0.22)" strokeWidth="1.5" />
               </pattern>
             </defs>
-            {timeline.yearTicks.map((t) => (
+            {timeline.yearTicks.map((t, i) => (
               <g key={t.key}>
                 <line x1={x(t.date)} x2={x(t.date)} y1={M.t - 4} y2={H - M.b} className={s.grid} />
-                <text x={x(t.date) + 4} y={M.t - 7} className={s.yLabel}>
-                  {shortYear(t.label)}
-                </text>
+                {(timeline.yearTicks.length - 1 - i) % every === 0 && (
+                  <text x={x(t.date) + 4} y={M.t - 7} className={s.yLabel}>
+                    {shortYear(t.label)}
+                  </text>
+                )}
               </g>
             ))}
             {units.map((u, i) => {
@@ -94,7 +100,7 @@ export function OccupancyGantt({ timeline, asOf, isLive, onLease, onUnit, classN
                     const w = Math.max(1, x1 - x0);
                     return (
                       <g key={`v${j}`} onMouseEnter={() => setHover({ kind: "vacant", unit: u.unitName, v, x: x0 + w / 2, y: top })}>
-                        <rect x={x0} y={top} width={w} height={barH} fill="url(#pe-hatch)" className={s.vacant} rx={2} />
+                        <rect x={x0} y={top} width={w} height={barH} fill={`url(#${hatchId})`} className={s.vacant} rx={2} />
                         {w > 64 && v.unrealizedLoss > 0 && (
                           <text x={x0 + w / 2} y={cy} className={s.vacantLabel} textAnchor="middle" dominantBaseline="central">
                             {inrCompact(v.unrealizedLoss)} lost

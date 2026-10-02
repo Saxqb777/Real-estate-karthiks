@@ -2,7 +2,7 @@
 // /hud-gallery — every HUD building block with live /api/dashboard data, in the arrangements the Overview uses.
 // Stages (?stage=): game (the composed game screen) · panels · inspect · explain · dock · bits
 // Screenshot params: left=1 · right=unit:<id|front|back>|mailbox|noticeboard|pole|tax · tab=<dock tab> · world=0|1
-//                    card=<kind>[:front|back] · hover=<kind>[:front|back] · key=<explain key> · drill=<a>,<b>,…
+//                    card=<kind>[:front|back] · hover=<kind>[:front|back] · radial=front|back · key=<explain key> · drill=<a>,<b>,… · asof=YYYY-MM-DD
 import { Map as MapIcon, PanelLeft } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import EstateSceneLazy from "@/components/estate/EstateSceneLazy";
@@ -24,7 +24,7 @@ import type { ChipTarget, DockTab, DrillView, PanelTarget, SceneObject, SceneObj
 import s from "./gallery.module.css";
 
 export type GalleryStage = "game" | "panels" | "inspect" | "explain" | "dock" | "bits";
-export type GalleryParams = Partial<Record<"stage" | "left" | "right" | "tab" | "world" | "card" | "hover" | "key" | "drill" | "period", string>>;
+export type GalleryParams = Partial<Record<"stage" | "left" | "right" | "tab" | "world" | "card" | "hover" | "radial" | "key" | "drill" | "period" | "asof", string>>;
 
 const STAGES: { id: GalleryStage; label: string }[] = [
   { id: "game", label: "Game screen" },
@@ -36,7 +36,7 @@ const STAGES: { id: GalleryStage; label: string }[] = [
 ];
 
 export default function HudGallery({ initial }: { initial: GalleryParams }) {
-  const dash = useHudDashboard();
+  const dash = useHudDashboard(initial.asof);
   const [stage, setStage] = useState<GalleryStage>((STAGES.find((x) => x.id === initial.stage)?.id ?? "game") as GalleryStage);
   const [storedPeriod, setPeriod] = usePeriod();
   const period = (initial.period as typeof storedPeriod | undefined) ?? storedPeriod;
@@ -176,7 +176,7 @@ function GameStage({ data, period, initial }: { data: DashboardData; period: Ret
           <Sketch data={data} inspect={inspect} />
         )}
       </div>
-      <div className={s.hud} data-left={leftOpen || undefined} data-right={inspect.panel ? true : undefined}>
+      <div className={s.hud} data-left={leftOpen || undefined} data-right={inspect.panel ? true : undefined} data-dock={tab ? true : undefined}>
         <div className={s.hudTop}>
           <button type="button" className={cx(s.propChip, leftOpen && s.propChipOn)} onClick={() => setLeftOpen((o) => !o)} title="Property panel (P)">
             <PanelLeft aria-hidden />
@@ -220,7 +220,7 @@ const SPOTS: { kind: SceneObjectKind; pos?: "front" | "back"; x: number; y: numb
   { kind: "plot", x: 24, y: 42, label: "Plot" },
 ];
 
-function Sketch({ data, inspect, autoCard, autoHover }: { data: DashboardData; inspect: InspectController; autoCard?: string; autoHover?: string }) {
+function Sketch({ data, inspect, autoCard, autoHover, autoRadial }: { data: DashboardData; inspect: InspectController; autoCard?: string; autoHover?: string; autoRadial?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const objFor = useCallback(
     (sp: (typeof SPOTS)[number], el: HTMLElement): SceneObject => {
@@ -244,10 +244,12 @@ function Sketch({ data, inspect, autoCard, autoHover }: { data: DashboardData; i
       if (c) inspect.onObjectClick(c);
       const h = find(autoHover);
       if (h) inspect.onObjectHover(h);
+      const r = find(autoRadial ? `unit:${autoRadial}` : undefined);
+      if (r?.unitId && r.screen) inspect.onUnitContextMenu(r.unitId, r.screen);
     }, 400);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoCard, autoHover]);
+  }, [autoCard, autoHover, autoRadial]);
 
   const units = data.units;
   const tone = (pos: "front" | "back") => {
@@ -275,6 +277,12 @@ function Sketch({ data, inspect, autoCard, autoHover }: { data: DashboardData; i
           onMouseEnter={(e) => inspect.onObjectHover(objFor(sp, e.currentTarget))}
           onMouseLeave={() => inspect.onObjectHover(null)}
           onClick={(e) => inspect.onObjectClick(objFor(sp, e.currentTarget))}
+          onContextMenu={(e) => {
+            const o = objFor(sp, e.currentTarget);
+            if (sp.kind !== "unit" || !o.unitId) return;
+            e.preventDefault();
+            inspect.onUnitContextMenu(o.unitId, { x: e.clientX || o.screen!.x, y: e.clientY || o.screen!.y });
+          }}
         >
           <span className={s.spotDot} />
           <span className={s.spotLabel}>{sp.label}</span>
@@ -295,7 +303,7 @@ function InspectStage({ data, period, initial }: { data: DashboardData; period: 
   return (
     <div className={s.game}>
       <div className={s.world}>
-        <Sketch data={data} inspect={inspect} autoCard={initial.card} autoHover={initial.hover} />
+        <Sketch data={data} inspect={inspect} autoCard={initial.card} autoHover={initial.hover} autoRadial={initial.radial} />
       </div>
       <div className={s.hud}>
         {inspect.panel && (

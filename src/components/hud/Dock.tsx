@@ -3,7 +3,7 @@
 //   1 Income vs expenses · 2 Where money went · 3 Front vs back · 4 Occupancy · 5 Growth · 6 Payments
 import { BarChart3, CalendarRange, ChevronDown, ChevronUp, Columns2, PieChart, ReceiptText, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { Kbd, cx, isFocusTrapActive } from "@/components/ui";
 import type { DashboardData, ExpenseSlice } from "@/lib/dashboard-types";
 import { GrowthChart } from "./charts/GrowthChart";
@@ -46,6 +46,7 @@ export interface DockProps {
 }
 
 export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, className }: DockProps) {
+  const uid = useId();
   const [inner, setInner] = useState<DockTab | null>(defaultTab);
   const tab = controlled === undefined ? inner : controlled;
   const forms = useFormDrawer();
@@ -177,7 +178,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
               onClick={() => toggle(d.id)}
               title={`${d.label} (${i + 1})`}
             >
-              {on && <motion.span layoutId="dock-tab-plate" className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
+              {on && <motion.span layoutId={`${uid}-plate`} className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
               <Kbd className={s.tabKey}>{i + 1}</Kbd>
               <span className={s.tabIcon}>{d.icon}</span>
               <span className={s.tabLabel}>{d.label}</span>

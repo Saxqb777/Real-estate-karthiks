@@ -28,7 +28,7 @@ import { SitePlanFallback } from "./SitePlanFallback";
 import { UnitSlot, dayMonth, slotLabels, type SceneMode } from "./UnitSlot";
 import { useAnimatedLayout } from "./useAnimatedLayout";
 import { Clouds, Fireflies } from "./SkyLife";
-import { Greenery, Palms } from "./Vegetation";
+import { Garden, Greenery, Palms } from "./Vegetation";
 import { SCENE_OBJECT_INFO, type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind, type ScreenPoint } from "./types";
 import { makeWorld, prefersReducedMotion } from "./util";
 import s from "./estate.module.css";
@@ -84,7 +84,10 @@ export interface EstateSceneProps {
   getObjectScreen?: (fn: ObjectScreenFn | null) => void;
 
   // ── optional extras ──
-  /** In-world hover tooltips (depth 1 of the inspect pattern). Default true. */
+  /**
+   * In-world hover tooltips (depth 1 of the inspect pattern: name + one line + next step). Default: on, unless
+   * `onObjectHover` is given — then the host is assumed to draw its own hover hint. Pass true/false to force.
+   */
   tooltips?: boolean;
   /** Second line of an object's tooltip, e.g. { noticeboard: "2 open to-dos", taxstamp: "2026 due" }. */
   objectNotes?: Partial<Record<SceneObjectKind, string>>;
@@ -136,6 +139,8 @@ export default function EstateScene(props: EstateSceneProps) {
   const [labels, setLabels] = useState<LabelSpec[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [hoverCursor, setHoverCursor] = useState(false);
+  // antialiasing is fixed when the WebGL context is created: MSAA only where post-processing (SMAA) won't run
+  const [antialias, setAntialias] = useState(false);
   const registry = useRef(new Map<string, HTMLElement>());
   const debugEl = useRef<HTMLDivElement>(null);
   const three = useRef<ThreeHandle | null>(null);
@@ -148,7 +153,9 @@ export default function EstateScene(props: EstateSceneProps) {
     const phone = window.matchMedia?.("(max-width: 720px) and (pointer: coarse), (max-width: 520px)").matches ?? false;
     const small = phone || (window.matchMedia?.("(pointer: coarse)").matches ?? false);
     setMobile(small);
-    setAutoTier(phone ? "low" : mode === "preview" || small ? "mid" : "high");
+    const auto: Tier = phone ? "low" : mode === "preview" || small ? "mid" : "high";
+    setAutoTier(auto);
+    setAntialias((props.quality ?? auto) === "low");
     setReady(true);
     const onVis = () => setPageVisible(document.visibilityState !== "hidden");
     document.addEventListener("visibilitychange", onVis);
@@ -158,6 +165,7 @@ export default function EstateScene(props: EstateSceneProps) {
       document.removeEventListener("visibilitychange", onVis);
       io.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   const tier: Tier = props.quality ?? autoTier;
@@ -165,8 +173,6 @@ export default function EstateScene(props: EstateSceneProps) {
   const hud = props.hud ?? mode === "hero";
   const active = onScreen && pageVisible;
   const fallbackLayout = useMemo(() => (webgl ? null : computeSiteLayout(plot, units)), [webgl, plot, units]);
-  // antialiasing is fixed when the context is created: MSAA only where post-processing (SMAA) won't run
-  const [antialias] = useState(() => tier === "low");
 
   // click on empty space (not a drag) → deselect
   const down = useRef<{ x: number; y: number } | null>(null);
@@ -253,7 +259,7 @@ export default function EstateScene(props: EstateSceneProps) {
         </div>
       )}
       {hud && webgl && (
-        <div className={s.hud}>
+        <div className={s.hud} style={props.insets ? { right: props.insets.right + 10, bottom: props.insets.bottom + 10 } : undefined}>
           <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => setLifeState(!life)} title="Street life: traffic, people, animals, birds">
             Life {life ? "on" : "off"}
           </button>
@@ -342,7 +348,7 @@ function SceneContents({
   onObjectClick,
   onObjectHover,
   onUnitContextMenu,
-  tooltips = true,
+  tooltips: tooltipsProp,
   objectNotes,
   cues,
   three,
@@ -350,6 +356,7 @@ function SceneContents({
   onCursor,
 }: ContentsProps) {
   const env = useRef(createEnv());
+  const tooltips = tooltipsProp ?? !onObjectHover;
   const { layout, target } = useAnimatedLayout(plot, units, !reduced);
   const warnSig = target.warnings.join("\n");
   useEffect(() => onWarnings(warnSig ? warnSig.split("\n") : []), [warnSig, onWarnings]);
@@ -396,11 +403,15 @@ function SceneContents({
     [screenOf, spots],
   );
   const api = useMemo<SceneApi>(() => ({ env, interactive, objects, hovered: hovered?.key ?? null, ...fns }), [hovered, interactive, objects, fns]);
-  // hover → cursor + HUD callback
+  // hover → cursor + HUD callback (once per object, not per face the pointer crosses)
+  const hoveredKey = hovered?.key ?? null;
+  const hoveredRef = useRef(hovered);
+  hoveredRef.current = hovered;
   useEffect(() => {
-    onCursor(!!hovered && interactive);
-    cb.current.onObjectHover?.(hovered ? { kind: hovered.kind, unitId: hovered.unitId, screen: screenOf(hovered) } : null);
-  }, [hovered, interactive, onCursor, screenOf]);
+    const h = hoveredRef.current;
+    onCursor(!!h && interactive);
+    cb.current.onObjectHover?.(h ? { kind: h.kind, unitId: h.unitId, screen: screenOf(h) } : null);
+  }, [hoveredKey, interactive, onCursor, screenOf]);
   useEffect(() => () => onCursor(false), [onCursor]);
 
   const selectedSlot = layout.slots.find((x) => x.unit && x.unit.id === selectedUnitId)?.slot ?? null;
@@ -481,6 +492,7 @@ function SceneContents({
       <GroundShade layout={layout} world={world} />
       <Greenery layout={layout} world={world} grassCount={counts.grass} />
       <Palms layout={layout} world={world} env={env} animate={animate} count={counts.palms} />
+      {mode !== "preview" && <Garden layout={layout} world={world} env={env} animate={animate} />}
       <Fixtures layout={layout} world={world} env={env} cues={cues} lampLight={tier !== "low"} crows={life && animate && tier !== "low" && showFixtures} />
       {layout.slots.map((slot, i) => (
         <UnitSlot

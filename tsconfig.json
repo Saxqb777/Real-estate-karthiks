@@ -35,9 +35,11 @@
     ".next-forms-data-config/types/**/*.ts",
     ".next-hud/types/**/*.ts",
     ".next-me/types/**/*.ts",
+    ".next-overview/types/**/*.ts",
+    ".next-world-v2/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-world-v2/types/**/*.ts"
+    ".next-reports-login/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

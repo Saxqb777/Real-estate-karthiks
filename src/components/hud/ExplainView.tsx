@@ -60,7 +60,7 @@ export function ExplainView({ explain: e, onInput, canOpenInput, related = [], o
           </div>
           <div className={s.titleRow}>
             <h3 className={s.title}>{e.title}</h3>
-            <Fig value={e.value} format={e.format} size="hero" compact={false} tone={e.bucket === "cash" ? "signed" : "neutral"} paper={paperKind} />
+            <Fig value={e.value} format={e.format} size="hero" compact={false} tone={e.bucket === "cash" ? "signed" : "neutral"} paper={paperKind} missing={e.plain} />
           </div>
         </header>
       )}

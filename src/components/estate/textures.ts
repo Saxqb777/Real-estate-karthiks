@@ -631,6 +631,99 @@ export const movingInTex = (date: string, tamil: boolean) =>
     { repeat: false },
   );
 
+/**
+ * Parapet face: terracotta plaster with a row of cement jaali openings (diamond lattice) and a drip line.
+ * One repeat = 6 ft wide × the parapet height (set the repeat so v spans exactly the parapet).
+ */
+export const parapetTex = () =>
+  make("parapet", 384, 192, (ctx, w, h) => {
+    ctx.fillStyle = "#e9dccd";
+    ctx.fillRect(0, 0, w, h);
+    const r = rng(91);
+    for (let i = 0; i < 18; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      const rad = 20 + r() * 40;
+      wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, r() > 0.5 ? "#d8c8b8" : "#f6ece0", 0.3));
+    }
+    // jaali band: a row of small cement lattice panels, 6 per 6 ft, set into a cream frame
+    const n = 6;
+    const cw = w / n;
+    ctx.fillStyle = "#f2e8da";
+    ctx.fillRect(0, h * 0.34, w, h * 0.34);
+    for (let i = 0; i < n; i++) {
+      const cx = i * cw + cw / 2;
+      const cy = h * 0.51;
+      const bw = cw * 0.66;
+      const bh = h * 0.24;
+      ctx.fillStyle = "#7a3a24";
+      ctx.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx - bw / 2, cy - bh / 2, bw, bh);
+      ctx.clip();
+      ctx.strokeStyle = "#efe4d4";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let k = -4; k <= 4; k++) {
+        ctx.moveTo(cx + k * (bw / 5) - bh, cy - bh);
+        ctx.lineTo(cx + k * (bw / 5) + bh, cy + bh);
+        ctx.moveTo(cx + k * (bw / 5) + bh, cy - bh);
+        ctx.lineTo(cx + k * (bw / 5) - bh, cy + bh);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+    // drip line + weathering under the coping
+    ctx.fillStyle = "rgba(60,30,20,0.35)";
+    ctx.fillRect(0, h * 0.08, w, 3);
+    const g = ctx.createLinearGradient(0, h * 0.08, 0, h * 0.3);
+    g.addColorStop(0, "rgba(80,50,30,0.22)");
+    g.addColorStop(1, "rgba(80,50,30,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, h * 0.08, w, h * 0.22);
+    speckle(ctx, w, h, 1600, ["#d6c6b4", "#ffffff", "#c9b8a6"], [1, 2], 0.4, 92);
+  });
+
+/** Woven palm-leaf mat with red chillies drying in the sun (a Pattukottai roadside sight). */
+export const chilliMatTex = () =>
+  make(
+    "chillimat",
+    256,
+    256,
+    (ctx, w, h) => {
+      ctx.fillStyle = "#c9a76a";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(120,90,40,0.35)";
+      ctx.lineWidth = 2;
+      for (let i = -h; i < w; i += 9) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + h, h);
+        ctx.stroke();
+      }
+      const r = rng(101);
+      for (let i = 0; i < 520; i++) {
+        const x = 14 + r() * (w - 28);
+        const y = 14 + r() * (h - 28);
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(r() * Math.PI);
+        ctx.fillStyle = r() > 0.15 ? (r() > 0.5 ? "#b3201c" : "#8e1612") : "#cf4a1c";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 6 + r() * 3, 1.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#3f6b2a";
+        ctx.fillRect(6, -1, 3, 2);
+        ctx.restore();
+      }
+      ctx.strokeStyle = "#8a6a34";
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, w - 8, h - 8);
+    },
+    { repeat: false },
+  );
+
 /** Soft contact-shadow blob (alpha falloff; tint it with the material colour). */
 export const blobTex = () =>
   make(

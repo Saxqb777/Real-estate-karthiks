@@ -327,9 +327,7 @@
   font-size: 18px;
   font-weight: 700;
   line-height: 1.15;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .tenantMeta {
   font-size: 12px;

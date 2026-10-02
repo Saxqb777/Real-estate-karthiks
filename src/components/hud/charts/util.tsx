@@ -3,8 +3,9 @@
 // Axis maths here is layout only (pixel scales / tick spacing) — every plotted value comes from the API.
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/components/ui";
-import { formatIndianNumber } from "@/lib/format";
 import s from "./charts.module.css";
+
+export { niceTicks, axisINR } from "./scale";
 
 /** Track an element's content size. */
 export function useSize<T extends HTMLElement>() {
@@ -21,35 +22,6 @@ export function useSize<T extends HTMLElement>() {
   }, []);
   return [ref, size] as const;
 }
-
-/** ~count evenly spaced round ticks covering [min, max] (always includes 0 when the range crosses it). */
-export function niceTicks(min: number, max: number, count = 4): number[] {
-  if (max === min) {
-    max = min === 0 ? 1 : min * 1.5;
-    if (min > 0) min = 0;
-  }
-  const span = max - min;
-  const raw = span / count;
-  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((st) => span / st <= count + 0.5) ?? 10 * pow;
-  const lo = Math.floor(min / step) * step;
-  const hi = Math.ceil(max / step) * step;
-  const out: number[] = [];
-  for (let v = lo; v <= hi + step / 2; v += step) out.push(Math.round(v * 100) / 100);
-  return out;
-}
-
-/** Axis label: ₹0 · ₹5k · ₹1.2 L · ₹1 Cr (axis only — tooltips and labels use exact ₹). */
-export function axisINR(n: number): string {
-  const a = Math.abs(n);
-  const sign = n < 0 ? "−" : "";
-  if (a === 0) return "₹0";
-  if (a >= 1e7) return `${sign}₹${trim(a / 1e7)} Cr`;
-  if (a >= 1e5) return `${sign}₹${trim(a / 1e5)} L`;
-  if (a >= 1e3) return `${sign}₹${trim(a / 1e3)}k`;
-  return `${sign}₹${formatIndianNumber(a)}`;
-}
-const trim = (x: number) => x.toFixed(x >= 10 ? 0 : 1).replace(/\.0$/, "");
 
 export interface TipRow {
   label: ReactNode;

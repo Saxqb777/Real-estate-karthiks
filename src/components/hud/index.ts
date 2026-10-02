@@ -13,16 +13,16 @@ export {
   DrillPanel,
   DrillContent,
   useDrillStack,
-  parseExplainKey,
-  relatedExplains,
   inputDrill,
   drillLabel,
   type DrillStack,
   type DrillPanelProps,
 } from "./DrillDown";
+export { parseExplainKey, relatedExplains } from "./explain-keys";
 export { useFormDrawer, type HudFormRequest } from "./FormDrawer";
 export { LedgerBadge, type LedgerBadgeProps } from "./LedgerBadge";
-export { StatusChips, buildStatusChips, type StatusChip, type StatusChipsProps } from "./StatusChips";
+export { StatusChips, type StatusChipsProps } from "./StatusChips";
+export { buildStatusChips, type StatusChip, type ChipTone } from "./chips";
 export { PeriodControl, useHudDashboard, type PeriodControlProps } from "./PeriodControl";
 
 export { PropertyPanel, type PropertyPanelProps } from "./PropertyPanel";
@@ -33,6 +33,7 @@ export { PolePanel, type PolePanelProps } from "./PolePanel";
 export { TaxPanel, type TaxPanelProps } from "./TaxPanel";
 
 export { useInspect, InspectLayer, WorldHint, HudPanelFor, panelFor, hintFor, type InspectController, type UseInspectOptions, type HudPanelForProps } from "./Inspect";
+export { RadialMenu, type RadialMenuProps } from "./RadialMenu";
 export { Dock, DOCK_TABS, type DockProps } from "./Dock";
 export { IncomeExpenseChart } from "./charts/IncomeExpenseChart";
 export { SpendingDonut } from "./charts/SpendingDonut";

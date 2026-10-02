@@ -177,7 +177,8 @@ export function CameraRig({
       const f = fitPoints(mode === "login" ? layout.site.tile.map((p) => toV(p)) : plotPts, v.phi, v.theta, W, H, box);
       return { target: f.target, radius: f.radius, phi: v.phi, theta: v.theta };
     }
-    const plotFit = fitPoints(plotPts, v.phi, v.theta, W, H, { w: Math.min(freeW * (portrait ? 0.92 : 0.8), W * 0.45), h: freeH * (portrait ? 0.84 : 0.8) });
+    // landscape: the plot ≈ 45% of the viewport width; portrait (phones): it fills the free width
+    const plotFit = fitPoints(plotPts, v.phi, v.theta, W, H, { w: portrait ? freeW * 0.88 : Math.min(freeW * 0.8, W * 0.45), h: freeH * (portrait ? 0.86 : 0.8) });
     // the whole tile (street in front, palms around) should fit too — on a phone the tile may bleed off the sides
     const tilePts = [...layout.site.tile.map((p) => toV(p)), ...plotPts];
     const tileFit = fitPoints(tilePts, v.phi, v.theta, W, H, { w: freeW * (portrait ? 1.6 : 0.97), h: freeH * (portrait ? 0.96 : 0.95) });
@@ -185,7 +186,7 @@ export function CameraRig({
     return { target: tileFit.target, radius: Math.max(plotFit.radius, tileFit.radius) / fill, phi: v.phi, theta: v.theta };
   }, [layout, world, mode, W, H, freeW, freeH, vt, vp, vf]);
 
-  // a selected unit: fill ~60% of the free height, keep the current orbit angle
+  // a selected unit: fill ~3/4 of the free height, keep the current orbit angle
   const focusFor = (theta: number): Pose | null => {
     const s = layout.slots.find((x) => x.slot === selectedSlot);
     if (!s) return null;
@@ -199,7 +200,7 @@ export function CameraRig({
     ])
       for (const y of [0, top]) pts.push(new THREE.Vector3(world.x(x), y, world.z(z)));
     const phi = 0.98;
-    const f = fitPoints(pts, phi, theta, W, H, { w: freeW * 0.62, h: freeH * 0.66 });
+    const f = fitPoints(pts, phi, theta, W, H, { w: freeW * 0.7, h: freeH * 0.78 });
     return { target: f.target, radius: f.radius, phi, theta };
   };
   const focusKey = `${selectedSlot}|${W}|${H}|${freeW}|${freeH}|${JSON.stringify(layout.slots.find((x) => x.slot === selectedSlot)?.rect ?? null)}`;

@@ -5,7 +5,10 @@ import dynamic from "next/dynamic";
 import type { EstateSceneProps } from "./EstateScene";
 import s from "./estate.module.css";
 
-export type { EstateSceneProps, SceneMode, TimeOfDay } from "./EstateScene";
+export type { EstateSceneProps, SceneMode, TimeOfDay, WorldCues } from "./EstateScene";
+// SCENE CONTRACT v2 types (pure module — safe to import anywhere)
+export type { ObjectScreenFn, SceneInsets, SceneObject, SceneObjectKind, ScreenPoint } from "./types";
+export { SCENE_OBJECT_INFO, SCENE_OBJECT_KINDS } from "./types";
 
 export function EstateSceneSkeleton({ className }: { className?: string }) {
   return (

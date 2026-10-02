@@ -493,15 +493,17 @@
     padding: 8px 12px;
     gap: 8px;
   }
-  .top > :last-child {
+  .top > :last-child:not(nav) {
     order: 3;
+    flex: 1 1 100%;
   }
   .brand {
     display: none;
   }
   .hud,
-  .hud[data-left],
-  .hud[data-right] {
+  .hud[data-left]:not([data-right]),
+  .hud[data-right]:not([data-left]),
+  .hud[data-left][data-right] {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
@@ -514,6 +516,14 @@
   .hudChips {
     order: 3;
     width: 100%;
+  }
+  /* phones: one sheet at a time — an open chart tray replaces the side panel */
+  .hud[data-dock] .left,
+  .hud[data-dock] .right {
+    display: none;
+  }
+  .hud[data-right] .left {
+    display: none;
   }
   .left,
   .right {

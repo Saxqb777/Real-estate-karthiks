@@ -71,6 +71,9 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
     },
   ];
 
+  // whole-plot share of the scope's expenses, straight from the explanation's own step (never re-added here)
+  const wholePlot = data.explain[explainKey("expenses", period)]?.steps.find((st) => /^whole plot/i.test(st.label))?.value ?? null;
+
   const cellKey = (r: Row, u: UnitBreakdown | null) => {
     if (u) return r.key ? explainKey(r.key, r.scoped ? period : null, u.id) : null;
     const base = r.totalKey ?? r.key;
@@ -79,13 +82,14 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
   const cell = (r: Row, v: number | null, key: string | null, strong?: boolean): ReactNode => {
     const text = fmt(v, r.format, Boolean(r.compact));
     const neg = typeof v === "number" && v < 0;
+    const zero = v === 0;
     const inner = (
       <span
         className={cx(
           "num",
           s.cmpNum,
-          r.tone === "income" && s.tIncome,
-          (r.tone === "expense" || (r.tone === "signed" && neg)) && s.tExpense,
+          r.tone === "income" && !zero && s.tIncome,
+          (r.tone === "expense" || (r.tone === "signed" && neg)) && !zero && s.tExpense,
           r.tone === "dim" && s.tDimNum,
           r.paper && s.paperNum,
           strong && s.cmpStrong,
@@ -150,6 +154,11 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
               ))}
             </tbody>
           </table>
+          {g.bucket === "cash" && wholePlot !== null && wholePlot > 0 && (
+            <p className={s.cmpNote}>
+              Property expenses = {units.map((u) => positionLabel(u.position) ?? u.name).join(" + ")} + whole plot <span className="num">{fmt(wholePlot, "inr")}</span>
+            </p>
+          )}
         </section>
       ))}
     </div>

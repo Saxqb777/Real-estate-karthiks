@@ -54,8 +54,11 @@ export function Fig({
   const useCompact = compact ?? size === "hero";
   const isMissing = value === null || value === undefined || !isFinite(value);
   const negative = !isMissing && value! < 0;
-  const toneClass =
-    tone === "income"
+  // ₹0 is calm: no income / expense colour on a zero
+  const isZero = !isMissing && value === 0 && (tone === "income" || tone === "expense" || tone === "signed");
+  const toneClass = isZero
+    ? undefined
+    : tone === "income"
       ? s.tIncome
       : tone === "expense"
         ? s.tExpense
@@ -73,7 +76,7 @@ export function Fig({
   const text = (n: number) => fmt(n, format, useCompact);
   const exact = !isMissing && useCompact && isCompacted(value, format) ? fmt(value, format) : null;
   const body = (
-    <span className={cx(s.fig, s[`fig-${size}`], toneClass, paper && s.paper, className)}>
+    <span className={cx(s.fig, s[`fig-${size}`], toneClass, paper && !isMissing && s.paper, className)}>
       {sign && <span className={s.figSign}>{sign}</span>}
       {isMissing ? (
         <span className={s.figMissing}>—</span>
@@ -82,7 +85,7 @@ export function Fig({
       ) : (
         <span>{text(value!)}</span>
       )}
-      {paper && <PaperTag kind={paper} />}
+      {paper && !isMissing && <PaperTag kind={paper} />}
     </span>
   );
   const tip = isMissing ? missing : [exact, onClick ? hint : null].filter(Boolean).join(" · ") || null;
@@ -234,12 +237,13 @@ export function BucketIcon({ bucket }: { bucket: Bucket }) {
 /** Exact rupees inline (tables, sentences) — whole rupees unless paise exist. */
 export function Rupees({ value, tone = "neutral", className }: { value: number | null | undefined; tone?: FigTone; className?: string }) {
   const negative = typeof value === "number" && value < 0;
+  const zero = value === 0;
   return (
     <span
       className={cx(
         "num",
-        tone === "income" && s.tIncome,
-        (tone === "expense" || (tone === "signed" && negative)) && s.tExpense,
+        tone === "income" && !zero && s.tIncome,
+        (tone === "expense" || (tone === "signed" && negative)) && !zero && s.tExpense,
         tone === "dim" && s.tDim,
         className,
       )}

@@ -52,7 +52,8 @@ const MOVE_TOLERANCE = 9;
 const gesture = {
   timer: 0 as ReturnType<typeof setTimeout> | 0,
   down: null as { x: number; y: number; button: number; touch: boolean } | null,
-  suppressClickUntil: 0,
+  /** the click that ends a long-press must not also select the house */
+  longPressed: false,
   lastLongPress: 0,
 };
 
@@ -85,6 +86,7 @@ export function useSpotHandlers(spot: Spot | null) {
         const ne = e.nativeEvent;
         const touch = ne.pointerType === "touch" || ne.pointerType === "pen";
         gesture.down = { x: ne.clientX, y: ne.clientY, button: ne.button, touch };
+        gesture.longPressed = false;
         cancelLongPress();
         const s = cur();
         if (!touch || !s || s.kind !== "unit") return;
@@ -103,7 +105,7 @@ export function useSpotHandlers(spot: Spot | null) {
         window.addEventListener("pointercancel", done);
         gesture.timer = setTimeout(() => {
           gesture.timer = 0;
-          gesture.suppressClickUntil = performance.now() + 900;
+          gesture.longPressed = true;
           gesture.lastLongPress = performance.now();
           navigator.vibrate?.(12);
           contextMenu(s);
@@ -113,7 +115,7 @@ export function useSpotHandlers(spot: Spot | null) {
       onClick: (e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         cancelLongPress();
-        if (e.delta > 6 || performance.now() < gesture.suppressClickUntil) return;
+        if (e.delta > 6 || gesture.longPressed) return;
         const s = cur();
         if (s) activate(s);
       },

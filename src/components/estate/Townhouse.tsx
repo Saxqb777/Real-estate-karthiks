@@ -6,11 +6,11 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { SITE_DEFAULTS, offsetPolygon, type BuildingSlot, type Pt } from "@/lib/site-layout";
-import type { Env } from "./env";
+import { gustAt, type Env } from "./env";
 import { ball, box, rod, type Part } from "./bake";
 import { Baked, vcMaterial } from "./Baked";
 import { G, PAL, holoMaterial, std, type Finish } from "./materials";
-import { athangudiTex, doorTex, kolamTex, plasterTex, roofTex, windowGlowTex, windowTex, withRepeat } from "./textures";
+import { athangudiTex, doorTex, kolamTex, parapetTex, plasterTex, roofTex, windowGlowTex, windowTex, withRepeat } from "./textures";
 import { FLAT, hash, planShape, type World } from "./util";
 
 const FH = SITE_DEFAULTS.floorHeightFt;
@@ -85,11 +85,11 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       band: std(PAL.cornice, { rough: 0.85, finish: f }),
       accent: std("#ffffff", { map: withRepeat(athangudiTex(), 1 / (BAND_H * 4), 1 / BAND_H, 0, 1 - 1 / BAND_H), rough: 0.6, finish: f }),
       cornice: std(PAL.cornice, { rough: 0.85, finish: f }),
-      parapetSide: std(PAL.terracotta, { map: withRepeat(plasterTex(), 1 / 6, 1 / 6), rough: 0.88, finish: f }),
+      parapetSide: std(PAL.terracotta, { map: withRepeat(parapetTex(), 1 / 6, 1 / (slot.parapetFt - 0.15)), rough: 0.88, finish: f }),
       parapetCap: std(PAL.terracottaCap, { rough: 0.8, finish: f }),
       stair: std("#e6d9c4", { rough: 0.9, finish: f }),
     };
-  }, [holo, finish]);
+  }, [holo, finish, slot.parapetFt]);
 
   // ── windows (instanced) ──
   const windows = useMemo(() => {
@@ -177,6 +177,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const winRef = useRef<THREE.InstancedMesh>(null);
   const litRef = useRef<THREE.InstancedMesh>(null);
   const shadeRef = useRef<THREE.InstancedMesh>(null);
+  const sillRef = useRef<THREE.InstancedMesh>(null);
   useEffect(() => {
     const o = new THREE.Object3D();
     const fill = (m: THREE.InstancedMesh | null, list: WindowSpot[], kind: "glass" | "shade" | "sill") => {
@@ -186,9 +187,15 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
         o.rotation.set(0, w.rotY, 0);
         o.scale.set(WIN_W, WIN_H, 1);
         if (kind === "shade") {
-          o.translateY(WIN_H / 2 + 0.4);
-          o.translateZ(0.62);
-          o.scale.set(WIN_W + 0.9, 0.24, 1.3);
+          // thin sunshade (chajja) sloping away from the wall
+          o.translateY(WIN_H / 2 + 0.45);
+          o.translateZ(0.66);
+          o.rotateX(0.2);
+          o.scale.set(WIN_W + 1.0, 0.16, 1.4);
+        } else if (kind === "sill") {
+          o.translateY(-WIN_H / 2 - 0.12);
+          o.translateZ(0.2);
+          o.scale.set(WIN_W + 0.5, 0.22, 0.42);
         }
         o.updateMatrix();
         m.setMatrixAt(i, o.matrix);
@@ -200,6 +207,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     fill(winRef.current, darkWin, "glass");
     fill(litRef.current, litWin, "glass");
     fill(shadeRef.current, windows, "shade");
+    fill(sillRef.current, windows, "sill");
     const sm = stepRef.current;
     if (sm) {
       stairs.steps.forEach((st, i) => {
@@ -232,16 +240,33 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       ...stairs.slabs.map((s) => box(s.p, s.s, "#e6d9c4")),
       box([stairs.spine.p[0], stairs.spine.h / 2, stairs.spine.p[2]], [0.32, stairs.spine.h, stairs.spine.len], PAL.plaster),
       ...stairs.rails.map((r) => box(r.p, [0.14, 0.14, r.len], PAL.woodDark, [r.pitch, 0, 0])),
+      // PVC rain-water down pipes at the left corners, with a shoe at the bottom
+      ...[slot.rect.z0 + 0.45, slot.rect.z1 - 0.45].flatMap((z) => {
+        const x = world.x(slot.rect.x0 - 0.28);
+        const Z = world.z(z);
+        return [rod([x, (top + 0.8) / 2, Z], [0.32, top + 0.8, 0.32], "#d7d2c6"), box([x - 0.25, 0.35, Z], [0.7, 0.24, 0.34], "#d7d2c6"), box([x + 0.05, top + 0.55, Z], [0.7, 0.24, 0.34], "#d7d2c6")];
+      }),
+      // entrance step at the porch mouth
+      box([world.x((slot.notch.wide.x0 + slot.notch.wide.x1) / 2), 0.15, world.z(slot.rect.z0 + 0.45)], [slot.notch.wide.x1 - slot.notch.wide.x0 - 0.2, 0.3, 0.9], "#cdbfa8"),
     ];
     return parts;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, stairs]);
   const furnitureMat = holo ?? vcMaterial(0.6, finish);
-  const doorTrim = useMemo<Part[]>(() => [box([0, 0.2, -0.05], [door.widthFt + 0.7, 7.5, 0.18], PAL.woodDark), box([0, 4.05, 0.45], [door.widthFt + 1.4, 0.3, 1.0], PAL.cornice)], [door.widthFt]);
+  const doorTrim = useMemo<Part[]>(
+    () => [
+      box([0, 0.2, -0.05], [door.widthFt + 0.7, 7.5, 0.18], PAL.woodDark),
+      box([0, 4.05, 0.45], [door.widthFt + 1.4, 0.3, 1.0], PAL.cornice),
+      box([0, -3.35, 0.35], [door.widthFt + 0.6, 0.25, 0.7], "#cdbfa8"), // threshold
+      box([-door.widthFt / 2 - 0.85, 1.4, 0.06], [0.7, 0.45, 0.05], "#1f3a34"), // door-number plate
+      box([-door.widthFt / 2 - 0.85, 1.4, 0.09], [0.5, 0.08, 0.02], "#e8dcc0"),
+    ],
+    [door.widthFt],
+  );
 
   return (
     <group>
-      <mesh geometry={geo.body} material={[M.roof, M.plaster]} rotation={FLAT} castShadow receiveShadow />
+      <mesh geometry={geo.body} material={[M.roof, M.plaster]} rotation={FLAT} castShadow={!ghost} receiveShadow />
       <mesh geometry={geo.plinth} material={M.plinth} rotation={FLAT} castShadow={!ghost} receiveShadow />
       {geo.bands.map((b, i) => (
         <mesh key={i} geometry={b} material={M.band} rotation={FLAT} position={[0, (i + 1) * FH - 0.21, 0]} castShadow={!ghost} receiveShadow />
@@ -259,6 +284,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       <instancedMesh ref={winRef} args={[G.plane(), ghost ? M.plaster : winMat, Math.max(1, windows.length)]} />
       <instancedMesh ref={litRef} args={[G.plane(), ghost ? M.plaster : litMat, Math.max(1, windows.length)]} />
       <instancedMesh ref={shadeRef} args={[G.box(), M.band, Math.max(1, windows.length)]} castShadow={!ghost} receiveShadow />
+      {!ghost && <instancedMesh ref={sillRef} args={[G.box(), M.cornice, Math.max(1, windows.length)]} receiveShadow />}
 
       {/* door with frame, canopy, lamp */}
       <group position={doorPos} rotation={[0, Math.PI / 2, 0]}>
@@ -284,7 +310,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       {lived && !ghost && (
         <mesh geometry={G.plane()} material={kolamMat} rotation={FLAT} position={[world.x(slot.kolam.x), 0.62, world.z(slot.kolam.z)]} scale={[slot.kolam.sizeFt, slot.kolam.sizeFt, 1]} />
       )}
-      {clothes && !ghost && <ClothesLine slot={slot} world={world} y={top} animate={animate} />}
+      {clothes && !ghost && <ClothesLine slot={slot} world={world} env={env} y={top} animate={animate} />}
     </group>
   );
 }
@@ -340,49 +366,74 @@ export function Thoranam({ width, animate, y = 3.55, z = 0.55, flowers = false }
 
 const CLOTH_COLORS = ["#c2185b", "#f4f1ea", "#2f6fb5", "#e0a020", "#2e8b57"];
 
-/** A clothes line on the roof terrace: saree, veshti, shirt, towel fluttering in the wind. */
-function ClothesLine({ slot, world, y, animate }: { slot: BuildingSlot; world: World; y: number; animate: boolean }) {
+/**
+ * A clothes line on the roof terrace: saree, veshti, shirt, towel — one merged mesh whose vertices flutter with the
+ * same travelling gust that bends the palms and carries the petals.
+ */
+function ClothesLine({ slot, world, env, y, animate }: { slot: BuildingSlot; world: World; env: RefObject<Env>; y: number; animate: boolean }) {
   const z = slot.rect.z1 - 6.5;
   const x0 = slot.rect.x0 + 6.5;
   const x1 = Math.min(slot.stairs.x0 - 1.5, slot.rect.x1 - 2.5);
   const len = Math.max(4, x1 - x0);
-  const clothes = useMemo(() => {
-    const out: { geo: THREE.PlaneGeometry; base: Float32Array; x: number; w: number; h: number; color: string }[] = [];
+  const cloth = useMemo(() => {
+    const geos: THREE.PlaneGeometry[] = [];
     let cursor = 0.5;
     const widths = [1.1, 1.5, 1.3, 1.0, 1.2];
+    const col: number[] = [];
+    const c = new THREE.Color();
     widths.forEach((w, i) => {
       if (cursor + w > len - 0.3) return;
       const h = i === 0 ? 3.2 : i === 1 ? 2.4 : 1.5;
-      const geo = new THREE.PlaneGeometry(w, h, 6, 5);
-      geo.translate(0, -h / 2, 0);
-      out.push({ geo, base: Float32Array.from(geo.attributes.position.array as Float32Array), x: cursor + w / 2, w, h, color: CLOTH_COLORS[i] });
+      const g = new THREE.PlaneGeometry(w, h, 6, 5);
+      g.translate(cursor + w / 2, 5.1 - h / 2, 0);
+      c.set(CLOTH_COLORS[i]);
+      for (let k = 0; k < g.attributes.position.count; k++) col.push(c.r, c.g, c.b);
+      geos.push(g);
       cursor += w + 0.35;
     });
-    return out;
-  }, [len]);
-  useEffect(() => () => clothes.forEach((c) => c.geo.dispose()), [clothes]);
-  useFrame(({ clock }) => {
-    if (!animate) return;
-    const t = clock.elapsedTime;
-    const wind = 0.6 + 0.4 * Math.sin(t * 0.37) * Math.sin(t * 0.21 + 1);
-    for (const c of clothes) {
-      const pos = c.geo.attributes.position as THREE.BufferAttribute;
-      for (let i = 0; i < pos.count; i++) {
-        const bx = c.base[i * 3];
-        const by = c.base[i * 3 + 1];
-        const hang = -by / c.h;
-        pos.setZ(i, Math.sin(t * 5 + bx * 1.8 + c.x) * 0.35 * hang * wind + hang * hang * 0.6 * wind);
-      }
-      pos.needsUpdate = true;
+    const total = geos.reduce((n, g) => n + g.attributes.position.count, 0);
+    const pos = new Float32Array(total * 3);
+    const idx: number[] = [];
+    let off = 0;
+    for (const g of geos) {
+      pos.set(g.attributes.position.array as Float32Array, off * 3);
+      for (const i of g.index!.array) idx.push(i + off);
+      off += g.attributes.position.count;
+      g.dispose();
     }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    return { geo, base: Float32Array.from(pos) };
+  }, [len]);
+  useEffect(() => () => cloth.geo.dispose(), [cloth]);
+  const wx = world.x(x0);
+  const wz = world.z(z);
+  useFrame(() => {
+    if (!animate) return;
+    const e = env.current;
+    const t = e.t;
+    const g = gustAt(e, wx, wz);
+    const wind = 0.25 + g;
+    const pos = cloth.geo.attributes.position as THREE.BufferAttribute;
+    const b = cloth.base;
+    for (let i = 0; i < pos.count; i++) {
+      const bx = b[i * 3];
+      const by = b[i * 3 + 1];
+      const hang = (5.1 - by) / 3.2;
+      pos.setZ(i, Math.sin(t * (4 + g * 4) + bx * 1.8) * 0.3 * hang * wind + hang * hang * 0.9 * wind * e.windDir[1]);
+      pos.setX(i, bx + hang * hang * 0.5 * wind * e.windDir[0]);
+    }
+    pos.needsUpdate = true;
+    cloth.geo.computeVertexNormals();
   });
   const frame = useMemo<Part[]>(() => [rod([0, 2.6, 0], [0.14, 5.2, 0.14], "#8a8a8a"), rod([len, 2.6, 0], [0.14, 5.2, 0.14], "#8a8a8a"), box([len / 2, 5.1, 0], [len, 0.04, 0.04], "#dddddd")], [len]);
   return (
-    <group position={[world.x(x0), y, world.z(z)]}>
+    <group position={[wx, y, wz]}>
       <Baked parts={frame} cast />
-      {clothes.map((c, i) => (
-        <mesh key={i} geometry={c.geo} material={std(c.color, { side: THREE.DoubleSide, flat: true, rough: 0.95 })} position={[c.x, 5.1, 0]} castShadow />
-      ))}
+      <mesh geometry={cloth.geo} material={std("#ffffff", { vertexColors: true, side: THREE.DoubleSide, rough: 0.95 })} castShadow />
     </group>
   );
 }

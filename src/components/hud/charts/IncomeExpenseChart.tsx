@@ -167,7 +167,7 @@ function Total({ label, value, tone, strong, onClick }: { label: string; value: 
   const body = (
     <>
       <span className={s.totalLabel}>{label}</span>
-      <span className={cx(s.totalValue, "num", tone === "income" && s.tIncome, tone === "expense" && s.tExpense, strong && s.totalStrong)}>{inr(value)}</span>
+      <span className={cx(s.totalValue, "num", value !== 0 && tone === "income" && s.tIncome, value !== 0 && tone === "expense" && s.tExpense, strong && s.totalStrong)}>{inr(value)}</span>
     </>
   );
   return onClick ? (

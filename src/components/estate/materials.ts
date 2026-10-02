@@ -171,18 +171,22 @@ const HOLO_FRAG = /* glsl */ `
     float a = (0.13 + fres * 0.5 + grid * 0.22 + scan * 0.22) * uOpacity;
     vec3 c = uColor * (0.75 + fres * 0.9 + grid * 0.5 + scan * 0.6);
     gl_FragColor = vec4(c, a);
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
   }
 `;
 
 /** Blueprint hologram for vacant units (fresnel + grid + drifting scanline). */
 export function holoMaterial(color: string = PAL.sky) {
-  return new THREE.ShaderMaterial({
+  const m = new THREE.ShaderMaterial({
     uniforms: { uColor: { value: new THREE.Color(color) }, uTime: { value: 0 }, uOpacity: { value: 1 } },
     vertexShader: HOLO_VERT,
     fragmentShader: HOLO_FRAG,
     transparent: true,
     depthWrite: false,
     side: THREE.DoubleSide,
-    toneMapped: false,
   });
+  // one pass is enough for a hologram (three would otherwise draw transparent double-sided meshes twice)
+  m.forceSinglePass = true;
+  return m;
 }

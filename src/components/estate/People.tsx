@@ -49,7 +49,9 @@ interface PedSpec {
   speed: number;
   gait: Gait;
   dir: 1 | -1;
+  /** which shoulder, and how far (ft) from its inner edge they walk — separate tracks so nobody walks through anybody */
   lane: "near" | "far";
+  track: number;
   /** scene-time offset into the loop */
   offset: number;
   /** seconds off-stage after each walk */
@@ -58,12 +60,14 @@ interface PedSpec {
   cart?: boolean;
 }
 
+// near shoulder: the veshti man (plot side) and the saree lady (road side) pass each other on separate tracks;
+// far shoulder: the vendor's cart along the road edge, the school kid and a second lady further in.
 const PEDS: PedSpec[] = [
-  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", dir: 1, lane: "near", offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
-  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.3, gait: "push", dir: -1, lane: "near", offset: 30, wait: 16, cart: true, stops: [{ at: "center", dur: 7, act: "ring" }] },
-  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", dir: -1, lane: "near", offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
-  { outfit: { top: "#f4f1ea", bottom: "#24324a", wrap: "shorts", skin: SKIN.dark, hair: "short" }, scale: 0.62, speed: 8.5, gait: "run", dir: 1, lane: "far", offset: 6, wait: 12, stops: [{ at: 0.32, dur: 1.6, act: "look" }, { at: 0.66, dur: 1.1, act: "idle" }] },
-  { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, scale: 0.95, speed: 2.9, gait: "walk", dir: 1, lane: "far", offset: 22, wait: 10, stops: [] },
+  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", dir: 1, lane: "near", track: 1.55, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
+  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.3, gait: "push", dir: -1, lane: "far", track: 1.5, offset: 30, wait: 16, cart: true, stops: [{ at: "center", dur: 7, act: "ring" }] },
+  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", dir: -1, lane: "near", track: 2.65, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
+  { outfit: { top: "#f4f1ea", bottom: "#24324a", wrap: "shorts", skin: SKIN.dark, hair: "short" }, scale: 0.62, speed: 8.5, gait: "run", dir: 1, lane: "far", track: 3.3, offset: 6, wait: 12, stops: [{ at: 0.32, dur: 1.6, act: "look" }, { at: 0.66, dur: 1.1, act: "idle" }] },
+  { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, scale: 0.95, speed: 2.9, gait: "walk", dir: 1, lane: "far", track: 4.4, offset: 22, wait: 10, stops: [] },
 ];
 
 /** Vegetable cart in front of the vendor (+Z), as extra rig limbs: 5 = cart, 6 = wheels (axle), 7 = bell. */
@@ -145,7 +149,8 @@ function Pedestrian({ spec, layout, world, env, marks, onGroup }: { spec: PedSpe
   const { geo, rig } = useRig(() => [...personLimbs(spec.outfit), ...(spec.cart ? cartLimbs() : [])], [spec], { clip: true });
   const root = useRef<THREE.Group>(null);
   const st = layout.site.street;
-  const z = spec.lane === "near" ? (st.nearShoulder[0] + st.nearShoulder[1]) / 2 - 0.9 : (st.farShoulder[0] + st.farShoulder[1]) / 2 + 0.4;
+  // inner edge of each shoulder: the drain side (near) / the road side (far); plan z decreases towards the street
+  const z = (spec.lane === "near" ? st.nearShoulder[1] : st.farShoulder[1]) - spec.track;
   const [tx0, tx1] = tileXRange(layout, z);
   const tl = useMemo(() => buildTimeline(spec, tx0 - 3, tx1 + 3, marks), [spec, tx0, tx1, marks]);
   const heading = useRef(spec.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
@@ -227,10 +232,11 @@ const TENANT_OUTFITS: Outfit[] = [
 ];
 
 /**
- * The tenant of an occupied house, standing by the door (the front house) or up on the roof terrace by the stair
- * head (a back house hides its door behind the front one). Clickable → "tenant". Waves when hovered.
+ * The tenant of an occupied house: standing at the unit's gate on the street (the front door itself faces away from
+ * the default camera), or up on the roof terrace by the clothes line (a back house hides its door behind the front
+ * one). Clickable → "tenant". Waves when hovered.
  */
-export function TenantFigure({ slot, world, env, index }: { slot: BuildingSlot; world: World; env: RefObject<Env>; index: number }) {
+export function TenantFigure({ slot, world, env, index, gateAt }: { slot: BuildingSlot; world: World; env: RefObject<Env>; index: number; gateAt?: { x: number; z: number } }) {
   const api = useScene();
   const hovered = !!slot.unit && api.hovered === spotKey("tenant", slot.unit.id);
   const outfit = TENANT_OUTFITS[index % TENANT_OUTFITS.length];
@@ -241,9 +247,10 @@ export function TenantFigure({ slot, world, env, index }: { slot: BuildingSlot; 
       const s = slot.stairs;
       return [world.x(s.x0 - 2.2), slot.heightFt + 0.1, world.z(s.z1 + 1.6)];
     }
+    if (gateAt) return [world.x(gateAt.x + 0.9), 0.47, world.z(-1.0)];
     const { wide } = slot.notch;
     return [world.x(Math.min(wide.x1 - 1.2, slot.door.x + 1.5)), 0.6, world.z(Math.max(wide.z0 + 1.3, slot.door.z - 1.6))];
-  }, [onRoof, slot, world]);
+  }, [onRoof, slot, world, gateAt]);
   const anchor = useMemo<V3>(() => [pos[0], pos[1] + 7.2, pos[2]], [pos]);
   const unitId = slot.unit?.id;
   useFrame(() => {
@@ -257,7 +264,7 @@ export function TenantFigure({ slot, world, env, index }: { slot: BuildingSlot; 
       hit={<mesh geometry={G.box()} position={[pos[0], pos[1] + 3, pos[2]]} scale={[2.6, 6.4, 2.6]} visible={false} />}
     >
       {/* faces the street (world +Z) */}
-      <group position={pos} rotation={[0, onRoof ? -0.5 : -0.25, 0]}>
+      <group position={pos} rotation={[0, onRoof ? -0.5 : -0.55, 0]}>
         <RigMesh geo={geo} rig={rig} />
       </group>
     </Hotspot>
@@ -294,7 +301,7 @@ export function Dog({ layout, world, env, movers }: { layout: SiteLayout; world:
   const { geo, rig } = useRig(dogLimbs, []);
   const g = useRef<THREE.Group>(null);
   const st = layout.site.street;
-  const z = (st.nearShoulder[0] + st.nearShoulder[1]) / 2 + 1.0;
+  const z = st.nearShoulder[1] - 0.3; // along the drain edge, inside the walkers' tracks
   const gate = layout.compoundWalls.find((w) => w.kind === "gate");
   const a = gate ? (gate.a.x + gate.b.x) / 2 - 1.5 : layout.plot.polygon[0].x + 2;
   const b = layout.plot.rightX + 5;
@@ -394,7 +401,7 @@ export function Cow({ layout, world, env, movers }: { layout: SiteLayout; world:
   const { geo, rig } = useRig(cowLimbs, []);
   const g = useRef<THREE.Group>(null);
   const st = layout.site.street;
-  const z = (st.farShoulder[0] + st.farShoulder[1]) / 2 - 0.2;
+  const z = st.farShoulder[0] - 0.95; // grazing on the verge beyond the far shoulder
   const [, x1] = tileXRange(layout, z);
   const x = Math.min(x1 - 9, layout.plot.rightX + 2);
   const neck = useRef(0);
@@ -414,7 +421,7 @@ export function Cow({ layout, world, env, movers }: { layout: SiteLayout; world:
         movers?.set("cow", o, 3.6);
       }}
       position={[world.x(x), 0, world.z(z)]}
-      rotation={[0, -0.35, 0]}
+      rotation={[0, -0.12, 0]}
     >
       <RigMesh geo={geo} rig={rig} />
     </group>

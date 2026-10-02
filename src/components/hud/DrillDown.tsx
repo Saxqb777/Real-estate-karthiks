@@ -8,7 +8,7 @@ import { useCallback, useState, type ReactNode } from "react";
 import { Button, EmptyState, Kbd, LinkButton, Skeleton, cx } from "@/components/ui";
 import { ExpenseForm, METHOD_LABEL, inlineFrame } from "@/components/forms";
 import { useApi } from "@/lib/client";
-import type { DashboardData, Explain, ExplainInput } from "@/lib/dashboard-types";
+import type { DashboardData, ExplainInput } from "@/lib/dashboard-types";
 import { formatDate, periodLabel } from "@/lib/dates";
 import type { ExpenseDTO, ExpenseListResponse } from "@/lib/schemas/expense";
 import type { PaymentDetail, PaymentListResponse } from "@/lib/schemas/payment";
@@ -17,8 +17,9 @@ import { Fig, Rupees, ScopeChip } from "./Figure";
 import { useFormDrawer } from "./FormDrawer";
 import { HudPanel, type Crumb, type HudPanelProps } from "./HudPanel";
 import { inr } from "./format";
+import { parseExplainKey, relatedExplains } from "./explain-keys";
 import { useEscape } from "./store";
-import type { DrillView, PeriodKind } from "./types";
+import type { DrillView } from "./types";
 import s from "./drill.module.css";
 import hs from "./hud.module.css";
 
@@ -42,57 +43,6 @@ export function useDrillStack(initial: DrillView[] = []): DrillStack {
   const reset = useCallback(() => setStack([]), []);
   useEscape(stack.length > 0, pop);
   return { stack, current: stack[stack.length - 1] ?? null, push, pop, popTo, reset };
-}
-
-/** Parse "unit:<id>:year:netCash" → { unitId, period, base }. */
-export function parseExplainKey(key: string): { unitId: string | null; period: PeriodKind; base: string } {
-  let rest = key;
-  let unitId: string | null = null;
-  if (rest.startsWith("unit:")) {
-    const i = rest.indexOf(":", 5);
-    unitId = rest.slice(5, i);
-    rest = rest.slice(i + 1);
-  }
-  let period: PeriodKind = "allTime";
-  if (rest.startsWith("year:")) {
-    period = "year";
-    rest = rest.slice(5);
-  } else if (rest.startsWith("month:")) {
-    period = "month";
-    rest = rest.slice(6);
-  }
-  return { unitId, period, base: rest };
-}
-
-/** Figures a figure is made of / related to (presentation links only — the maths stays in data.explain). */
-const RELATED: Record<string, string[]> = {
-  netCash: ["rentCollected", "expenses"],
-  collection: ["rentCollected"],
-  rentCollected: ["collection"],
-  totalReturn: ["gain", "rentCollected"],
-  worthNow: ["bestOffer", "estimatedValue", "invested"],
-  gain: ["worthNow", "invested"],
-  multiplier: ["worthNow", "invested"],
-  cagr: ["holdingYears", "multiplier"],
-  occupancy: ["vacantDays", "rentLost"],
-  vacantDays: ["rentLost", "occupancy"],
-  rentLost: ["vacantDays", "occupancy"],
-  overdue: ["rentRoll"],
-  perSqftOffered: ["perSqftBought", "worthNow"],
-  perSqftBought: ["perSqftOffered", "invested"],
-};
-
-/** Related explanations for a key, in the same scope and unit. */
-export function relatedExplains(data: DashboardData, key: string): Explain[] {
-  const { unitId, period, base } = parseExplainKey(key);
-  const keys = RELATED[base] ?? [];
-  const out: Explain[] = [];
-  for (const k of keys) {
-    const scoped = (p: PeriodKind) => `${unitId ? `unit:${unitId}:` : ""}${p === "year" ? "year:" : p === "month" ? "month:" : ""}${k}`;
-    const e = data.explain[scoped(period)] ?? data.explain[scoped("allTime")];
-    if (e && e.key !== key) out.push(e);
-  }
-  return out;
 }
 
 export function drillLabel(data: DashboardData, v: DrillView): string {
@@ -302,11 +252,10 @@ function CategoryView({ data, view, push }: { data: DashboardData; view: Extract
           {rows.map((x) => (
             <li key={x.id}>
               <button type="button" className={s.row} onClick={() => push({ kind: "expense", id: x.id, label: shorten(x.description || view.name) })}>
-                <span className={s.rowDate}>{formatDate(x.expenseDate)}</span>
                 <span className={s.rowMain}>
                   <span className={s.rowTitle}>{x.description || view.name}</span>
                   <span className={s.rowSub}>
-                    {x.unit?.name ?? "Whole plot"}
+                    <span className="num">{formatDate(x.expenseDate)}</span> · {x.unit?.name ?? "Whole plot"}
                     {x.propertyTaxId && " · from property tax"}
                   </span>
                 </span>
@@ -368,11 +317,10 @@ function LeaseView({ data, leaseId, push }: { data: DashboardData; leaseId: stri
           {rows.map((p) => (
             <li key={p.id}>
               <button type="button" className={s.row} onClick={() => push({ kind: "payment", id: p.id, label: p.invoiceNumber })}>
-                <span className={s.rowDate}>{formatDate(p.paymentDate)}</span>
                 <span className={s.rowMain}>
-                  <span className={s.rowTitle}>{periodLabel({ month: p.periodMonth, year: p.periodYear })}</span>
+                  <span className={s.rowTitle}>Rent for {periodLabel({ month: p.periodMonth, year: p.periodYear })}</span>
                   <span className={s.rowSub}>
-                    {p.invoiceNumber}
+                    received <span className="num">{formatDate(p.paymentDate)}</span> · {p.invoiceNumber}
                     {p.method ? ` · ${METHOD_LABEL[p.method] ?? p.method}` : ""}
                   </span>
                 </span>

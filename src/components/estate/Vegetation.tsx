@@ -1,11 +1,15 @@
 "use client";
-// Coconut palms (Pattukottai is coconut country), hedges and grass — all instanced, swaying with the gusty wind.
+// Coconut palms (Pattukottai is coconut country), hedges, grass and the side garden (banana clumps, a chilli mat, a hand
+// pump) — instanced, swaying with the travelling wind gusts (env.ts gustAt) shared with the laundry and the petals.
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { offsetPolygon, type Pt, type SiteLayout } from "@/lib/site-layout";
 import { gustAt, type Env } from "./env";
-import { PAL, std } from "./materials";
+import { Baked } from "./Baked";
+import type { Part } from "./bake";
+import { G, PAL, std } from "./materials";
+import { chilliMatTex } from "./textures";
 import { rng, type World } from "./util";
 
 export function insidePolygon(p: Pt, poly: Pt[]): boolean {
@@ -415,6 +419,140 @@ export function Greenery({ layout, world, grassCount }: { layout: SiteLayout; wo
     <group>
       <instancedMesh ref={bushRef} args={[bushGeo, std("#ffffff", { flat: true, rough: 0.9 }), Math.max(1, data.bushes.length)]} castShadow receiveShadow />
       <instancedMesh ref={grassRef} args={[grassGeo, std("#ffffff", { side: THREE.DoubleSide, rough: 1 }), Math.max(1, data.grass.length)]} />
+    </group>
+  );
+}
+
+// ───────────────────────────── the side garden (left margin, in the foreground) ─────────────────────────────
+
+/** A banana leaf along +X (length 1): broad, slightly cupped blade on a midrib that arches and droops. */
+function bananaLeafGeometry(): THREE.BufferGeometry {
+  const N = 10;
+  const pos: number[] = [];
+  const col: number[] = [];
+  const rib = (t: number) => new THREE.Vector3(t, 0.25 * Math.sin(t * Math.PI * 0.8) - 0.35 * t * t, 0);
+  const width = (t: number) => 0.17 * Math.sin(Math.min(1, t * 1.15) * Math.PI) ** 0.6;
+  const dark = new THREE.Color("#3d7a2f");
+  const light = new THREE.Color("#7fb04a");
+  for (let i = 0; i < N; i++) {
+    const t0 = 0.1 + (i / N) * 0.9;
+    const t1 = 0.1 + ((i + 1) / N) * 0.9;
+    const a = rib(t0);
+    const b = rib(t1);
+    for (const side of [-1, 1]) {
+      const a2 = a.clone().add(new THREE.Vector3(0, -width(t0) * 0.35, side * width(t0)));
+      const b2 = b.clone().add(new THREE.Vector3(0, -width(t1) * 0.35, side * width(t1)));
+      const c0 = dark.clone().lerp(light, t0);
+      const c1 = dark.clone().lerp(light, t1);
+      for (const [v, c] of [
+        [a, c0],
+        [b, c1],
+        [b2, c1],
+        [a, c0],
+        [b2, c1],
+        [a2, c0],
+      ] as const) {
+        pos.push(v.x, v.y, v.z);
+        col.push(c.r, c.g, c.b);
+      }
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/**
+ * The side garden on the tile's left margin: two banana clumps swaying in the same gusts, chillies drying on a mat,
+ * a green hand pump with a brass pot, and a stack of coconut husks.
+ */
+export function Garden({ layout, world, env, animate }: { layout: SiteLayout; world: World; env: RefObject<Env>; animate: boolean }) {
+  const [FL, , , BL] = layout.plot.polygon;
+  const D = layout.plot.depthFt;
+  const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
+  const leafGeo = useMemo(bananaLeafGeometry, []);
+  useEffect(() => () => leafGeo.dispose(), [leafGeo]);
+  const clumps = useMemo(() => {
+    const r = rng(515);
+    const spots = [
+      { x: leftX(D * 0.36) - 9.5, z: D * 0.36 },
+      { x: leftX(D * 0.36 + 3) - 12.5, z: D * 0.36 + 3.5 },
+      { x: leftX(D * 0.62) - 8.5, z: D * 0.62 },
+    ];
+    const tileIn = offsetPolygon(layout.site.tile, -2);
+    return spots
+      .filter((p) => insidePolygon(p, tileIn))
+      .map((p) => ({
+        x: world.x(p.x),
+        z: world.z(p.z),
+        h: 7 + r() * 3,
+        leaves: Array.from({ length: 7 }, (_, k) => ({ yaw: (k / 7) * Math.PI * 2 + r() * 0.5, pitch: 0.55 - r() * 0.7, len: 5.5 + r() * 2, ph: r() * 6 })),
+      }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout, world]);
+  const leafRef = useRef<THREE.InstancedMesh>(null);
+  const leafCount = clumps.reduce((n, c) => n + c.leaves.length, 0);
+  const o = useMemo(() => new THREE.Object3D(), []);
+  const pose = (e: Env | null) => {
+    const m = leafRef.current;
+    if (!m) return;
+    let i = 0;
+    for (const c of clumps) {
+      const g = e && animate ? gustAt(e, c.x, c.z) : 0.3;
+      const t = e?.t ?? 0;
+      for (const l of c.leaves) {
+        const flutter = animate ? Math.sin(t * (2 + g * 3) + l.ph) * (0.05 + g * 0.12) : 0;
+        o.position.set(c.x, c.h, c.z);
+        o.rotation.set(0, l.yaw, l.pitch + flutter, "YXZ");
+        o.scale.setScalar(l.len);
+        o.updateMatrix();
+        m.setMatrixAt(i++, o.matrix);
+      }
+    }
+    m.instanceMatrix.needsUpdate = true;
+  };
+  useEffect(() => {
+    pose(env.current);
+    leafRef.current?.computeBoundingSphere();
+  });
+  useFrame(() => {
+    if (animate) pose(env.current);
+  });
+  const props = useMemo<Part[]>(() => {
+    const parts: Part[] = [];
+    for (const c of clumps) {
+      parts.push({ g: "cyl", p: [c.x, c.h / 2, c.z], s: [0.9, c.h, 0.9], c: "#6f8f3a" });
+      parts.push({ g: "cyl", p: [c.x + 0.9, c.h * 0.3, c.z + 0.5], s: [0.55, c.h * 0.6, 0.55], c: "#7b9a42" });
+      parts.push({ g: "sphere", p: [c.x + 0.4, c.h * 0.78, c.z - 0.5], s: [0.8, 1.3, 0.8], c: "#5b2a3a" }); // banana flower
+    }
+    // hand pump on a small cement platform with a brass pot
+    const px = world.x(leftX(D * 0.2) - 6.5);
+    const pz = world.z(D * 0.2);
+    parts.push(
+      { g: "box", p: [px, 0.2, pz], s: [3.2, 0.4, 3.2], c: "#bdb5a8" },
+      { g: "cyl", p: [px, 1.9, pz], s: [0.42, 3.2, 0.42], c: "#2f6b4f" },
+      { g: "box", p: [px + 0.55, 2.9, pz], s: [1.1, 0.24, 0.24], c: "#2f6b4f" },
+      { g: "box", p: [px - 0.9, 3.6, pz], s: [2.2, 0.16, 0.16], c: "#2f6b4f", r: [0, 0, 0.35] },
+      { g: "cyl", p: [px + 1.0, 0.85, pz + 0.2], s: [0.9, 0.9, 0.9], c: "#c9a03e" },
+      { g: "sphere", p: [px + 1.0, 1.3, pz + 0.2], s: [0.95, 0.5, 0.95], c: "#c9a03e" },
+    );
+    // coconut husk / frond stack by the wall
+    const hx = world.x(leftX(D * 0.5) - 3.6);
+    const hz = world.z(D * 0.5);
+    for (let i = 0; i < 9; i++) parts.push({ g: "sphere", p: [hx + ((i % 3) - 1) * 0.7, 0.35 + Math.floor(i / 3) * 0.45, hz + (i % 2) * 0.5], s: [0.8, 0.55, 0.7], c: i % 2 ? "#8a6a42" : "#9c7a4c" });
+    return parts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clumps, world, layout]);
+  const mat = useMemo(() => std("#ffffff", { map: chilliMatTex(), rough: 0.95 }), []);
+  const mx = world.x(leftX(D * 0.12) - 8.5);
+  const mz = world.z(D * 0.12);
+  return (
+    <group>
+      <instancedMesh ref={leafRef} args={[leafGeo, std("#ffffff", { vertexColors: true, side: THREE.DoubleSide, rough: 0.7 }), Math.max(1, leafCount)]} castShadow frustumCulled={false} />
+      <Baked parts={props} cast receive />
+      <mesh geometry={G.plane()} material={mat} rotation={[-Math.PI / 2, 0, 0.3]} position={[mx, 0.06, mz]} scale={[6.5, 5, 1]} receiveShadow />
     </group>
   );
 }

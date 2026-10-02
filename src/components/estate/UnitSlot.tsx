@@ -156,7 +156,6 @@ function BuiltSlot({ slot, world, env, mode, selected, highlighted, interactive,
     <group>
       <Hotspot
         spot={{ key, kind: "unit", unitId: u.id, anchor }}
-        selected={selected}
         hit={<mesh ref={occluder} geometry={hitGeo} rotation={FLAT} visible={false} />}
       >
         <group ref={group}>
@@ -185,7 +184,7 @@ function BuiltSlot({ slot, world, env, mode, selected, highlighted, interactive,
       {!look.ring && (highlighted || selected) && <StatusRing slot={slot} world={world} color={PAL.marigold} pulse={false} dashed={false} boost={1} />}
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
       {empty && <LetBoard slot={slot} world={world} reduced={reduced} at={signAt} onWall={!!boardOnWall} incoming={slot.status === "incoming"} />}
-      {slot.status === "occupied" && mode !== "preview" && interactive && <TenantFigure slot={slot} world={world} env={env} index={index} />}
+      {slot.status === "occupied" && mode !== "preview" && interactive && <TenantFigure slot={slot} world={world} env={env} index={index} gateAt={slot.rect.z0 < 0.01 ? signAt : undefined} />}
       {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x)} z={world.z(signAt.z - 1.2)} env={env} />}
     </group>
   );

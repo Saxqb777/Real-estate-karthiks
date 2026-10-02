@@ -11,7 +11,7 @@
 //   {inspect.panel && <HudPanelFor target={inspect.panel} data={data} period={period} onClose={inspect.closePanel} />}
 import { ArrowUpRight, ExternalLink, FileSignature, ListPlus, Phone, ReceiptIndianRupee, Ruler } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button, InspectCard, LinkButton, useIsClient, cx } from "@/components/ui";
 import { usePropertyTax } from "@/components/forms";
@@ -24,6 +24,7 @@ import { MailboxPanel } from "./MailboxPanel";
 import { NoticeBoardPanel } from "./NoticeBoardPanel";
 import { PolePanel } from "./PolePanel";
 import { PropertyPanel } from "./PropertyPanel";
+import { RadialMenu } from "./RadialMenu";
 import { useEscape, useExplored } from "./store";
 import { TaxPanel } from "./TaxPanel";
 import type { PanelTarget, PeriodKind, SceneObject, SceneObjectKind } from "./types";
@@ -75,6 +76,10 @@ export interface InspectController {
   setPropertyOpen: (open: boolean) => void;
   /** a world object has never been opened → show its marigold "unexplored" dot */
   explored: ReturnType<typeof useExplored>;
+  /** radial action wheel (right-click / long-press on a house) */
+  radial: { unitId: string; at: { x: number; y: number } } | null;
+  onUnitContextMenu: (unitId: string, screen: { x: number; y: number }) => void;
+  closeRadial: () => void;
 }
 
 /** State machine for hover → card → panel. Pass its callbacks to the 3D scene. */
@@ -83,6 +88,7 @@ export function useInspect({ direct = [], initialPanel = null }: UseInspectOptio
   const [card, setCard] = useState<SceneObject | null>(null);
   const [panel, setPanel] = useState<PanelTarget | null>(initialPanel);
   const [propertyOpen, setPropertyOpenState] = useState(false);
+  const [radial, setRadial] = useState<{ unitId: string; at: { x: number; y: number } } | null>(null);
   const explored = useExplored();
   const { markExplored } = explored;
 
@@ -119,8 +125,34 @@ export function useInspect({ direct = [], initialPanel = null }: UseInspectOptio
   const closePanel = useCallback(() => setPanel(null), []);
   const setPropertyOpen = useCallback((o: boolean) => setPropertyOpenState(o), []);
   useEscape(card !== null, closeCard);
+  const onUnitContextMenu = useCallback(
+    (unitId: string, at: { x: number; y: number }) => {
+      setHover(null);
+      setCard(null);
+      setRadial({ unitId, at });
+      markExplored("radial");
+    },
+    [markExplored],
+  );
+  const closeRadial = useCallback(() => setRadial(null), []);
 
-  return { hover, card, panel, propertyOpen, onObjectHover: setHover, onObjectClick, expand, closeCard, openPanel, closePanel, setPropertyOpen, explored };
+  return {
+    hover,
+    card,
+    panel,
+    propertyOpen,
+    onObjectHover: setHover,
+    onObjectClick,
+    expand,
+    closeCard,
+    openPanel,
+    closePanel,
+    setPropertyOpen,
+    explored,
+    radial,
+    onUnitContextMenu,
+    closeRadial,
+  };
 }
 
 // ---------------------------------------------------------------- panel router
@@ -264,27 +296,48 @@ export function WorldHint({ obj, data }: { obj: SceneObject | null; data: Dashbo
 export interface InspectLayerProps {
   data: DashboardData;
   inspect: InspectController;
+  /**
+   * Optional live position of a world object (the scene's getObjectScreen): keeps the card's leader line on the
+   * object while the camera glides. Without it the card stays where the object was clicked.
+   */
+  locate?: (kind: SceneObjectKind, unitId?: string) => { x: number; y: number } | null;
 }
 
-/** Hover hint + the anchored inspect card for the current object. Forms open in a drawer from here. */
-export function InspectLayer({ data, inspect }: InspectLayerProps) {
+/** Hover hint + the anchored inspect card + the radial wheel. Forms open in a drawer from here. */
+export function InspectLayer({ data, inspect, locate }: InspectLayerProps) {
   const forms = useFormDrawer();
   const { card } = inspect;
   return (
     <>
-      <WorldHint obj={card ? null : inspect.hover} data={data} />
-      <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} />
+      <WorldHint obj={card || inspect.radial ? null : inspect.hover} data={data} />
+      <RadialMenu data={data} unitId={inspect.radial?.unitId ?? null} at={inspect.radial?.at ?? null} onClose={inspect.closeRadial} />
+      <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} locate={locate} />
       {forms.element}
     </>
   );
 }
 
-function ObjectCard({ obj, data, onClose, onExpand, openForm }: { obj: SceneObject | null; data: DashboardData; onClose: () => void; onExpand: () => void; openForm: ReturnType<typeof useFormDrawer>["open"] }) {
+function ObjectCard({
+  obj,
+  data,
+  onClose,
+  onExpand,
+  openForm,
+  locate,
+}: {
+  obj: SceneObject | null;
+  data: DashboardData;
+  onClose: () => void;
+  onExpand: () => void;
+  openForm: ReturnType<typeof useFormDrawer>["open"];
+  locate?: InspectLayerProps["locate"];
+}) {
   // keep the last object so the card can animate out with its content
   const [last, setLast] = useState<SceneObject | null>(obj);
   if (obj && obj !== last) setLast(obj);
   const parts = useCardParts({ obj: last, data, openForm, onExpand });
-  const anchor = obj ? (obj.screen ?? (typeof window !== "undefined" ? { x: window.innerWidth / 2, y: window.innerHeight / 2 } : null)) : null;
+  const live = useLivePosition(obj, locate);
+  const anchor = obj ? (live ?? obj.screen ?? (typeof window !== "undefined" ? { x: window.innerWidth / 2, y: window.innerHeight / 2 } : null)) : null;
   return (
     <InspectCard
       open={Boolean(obj)}
@@ -301,6 +354,33 @@ function ObjectCard({ obj, data, onClose, onExpand, openForm }: { obj: SceneObje
       {parts && <p className={s.cardHint}>Enter to expand · Esc to close</p>}
     </InspectCard>
   );
+}
+
+/** Follow a world object's screen position (only when the scene can tell us); updates only when it moves. */
+function useLivePosition(obj: SceneObject | null, locate?: InspectLayerProps["locate"]) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const locRef = useRef(locate);
+  useEffect(() => {
+    locRef.current = locate;
+  });
+  const has = Boolean(locate);
+  useEffect(() => {
+    setPos(null);
+    if (!obj || !has) return;
+    let raf = 0;
+    let cur = obj.screen ?? null;
+    const tick = () => {
+      const p = locRef.current?.(obj.kind, obj.unitId) ?? null;
+      if (p && (!cur || Math.abs(p.x - cur.x) > 1 || Math.abs(p.y - cur.y) > 1)) {
+        cur = p;
+        setPos(p);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [obj, has]);
+  return pos;
 }
 
 interface CardParts {

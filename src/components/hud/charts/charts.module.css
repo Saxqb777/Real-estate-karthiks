@@ -473,6 +473,15 @@
 .cmpTable tbody tr + tr > * {
   border-top: 1px dashed rgba(243, 233, 216, 0.06);
 }
+.cmpNote {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.cmpNote :global(.num) {
+  color: var(--text-dim);
+}
 .cmpTotalHead,
 .cmpTotal {
   background: rgba(243, 233, 216, 0.025);
@@ -503,6 +512,15 @@
 .cmpNum {
   font-size: 14px;
   color: var(--text);
+}
+.cmpNum.tIncome {
+  color: var(--teal);
+}
+.cmpNum.tExpense {
+  color: var(--coral);
+}
+.cmpNum.tDimNum {
+  color: var(--text-dim);
 }
 .cmpStrong {
   font-weight: 700;

@@ -588,8 +588,9 @@ function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: Building
   const zb = Math.min(7, Math.max(2.5, depth * 0.12));
   const xb = FL.x + ((BL.x - FL.x) * (zb - FL.z)) / (depth || 1);
   const noticeBoard = { x: r2(xb), z: r2(zb), widthFt: r2(clamp(depth * 0.06, 2.4, 3.6)) };
-  // poles stand on the near shoulder, one left of the plot (lamp + meter), one to the right
-  const zPole = (street.nearShoulder[0] + street.nearShoulder[1]) / 2 + 0.4;
+  // poles stand at the road edge of the near shoulder (pedestrians walk inside them), one left of the plot
+  // (lamp + meter), one to the right
+  const zPole = street.nearShoulder[0] + 0.9;
   const [, tFR, tBR] = tile;
   const tx1 = xAt(tFR, tBR, zPole);
   const poles = [

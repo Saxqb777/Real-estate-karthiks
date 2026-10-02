@@ -1,7 +1,8 @@
 // Presentation helpers for the HUD: one way to print every kind of figure (DATA CLARITY CONTRACT §6),
 // the three buckets, scope labels and explain-key lookup. Formatting only — no arithmetic on money.
-import type { DashboardData, ExplainBucket, ExplainFormat, UnitBreakdown } from "@/lib/dashboard-types";
-import { formatINR, formatINRCompact, formatIndianNumber, formatPercent } from "@/lib/format";
+// (relative imports: this module is unit-tested without the @ alias)
+import type { DashboardData, ExplainBucket, ExplainFormat, UnitBreakdown } from "../../lib/dashboard-types";
+import { formatINR, formatINRCompact, formatIndianNumber, formatPercent } from "../../lib/format";
 import type { PeriodKind } from "./types";
 
 export type Bucket = ExplainBucket;
@@ -24,12 +25,15 @@ export function inr(n: number | null | undefined): string {
 /** ₹45.2 L / ₹1.25 Cr for big HUD figures; exact value goes in the tooltip. */
 export const inrCompact = (n: number | null | undefined) => minus(formatINRCompact(n));
 
-/** Print a figure in its explain format. `compact` only affects money ≥ ₹1 L. */
+/** Compact money only from ₹10 L up — below that the exact figure fits and reads better. */
+export const COMPACT_FROM = 1e6;
+
+/** Print a figure in its explain format. `compact` only affects money ≥ ₹10 L. */
 export function fmt(value: number | null | undefined, format: ExplainFormat, compact = false): string {
   if (value === null || value === undefined || !isFinite(value)) return "—";
   switch (format) {
     case "inr":
-      return compact && Math.abs(value) >= 1e5 ? inrCompact(value) : inr(value);
+      return compact && Math.abs(value) >= COMPACT_FROM ? inrCompact(value) : inr(value);
     case "pct":
       return minus(formatPercent(value, 1));
     case "multiplier":
@@ -47,7 +51,7 @@ export function fmt(value: number | null | undefined, format: ExplainFormat, com
 
 /** true when the compact form hides digits (so the exact value is worth a tooltip). */
 export const isCompacted = (value: number | null | undefined, format: ExplainFormat) =>
-  format === "inr" && value !== null && value !== undefined && Math.abs(value) >= 1e5;
+  format === "inr" && value !== null && value !== undefined && Math.abs(value) >= COMPACT_FROM;
 
 /** Explain key for a figure in a period (and optionally one unit): "netCash", "year:netCash", "unit:<id>:month:netCash". */
 export function explainKey(key: string, period: PeriodKind | null, unitId?: string | null): string {

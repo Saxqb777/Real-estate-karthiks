@@ -40,7 +40,7 @@
   transition: filter 650ms ease;
 }
 .dimmed .canvas {
-  filter: saturate(0.5) brightness(0.62);
+  filter: saturate(0.55) brightness(0.6) sepia(0.12);
 }
 .dimmed .overlay {
   opacity: 0.55;
