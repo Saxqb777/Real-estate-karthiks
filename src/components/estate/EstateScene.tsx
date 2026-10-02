@@ -5,7 +5,7 @@
 import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Selection } from "@react-three/postprocessing";
-import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
 import type { PlotGeometry } from "@/lib/dashboard-types";
 import { computeSiteLayout, highlightedSlots, type SceneUnit, type SlotName } from "@/lib/site-layout";
@@ -21,6 +21,7 @@ import { PlotGround } from "./PlotGround";
 import { SitePlanFallback } from "./SitePlanFallback";
 import { UnitSlot, slotLabels, type SceneMode } from "./UnitSlot";
 import { useAnimatedLayout } from "./useAnimatedLayout";
+import { Clouds, Fireflies } from "./SkyLife";
 import { Greenery, Palms } from "./Vegetation";
 import { makeWorld, prefersReducedMotion } from "./util";
 import s from "./estate.module.css";
@@ -189,7 +190,7 @@ interface ContentsProps extends EstateSceneProps {
   life: boolean;
   zoomEnabled: boolean;
   onLabels: (labels: LabelSpec[]) => void;
-  registry: React.RefObject<Map<string, HTMLElement>>;
+  registry: RefObject<Map<string, HTMLElement>>;
 }
 
 function SceneContents({
@@ -227,7 +228,7 @@ function SceneContents({
 
   const selectedSlot = layout.slots.find((x) => x.unit && x.unit.id === selectedUnitId)?.slot ?? null;
   const hot = new Set(highlightedSlots(layout, highlightField));
-  const counts = tier === "high" ? { palms: 14, grass: 260 } : tier === "mid" ? { palms: 11, grass: 150 } : { palms: 8, grass: 70 };
+  const counts = tier === "high" ? { palms: 14, grass: 260, clouds: 12, flies: 70 } : tier === "mid" ? { palms: 11, grass: 150, clouds: 8, flies: 40 } : { palms: 8, grass: 70, clouds: 5, flies: 20 };
   const animate = !reduced;
 
   // labels: specs go to the DOM overlay only when their content changes; anchors are read every frame
@@ -283,6 +284,8 @@ function SceneContents({
       ))}
       <Dimensions layout={layout} world={world} show={showDimensions} highlight={highlightField} reduced={reduced} />
       <Life layout={layout} world={world} env={env} enabled={life && animate} tier={tier} mobile={mobile} />
+      <Clouds layout={layout} env={env} count={counts.clouds} animate={animate} />
+      <Fireflies layout={layout} world={world} env={env} count={counts.flies} animate={animate} />
     </>
   );
 
