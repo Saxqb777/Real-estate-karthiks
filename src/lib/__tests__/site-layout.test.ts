@@ -182,6 +182,9 @@ describe("computeSiteLayout — slots and edge cases", () => {
     ]);
     // open front wall with a main gate
     expect(L.compoundWalls.filter((w) => w.kind === "gate").map((w) => w.gate)).toEqual(["main"]);
+    // nothing built yet: no paving, placeholder footprints only appear when highlighted
+    expect(L.paved[2].z).toBe(0);
+    expect(L.dimensions.filter((d) => d.kind === "footprint").every((d) => !d.primary)).toBe(true);
   });
 
   it("units without a position fill free slots in order", () => {

@@ -160,7 +160,7 @@ export interface SiteLayout {
   slots: BuildingSlot[];
   courtyard: { z0: number; z1: number } | null;
   rearYard: { z0: number; z1: number };
-  /** paved ground: plot from the front edge to the back of the last building */
+  /** paved ground: plot from the front edge to the back of the last real building (empty when no units) */
   paved: Pt[];
   compoundWalls: CompoundWall[];
   site: {
@@ -370,7 +370,8 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
     return buildSlot(s, unit, { x0: rightX - w, x1: rightX, z0: zA, z1: zB }, floors, req[s], leftX);
   });
 
-  const lastZ = slots.length ? Math.max(...slots.map((s) => s.rect.z1)) : 0;
+  const built = slots.filter((s) => s.unit);
+  const lastZ = built.length ? Math.max(...built.map((s) => s.rect.z1)) : 0;
   const frontSlot = slots.find((s) => s.slot === "front");
   const backSlot = slots.find((s) => s.slot === "back");
   const courtyard = frontSlot && backSlot ? { z0: frontSlot.rect.z1, z1: backSlot.rect.z0 } : null;
@@ -409,7 +410,7 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
     plot: { frontWidthFt: front, backWidthFt: back, depthFt: depth, areaSqft, rightX, polygon, townName: plotIn.townName || "Pattukottai" },
     slots,
     courtyard,
-    rearYard: { z0: lastZ, z1: depth },
+    rearYard: { z0: slots.length ? Math.max(...slots.map((s) => s.rect.z1)) : 0, z1: depth },
     paved,
     compoundWalls,
     site: { tile, street },
@@ -547,9 +548,10 @@ function buildDimensions(L: SiteLayout): Dimension[] {
     const top = s.heightFt + s.parapetFt + 0.6;
     const { x0, x1, z0, z1 } = s.rect;
     const base = { slot: s.slot, unitId: s.unit?.id };
+    const real = !!s.unit; // an empty slot's footprint is a placeholder: only drawn when its field is highlighted
     dims.push(
-      { key: `footprintWidthFt:${s.slot}`, kind: "footprint", ...base, valueFt: s.widthFt, label: formatFeetInches(s.widthFt), a: { x: x0, y: top, z: z1 }, b: { x: x1, y: top, z: z1 }, dir: { x: 0, y: 0, z: 1 }, offset: 1.6, primary: true },
-      { key: `footprintDepthFt:${s.slot}`, kind: "footprint", ...base, valueFt: s.depthFt, label: formatFeetInches(s.depthFt), a: { x: x0, y: top, z: z0 }, b: { x: x0, y: top, z: z1 }, dir: { x: -1, y: 0, z: 0 }, offset: 1.6, primary: true },
+      { key: `footprintWidthFt:${s.slot}`, kind: "footprint", ...base, valueFt: s.widthFt, label: formatFeetInches(s.widthFt), a: { x: x0, y: top, z: z1 }, b: { x: x1, y: top, z: z1 }, dir: { x: 0, y: 0, z: 1 }, offset: 1.6, primary: real },
+      { key: `footprintDepthFt:${s.slot}`, kind: "footprint", ...base, valueFt: s.depthFt, label: formatFeetInches(s.depthFt), a: { x: x0, y: top, z: z0 }, b: { x: x0, y: top, z: z1 }, dir: { x: -1, y: 0, z: 0 }, offset: 1.6, primary: real },
       {
         key: `floors:${s.slot}`,
         kind: "height",

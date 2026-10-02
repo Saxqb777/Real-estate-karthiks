@@ -26,7 +26,7 @@ export function PlotGround({ layout, world }: { layout: SiteLayout; world: World
   return (
     <group>
       <mesh geometry={geos.yard} material={yardMat} rotation={FLAT} position={[0, 0.02, 0]} receiveShadow />
-      <mesh geometry={geos.paved} material={paveMat} rotation={FLAT} position={[0, 0.05, 0]} receiveShadow />
+      {layout.paved[2].z > 0 && <mesh geometry={geos.paved} material={paveMat} rotation={FLAT} position={[0, 0.05, 0]} receiveShadow />}
       {layout.slots.filter((s) => s.status !== "empty").map((s) => (
         <Porch key={s.slot} slot={s} world={world} />
       ))}

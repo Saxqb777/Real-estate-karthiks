@@ -376,7 +376,7 @@ function EmptySlot({ slot, world, mode, interactive, reduced, onEmptyClick }: Un
   return (
     <group position={[cx, 0, cz]}>
       <mesh geometry={G.plane()} material={mat} rotation={FLAT} position={[0, 0.12, 0]} scale={[w, d, 1]} renderOrder={4} />
-      <Line ref={lineRef as never} points={edges} segments color={color} lineWidth={1.4} dashed dashSize={0.9} gapSize={0.6} transparent opacity={hover ? 1 : 0.75} toneMapped={false} />
+      <Line ref={lineRef as never} points={edges} segments color={color} lineWidth={hover ? 2.6 : 2} dashed dashSize={0.9} gapSize={0.6} transparent opacity={hover ? 1 : 0.85} toneMapped={false} />
       {[
         [-w / 2, -d / 2],
         [w / 2, -d / 2],
