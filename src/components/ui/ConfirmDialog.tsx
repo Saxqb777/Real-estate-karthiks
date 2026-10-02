@@ -55,10 +55,10 @@ export function ConfirmDialog({
       eyebrow={tone === "danger" ? "Confirm — can't be undone" : "Confirm"}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={busy}>
+          <Button variant="ghost" onClick={onClose} disabled={busy} data-autofocus={tone === "danger" || undefined}>
             {cancelLabel}
           </Button>
-          <Button variant={tone === "danger" ? "danger" : "primary"} onClick={run} loading={busy} data-autofocus>
+          <Button variant={tone === "danger" ? "danger" : "primary"} onClick={run} loading={busy} data-autofocus={tone !== "danger" || undefined}>
             {confirmLabel}
           </Button>
         </>

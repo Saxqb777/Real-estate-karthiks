@@ -250,7 +250,7 @@ body::after {
   background:
     radial-gradient(130% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%),
     var(--noise);
-  opacity: 0.7;
+  opacity: 0.32;
 }
 
 ::selection {

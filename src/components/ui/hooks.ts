@@ -30,7 +30,8 @@ const trapStack: HTMLElement[] = [];
 
 /**
  * Trap Tab focus inside `ref` while active, call onEscape on Esc, focus the first
- * `[data-autofocus]` (or first focusable) on open and restore focus on close.
+ * `[data-autofocus]` (else the first focusable not inside `[data-no-autofocus]`) on open,
+ * and restore focus on close.
  */
 export function useFocusTrap(ref: RefObject<HTMLElement | null>, active: boolean, onEscape?: () => void) {
   const escRef = useRef(onEscape);
@@ -46,7 +47,11 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, active: boolean
     trapStack.push(node);
     const raf = requestAnimationFrame(() => {
       if (node.contains(document.activeElement)) return;
-      const target = node.querySelector<HTMLElement>("[data-autofocus]") ?? focusables(node)[0] ?? node;
+      const target =
+        node.querySelector<HTMLElement>("[data-autofocus]") ??
+        focusables(node).find((el) => !el.closest("[data-no-autofocus]")) ??
+        focusables(node)[0] ??
+        node;
       target.focus({ preventScroll: true });
     });
     const onKey = (e: KeyboardEvent) => {

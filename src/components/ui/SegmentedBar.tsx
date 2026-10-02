@@ -67,9 +67,9 @@ export function SegmentedBar({
             <span key={i} className={cx(styles.seg, i === leading && ratio < 1 && styles.leading)}>
               <motion.span
                 className={styles.fill}
-                initial={reduce ? false : { scaleX: 0 }}
+                initial={{ scaleX: 0 }}
                 animate={{ scaleX: f }}
-                transition={{ duration: 0.28, delay: reduce ? 0 : i * 0.025, ease: [0.22, 1, 0.36, 1] }}
+                transition={reduce ? { duration: 0 } : { duration: 0.28, delay: i * 0.025, ease: [0.22, 1, 0.36, 1] }}
               />
             </span>
           );

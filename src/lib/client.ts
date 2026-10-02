@@ -242,7 +242,6 @@ export function useApi<T>(path: string | null, { dedupeMs = 2000, keepPrevious =
     [path],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- reading the ref during render is intentional (fallback only)
   const data = entry.data ?? (keepPrevious ? previous.current : undefined);
   return {
     data,

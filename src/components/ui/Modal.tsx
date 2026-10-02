@@ -49,7 +49,11 @@ function Header({ id, descId, title, eyebrow, description, hideClose, onClose }:
           </p>
         )}
       </div>
-      {!hideClose && <IconButton label="Close" icon={<X />} size="sm" onClick={onClose} tooltip={false} />}
+      {!hideClose && (
+        <span data-no-autofocus>
+          <IconButton label="Close" icon={<X />} size="sm" onClick={onClose} tooltip={false} />
+        </span>
+      )}
     </div>
   );
 }

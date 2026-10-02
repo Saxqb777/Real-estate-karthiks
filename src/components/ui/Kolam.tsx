@@ -11,8 +11,8 @@ const DOTS = [24, 40, 56].flatMap((y) => [24, 40, 56].map((x) => [x, y] as const
  * Lines draw themselves in on mount.
  */
 export function Kolam({ size = 80, className, animate = true }: { size?: number; className?: string; animate?: boolean }) {
+  // `initial` must match between server and client render, so reduced motion only changes the timing.
   const reduce = useReducedMotion();
-  const draw = animate && !reduce;
   const petals = [
     ...[0, 90, 180, 270].map((r) => ({ d: AXIS, r })),
     ...[45, 135, 225, 315].map((r) => ({ d: DIAG, r })),
@@ -29,9 +29,9 @@ export function Kolam({ size = 80, className, animate = true }: { size?: number;
           strokeOpacity={p.d === AXIS ? 0.8 : 0.45}
           strokeWidth={1.4}
           strokeLinecap="round"
-          initial={draw ? { pathLength: 0 } : false}
+          initial={animate ? { pathLength: 0 } : false}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 0.9, delay: 0.08 * i, ease: [0.65, 0, 0.35, 1] }}
+          transition={reduce ? { duration: 0 } : { duration: 0.9, delay: 0.08 * i, ease: [0.65, 0, 0.35, 1] }}
         />
       ))}
       {DOTS.map(([x, y]) => (

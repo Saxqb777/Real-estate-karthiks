@@ -49,27 +49,29 @@ export function Sparkline({ data, tone = "marigold", height = 36, fill = true, b
             <stop offset="0" stopColor={color} stopOpacity="0.22" />
             <stop offset="1" stopColor={color} stopOpacity="0" />
           </linearGradient>
+          <clipPath id={`sc${id}`}>
+            <motion.rect
+              x={-2}
+              y={-4}
+              height={height + 8}
+              initial={{ width: 0 }}
+              animate={{ width: W + 4 }}
+              transition={reduce ? { duration: 0 } : { duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
+            />
+          </clipPath>
         </defs>
         {baseline !== undefined && (
           <line x1="0" x2={W} y1={y(baseline)} y2={y(baseline)} stroke="var(--line-strong)" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
         )}
-        {fill && (
-          <motion.path d={area} fill={`url(#sg${id})`} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.3 }} />
-        )}
-        <motion.path
-          d={line}
-          fill="none"
-          stroke={color}
-          strokeWidth={1.6}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-          initial={reduce ? false : { pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1, ease: [0.65, 0, 0.35, 1] }}
-        />
+        <g clipPath={`url(#sc${id})`}>
+          {fill && <path d={area} fill={`url(#sg${id})`} />}
+          <path d={line} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        </g>
       </svg>
-      <span
+      <motion.span
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={reduce ? { duration: 0 } : { delay: 1, duration: 0.25 }}
         style={{
           position: "absolute",
           left: `${(last[0] / W) * 100}%`,

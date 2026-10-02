@@ -14,7 +14,8 @@ export interface Column<T> {
   numeric?: boolean;
   align?: "left" | "center" | "right";
   width?: CSSProperties["width"];
-  nowrap?: boolean;
+  /** Cells don't wrap by default (narrow screens scroll the table sideways); set for long text like notes. */
+  wrap?: boolean;
   /** Enables click-to-sort on this column. */
   sortValue?: (row: T) => number | string | null | undefined;
   /** Footer cell (e.g. totals — compute them with sumAmounts()). */
@@ -82,7 +83,7 @@ export function Table<T>({
     setSort((s) => (s?.key !== key ? { key, dir: "desc" } : s.dir === "desc" ? { key, dir: "asc" } : null));
 
   const alignClass = (c: Column<T>) =>
-    cx(c.numeric && styles.numCell, c.align === "right" && styles.right, c.align === "center" && styles.center, c.nowrap && styles.nowrap);
+    cx(c.numeric && styles.numCell, c.align === "right" && styles.right, c.align === "center" && styles.center, c.wrap && styles.wrap);
 
   const hasFooter = !hideFooter && columns.some((c) => c.footer !== undefined);
   const showSkeleton = loading && (!rows || rows.length === 0);
@@ -145,7 +146,7 @@ export function Table<T>({
                       onClick={onRowClick ? () => onRowClick(row) : undefined}
                       onKeyDown={onRowClick ? (e) => onRowKey(e, row) : undefined}
                       tabIndex={onRowClick ? 0 : undefined}
-                      aria-selected={selectedKey !== undefined ? selectedKey === key : undefined}
+                      aria-current={selectedKey === key ? "true" : undefined}
                     >
                       {columns.map((c) => (
                         <td key={c.key} className={cx(styles.td, alignClass(c), c.className)}>

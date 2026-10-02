@@ -180,3 +180,17 @@ A slim timeline in the bottom dock (purchase date → today). Dragging it sets a
 the 3D world shows who lived where on that date (vacant/occupied, tenant names), and every HUD number recomputes "as of" that date
 (calculations module must accept an asOf date — buildDashboard(input, asOf)). A "LIVE" button snaps back to today. Year tick marks, lease
 change markers, play ▶ to animate through time.
+
+## "Show the maths" — every number explains itself (owner request)
+The owner wants to understand how every figure is worked out. Every KPI / total / chart value has an **ⓘ How is this calculated?** view
+(part of the drill-down inspect card) with 4 layers, in plain English first:
+1. **In words** — "What your two units are worth today if you sold at the best offers you've received."
+2. **The formula** — `Best offer total ÷ Money invested`
+3. **With your numbers** — `₹1,12,00,000 ÷ ₹78,00,000 = ×1.44` (real values substituted, Indian format, each value clickable to its source)
+4. **What went into it** — the actual records (offers, payments, expenses, leases) as a small table, plus any assumptions in a marigold note:
+   "Back unit has no offer yet — we used its estimated value (₹52.3 L at 8%/yr) instead."
+- Step-by-step for multi-step figures (e.g. CAGR: years held → growth ratio → yearly rate; vacancy loss: each gap × rent ÷ 30).
+- Numbers animate in step order like a game's damage/score breakdown (respect reduced motion).
+- The explanations come from the calculations module (single source of truth): buildDashboard returns an `explain` map keyed by KPI
+  with {title, plain, formula, steps:[{label, expression, value}], inputs:[{kind, id, label, value}], notes:[]}, so the maths shown
+  is exactly the maths used.

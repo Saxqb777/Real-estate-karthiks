@@ -79,7 +79,8 @@ function CountUp({
   from: number;
   animate: boolean;
 }) {
-  const mv = useMotionValue(shouldAnimate ? from : (value ?? 0));
+  // Always start from `from` so server and client render the same text; reduced motion jumps in the effect.
+  const mv = useMotionValue(from);
   const text = useTransform(mv, (v) => formatNumber(v, format, decimals));
   useEffect(() => {
     if (value === null || value === undefined || !isFinite(value)) return;
@@ -111,9 +112,9 @@ function Odometer({ text, animate: shouldAnimate, duration }: { text: string; an
           <span key={`d${key}`} className={styles.roller}>
             <motion.span
               className={styles.strip}
-              initial={shouldAnimate ? { y: "0%" } : false}
+              initial={{ y: "0%" }}
               animate={{ y: `${-d * 10}%` }}
-              transition={{ duration: duration * 0.9, delay: shouldAnimate ? (chars.length - i) * 0.04 : 0, ease: [0.16, 1, 0.3, 1] }}
+              transition={shouldAnimate ? { duration: duration * 0.9, delay: (chars.length - i) * 0.04, ease: [0.16, 1, 0.3, 1] } : { duration: 0 }}
             >
               {DIGITS.map((n) => (
                 <span key={n}>{n}</span>

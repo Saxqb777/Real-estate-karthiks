@@ -92,7 +92,7 @@ export function Tabs({
     if (!next) return;
     e.preventDefault();
     select(next.id);
-    const btn = listRef.current?.querySelector<HTMLButtonElement>(`#${uid}-tab-${CSS.escape(next.id)}`);
+    const btn = listRef.current?.querySelector<HTMLButtonElement>(`#${CSS.escape(`${uid}-tab-${next.id}`)}`);
     btn?.focus();
     btn?.scrollIntoView({ block: "nearest", inline: "nearest" });
   };
