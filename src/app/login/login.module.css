@@ -300,6 +300,21 @@
 }
 @media (max-width: 767px) and (max-height: 700px) {
   .greet {
-    display: none;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+  .greetTa {
+    font-size: 20px;
+  }
+  .greetEn {
+    margin-top: 0;
+  }
+  .form {
+    margin-top: 12px;
+    gap: 10px;
   }
 }
