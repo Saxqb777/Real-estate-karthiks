@@ -7,7 +7,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEve
 import EstateSceneLazy, { type SceneInsets } from "@/components/estate/EstateSceneLazy";
 import { BrandMark } from "@/components/shell/BrandMark";
 import { useEpochSecond } from "@/components/shell/IstClock";
-import { Button, Field, Input, Kbd, cx } from "@/components/ui";
+import { Button, Field, Input, Kbd, cx, useIsClient } from "@/components/ui";
 import { api, ApiClientError } from "@/lib/client";
 import { dayPhaseAt, formatTimeIST, hourInIST, type DayPhase } from "@/lib/day-phase";
 import type { SceneUnit } from "@/lib/site-layout";
@@ -31,6 +31,7 @@ const istDay = (now: Date) => {
 
 export function LoginScreen({ next, initialPhase }: { next: string; initialPhase: DayPhase }) {
   const sec = useEpochSecond();
+  const hydrated = useIsClient();
   const now = sec ? new Date(sec * 1000) : null;
   const phase = now ? dayPhaseAt(hourInIST(now)) : dayPhaseAt(PHASE_HOUR[initialPhase]);
   const reduce = useReducedMotion();
@@ -168,7 +169,9 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
             </p>
           </div>
 
-          <form className={s.form} onSubmit={submit} noValidate>
+          {/* method="post" + a disabled button until hydrated: an Enter pressed before the page is ready can never
+              put the password in the address bar */}
+          <form className={s.form} onSubmit={submit} method="post" noValidate>
             <Field label="Username" error={error?.field === "username" ? error.text : undefined}>
               <Input
                 ref={userRef}
@@ -238,6 +241,7 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
               size="lg"
               block
               loading={status === "busy"}
+              disabled={!hydrated}
               icon={status === "done" ? <Check /> : undefined}
               iconRight={status === "idle" ? <ArrowRight /> : undefined}
               className={cx(s.submit, status === "done" && s.submitDone)}

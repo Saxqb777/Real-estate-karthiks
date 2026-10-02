@@ -403,6 +403,16 @@
   min-width: 0;
   flex: 0 1 auto;
 }
+.mTop .mChips > button {
+  height: 30px;
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 12.5px;
+}
+.mTop .mChips > button:first-child {
+  flex-shrink: 1;
+  min-width: 0;
+}
 .mHelp {
   flex: none;
   background: rgba(27, 23, 19, 0.88) !important;

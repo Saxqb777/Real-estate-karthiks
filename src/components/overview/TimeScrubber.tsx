@@ -69,6 +69,14 @@ export function TimeScrubber({ timeline, asOf, onChange, loading, yearMode, comp
   useEffect(() => {
     changeRef.current = onChange;
   });
+  const [trackW, setTrackW] = useState(0);
+  useEffect(() => {
+    const el = track.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setTrackW(e.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [start]);
 
   const committed = asOf ? dayStart(Date.parse(asOf)) : end;
   const value = drag ?? committed;
@@ -202,6 +210,19 @@ export function TimeScrubber({ timeline, asOf, onChange, loading, yearMode, comp
       </div>
     );
 
+  // year ticks; labels are skipped where they would touch the previous one
+  let lastX = -Infinity;
+  const ticks = timeline.yearTicks
+    .map((t) => ({ key: t.key, r: (Date.parse(t.date) - start) / span, text: tickLabel(t.label, t.key, yearMode, compact) }))
+    .filter((t) => t.r > 0.005 && t.r < 0.995)
+    .map((t) => {
+      const x = t.r * trackW;
+      const w = t.text.length * (compact ? 6.2 : 6.6) + 4;
+      const show = trackW > 0 && x - lastX >= w + 6 && x + w <= trackW - 4;
+      if (show) lastX = x;
+      return { key: t.key, r: t.r, label: show ? t.text : null };
+    });
+
   const valueLabel = live ? `Today ${formatDate(new Date(end))}` : `As of ${formatDate(new Date(value))}`;
   const hoverMs = hoverX !== null && drag === null && track.current ? clamp(start + (hoverX / track.current.getBoundingClientRect().width) * span) : null;
   const hm = hoverMarker !== null ? markers.find((x) => x.i === hoverMarker) : null;
@@ -261,15 +282,11 @@ export function TimeScrubber({ timeline, asOf, onChange, loading, yearMode, comp
           ))}
         </div>
 
-        {timeline.yearTicks.map((t) => {
-          const r = (Date.parse(t.date) - start) / span;
-          if (r <= 0.005 || r >= 0.995) return null;
-          return (
-            <span key={t.key} className={s.tick} style={{ left: `${r * 100}%` }} aria-hidden>
-              <span className={s.tickLabel}>{tickLabel(t.label, t.key, yearMode, compact)}</span>
-            </span>
-          );
-        })}
+        {ticks.map((t) => (
+          <span key={t.key} className={s.tick} style={{ left: `${t.r * 100}%` }} aria-hidden>
+            {t.label && <span className={s.tickLabel}>{t.label}</span>}
+          </span>
+        ))}
 
         {markers.map(({ m, i, r }) => (
           <span

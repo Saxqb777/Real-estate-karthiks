@@ -369,7 +369,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     />
   );
 
-  const scrubber = data ? (
+  const scrubber = data && hasUnits ? (
     <TimeScrubber
       timeline={data.timeline}
       asOf={asOf}
@@ -505,7 +505,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
               </div>
               <div className={s.topRight}>
                 {asOfChip}
-                {data && (
+                {data && hasUnits && (
                   <div data-help="Period for cash figures · FY or calendar">
                     <PeriodControl data={data} period={period} size="sm" />
                   </div>
@@ -548,8 +548,8 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
               )}
             </AnimatePresence>
 
-            {/* ---- bottom: dock + time */}
-            {data && (
+            {/* ---- bottom: dock + time (nothing to chart before the first unit) */}
+            {data && hasUnits && (
               <div ref={setBottomEl} className={s.bottom} data-tour="bottom">
                 <div data-help="Charts (keys 1–6)">
                   <Dock className={s.dock} data={data} period={period} tab={tab} onTabChange={onTabChange} onDrill={onDrill} onOpenUnit={openUnit} hints={dockHints} hotkeys={!tourOpen} />

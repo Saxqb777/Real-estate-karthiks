@@ -108,6 +108,7 @@
   overflow: hidden;
 }
 .page {
+  container-type: size;
   position: absolute;
   inset: 0;
   display: flex;
@@ -133,8 +134,10 @@
   min-height: 0;
   max-height: 100%;
 }
-.dock {
+/* the charts tray fills the sheet page (its tab bar stays in view) */
+.body .dock {
   flex: none;
+  --tray-h: max(150px, calc(100cqh - 66px));
 }
 
 /* units list */
