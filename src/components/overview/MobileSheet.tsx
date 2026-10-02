@@ -97,14 +97,26 @@ export function MobileSheet({ data, tab, onTab, period, detail, onCloseDetail, u
           const on = t.id === tab && !detail;
           const badge = t.id === "todo" ? pending : 0;
           return (
-            <button key={t.id} type="button" role="tab" aria-selected={on} className={cx(s.tab, on && s.tabOn)} onClick={() => go(t.id)}>
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              aria-label={t.id === "month" && late ? `${t.label}, rent overdue` : badge > 0 ? `${t.label}, ${badge} open` : undefined}
+              className={cx(s.tab, on && s.tabOn)}
+              onClick={() => go(t.id)}
+            >
               {on && <motion.span layoutId="sheet-tab" className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
               <span className={s.tabIcon}>
                 {t.icon}
-                {t.id === "month" && late && <span className={s.alert} aria-label="rent overdue" />}
+                {t.id === "month" && late && <span className={s.alert} aria-hidden />}
               </span>
               <span className={s.tabLabel}>{t.label}</span>
-              {badge > 0 && <span className={s.badge}>{badge}</span>}
+              {badge > 0 && (
+                <span className={s.badge} aria-hidden>
+                  {badge}
+                </span>
+              )}
             </button>
           );
         })}

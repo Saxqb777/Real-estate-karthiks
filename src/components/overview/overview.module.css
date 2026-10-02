@@ -378,7 +378,7 @@
 .mWorld {
   position: relative;
   flex: none;
-  height: 44dvh;
+  height: 42dvh;
   min-height: 250px;
 }
 .mScene {
@@ -399,19 +399,26 @@
 .mTop > * {
   pointer-events: auto;
 }
+/* chips scroll sideways on a phone — the most urgent one is never cut short */
 .mChips {
   min-width: 0;
   flex: 0 1 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0 8px;
+  margin-bottom: -6px;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 18px), transparent);
+}
+.mChips::-webkit-scrollbar {
+  display: none;
 }
 .mTop .mChips > button {
   height: 30px;
   gap: 6px;
-  padding: 0 8px;
+  padding: 0 9px 0 8px;
   font-size: 12.5px;
-}
-.mTop .mChips > button:first-child {
-  flex-shrink: 1;
-  min-width: 0;
+  flex-shrink: 0;
 }
 .mHelp {
   flex: none;

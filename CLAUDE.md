@@ -98,3 +98,12 @@ import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
   APP_USERNAME, APP_PASSWORD, SESSION_SECRET (production secret differs from local). Vercel Authentication only on previews;
   production URL is public behind the app's own login.
 - **`commandForIgnoringBuildStep` is set to `exit 0` (builds paused) — set it to null when ready to deploy.**
+
+## Owner's done-check (automated)
+`scripts/done-check.mjs` enters the owner's test case through the real API (2 units, 1 offer, 1 tenant, 1 lease, 3 payments,
+2 expenses incl. a Paid property tax), recomputes every figure with an INDEPENDENT implementation of the spec formulas and checks
+that rent/expense totals are identical across /api/payments, /api/expenses, /api/expense-categories, /api/dashboard (kpis, periods,
+unit cards, composition, explain), /api/reports/annual and /api/reports/rent-ledger. Run on an EMPTY database:
+`scripts/dev-server.sh check 3300 estates_donecheck && BASE=http://localhost:3300 node scripts/done-check.mjs --cleanup`
+(DB estates_donecheck exists, migrated + seeded; --cleanup leaves it empty again). Refuses non-localhost targets.
+First run (round 2, 3/10/2026): 52/52 checks passed.

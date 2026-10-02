@@ -129,10 +129,9 @@
   align-self: stretch;
   justify-content: space-between;
 }
+/* panels keep their natural height; the page scrolls as one piece (thumb-friendly) */
 .body .fill {
-  flex: 1;
-  min-height: 0;
-  max-height: 100%;
+  flex: none;
 }
 /* the charts tray fills the sheet page (its tab bar stays in view) */
 .body .dock {

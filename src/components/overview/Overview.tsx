@@ -679,7 +679,7 @@ function MobileGame({ data, error, retry, scene, scrubber, asOfChip, setRootEl, 
           {scene}
         </div>
         <div ref={setTopEl} className={s.mTop}>
-          {data && data.units.length > 0 && <StatusChips data={data} taxes={taxes} onSelect={onChip} max={1} className={s.mChips} />}
+          {data && data.units.length > 0 && <StatusChips data={data} taxes={taxes} onSelect={onChip} max={2} className={s.mChips} />}
           {asOfChip}
           <span className={s.flex} />
           {help}
