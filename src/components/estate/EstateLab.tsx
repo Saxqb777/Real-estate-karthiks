@@ -92,6 +92,11 @@ export default function EstateLab({ initial }: { initial: LabConfig }) {
     return list;
   }, [c]);
   const selectedUnitId = c.sel === "a" ? "unit-a" : c.sel === "b" ? "unit-b" : null;
+  const cameraView = useMemo(() => {
+    if (!c.cam) return undefined;
+    const [theta, phi, fit] = c.cam.split(",").map(Number);
+    return { theta, phi: isFinite(phi) ? phi : undefined, fit: isFinite(fit) ? fit : undefined };
+  }, [c.cam]);
 
   return (
     <div className={s.lab}>
@@ -115,6 +120,7 @@ export default function EstateLab({ initial }: { initial: LabConfig }) {
         hud
         wheelZoom="always"
         intro={c.intro}
+        cameraView={cameraView}
         key={`${c.mode}-${c.quality}`}
       />
       {c.panel ? (

@@ -53,6 +53,7 @@ export function CameraRig({
   intro,
   reduced,
   zoomEnabled,
+  view,
 }: {
   layout: SiteLayout;
   world: World;
@@ -61,6 +62,7 @@ export function CameraRig({
   intro: boolean;
   reduced: boolean;
   zoomEnabled: boolean;
+  view?: { theta?: number; phi?: number; fit?: number };
 }) {
   const controls = useRef<OrbitControlsImpl>(null);
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
@@ -70,7 +72,7 @@ export function CameraRig({
 
   // Fit the whole tile (plot + street) for the current viewport.
   const home = useMemo<Pose>(() => {
-    const v = VIEW[mode];
+    const v = { ...VIEW[mode], ...view };
     const aspect = size.width / Math.max(1, size.height);
     const vfov = THREE.MathUtils.degToRad(FOV);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
@@ -78,7 +80,7 @@ export function CameraRig({
     const dist = R / Math.sin(Math.min(vfov, hfov) / 2);
     const target = new THREE.Vector3(1.5, Math.min(8, layout.maxHeightFt * 0.25), world.z(layout.center.z) + (mode === "preview" ? 5 : 6));
     return { target, radius: dist, phi: v.phi, theta: v.theta };
-  }, [layout.radius, layout.maxHeightFt, layout.center.z, mode, size.width, size.height, world]);
+  }, [layout.radius, layout.maxHeightFt, layout.center.z, mode, size.width, size.height, world, view?.theta, view?.phi, view?.fit]);
 
   const focus = useMemo<Pose | null>(() => {
     const s = layout.slots.find((x) => x.slot === selectedSlot);

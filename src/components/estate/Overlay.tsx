@@ -18,12 +18,31 @@ export type LabelSpec =
   | { key: string; kind: "build"; slot: SlotName };
 
 /** Projects anchors → screen and writes transforms straight onto the registered DOM nodes. */
-export function LabelProjector({ anchors, registry }: { anchors: RefObject<Map<string, V3>>; registry: RefObject<Map<string, HTMLElement>> }) {
+export function LabelProjector({
+  anchors,
+  registry,
+  occluders,
+}: {
+  anchors: RefObject<Map<string, V3>>;
+  registry: RefObject<Map<string, HTMLElement>>;
+  occluders?: RefObject<Set<THREE.Object3D>>;
+}) {
   const v = useMemo(() => new THREE.Vector3(), []);
+  const w = useMemo(() => new THREE.Vector3(), []);
+  const ray = useMemo(() => new THREE.Raycaster(), []);
   useFrame(({ camera, size }) => {
+    const occ = occluders ? [...occluders.current] : [];
     for (const [key, el] of registry.current) {
       const a = anchors.current.get(key);
       if (!a) continue;
+      if (occ.length && el.dataset.fade === "1") {
+        // fade drawing labels that sit behind a building
+        w.set(a[0], a[1], a[2]);
+        const dist = w.distanceTo(camera.position);
+        ray.set(camera.position, w.sub(camera.position).normalize());
+        ray.far = dist - 0.5;
+        el.style.opacity = ray.intersectObjects(occ, false).length ? "0.22" : "1";
+      }
       v.set(a[0], a[1], a[2]).project(camera);
       if (v.z > 1 || v.z < -1) {
         el.style.visibility = "hidden";
@@ -55,7 +74,13 @@ export function OverlayLabels({
   return (
     <div className={s.overlay} aria-hidden={labels.every((l) => l.kind !== "build") ? true : undefined}>
       {labels.map((l) => (
-        <div key={l.key} ref={reg(l.key)} className={`${s.anchor} ${l.kind === "dim" ? (l.hot ? s.zHot : s.zDim) : l.kind === "card" ? s.zCard : ""}`} style={{ visibility: "hidden" }}>
+        <div
+          key={l.key}
+          ref={reg(l.key)}
+          data-fade={l.kind === "dim" && !l.hot ? "1" : undefined}
+          className={`${s.anchor} ${l.kind === "dim" ? (l.hot ? s.zHot : s.zDim) : l.kind === "card" ? s.zCard : ""}`}
+          style={{ visibility: "hidden" }}
+        >
           {l.kind === "card" && (
             <div className={s.above}>
             <div className={`${s.card} ${toneClass[l.tone]}`}>

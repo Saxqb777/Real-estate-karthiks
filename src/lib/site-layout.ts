@@ -540,7 +540,8 @@ function buildDimensions(L: SiteLayout): Dimension[] {
   const dims: Dimension[] = [
     { key: "frontWidthFt", kind: "plot", valueFt: frontWidthFt, label: formatFeetInches(frontWidthFt), a: v(FL), b: v(FR), dir: { x: 0, y: 0, z: -1 }, offset: 3.4, primary: true },
     { key: "backWidthFt", kind: "plot", valueFt: backWidthFt, label: formatFeetInches(backWidthFt), a: v(BL), b: v(BR), dir: { x: 0, y: 0, z: 1 }, offset: 3.4, primary: true },
-    { key: "depthFt", kind: "plot", valueFt: depthFt, label: formatFeetInches(depthFt), a: v(FR), b: v(BR), dir: { x: 1, y: 0, z: 0 }, offset: 4.2, primary: true },
+    // depth runs along the left side (the side the default camera sees), measured square to the street
+    { key: "depthFt", kind: "plot", valueFt: depthFt, label: formatFeetInches(depthFt), a: v({ x: Math.min(FL.x, BL.x), z: 0 }), b: v({ x: Math.min(FL.x, BL.x), z: depthFt }), dir: { x: -1, y: 0, z: 0 }, offset: 4.5, primary: true },
   ];
   for (const s of L.slots) {
     const top = s.heightFt + s.parapetFt + 0.6;

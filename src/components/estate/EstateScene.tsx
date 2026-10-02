@@ -53,6 +53,8 @@ export interface EstateSceneProps {
   wheelZoom?: "focus" | "always";
   /** Hero fly-in on first load (default true in hero mode). */
   intro?: boolean;
+  /** Override the default camera angle: theta (azimuth, rad, 0 = straight from the street), phi (from vertical), fit (zoom). */
+  cameraView?: { theta?: number; phi?: number; fit?: number };
 }
 
 function hasWebGL(): boolean {
@@ -212,6 +214,7 @@ function SceneContents({
   intro,
   onLabels,
   registry,
+  cameraView,
 }: ContentsProps) {
   const env = useRef(createEnv());
   const { layout } = useAnimatedLayout(plot, units, !reduced);
@@ -230,6 +233,24 @@ function SceneContents({
   const hot = new Set(highlightedSlots(layout, highlightField));
   const counts = tier === "high" ? { palms: 14, grass: 260, clouds: 12, flies: 70 } : tier === "mid" ? { palms: 11, grass: 150, clouds: 8, flies: 40 } : { palms: 8, grass: 70, clouds: 5, flies: 20 };
   const animate = !reduced;
+  const occluders = useRef(new Set<THREE.Object3D>());
+  const occluderFor = useMemo(() => {
+    const last = new Map<string, THREE.Object3D>();
+    return (key: string) => (o: THREE.Object3D | null) => {
+      const prev = last.get(key);
+      if (prev) occluders.current.delete(prev);
+      if (o) {
+        occluders.current.add(o);
+        last.set(key, o);
+      } else last.delete(key);
+    };
+  }, []);
+  const gate = layout.compoundWalls.find((w) => w.gate === "passage" || w.gate === "main");
+  const porchGate = layout.compoundWalls.find((w) => w.gate === "porch");
+  const signAt = (s: SlotName) => {
+    const g = s === "front" ? (porchGate ?? gate) : (gate ?? porchGate);
+    return g ? { x: (g.a.x + g.b.x) / 2, z: -2.6 } : undefined;
+  };
 
   // labels: specs go to the DOM overlay only when their content changes; anchors are read every frame
   const anchors = useRef(new Map<string, V3>());
@@ -280,6 +301,8 @@ function SceneContents({
           onHover={setHovered}
           onSelect={onSelectUnit}
           onEmptyClick={onEmptySlotClick}
+          signAt={signAt(slot.slot)}
+          occluder={occluderFor(slot.slot)}
         />
       ))}
       <Dimensions layout={layout} world={world} show={showDimensions} highlight={highlightField} reduced={reduced} />
@@ -302,8 +325,8 @@ function SceneContents({
           {body}
         </Selection>
       )}
-      <CameraRig layout={layout} world={world} mode={mode} selectedSlot={selectedSlot} intro={intro ?? mode === "hero"} reduced={reduced} zoomEnabled={zoomEnabled} />
-      <LabelProjector anchors={anchors} registry={registry} />
+      <CameraRig layout={layout} world={world} mode={mode} selectedSlot={selectedSlot} intro={intro ?? mode === "hero"} reduced={reduced} zoomEnabled={zoomEnabled} view={cameraView} />
+      <LabelProjector anchors={anchors} registry={registry} occluders={occluders} />
     </>
   );
 }

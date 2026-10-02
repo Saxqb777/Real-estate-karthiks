@@ -258,3 +258,13 @@ Chosen: **A — world as background**, refined to stay calm:
 - **Focus dimming**: when a side panel or the dock is expanded for reading, the world softly dims/desaturates and ambient motion slows;
   it returns when closed. "F" hides all HUD for a full-world view.
 - Easy to switch later to B (framed world) — keep the layout in one component with a `layout="immersive" | "framed"` prop.
+
+## Clean world by default — panels open on click (owner idea, adopted; supersedes "panels always visible")
+- **Default view = the world**, nearly clean: slim top bar + a small **status strip** of up to 3 chips (e.g. "All rent paid ✓",
+  "Back unit 3 days late", "Tax due Nov") so the 3-second test still passes. The houses themselves show status (rings / "!" markers).
+- **Click a house** → its unit panel slides in (right). **Click a chip** → the matching panel. **Click the mailbox / notice board / pole**
+  → their panels. **Click the "Property" chip or press P** → the overall property panel (left: value, cash flow, occupancy).
+- **Bottom tray is collapsed** to a slim tab bar; clicking a tab slides the chart up; click again or Esc to close.
+- Panels close with Esc / click empty ground / ✕; the world un-dims. A **📌 pin** on any panel keeps it open for owners who like
+  numbers always visible (remembered per browser).
+- First-run tutorial explicitly teaches "click a house to see its details".

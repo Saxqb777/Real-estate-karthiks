@@ -33,6 +33,10 @@ export interface UnitSlotProps {
   onHover: (slot: SlotName | null) => void;
   onSelect?: (id: string) => void;
   onEmptyClick?: (slot: SlotName) => void;
+  /** where the TO-LET board stands (plan ft) — the unit's gate on the street */
+  signAt?: { x: number; z: number };
+  /** registers the building hit box (used to fade labels hidden behind buildings) */
+  occluder?: (o: THREE.Object3D | null) => void;
 }
 
 export function statusLook(slot: BuildingSlot) {
@@ -85,7 +89,7 @@ export function UnitSlot(p: UnitSlotProps) {
   return <BuiltSlot {...p} />;
 }
 
-function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interactive, reduced, life, rise, index, onHover, onSelect }: UnitSlotProps) {
+function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interactive, reduced, life, rise, index, onHover, onSelect, signAt, occluder }: UnitSlotProps) {
   const u = slot.unit!;
   const look = statusLook(slot);
   const group = useRef<THREE.Group>(null);
@@ -149,9 +153,9 @@ function BuiltSlot({ slot, world, env, selected, hovered, highlighted, interacti
       )}
       {!look.ring && (highlighted || selected) && <StatusRing slot={slot} world={world} color={PAL.marigold} pulse={false} dashed={false} boost={1} />}
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
-      {slot.status === "vacant" && <ToLetBoard slot={slot} world={world} reduced={reduced} />}
+      {slot.status === "vacant" && <ToLetBoard slot={slot} world={world} reduced={reduced} at={signAt} />}
       {/* invisible hit box: hover / click target for the whole building */}
-      <mesh position={[cx, totalH / 2, cz]} scale={[slot.widthFt + 1, totalH + 1, slot.depthFt + 1]} geometry={G.box()} {...handlers}>
+      <mesh ref={occluder} position={[cx, totalH / 2, cz]} scale={[slot.widthFt + 1, totalH + 1, slot.depthFt + 1]} geometry={G.box()} {...handlers}>
         <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
       </mesh>
     </group>
@@ -283,7 +287,7 @@ function useTamilFont(): boolean {
   return ok;
 }
 
-function ToLetBoard({ slot, world, reduced }: { slot: BuildingSlot; world: World; reduced: boolean }) {
+function ToLetBoard({ slot, world, reduced, at }: { slot: BuildingSlot; world: World; reduced: boolean; at?: { x: number; z: number } }) {
   const tamil = useTamilFont();
   const ref = useRef<THREE.Group>(null);
   const face = useMemo(() => std("#ffffff", { map: toLetTex(tamil), rough: 0.7 }), [tamil]);
@@ -291,9 +295,9 @@ function ToLetBoard({ slot, world, reduced }: { slot: BuildingSlot; world: World
   useFrame(({ clock }) => {
     if (ref.current && !reduced) ref.current.rotation.z = Math.sin(clock.elapsedTime * 1.3) * 0.025;
   });
-  // planted at the porch mouth, facing the street
-  const x = world.x(slot.notch.wide.x0 + (slot.notch.wide.x1 - slot.notch.wide.x0) * 0.45);
-  const z = world.z(slot.rect.z0 - (slot.slot === "front" ? 2.2 : 2.6));
+  // at the unit's gate on the street (fallback: the porch mouth), facing the road
+  const x = world.x(at ? at.x : slot.notch.wide.x0 + (slot.notch.wide.x1 - slot.notch.wide.x0) * 0.45);
+  const z = world.z(at ? at.z : slot.rect.z0 - 2.4);
   return (
     <group position={[x, 0, z]} rotation={[0, -0.18, 0]}>
       {[-1.25, 1.25].map((dx) => (

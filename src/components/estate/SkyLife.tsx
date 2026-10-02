@@ -48,7 +48,7 @@ export function Clouds({ layout, env, count, animate }: { layout: SiteLayout; en
     return Array.from({ length: count }, (_, i) => {
       const low = i % 3 !== 0;
       const a = low ? r() * Math.PI * 2 : behind + (r() - 0.5) * 2.2;
-      return { a, rad: R * (low ? 1.2 + r() * 1.3 : 2.2 + r() * 1.2), y: low ? -38 - r() * 40 : 55 + r() * 35, s: (low ? 4.5 : 7) + r() * 5, v: i % 3, spin: (r() - 0.5) * 0.4, speed: 0.004 + r() * 0.008 };
+      return { a, rad: R * (low ? 0.8 + r() * 1.4 : 2.4 + r() * 1.2), y: low ? -55 - r() * 50 : 60 + r() * 35, s: (low ? 2.6 : 5) + r() * 3, v: i % 3, spin: (r() - 0.5) * 0.4, speed: 0.004 + r() * 0.008 };
     });
   }, [count, R]);
   const refs = [useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null), useRef<THREE.InstancedMesh>(null)];
@@ -101,7 +101,7 @@ const FF_VERT = /* glsl */ `
     p.z += cos(uTime * 0.5 + aPhase * 5.0) * 1.6;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
-    gl_PointSize = uPx * 180.0 / -mv.z;
+    gl_PointSize = uPx * 1500.0 / -mv.z;
     vBlink = pow(0.5 + 0.5 * sin(uTime * (1.5 + fract(aPhase * 13.0) * 2.0) + aPhase * 40.0), 3.0);
   }
 `;
