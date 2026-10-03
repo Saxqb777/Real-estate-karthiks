@@ -227,10 +227,11 @@ export interface MoverRegistry {
 
 export function Pedestrians({ layout, world, env, count, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; count: number; movers?: MoverRegistry }) {
   const marks = useMemo<Landmarks>(() => {
-    const porch = layout.compoundWalls.find((w) => w.gate === "porch") ?? layout.compoundWalls.find((w) => w.kind === "gate");
+    const porch = layout.compoundWalls.find((w) => w.gate === "porch" || w.gate === "main") ?? layout.compoundWalls.find((w) => w.kind === "gate");
     const gateX = porch ? (porch.a.x + porch.b.x) / 2 : layout.plot.rightX / 2;
     const vacant = layout.slots.find((s) => s.status === "vacant" || s.status === "incoming");
-    const boardGate = vacant ? (vacant.slot === "front" ? porch : (layout.compoundWalls.find((w) => w.gate === "passage" || w.gate === "main") ?? porch)) : null;
+    // the back house's board hangs on its lane-side wall, off the walkers' tracks: they only stop for the front one
+    const boardGate = vacant && vacant.slot === "front" ? porch : null;
     return { gateX, boardX: boardGate ? (boardGate.a.x + boardGate.b.x) / 2 : null, centerX: (layout.plot.polygon[0].x + layout.plot.rightX) / 2 };
   }, [layout]);
   // passers-by appear from / vanish into the island's cut edges
@@ -273,11 +274,11 @@ export function TenantFigure({ slot, world, env, index, gateAt }: { slot: Buildi
   const pos = useMemo<V3>(() => {
     if (onRoof) {
       const s = slot.stairs;
-      return [world.x(s.x0 - 2.2), slot.heightFt + 0.1, world.z(s.z1 + 1.6)];
+      return [world.x(s.x1 + 2.2), slot.heightFt + 0.1, world.z(s.z1 + 1.6)];
     }
     if (gateAt) return [world.x(gateAt.x + 0.9), 0.47, world.z(-1.0)];
     const { wide } = slot.notch;
-    return [world.x(Math.min(wide.x1 - 1.2, slot.door.x + 1.5)), 0.6, world.z(Math.max(wide.z0 + 1.3, slot.door.z - 1.6))];
+    return [world.x(Math.max(wide.x0 + 1.2, slot.door.x - 1.5)), 0.6, world.z(Math.max(wide.z0 + 1.3, slot.door.z - 1.6))];
   }, [onRoof, slot, world, gateAt]);
   const anchor = useMemo<V3>(() => [pos[0], pos[1] + 7.2, pos[2]], [pos]);
   const unitId = slot.unit?.id;

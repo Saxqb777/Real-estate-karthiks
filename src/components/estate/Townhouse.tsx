@@ -57,29 +57,29 @@ interface Edge {
   b: Pt;
   n: Pt;
   len: number;
-  kind: "front" | "left" | "back" | "porch" | "stair" | "party" | "veranda";
+  kind: "front" | "side" | "back" | "porch" | "stair" | "party" | "veranda";
 }
 
 function extrude(pts: Pt[], world: World, depth: number, holes: Pt[][] = []) {
   return new THREE.ExtrudeGeometry(planShape(pts, world, holes), { depth, bevelEnabled: false, curveSegments: 1 });
 }
 
-/** The front-left veranda (recessed under the roof, open on the front and the passage side), or null when too small. */
+/** The front-right veranda (recessed under the roof, open on the front and the passage side), or null when too small. */
 export function verandaOf(slot: BuildingSlot): Rect | null {
-  const { x0, z0 } = slot.rect;
-  const frontLen = slot.notch.wide.x0 - x0;
+  const { x1, z0 } = slot.rect;
+  const frontLen = x1 - slot.notch.wide.x1;
   if (frontLen < 8 || slot.depthFt < 14) return null;
-  return { x0, x1: x0 + Math.min(9.5, frontLen * 0.72), z0, z1: z0 + Math.min(6.5, slot.depthFt * 0.24) };
+  return { x0: x1 - Math.min(9.5, frontLen * 0.72), x1, z0, z1: z0 + Math.min(6.5, slot.depthFt * 0.24) };
 }
 
-/** Straight external stair against the right boundary: from just inside the porch gate up to the roof edge. */
+/** Straight external stair against the lane-side boundary: from just inside the main gate up to the roof edge. */
 export function stairOf(slot: BuildingSlot) {
   const { wide, step } = slot.notch;
   const s = slot.stairs;
   const w = Math.min(3.6, s.x1 - s.x0);
-  const x1 = s.x1 - 0.28; // inner face of the right compound wall
+  const x0 = s.x0 + 0.28; // inner face of the lane-side compound wall
   const z0 = wide.z0 + Math.min(3.2, (step.z1 - wide.z0) * 0.34);
-  return { x0: x1 - w, x1, z0, z1: s.z1 };
+  return { x0, x1: x0 + w, z0, z1: s.z1 };
 }
 
 /** Plan edges of a CCW polygon with outward normals. */
@@ -102,7 +102,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const groundOutline = useMemo<Pt[]>(() => {
     const o = slot.outline;
     if (!ver) return o;
-    return [{ x: ver.x1, z: ver.z0 }, ...o.slice(1), { x: ver.x0, z: ver.z1 }, { x: ver.x1, z: ver.z1 }];
+    // o = [notch front corner, front-right, back-right, …]: cut the front-right corner
+    return [o[0], { x: ver.x0, z: ver.z0 }, { x: ver.x0, z: ver.z1 }, { x: ver.x1, z: ver.z1 }, ...o.slice(2)];
   }, [slot.outline, ver]);
 
   // classify every wall edge (windows go on front / left / back / porch walls)
@@ -114,10 +115,12 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const classify = (e: Omit<Edge, "kind">): Edge["kind"] => {
     const k = wallKinds.get(`${e.a.x},${e.a.z}|${e.b.x},${e.b.z}`);
     if (k) return k;
-    if (ver && Math.max(e.a.x, e.b.x) <= ver.x1 + 0.01 && Math.max(e.a.z, e.b.z) <= ver.z1 + 0.01 && e.n.x <= 0.5 && e.n.z <= 0.5) {
-      return Math.abs(e.a.z - ver.z0) < 0.01 && Math.abs(e.b.z - ver.z0) < 0.01 ? "front" : Math.abs(e.a.x - ver.x0) < 0.01 && Math.abs(e.b.x - ver.x0) < 0.01 ? "left" : "veranda";
+    if (ver && Math.min(e.a.x, e.b.x) >= ver.x0 - 0.01 && Math.max(e.a.z, e.b.z) <= ver.z1 + 0.01) {
+      if (Math.abs(e.a.z - ver.z0) < 0.01 && Math.abs(e.b.z - ver.z0) < 0.01) return "front";
+      if (Math.abs(e.a.x - ver.x1) < 0.01 && Math.abs(e.b.x - ver.x1) < 0.01) return "side";
+      return "veranda";
     }
-    return e.n.z < -0.5 ? "front" : e.n.x < -0.5 ? "left" : e.n.z > 0.5 ? "back" : "party";
+    return e.n.z < -0.5 ? "front" : e.n.x > 0.5 ? "side" : e.n.z > 0.5 ? "back" : "party";
   };
 
   const geo = useMemo(() => {
@@ -169,14 +172,17 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       const edges = edgesOf(f === 0 ? groundOutline : slot.outline);
       edges.forEach((e, wi) => {
         const kind = classify(e);
-        if (!["front", "left", "back", "porch"].includes(kind) || e.len < 4.2) return;
+        // windows on the front / passage side / back / porch walls, and on the lane-side wall (it looks over the lane wall)
+        const laneSide = kind === "party" && e.n.x < -0.5;
+        if ((!["front", "side", "back", "porch"].includes(kind) && !laneSide) || e.len < 4.2) return;
         const n = Math.max(1, Math.floor((e.len - 1.2) / 6.6));
         const dx = (e.b.x - e.a.x) / e.len;
         const dz = (e.b.z - e.a.z) / e.len;
         const rotY = Math.atan2(e.n.x, -e.n.z);
         for (let i = 0; i < n; i++) {
           let t = ((i + 0.5) * e.len) / n;
-          if (kind === "porch" && f === 0) t = Math.max(t, Math.min(e.len - 1.8, 4.2)); // the meter box is at the front
+          // the meter box hangs at the front end of the porch wall: keep the window behind it
+          if (kind === "porch" && f === 0 && Math.abs(dz) > 0.5) t = Math.max(0, Math.min(e.len, (Math.max(slot.rect.z0 + 4.2, Math.min(e.a.z, e.b.z) + 1.6) - e.a.z) / dz));
           const px = e.a.x + dx * t + e.n.x * 0.06;
           const pz = e.a.z + dz * t + e.n.z * 0.06;
           const y = f * FH + 3.1 + WIN_H / 2;
@@ -261,10 +267,10 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     const parts: Part[] = [];
     const grills: Panel[] = [];
     const pz = ver.z0 + 0.5;
-    const px = ver.x0 + 0.5;
+    const px = ver.x1 - 0.5;
     const yTop = CHAJJA_Y;
     const ph = yTop - PLINTH;
-    const pillar = (x: number, z: number, faces: ("front" | "left")[]) => {
+    const pillar = (x: number, z: number, faces: ("front" | "side")[]) => {
       const X = world.x(x);
       const Z = world.z(z);
       parts.push(box([X, PLINTH + ph / 2, Z], [1.0, ph, 1.0], CREAM));
@@ -272,16 +278,16 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       parts.push(box([X, yTop - 0.35, Z], [1.2, 0.5, 1.2], CREAM));
       for (const f of faces)
         for (const d of [-0.28, 0, 0.28]) {
-          const sx = f === "front" ? d : -0.52;
+          const sx = f === "front" ? d : 0.52;
           const sz = f === "front" ? 0.52 : d;
           parts.push(box([X + sx, PLINTH + 0.75 + (ph - 1.5) / 2, Z + sz], f === "front" ? [0.09, ph - 1.5, 0.04] : [0.04, ph - 1.5, 0.09], BLACK));
         }
     };
     const midX = ver.x0 + (ver.x1 - ver.x0) / 2;
     const midZ = ver.z0 + (ver.z1 - ver.z0) / 2;
-    pillar(px, pz, ["front", "left"]);
+    pillar(px, pz, ["front", "side"]);
     pillar(midX, pz, ["front"]);
-    if (ver.z1 - ver.z0 > 4.5) pillar(px, midZ, ["left"]);
+    if (ver.z1 - ver.z0 > 4.5) pillar(px, midZ, ["side"]);
     // spandrel between the opening and the roof (the veranda ceiling)
     parts.push(box([world.x((ver.x0 + ver.x1) / 2), (yTop + FH) / 2, world.z((ver.z0 + ver.z1) / 2)], [ver.x1 - ver.x0, FH - yTop, ver.z1 - ver.z0], CREAM));
     // knee walls + grills between the pillars
@@ -294,10 +300,10 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       const c = (a + b) / 2;
       const [X, Z] = along === "x" ? [world.x(c), world.z(pz)] : [world.x(px), world.z(c)];
       parts.push(box([X, PLINTH + kneeH / 2, Z], along === "x" ? [len, kneeH, 0.5] : [0.5, kneeH, len], CREAM));
-      grills.push({ pos: [X, gy0 + gh / 2, Z], rotY: along === "x" ? 0 : -Math.PI / 2, w: len, h: gh });
+      grills.push({ pos: [X, gy0 + gh / 2, Z], rotY: along === "x" ? 0 : Math.PI / 2, w: len, h: gh });
     };
-    run(px + 0.5, midX - 0.5, "x");
-    run(midX + 0.5, ver.x1, "x");
+    run(ver.x0, midX - 0.5, "x");
+    run(midX + 0.5, px - 0.5, "x");
     if (ver.z1 - ver.z0 > 4.5) {
       run(pz + 0.5, midZ - 0.5, "z");
       run(midZ + 0.5, ver.z1, "z");
@@ -307,8 +313,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
 
   // ── chajja (sunshade) with black edge band, wrapped round the veranda corner ──
   const chajja = useMemo<Part[]>(() => {
-    const { x0, z0 } = slot.rect;
-    const xEnd = slot.notch.wide.x0;
+    const { x1, z0 } = slot.rect;
+    const xStart = slot.notch.wide.x1;
     const parts: Part[] = [];
     const slab = (xa: number, xb: number, za: number, zb: number) =>
       parts.push(box([world.x((xa + xb) / 2), CHAJJA_Y + 0.2, world.z((za + zb) / 2)], [xb - xa, 0.4, zb - za], CREAM_LIGHT));
@@ -317,16 +323,16 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       parts.push(box([world.x((xa + xb) / 2), CHAJJA_Y - 0.24, world.z((za + zb) / 2)], [Math.max(0.36, xb - xa + 0.06), 0.2, Math.max(0.36, zb - za + 0.06)], BLACK));
       parts.push(box([world.x((xa + xb) / 2), CHAJJA_Y + 0.44, world.z((za + zb) / 2)], [Math.max(0.36, xb - xa + 0.06), 0.08, Math.max(0.36, zb - za + 0.06)], BLACK));
     };
-    const left = ver ? CHAJJA_OUT : 0;
-    slab(x0 - left, xEnd, z0 - CHAJJA_OUT, z0 + 0.3);
-    fascia(x0 - left, xEnd, z0 - CHAJJA_OUT, z0 - CHAJJA_OUT + 0.3);
+    const right = ver ? CHAJJA_OUT : 0;
+    slab(xStart, x1 + right, z0 - CHAJJA_OUT, z0 + 0.3);
+    fascia(xStart, x1 + right, z0 - CHAJJA_OUT, z0 - CHAJJA_OUT + 0.3);
     if (ver) {
       const zEnd = ver.z1 + 1.0;
-      slab(x0 - CHAJJA_OUT, x0 + 0.3, z0, zEnd);
-      fascia(x0 - CHAJJA_OUT, x0 - CHAJJA_OUT + 0.3, z0 - CHAJJA_OUT, zEnd);
+      slab(x1 - 0.3, x1 + CHAJJA_OUT, z0, zEnd);
+      fascia(x1 + CHAJJA_OUT - 0.3, x1 + CHAJJA_OUT, z0 - CHAJJA_OUT, zEnd);
     }
     return parts;
-  }, [slot.rect, slot.notch.wide.x0, ver, world]);
+  }, [slot.rect, slot.notch.wide.x1, ver, world]);
 
   // ── roof: low parapet with black coping (gap where the stair arrives) + the raised stepped front parapet ──
   const roof = useMemo(() => {
@@ -339,7 +345,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       const kind = wallKinds.get(`${e.a.x},${e.a.z}|${e.b.x},${e.b.z}`);
       if (kind === "stair" && Math.abs(e.a.z - e.b.z) < 0.01) {
         const dx = (e.b.x - e.a.x) / e.len;
-        const g0 = (stair.x0 - 0.2 - e.a.x) / dx;
+        const g0 = (stair.x0 - 0.3 - e.a.x) / dx;
         const g1 = (stair.x1 + 0.3 - e.a.x) / dx;
         segs.length = 0;
         const lo = Math.max(0, Math.min(g0, g1));
@@ -362,10 +368,10 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       }
     }
     // raised stepped parapet over the front (centred on the veranda), with two arched jaali vents
-    const { x0, z0 } = slot.rect;
-    const frontLen = slot.notch.wide.x0 - x0;
+    const { x1, z0 } = slot.rect;
+    const frontLen = x1 - slot.notch.wide.x1;
     if (frontLen > 5) {
-      const cx = ver ? (ver.x0 + ver.x1) / 2 + 0.4 : x0 + frontLen / 2;
+      const cx = ver ? (ver.x0 + ver.x1) / 2 - 0.4 : slot.notch.wide.x1 + frontLen / 2;
       const Wc = Math.min(8, frontLen * 0.62);
       const d = 1.1;
       const Z = world.z(z0 + d / 2 - 0.12);
@@ -388,8 +394,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
         vents.push({ pos: [X + sx * wC * 0.22, yb + hC - 1.45, Z + d / 2 + 0.08], rotY: 0, w: 0.85, h: 1.15 });
       }
     }
-    // water tank: black HDPE cylinder on a small raised cream stand, at the rear-left corner of the terrace
-    const tx = world.x(slot.rect.x0 + 3.0);
+    // water tank: black HDPE cylinder on a small raised cream stand, at the rear passage-side corner of the terrace
+    const tx = world.x(slot.rect.x1 - 3.0);
     const tz = world.z(slot.rect.z1 - 3.0);
     parts.push(
       box([tx, top + 0.15, tz], [4.4, 0.3, 4.4], CREAM_LIGHT),
@@ -408,32 +414,32 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     const top = H;
     const { wide } = slot.notch;
     const parts: Part[] = [
-      // PVC rain-water down pipes at the left corners
+        // PVC rain-water down pipes at the passage-side corners
       ...[slot.rect.z0 + (ver ? ver.z1 - slot.rect.z0 + 0.3 : 0.45), slot.rect.z1 - 0.45].flatMap((z) => {
-        const x = world.x(slot.rect.x0 - 0.28);
+        const x = world.x(slot.rect.x1 + 0.28);
         const Z = world.z(z);
-        return [rod([x, (top + 0.8) / 2, Z], [0.3, top + 0.8, 0.3], "#e6e1d3"), box([x - 0.25, 0.35, Z], [0.7, 0.22, 0.32], "#e6e1d3")];
+        return [rod([x, (top + 0.8) / 2, Z], [0.3, top + 0.8, 0.3], "#e6e1d3"), box([x + 0.25, 0.35, Z], [0.7, 0.22, 0.32], "#e6e1d3")];
       }),
     ];
-    // maroon EB meter box in a cream frame on the porch wall at the stair foot (faces the gate)
+    // maroon EB meter box in a cream frame on the porch wall at the stair foot (faces the stair and the gate)
     if (wide.z1 - wide.z0 > 3) {
-      const X = world.x(wide.x0);
+      const X = world.x(wide.x1);
       const Z = world.z(wide.z0 + 1.5);
       parts.push(
-        box([X + 0.12, 5.0, Z], [0.24, 2.3, 2.2], CREAM_LIGHT),
-        box([X + 0.3, 5.0, Z], [0.2, 1.7, 1.6], PAL.maroon),
-        box([X + 0.42, 5.25, Z + 0.3], [0.08, 0.55, 0.42], "#cfd3d6"),
-        box([X + 0.42, 4.7, Z - 0.4], [0.1, 0.5, 0.5], "#8e2a22"),
+        box([X - 0.12, 5.0, Z], [0.24, 2.3, 2.2], CREAM_LIGHT),
+        box([X - 0.3, 5.0, Z], [0.2, 1.7, 1.6], PAL.maroon),
+        box([X - 0.42, 5.25, Z + 0.3], [0.08, 0.55, 0.42], "#cfd3d6"),
+        box([X - 0.42, 4.7, Z - 0.4], [0.1, 0.5, 0.5], "#8e2a22"),
       );
     }
     // entrance steps at the front of the veranda / porch
-    if (ver) parts.push(box([world.x(ver.x0 + (ver.x1 - ver.x0) * 0.75), 0.3, world.z(ver.z0 - 0.4)], [2.6, 0.6, 0.8], "#d9d2bf"));
+    if (ver) parts.push(box([world.x(ver.x0 + (ver.x1 - ver.x0) * 0.25), 0.3, world.z(ver.z0 - 0.4)], [2.6, 0.6, 0.8], "#d9d2bf"));
     return parts;
   }, [slot, ver, world, H]);
 
   const door = slot.door;
   const doorOnVeranda = !!ver;
-  const doorPos: V3 = ver ? [world.x(ver.x0 + (ver.x1 - ver.x0) * 0.66), PLINTH + 3.5, world.z(ver.z1 - 0.07)] : [world.x(door.x + 0.07), 0.6 + 3.5, world.z(door.z)];
+  const doorPos: V3 = ver ? [world.x(ver.x0 + (ver.x1 - ver.x0) * 0.34), PLINTH + 3.5, world.z(ver.z1 - 0.07)] : [world.x(door.x - 0.07), 0.6 + 3.5, world.z(door.z)];
   const doorW = ver ? 3.2 : door.widthFt;
   const doorTrim = useMemo<Part[]>(
     () => [
@@ -513,7 +519,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const furniture = useMemo(() => [...stairs.parts, ...veranda.parts, ...chajja, ...roof.parts, ...extras], [stairs, veranda, chajja, roof, extras]);
   const furnitureMat = holo ?? vcMaterial(0.8, finish);
   const kolam = ver
-    ? { x: ver.x0 + (ver.x1 - ver.x0) * 0.6, z: ver.z0 + (ver.z1 - ver.z0) * 0.55, s: Math.min(ver.x1 - ver.x0, ver.z1 - ver.z0) * 0.62, y: PLINTH + 0.03 }
+    ? { x: ver.x0 + (ver.x1 - ver.x0) * 0.4, z: ver.z0 + (ver.z1 - ver.z0) * 0.55, s: Math.min(ver.x1 - ver.x0, ver.z1 - ver.z0) * 0.62, y: PLINTH + 0.03 }
     : { x: slot.kolam.x, z: slot.kolam.z, s: slot.kolam.sizeFt, y: 0.62 };
 
   return (
@@ -541,7 +547,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       <instancedMesh ref={ventRef} args={[G.plane(), M.vent, Math.max(1, roof.vents.length)]} />
 
       {/* main door with frame + lamp */}
-      <group position={doorPos} rotation={[0, doorOnVeranda ? 0 : Math.PI / 2, 0]}>
+      <group position={doorPos} rotation={[0, doorOnVeranda ? 0 : -Math.PI / 2, 0]}>
         <Baked parts={doorTrim} cast={!ghost} material={furnitureMat} />
         <mesh geometry={G.plane()} material={ghost ? M.plaster : std("#ffffff", { map: doorTex(), rough: 0.6, finish })} scale={[doorW, 7, 1]} position={[0, 0, 0.06]} />
         {!ghost && <mesh geometry={G.sphere()} material={lampMat} scale={0.4} position={[doorW / 2 + 0.75, 2.6, 0.3]} />}
@@ -616,8 +622,8 @@ const CLOTH_COLORS = ["#c2185b", "#f4f1ea", "#2f6fb5", "#e0a020", "#2e8b57"];
  */
 function ClothesLine({ slot, world, env, y, animate }: { slot: BuildingSlot; world: World; env: RefObject<Env>; y: number; animate: boolean }) {
   const z = slot.rect.z1 - 6.5;
-  const x0 = slot.rect.x0 + 6.5;
-  const x1 = Math.min(slot.stairs.x0 - 1.5, slot.rect.x1 - 2.5);
+  const x0 = Math.max(slot.stairs.x1 + 1.5, slot.rect.x0 + 2.5);
+  const x1 = slot.rect.x1 - 6.5;
   const len = Math.max(4, x1 - x0);
   const cloth = useMemo(() => {
     const geos: THREE.PlaneGeometry[] = [];

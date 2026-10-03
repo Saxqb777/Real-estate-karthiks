@@ -431,14 +431,14 @@ function SceneContents({
       } else last.delete(key);
     };
   }, []);
-  const gate = layout.compoundWalls.find((w) => w.gate === "passage" || w.gate === "main");
-  const porchGate = layout.compoundWalls.find((w) => w.gate === "porch");
+  // each unit's own gate: the front unit's main gate at its stair foot (front wall), the back unit's gate in the
+  // middle of the lane-side wall; the point just outside it carries the TO-LET board / the kolam
+  const frontGate = layout.compoundWalls.find((w) => w.gate === "porch" || w.gate === "main");
+  const sideGate = layout.compoundWalls.find((w) => w.gate === "side");
   const signAt = (sl: SlotName) => {
-    const g = sl === "front" ? (porchGate ?? gate) : (gate ?? porchGate);
-    return g ? { x: (g.a.x + g.b.x) / 2, z: -2.6 } : undefined;
+    if (sl === "back" && sideGate) return { x: -2.6, z: (sideGate.a.z + sideGate.b.z) / 2, side: true };
+    return frontGate ? { x: (frontGate.a.x + frontGate.b.x) / 2, z: -2.6 } : undefined;
   };
-  // a back house behind a front one hangs its TO-LET board on its side wall (seen over the side passage)
-  const frontBuilt = layout.slots.some((x) => x.slot === "front" && !!x.unit);
 
   // ── DOM labels: cards / tags / tooltips / hint markers / dimensions (anchors read every frame) ──
   const anchors = useRef(new Map<string, V3>());
@@ -507,7 +507,7 @@ function SceneContents({
           rise={animate}
           onEmptyClick={onEmptySlotClick}
           signAt={signAt(slot.slot)}
-          boardOnWall={slot.slot === "back" && frontBuilt}
+          boardOnWall={slot.slot === "back" && !!sideGate}
           occluder={occluderFor(slot.slot)}
         />
       ))}

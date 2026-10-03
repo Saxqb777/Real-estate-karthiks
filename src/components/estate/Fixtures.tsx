@@ -1,6 +1,6 @@
 "use client";
 // Street-front furniture that doubles as data entry points (DESIGN.md "World objects = data entry points"):
-//   mailbox on the porch-gate pillar → payments · notice board by the passage gate → to-dos ·
+//   mailbox on the main-gate pillar → payments · notice board on the lane wall → to-dos ·
 //   EB pole + meter (on the grass by the gate) → electricity · tax stamp on the gate pillar → property tax · survey stone + flag → plot.
 // Positions come from layout.fixtures (src/lib/site-layout.ts, unit tested). Each is a <Hotspot>.
 import { Line } from "@react-three/drei";
@@ -229,11 +229,11 @@ function PoleAndMeter({ layout, world, env, lampLight, crows }: { layout: SiteLa
         out.push(pts);
       }
     }
-    // service drop to the front building, landing above its meter box at the stair foot
+    // service drop to the front building's passage-side corner (the poles stand right of the plot)
     const f = layout.slots.find((s) => s.slot === "front" && s.unit);
     if (f) {
       const a: V3 = [world.x(p0.x), wireY - 1.5, world.z(zPole)];
-      const b: V3 = [world.x(f.notch.wide.x0 + 0.3), f.heightFt - 0.6, world.z(f.rect.z0 + 1.5)];
+      const b: V3 = [world.x(f.rect.x1 - 0.6), f.heightFt + 0.8, world.z(f.rect.z0 + 0.6)];
       const pts: V3[] = [];
       for (let i = 0; i <= 12; i++) {
         const t = i / 12;

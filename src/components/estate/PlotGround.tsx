@@ -1,8 +1,9 @@
 "use client";
 // Inside the compound (owner's photos): grey concrete yard and passage, a concrete step at each porch, and the
-// cream compound wall — square pillars, a graphic black line pattern on the lane side (left), white quatrefoil
-// breeze-block jaali panels in black frames, black steel gates with a diamond motif and the house-number plate on
-// the corner pillar. A tulsi maadam in the courtyard and potted marigolds.
+// cream compound wall — square pillars, a graphic black line pattern on the long lane-side (left) wall, white
+// quatrefoil breeze-block jaali panels in black frames elsewhere, two black steel gates with a diamond motif (the main
+// gate at the front unit's stair foot, the back unit's gate mid-way along the lane wall) and the house-number plate
+// on the front corner pillar. A tulsi maadam in the courtyard and potted marigolds.
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { BuildingSlot, CompoundWall, SiteLayout } from "@/lib/site-layout";
@@ -109,7 +110,9 @@ function wallParts(layout: SiteLayout, world: World): { solid: Part[]; jalis: In
       solid.push(box(at(t, (WALL_H + 0.45) / 2), [PILLAR, WALL_H + 0.45, PILLAR], cream, [0, rotY, 0]));
       solid.push(box(at(t, WALL_H + 0.5), [PILLAR + 0.16, 0.14, PILLAR + 0.16], PAL.cornice, [0, rotY, 0]));
     }
-    const lane = w.kind === "wall" && Math.abs(w.a.x - P[3].x) + Math.abs(w.b.x - P[0].x) < 0.01 && w.a.z > w.b.z; // the left (lane-side) wall
+    // the long lane-side (left) wall: both ends on the line FL–BL
+    const onLane = (p: { x: number; z: number }) => Math.abs((P[3].x - P[0].x) * (p.z - P[0].z) - (P[3].z - P[0].z) * (p.x - P[0].x)) < 0.01 * (P[3].z - P[0].z);
+    const lane = onLane(w.a) && onLane(w.b);
     const outFace = WALL_T / 2 + 0.025;
     if (lane) {
       // graphic black pattern on the lane side: a black post on every pillar, two rails per panel that step up and
@@ -191,7 +194,7 @@ function Tulsi({ layout, world }: { layout: SiteLayout; world: World }) {
   const parts = useMemo<Part[]>(() => {
     const c = layout.courtyard!;
     const back = layout.slots.find((s) => s.slot === "back");
-    const X = world.x((back ? back.rect.x0 : layout.plot.rightX - 10) + 3.2);
+    const X = world.x((back ? back.rect.x1 : layout.plot.rightX) - 3.2); // passage side, clear of the lane gate
     const Z = world.z((c.z0 + c.z1) / 2);
     const p = (x: number, y: number, z: number): [number, number, number] => [X + x, y, Z + z];
     return [
@@ -212,15 +215,15 @@ function Pots({ layout, world }: { layout: SiteLayout; world: World }) {
     const spots: [number, number][] = [];
     for (const s of layout.slots) {
       if (s.status === "empty") continue;
-      spots.push([s.notch.wide.x0 + 0.9, s.rect.z0 + 0.8]);
-      spots.push([s.rect.x1 - 0.9, s.rect.z0 + 0.8]);
+      spots.push([s.notch.wide.x1 - 0.9, s.rect.z0 + 0.8]);
     }
     if (layout.courtyard) {
-      spots.push([layout.plot.rightX - 1.2, layout.courtyard.z1 - 1.2]);
-      spots.push([layout.plot.rightX - 2.6, layout.courtyard.z1 - 1.0]);
+      const rx = layout.plot.polygon[1].x + ((layout.plot.polygon[2].x - layout.plot.polygon[1].x) * layout.courtyard.z1) / layout.plot.depthFt;
+      spots.push([rx - 1.2, layout.courtyard.z1 - 1.2]);
+      spots.push([rx - 2.6, layout.courtyard.z1 - 1.0]);
     }
     return spots.flatMap(([x, z], i) => {
-      const raised = layout.slots.some((s) => s.status !== "empty" && x >= s.notch.wide.x0 - 0.01 && z <= s.notch.wide.z1 && z >= s.rect.z0) ? 0.6 : 0;
+      const raised = layout.slots.some((s) => s.status !== "empty" && x <= s.notch.wide.x1 + 0.01 && z <= s.notch.wide.z1 && z >= s.rect.z0) ? 0.3 : 0;
       const X = world.x(x);
       const Z = world.z(z);
       return [

@@ -35,8 +35,8 @@ export interface UnitSlotProps {
   index: number;
   onEmptyClick?: (slot: SlotName) => void;
   /** where the unit's gate is on the street (plan ft): its TO-LET board stands there, its kolam is drawn there */
-  signAt?: { x: number; z: number };
-  /** hang the TO-LET board on the building's side wall instead (a back house, seen over the side passage) */
+  signAt?: { x: number; z: number; side?: boolean };
+  /** hang the TO-LET board on the building's lane-side wall instead (the back house, seen over the lane wall by its gate) */
   boardOnWall?: boolean;
   /** registers the building hit volume (used to fade labels hidden behind buildings) */
   occluder?: (o: THREE.Object3D | null) => void;
@@ -185,7 +185,7 @@ function BuiltSlot({ slot, world, env, mode, selected, highlighted, interactive,
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
       {empty && <LetBoard slot={slot} world={world} reduced={reduced} at={signAt} onWall={!!boardOnWall} incoming={slot.status === "incoming"} />}
       {slot.status === "occupied" && mode !== "preview" && interactive && <TenantFigure slot={slot} world={world} env={env} index={index} gateAt={slot.rect.z0 < 0.01 ? signAt : undefined} />}
-      {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x)} z={world.z(signAt.z - 1.2)} env={env} />}
+      {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x - (signAt.side ? 0.4 : 0))} z={world.z(signAt.z - (signAt.side ? 0 : 1.2))} env={env} />}
     </group>
   );
 }
@@ -308,8 +308,8 @@ function LetBoard({ slot, world, reduced, at, onWall, incoming }: { slot: Buildi
     if (ref.current && !reduced) ref.current.rotation.z = Math.sin(clock.elapsedTime * 1.3) * (onWall ? 0.012 : 0.025);
   });
   const unitId = slot.unit!.id;
-  // street board at the unit's gate, facing the road — or hung on the side wall facing the passage (world −X)
-  const wallY = Math.min(slot.heightFt - 2.2, slot.floors > 1 ? 10.5 + 2.2 : 5.6);
+  // board on the grass at the unit's front gate, facing out — or hung on the house's lane-side wall facing the lane (world −X)
+  const wallY = Math.min(slot.heightFt - 2.2, slot.floors > 1 ? 10.5 + 2.2 : 6.7);
   const pos: V3 = onWall
     ? [world.x(slot.rect.x0 - 0.3), 0, world.z(slot.rect.z0 + Math.min(slot.depthFt * 0.4, 9))]
     : [world.x(at ? at.x : slot.notch.wide.x0 + (slot.notch.wide.x1 - slot.notch.wide.x0) * 0.45), 0, world.z(at ? at.z : slot.rect.z0 - 2.4)];

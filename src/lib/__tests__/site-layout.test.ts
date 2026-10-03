@@ -84,11 +84,11 @@ describe("polygon helpers", () => {
 describe("computeSiteLayout — owner's site plan", () => {
   const L = computeSiteLayout(PLOT, [A, B]);
 
-  it("draws the trapezoid with a straight right boundary and slanting left boundary", () => {
+  it("draws the trapezoid with a straight left (lane-side) boundary and a slanting right boundary", () => {
     expect(L.plot.rightX).toBe(23.25);
     expect(L.plot.polygon).toEqual([
-      { x: 1, z: 0 }, // 23.25 − 22.25
-      { x: 23.25, z: 0 },
+      { x: 0, z: 0 },
+      { x: 22.25, z: 0 },
       { x: 23.25, z: 76.66 },
       { x: 0, z: 76.66 },
     ]);
@@ -96,16 +96,17 @@ describe("computeSiteLayout — owner's site plan", () => {
     expect(L.warnings).toEqual([]);
   });
 
-  it("places the front building at 0–28 ft and the back one after a 10 ft courtyard, flush right", () => {
+  it("places the front building at 0–28 ft and the back one after a 10 ft courtyard, flush to the lane side (left)", () => {
     const [f, b] = L.slots;
     expect(f.slot).toBe("front");
-    expect(f.rect).toEqual({ x0: 3.25, x1: 23.25, z0: 0, z1: 28 });
-    expect(b.rect).toEqual({ x0: 3.25, x1: 23.25, z0: 38, z1: 66 });
+    expect(f.rect).toEqual({ x0: 0, x1: 20, z0: 0, z1: 28 });
+    expect(b.rect).toEqual({ x0: 0, x1: 20, z0: 38, z1: 66 });
     expect(L.courtyard).toEqual({ z0: 28, z1: 38 });
     expect(L.rearYard.z0).toBe(66);
     expect(L.rearYard.z1).toBe(76.66);
+    // the side passage is on the right, between the building and the slanting boundary
     expect(f.passageFt).toBeCloseTo(2.25, 6);
-    expect(b.passageFt).toBeCloseTo(3.25 - (23.25 - (22.25 + 38 / 76.66)), 6);
+    expect(b.passageFt).toBeCloseTo(22.25 + 38 / 76.66 - 20, 6);
     expect(f.unit?.id).toBe("u1");
     expect(b.status).toBe("vacant");
   });
@@ -122,37 +123,44 @@ describe("computeSiteLayout — owner's site plan", () => {
     expect(computeSiteLayout(PLOT, [unit({ floors: 0 })]).slots[0].floors).toBe(1);
   });
 
-  it("cuts the stepped notch (6.5 × 9.5, one step) and the 5 × 7 stair well from the front-right corner", () => {
+  it("cuts the stepped notch (6.5 × 9.5, one step) and the 5 × 7 stair well from the front-left (lane-side) corner", () => {
     const f = L.slots[0];
-    expect(f.notch.wide).toEqual({ x0: 16.75, x1: 23.25, z0: 0, z1: 7.5 });
-    expect(f.notch.step).toEqual({ x0: 18.25, x1: 23.25, z0: 7.5, z1: 9.5 });
-    expect(f.stairs).toEqual({ x0: 18.25, x1: 23.25, z0: 9.5, z1: 16.5 });
+    expect(f.notch.wide).toEqual({ x0: 0, x1: 6.5, z0: 0, z1: 7.5 });
+    expect(f.notch.step).toEqual({ x0: 0, x1: 5, z0: 7.5, z1: 9.5 });
+    expect(f.stairs).toEqual({ x0: 0, x1: 5, z0: 9.5, z1: 16.5 });
     expect(f.outline).toEqual([
-      { x: 3.25, z: 0 },
-      { x: 16.75, z: 0 },
-      { x: 16.75, z: 7.5 },
-      { x: 18.25, z: 7.5 },
-      { x: 18.25, z: 16.5 },
-      { x: 23.25, z: 16.5 },
-      { x: 23.25, z: 28 },
-      { x: 3.25, z: 28 },
+      { x: 6.5, z: 0 },
+      { x: 20, z: 0 },
+      { x: 20, z: 28 },
+      { x: 0, z: 28 },
+      { x: 0, z: 16.5 },
+      { x: 5, z: 16.5 },
+      { x: 5, z: 7.5 },
+      { x: 6.5, z: 7.5 },
     ]);
     // 20 × 28 − porch 6.5 × 7.5 − step 5 × 2 − stairs 5 × 7
     expect(f.floorAreaSqft).toBe(466.25);
     expect(polygonArea(f.outline)).toBeGreaterThan(0); // counter-clockwise
-    expect(f.door.x).toBe(16.75);
-    expect(f.walls.map((w) => w.kind)).toEqual(["front", "porch", "porch", "stair", "stair", "party", "back", "left"]);
-    // outward normals
+    expect(f.door.x).toBe(6.5);
+    expect(f.walls.map((w) => w.kind)).toEqual(["front", "side", "back", "party", "stair", "stair", "porch", "porch"]);
+    // outward normals: front faces the grass, the side wall faces the passage (+x), the party wall the lane (−x)
     expect(f.walls[0].n).toEqual({ x: 0, z: -1 });
-    expect(f.walls[7].n).toEqual({ x: -1, z: -0 });
+    expect(f.walls[1].n).toEqual({ x: 1, z: -0 });
+    expect(f.walls[3].n).toEqual({ x: -1, z: -0 });
   });
 
-  it("builds compound walls with a passage gate and a porch gate when the front building is on the boundary", () => {
-    const gates = L.compoundWalls.filter((w) => w.kind === "gate").map((w) => w.gate);
-    expect(gates).toEqual(["passage", "porch"]);
-    const passage = L.compoundWalls.find((w) => w.gate === "passage")!;
-    expect(passage.a).toEqual({ x: 1, z: 0 });
-    expect(passage.b).toEqual({ x: 3.25, z: 0 });
+  it("has exactly two gates: the main gate at the front unit's stair foot and the back unit's gate mid-way along the lane wall", () => {
+    const gates = L.compoundWalls.filter((w) => w.kind === "gate");
+    expect(gates.map((w) => w.gate)).toEqual(["porch", "side"]);
+    const main = gates[0];
+    expect(main.a).toEqual({ x: 2.5, z: 0 });
+    expect(main.b).toEqual({ x: 6.5, z: 0 }); // ends at the house front, in front of the notch / stair
+    const side = gates[1];
+    expect([side.a.x, side.b.x]).toEqual([0, 0]); // on the lane-side boundary
+    expect((side.a.z + side.b.z) / 2).toBe(33); // middle of the 28–38 courtyard
+    expect(Math.abs(side.a.z - side.b.z)).toBe(4);
+    // a front unit alone has only the main gate
+    expect(computeSiteLayout(PLOT, [A]).compoundWalls.filter((w) => w.kind === "gate").map((w) => w.gate)).toEqual(["porch"]);
   });
 
   it("puts open grass (no road) in front of the plot", () => {
@@ -216,7 +224,7 @@ describe("computeSiteLayout — slots and edge cases", () => {
   it("uses each unit's own footprint and floors", () => {
     const L = computeSiteLayout(PLOT, [unit({ footprintWidthFt: 18, footprintDepthFt: 24, floors: 3 })]);
     const f = L.slots[0];
-    expect(f.rect).toEqual({ x0: 5.25, x1: 23.25, z0: 0, z1: 24 });
+    expect(f.rect).toEqual({ x0: 0, x1: 18, z0: 0, z1: 24 });
     expect(f.heightFt).toBe(31.5);
     expect(L.slots[1].rect.z0).toBe(34); // 24 + 10 courtyard
   });
@@ -255,7 +263,7 @@ describe("computeSiteLayout — slots and edge cases", () => {
   it("keeps the notch valid on a tiny footprint", () => {
     const L = computeSiteLayout(PLOT, [unit({ footprintWidthFt: 8, footprintDepthFt: 10 })]);
     const f = L.slots[0];
-    expect(f.notch.wide.x0).toBeGreaterThan(f.rect.x0);
+    expect(f.notch.wide.x1).toBeLessThan(f.rect.x1);
     expect(f.stairs.z1).toBeLessThan(f.rect.z1);
     expect(f.floorAreaSqft).toBeGreaterThan(0);
   });
@@ -285,12 +293,12 @@ describe("street-front fixtures (clickable world objects)", () => {
   const L = computeSiteLayout(PLOT, [A, B]);
   const F = L.fixtures;
   const [FL, FR, , BL] = L.plot.polygon;
-  it("mounts the mailbox on the porch-gate pillar and the tax stamp on the front wall by the passage", () => {
+  it("mounts the mailbox on the main-gate pillar and the tax stamp on the house front beside the notch", () => {
     const porch = L.compoundWalls.find((w) => w.gate === "porch")!;
     expect(F.mailbox).toEqual(porch.a);
     const front = L.slots.find((s) => s.slot === "front")!;
-    expect(F.taxStamp).toEqual({ x: front.rect.x0 + 2.2, z: 0, on: "wall" });
-    expect(F.taxStamp.x).toBeLessThan(front.notch.wide.x0);
+    expect(F.taxStamp).toEqual({ x: front.notch.wide.x1 + 2.2, z: 0, on: "wall" });
+    expect(F.taxStamp.x).toBeLessThan(front.rect.x1);
   });
   it("hangs the notice board on the left wall a few feet from the street, inside the plot depth", () => {
     expect(F.noticeBoard.z).toBeGreaterThan(2);

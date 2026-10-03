@@ -23,10 +23,12 @@ The owner wants it **visually stunning, game-like and highly interactive** — a
 
 ## Site plan (from owner's drawing)
 Plot: front width 22'3" (22.25 ft), back width 23'3" (23.25 ft), depth 76' (label 76.66 ft), area 1,744 sqft.
-Two identical buildings, each ~20 ft wide × 28 ft deep, flush to the right boundary with ~3 ft side passage on the left.
+Two identical buildings, each ~20 ft wide × 28 ft deep. 3D orientation follows the owner's photos (photo 7): the LEFT
+boundary runs along the lane (straight, x = 0); houses are flush to it with the ~3 ft side passage on the RIGHT.
 Front building at 0–28 ft, ~10 ft open courtyard gap, back building ~38–66 ft, ~10 ft rear yard.
-Each building has a stepped notch at its front-right corner (~6.5 ft wide × ~9.5 ft deep, one small step) and an external
-staircase just behind it on the right (~7 ft wide × ~5 ft). These defaults are used when Plot/Unit dimension fields are empty.
+Each building has a stepped notch at its front-LEFT (lane-side) corner (~6.5 ft wide × ~9.5 ft deep, one small step) and an
+external staircase just behind it (~7 ft × ~5 ft); the 3D draws one straight flight from the main gate up to the terrace.
+Gates: ONE main gate in the front wall at the front unit's stair foot + the back unit's gate mid-way along the lane wall. These defaults are used when Plot/Unit dimension fields are empty.
 
 ## Local dev in the cloud container
 The container cannot reach Neon (egress policy). Use the local Postgres: `service postgresql start`,
@@ -64,6 +66,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   pattern on the lane (left) side, quatrefoil jaali panels, black diamond gates, "116/87" plate. Road, shoulders, drain, kerbs and ALL
   traffic REMOVED (Traffic.tsx deleted) — open grass on the island (`layout.site.meadow`), EB poles on the grass right of the gate,
   people walk across the grass / round the palms and banana garden, cow grazes under the front-right palms.
+- 3/10/2026 follow-up (owner): layout MIRRORED to match photos 6/7 — lane on the left long side (black-banded wall), houses
+  flush to it, notch + stair + main gate at the front-left (lane corner, "116/87" pillar), veranda at the front-right,
+  passage on the right; second gate mid-way along the lane wall for the back unit. Default camera (front-left) unchanged.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

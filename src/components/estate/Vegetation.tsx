@@ -360,9 +360,10 @@ export function Greenery({ layout, world, grassCount }: { layout: SiteLayout; wo
     // a few shrubs along the far half of the left wall (the near half shows the wall's black line pattern)
     for (let z = D * 0.55; z < D; z += 4.5 + r() * 3) bushes.push({ x: leftX(z) - 1.5 - r() * 0.6, z, s: 1.2 + r() * 0.8, c: r() });
     for (let x = BL.x + 1; x < BR.x; x += 2.6 + r() * 1.4) bushes.push({ x, z: D + 1.4 + r() * 0.5, s: 1.3 + r() * 0.9, c: r() });
-    for (let z = 3; z < D; z += 5 + r() * 4) bushes.push({ x: FR.x + 1.5 + r() * 0.6, z, s: 1.0 + r() * 0.8, c: r() });
+    const rightX = (z: number) => FR.x + ((BR.x - FR.x) * z) / D;
+    for (let z = 3; z < D; z += 5 + r() * 4) bushes.push({ x: rightX(z) + 1.5 + r() * 0.6, z, s: 1.0 + r() * 0.8, c: r() });
     const rear = layout.rearYard.z1 - layout.rearYard.z0;
-    if (rear > 3) for (let i = 0; i < 5; i++) bushes.push({ x: FR.x - 1.5 - i * 3.6, z: D - 1.4, s: 1.2 + r() * 0.6, c: r() });
+    if (rear > 3) for (let i = 0; i < 5; i++) bushes.push({ x: BR.x - 1.5 - i * 3.6, z: D - 1.4, s: 1.2 + r() * 0.6, c: r() });
     const tileIn = offsetPolygon(layout.site.tile, -1.6);
     const plotOut = offsetPolygon(P.polygon, 1.2);
     const xs = layout.site.tile.map((p) => p.x);

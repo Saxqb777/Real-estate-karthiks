@@ -13,7 +13,7 @@ every entity (unit, tenant, payment) is clickable, and the 3D model is driven by
 - The plot sits on a floating **laterite soil tile** (red earth, cut edge shows soil strata, like a game board tile),
   trapezoid shaped exactly per plot fields (front width, back width, depth).
 - Two cream-plaster **townhouses** with terracotta parapet + a Chettinad-style accent band, flat roofs with the classic
-  black **water tank** found on Tamil Nadu roofs, external staircase, stepped front-right notch (see CLAUDE.md site plan).
+  black **water tank** found on Tamil Nadu roofs, external staircase, stepped front-left (lane-side) notch (see CLAUDE.md site plan).
 - **Coconut palms** around the plot (Pattukottai is coconut country), compound wall with gate, a white **kolam** at each entrance,
   soft clouds, gentle ambient motion (palm sway, drifting clouds, fireflies at night).
 - **Day / dusk / night** lighting follows the real IST clock (toggle available). Windows glow warm at night when occupied.
