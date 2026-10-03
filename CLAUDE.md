@@ -99,7 +99,7 @@ import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
   Node 22.x, build `npx prisma migrate deploy && npm run build`. Env: DATABASE_URL (Neon pooled, pgbouncer=true), DIRECT_URL,
   APP_USERNAME, APP_PASSWORD, SESSION_SECRET (production secret differs from local). Vercel Authentication only on previews;
   production URL is public behind the app's own login.
-- **`commandForIgnoringBuildStep` is set to `exit 0` (builds paused) — set it to null when ready to deploy.**
+- LIVE 3/10/2026: https://pattukottai-estates.vercel.app (builds un-paused; every push to the branch redeploys production).
 
 ## Owner's done-check (automated)
 `scripts/done-check.mjs` enters the owner's test case through the real API (2 units, 1 offer, 1 tenant, 1 lease, 3 payments,
