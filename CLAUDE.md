@@ -57,6 +57,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - DATA CLARITY CONTRACT in docs/DESIGN.md is mandatory: cash vs paper value vs occupancy always separated and tagged, scope chip on every
   number, fixed vocabulary, deposits ≠ income, visible reconciliation, identical formats everywhere.
 - Layout: immersive world-as-background (option A), CLEAN by default — panels open on click (house, chips, objects) with pin-to-keep-open; focus dimming; option B (framed) switchable via a layout prop.
+- 3/10/2026 owner sent real photos (houses 116/87): 3D houses now match them — SINGLE STOREY + flat roof terrace (default floors 1,
+  demo seed floors 1), ivory-cream walls with black accent lines, raised stepped front parapet with 2 arched jaali vents, chajja with
+  black edge over a grilled front-left veranda (fluted pillars), maroon-framed grilled windows, straight external stair (solid cream
+  balustrades + round black rails) in the notch, maroon meter box, black tank on a cream stand; compound wall cream with black line
+  pattern on the lane (left) side, quatrefoil jaali panels, black diamond gates, "116/87" plate. Road, shoulders, drain, kerbs and ALL
+  traffic REMOVED (Traffic.tsx deleted) — open grass on the island (`layout.site.meadow`), EB poles on the grass right of the gate,
+  people walk across the grass / round the palms and banana garden, cow grazes under the front-right palms.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

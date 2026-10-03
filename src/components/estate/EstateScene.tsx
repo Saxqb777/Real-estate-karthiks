@@ -19,7 +19,7 @@ import { Effects, type Tier } from "./Effects";
 import { createEnv, type TimeOfDay } from "./env";
 import { Fixtures, type WorldCues } from "./Fixtures";
 import { GroundShade } from "./GroundShade";
-import { Milestone, Puddle, Street, Tile } from "./Island";
+import { Tile } from "./Island";
 import { SceneApiProvider, projectToViewport, spotKey, type SceneApi, type Spot, type V3 } from "./Interact";
 import { LabelProjector, OverlayLabels, type LabelSpec, type Tone } from "./Overlay";
 import { Life } from "./Life";
@@ -52,7 +52,7 @@ export interface EstateSceneProps {
   /** e.g. "frontWidthFt", "depthFt", "footprintWidthFt:front", "floors:<unitId>", "areaSqft" */
   highlightField?: string | null;
   className?: string;
-  /** Street life (traffic, people, animals, birds). Uncontrolled by default with a toggle in the scene HUD. */
+  /** World life (people, the cow and the dog, birds, petals). Uncontrolled by default with a toggle in the scene HUD. */
   life?: boolean;
   /** Force a quality tier (default: auto — high on desktop hero, mid in preview, low on phones; steps down if slow). */
   quality?: Tier;
@@ -260,7 +260,7 @@ export default function EstateScene(props: EstateSceneProps) {
       )}
       {hud && webgl && (
         <div className={s.hud} style={props.insets ? { right: props.insets.right + 10, bottom: props.insets.bottom + 10 } : undefined}>
-          <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => setLifeState(!life)} title="Street life: traffic, people, animals, birds">
+          <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => setLifeState(!life)} title="Life: people, animals, birds">
             Life {life ? "on" : "off"}
           </button>
         </div>
@@ -485,9 +485,6 @@ function SceneContents({
   const body = (
     <>
       <Tile layout={layout} world={world} />
-      <Street layout={layout} world={world} />
-      <Milestone layout={layout} world={world} />
-      <Puddle layout={layout} world={world} env={env} />
       <PlotGround layout={layout} world={world} animate={animate} />
       <GroundShade layout={layout} world={world} />
       <Greenery layout={layout} world={world} grassCount={counts.grass} />

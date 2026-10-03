@@ -15,8 +15,8 @@ import s from "./login.module.css";
 
 /** Two calm, nameless townhouses — nothing private is shown before signing in. */
 const UNITS: SceneUnit[] = [
-  { id: "front", name: "", position: "front", floors: 2, footprintWidthFt: null, footprintDepthFt: null, status: "occupied", rentState: "paid", isActive: true },
-  { id: "back", name: "", position: "back", floors: 2, footprintWidthFt: null, footprintDepthFt: null, status: "occupied", rentState: "paid", isActive: true },
+  { id: "front", name: "", position: "front", floors: 1, footprintWidthFt: null, footprintDepthFt: null, status: "occupied", rentState: "paid", isActive: true },
+  { id: "back", name: "", position: "back", floors: 1, footprintWidthFt: null, footprintDepthFt: null, status: "occupied", rentState: "paid", isActive: true },
 ];
 const PLOT = {};
 

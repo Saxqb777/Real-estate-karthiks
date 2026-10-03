@@ -157,9 +157,12 @@ function palmSpots(layout: SiteLayout): Pt[] {
   const D = layout.plot.depthFt;
   const R = layout.plot.rightX;
   const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
-  const st = layout.site.street;
-  // on the right and behind the buildings: they frame the view from the front-left instead of hiding the facades
+  const M = layout.site.meadow;
+  // on the right and behind the buildings: they frame the view from the front-left instead of hiding the facades;
+  // two more at the front-right corner of the grass, where the cow grazes
   const spots: Pt[] = [
+    { x: R + 9.2, z: M.z0 + 4.4 },
+    { x: R + 13.4, z: M.z0 + 2.4 },
     { x: R + 7, z: 5 },
     { x: R + 10.5, z: 23 },
     { x: R + 7.5, z: 42 },
@@ -168,7 +171,6 @@ function palmSpots(layout: SiteLayout): Pt[] {
     { x: (R + leftX(D)) / 2 + 6, z: D + 6 },
     { x: (R + leftX(D)) / 2 - 6, z: D + 5 },
     { x: leftX(D) - 9, z: D + 6.5 },
-    { x: R + 14, z: (st.farShoulder[0] + st.farShoulder[1]) / 2 - 1 },
     { x: leftX(D - 6) - 11, z: D - 6 },
   ];
   const rear = layout.rearYard.z1 - layout.rearYard.z0;
@@ -323,7 +325,7 @@ export function Palms({ layout, world, env, animate, count }: { layout: SiteLayo
   );
 }
 
-/** Hedges along the outside of the compound wall + grass tufts on the margins. */
+/** Shrubs along the outside of the compound wall + grass tufts all over the grass round the plot. */
 export function Greenery({ layout, world, grassCount }: { layout: SiteLayout; world: World; grassCount: number }) {
   const bushRef = useRef<THREE.InstancedMesh>(null);
   const grassRef = useRef<THREE.InstancedMesh>(null);
@@ -355,13 +357,8 @@ export function Greenery({ layout, world, grassCount }: { layout: SiteLayout; wo
     const D = P.depthFt;
     const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
     const bushes: { x: number; z: number; s: number; c: number }[] = [];
-    // hedge along the left wall, with a gap where the notice board hangs
-    const nb = layout.fixtures.noticeBoard;
-    for (let z = 1.5; z < D; z += 2.6 + r() * 1.6) {
-      const skip = Math.abs(z - nb.z) < nb.widthFt / 2 + 1.6;
-      const b = { x: leftX(z) - 1.4 - r() * 0.7, z, s: 1.4 + r() * 1.0, c: r() };
-      if (!skip) bushes.push(b);
-    }
+    // a few shrubs along the far half of the left wall (the near half shows the wall's black line pattern)
+    for (let z = D * 0.55; z < D; z += 4.5 + r() * 3) bushes.push({ x: leftX(z) - 1.5 - r() * 0.6, z, s: 1.2 + r() * 0.8, c: r() });
     for (let x = BL.x + 1; x < BR.x; x += 2.6 + r() * 1.4) bushes.push({ x, z: D + 1.4 + r() * 0.5, s: 1.3 + r() * 0.9, c: r() });
     for (let z = 3; z < D; z += 5 + r() * 4) bushes.push({ x: FR.x + 1.5 + r() * 0.6, z, s: 1.0 + r() * 0.8, c: r() });
     const rear = layout.rearYard.z1 - layout.rearYard.z0;
@@ -371,12 +368,10 @@ export function Greenery({ layout, world, grassCount }: { layout: SiteLayout; wo
     const xs = layout.site.tile.map((p) => p.x);
     const zs = layout.site.tile.map((p) => p.z);
     const grass: { x: number; z: number; s: number; rot: number }[] = [];
-    const st = layout.site.street;
     let guard = 0;
     while (grass.length < grassCount && guard++ < grassCount * 30) {
       const p = { x: Math.min(...xs) + r() * (Math.max(...xs) - Math.min(...xs)), z: Math.min(...zs) + r() * (Math.max(...zs) - Math.min(...zs)) };
       if (!insidePolygon(p, tileIn) || insidePolygon(p, plotOut)) continue;
-      if (p.z < 0.6 && p.z > st.farShoulder[0] - 0.2) continue;
       grass.push({ ...p, s: 0.7 + r() * 0.9, rot: r() * 6 });
     }
     return { bushes, grass };
@@ -480,6 +475,7 @@ export function Garden({ layout, world, env, animate }: { layout: SiteLayout; wo
       { x: leftX(D * 0.36) - 9.5, z: D * 0.36 },
       { x: leftX(D * 0.36 + 3) - 12.5, z: D * 0.36 + 3.5 },
       { x: leftX(D * 0.62) - 8.5, z: D * 0.62 },
+      { x: layout.plot.rightX + 6.8, z: layout.site.meadow.z0 + 2.8 },
     ];
     const tileIn = offsetPolygon(layout.site.tile, -2);
     return spots

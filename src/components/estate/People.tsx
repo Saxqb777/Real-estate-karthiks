@@ -1,18 +1,18 @@
 "use client";
-// Low-poly street life on the shoulders: a veshti man with an umbrella who stops at the gate, a saree lady who pauses to
-// read the TO-LET board, a school kid who runs and stops and runs, a vegetable vendor pushing his cart (he stops in
-// front of the plot and rings the bell), a stray dog napping by the gate, a zebu cow grazing, and the tenant at the
-// door of each occupied house (a clickable world object). Every character is ONE draw call (rig.ts). Movement follows
+// Low-poly life on the grass round the plot (no road): a veshti man with an umbrella who stops at the gate, a saree
+// lady who pauses to read the TO-LET board, a man in a lungi, a school kid running round the palms, a lady strolling
+// through the banana garden, a stray dog napping by the gate, a zebu cow grazing under the palms, and the tenant at
+// the door of each occupied house (a clickable world object). Every character is ONE draw call (rig.ts). Movement follows
 // scripted timelines on scene time → frame-rate independent and slowed by focus dimming.
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
-import type { BuildingSlot, SiteLayout } from "@/lib/site-layout";
+import type { BuildingSlot, Pt, SiteLayout } from "@/lib/site-layout";
 import type { Env } from "./env";
 import { tileXRange } from "./Island";
 import { Hotspot, spotKey, useScene, type V3 } from "./Interact";
-import { G } from "./materials";
-import { ball, box, cone, rod, type Part } from "./bake";
+import { EDGE_CLIP, G } from "./materials";
+import { ball, box, cone, type Part } from "./bake";
 import { SKIN, personLimbs, posePerson, rigGeometry, rigMaterials, type Gait, type Limb, type Outfit, type RigMaterials } from "./rig";
 import { blobTex } from "./textures";
 import { smoothstep, type World } from "./util";
@@ -33,77 +33,43 @@ function RigMesh({ geo, rig, cast = true }: { geo: THREE.BufferGeometry; rig: Ri
   return <mesh geometry={geo} material={rig.mat} customDepthMaterial={rig.depth} castShadow={cast} />;
 }
 
-// ───────────────────────────── pedestrians ─────────────────────────────
+// ───────────────────────────── people on the grass ─────────────────────────────
 
 type StopAt = "gate" | "board" | "center" | number;
 interface Stop {
-  /** where along the walk: a landmark or a fraction 0..1 of the walk */
+  /** where along the walk: a landmark (crossers) or a fraction 0..1 of the walk */
   at: StopAt;
   dur: number;
-  /** what they do while stopped */
-  act?: "look" | "ring" | "idle";
+  /** what they do while stopped: "look" turns to the houses */
+  act?: "look" | "idle";
 }
+type Route =
+  /** walks across the open grass in front of the plot at this distance (ft) from the front wall, edge to edge */
+  | { kind: "cross"; dist: number; dir: 1 | -1 }
+  /** strolls a closed loop around the palms on the right / the banana garden on the left */
+  | { kind: "loop"; area: "palms" | "garden" };
 interface PedSpec {
   outfit: Outfit;
   scale: number;
   speed: number;
   gait: Gait;
-  dir: 1 | -1;
-  /** which shoulder, and how far (ft) from its inner edge they walk — separate tracks so nobody walks through anybody */
-  lane: "near" | "far";
-  track: number;
+  route: Route;
   /** scene-time offset into the loop */
   offset: number;
-  /** seconds off-stage after each walk */
+  /** seconds off-stage after each crossing (loops never leave) */
   wait: number;
   stops: Stop[];
-  cart?: boolean;
 }
 
-// near shoulder: the veshti man (plot side) and the saree lady (road side) pass each other on separate tracks;
-// far shoulder: the vendor's cart along the road edge, the school kid and a second lady further in.
+// three passers-by on separate tracks across the front grass (nobody walks through anybody), a school kid running
+// round the palms and a lady strolling through the banana garden
 const PEDS: PedSpec[] = [
-  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", dir: 1, lane: "near", track: 1.55, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
-  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.3, gait: "push", dir: -1, lane: "far", track: 1.5, offset: 30, wait: 16, cart: true, stops: [{ at: "center", dur: 7, act: "ring" }] },
-  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", dir: -1, lane: "near", track: 2.65, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
-  { outfit: { top: "#f4f1ea", bottom: "#24324a", wrap: "shorts", skin: SKIN.dark, hair: "short" }, scale: 0.62, speed: 8.5, gait: "run", dir: 1, lane: "far", track: 3.3, offset: 6, wait: 12, stops: [{ at: 0.32, dur: 1.6, act: "look" }, { at: 0.66, dur: 1.1, act: "idle" }] },
-  { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, scale: 0.95, speed: 2.9, gait: "walk", dir: 1, lane: "far", track: 4.4, offset: 22, wait: 10, stops: [] },
+  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", route: { kind: "cross", dist: 7, dir: 1 }, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
+  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", route: { kind: "cross", dist: 10, dir: -1 }, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
+  { outfit: { top: "#f4f1ea", bottom: "#24324a", wrap: "shorts", skin: SKIN.dark, hair: "short" }, scale: 0.62, speed: 6.5, gait: "run", route: { kind: "loop", area: "palms" }, offset: 6, wait: 0, stops: [{ at: 0.3, dur: 1.6, act: "idle" }, { at: 0.75, dur: 1.2, act: "look" }] },
+  { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, scale: 0.95, speed: 2.6, gait: "walk", route: { kind: "loop", area: "garden" }, offset: 22, wait: 0, stops: [{ at: 0.22, dur: 4, act: "look" }, { at: 0.62, dur: 3, act: "idle" }] },
+  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.8, gait: "walk", route: { kind: "cross", dist: 13, dir: 1 }, offset: 30, wait: 12, stops: [{ at: "center", dur: 3, act: "look" }] },
 ];
-
-/** Vegetable cart in front of the vendor (+Z), as extra rig limbs: 5 = cart, 6 = wheels (axle), 7 = bell. */
-function cartLimbs(): Limb[] {
-  const Z = 3.3;
-  const cart: Part[] = [
-    box([0, 2.3, Z], [3.0, 0.3, 4.2], "#7a4a26"),
-    box([0, 2.75, Z - 1.95], [3.0, 0.6, 0.2], "#6b3f22"),
-    box([0, 2.75, Z + 1.95], [3.0, 0.6, 0.2], "#6b3f22"),
-    rod([-1.2, 3.05, Z - 2.6], [0.12, 1.6, 0.12], "#6b3f22", [0.9, 0, 0]),
-    rod([1.2, 3.05, Z - 2.6], [0.12, 1.6, 0.12], "#6b3f22", [0.9, 0, 0]),
-    box([0, 3.55, Z - 3.15], [2.6, 0.14, 0.14], "#6b3f22"),
-    ...(
-      [
-        [-0.8, -1, "#3f8a35"],
-        [0.6, -0.8, "#c0392b"],
-        [-0.2, 0.4, "#e67e22"],
-        [0.9, 0.8, "#3f8a35"],
-        [-0.9, 1.2, "#f1c40f"],
-        [0.1, -0.2, "#7cae3a"],
-        [0.8, 1.6, "#8e44ad"],
-        [-0.7, -1.6, "#c0392b"],
-      ] as const
-    ).map(([x, z, c]) => ball([x, 2.78, Z + z], 0.8, c)),
-    // shade umbrella on a pole
-    rod([1.25, 4.4, Z + 1.7], [0.08, 4.2, 0.08], "#5a4632"),
-    cone([1.25, 6.7, Z + 1.7], [4.2, 1.0, 4.2], "#2f6fb5"),
-  ];
-  const wheels: Part[] = [-1.65, 1.65].flatMap((x) => [rod([x, 1.1, Z], [2.2, 0.2, 2.2], "#3e2414", [0, 0, Math.PI / 2]), box([x * 1.06, 1.1, Z], [0.06, 1.8, 0.25], "#9a7b52")]);
-  const bell: Part[] = [cone([0.9, 3.25, Z - 3.15], [0.36, 0.34, 0.36], "#d4a72c"), ball([0.9, 3.06, Z - 3.15], 0.1, "#8a6a1c")];
-  return [
-    { parts: cart },
-    { parts: wheels, pivot: [0, 1.1, Z], axis: [1, 0, 0] },
-    { parts: bell, pivot: [0.9, 3.5, Z - 3.15], axis: [0, 0, 1] },
-  ];
-}
 
 interface Landmarks {
   gateX: number;
@@ -111,20 +77,66 @@ interface Landmarks {
   centerX: number;
 }
 
+/** The plan-space polyline a walker follows (closed for loops). */
+function routePath(route: Route, layout: SiteLayout): Pt[] {
+  const [FL, , , BL] = layout.plot.polygon;
+  const D = layout.plot.depthFt;
+  const R = layout.plot.rightX;
+  const lx = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
+  if (route.kind === "cross") {
+    const z = -route.dist;
+    const [x0, x1] = tileXRange(layout, z);
+    const pts = [
+      { x: x0 - 3, z },
+      { x: x1 + 3, z },
+    ];
+    return route.dir > 0 ? pts : pts.reverse();
+  }
+  if (route.area === "palms") {
+    // round the front-right palm, between the hedge and the right edge of the island
+    return [
+      { x: R + 4.5, z: 0.4 },
+      { x: R + 11.5, z: -0.6 },
+      { x: R + 12.6, z: 6.5 },
+      { x: R + 8.5, z: 10 },
+      { x: R + 4.6, z: 7 },
+    ];
+  }
+  // through the side garden: up along the wall, round the banana clumps, back past the chilli mat
+  return [
+    { x: lx(2) - 3, z: 2 },
+    { x: lx(20) - 3, z: 20 },
+    { x: lx(33) - 5.5, z: 33 },
+    { x: lx(Math.min(52, D * 0.68)) - 4, z: Math.min(52, D * 0.68) },
+    { x: lx(Math.min(60, D * 0.78)) - 12, z: Math.min(60, D * 0.78) },
+    { x: lx(40) - 14.5, z: 40 },
+    { x: lx(20) - 14, z: 20 },
+    { x: lx(4) - 14.5, z: 4 },
+    { x: lx(1) - 9, z: 1 },
+  ];
+}
+
 interface Timeline {
-  segs: { t0: number; t1: number; x0: number; x1: number; stop?: Stop }[];
+  pts: Pt[];
+  cum: number[];
+  segs: { t0: number; t1: number; d0: number; d1: number; stop?: Stop }[];
   period: number;
   walkEnd: number;
 }
 
-function buildTimeline(spec: PedSpec, x0: number, x1: number, marks: Landmarks): Timeline {
-  const span = x1 - x0;
-  const start = spec.dir > 0 ? x0 : x1;
-  const along = (x: number) => (x - start) * spec.dir; // distance walked when at plan x
+function buildTimeline(spec: PedSpec, layout: SiteLayout, marks: Landmarks): Timeline {
+  const loop = spec.route.kind === "loop";
+  const raw = routePath(spec.route, layout);
+  const pts = loop ? [...raw, raw[0]] : raw;
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z));
+  const span = cum[cum.length - 1];
+  // landmarks are x positions on a crossing (straight along x)
+  const alongX = (x: number) => Math.abs(x - pts[0].x);
   const stops = spec.stops
     .map((s) => {
-      const x = s.at === "gate" ? marks.gateX : s.at === "board" ? marks.boardX : s.at === "center" ? marks.centerX : start + spec.dir * span * s.at;
-      return x === null ? null : { s, d: along(x) };
+      const d = typeof s.at === "number" ? span * s.at : loop ? null : s.at === "gate" ? alongX(marks.gateX) : s.at === "board" ? (marks.boardX === null ? null : alongX(marks.boardX)) : alongX(marks.centerX);
+      return d === null ? null : { s, d };
     })
     .filter((v): v is { s: Stop; d: number } => !!v && v.d > 1 && v.d < span - 1)
     .sort((a, b) => a.d - b.d);
@@ -133,28 +145,37 @@ function buildTimeline(spec: PedSpec, x0: number, x1: number, marks: Landmarks):
   let d = 0;
   for (const st of stops) {
     const dt = (st.d - d) / spec.speed;
-    segs.push({ t0: t, t1: t + dt, x0: d, x1: st.d });
+    segs.push({ t0: t, t1: t + dt, d0: d, d1: st.d });
     t += dt;
-    segs.push({ t0: t, t1: t + st.s.dur, x0: st.d, x1: st.d, stop: st.s });
+    segs.push({ t0: t, t1: t + st.s.dur, d0: st.d, d1: st.d, stop: st.s });
     t += st.s.dur;
     d = st.d;
   }
   const dt = (span - d) / spec.speed;
-  segs.push({ t0: t, t1: t + dt, x0: d, x1: span });
+  segs.push({ t0: t, t1: t + dt, d0: d, d1: span });
   t += dt;
-  return { segs, period: t + spec.wait, walkEnd: t };
+  return { pts, cum, segs, period: t + (loop ? 0 : spec.wait), walkEnd: t };
+}
+
+/** Point + direction at distance d along the polyline. */
+function along(tl: Timeline, d: number): { p: Pt; dx: number; dz: number } {
+  const { pts, cum } = tl;
+  let i = 1;
+  while (i < cum.length - 1 && cum[i] < d) i++;
+  const a = pts[i - 1];
+  const b = pts[i];
+  const len = cum[i] - cum[i - 1] || 1;
+  const k = Math.min(1, Math.max(0, (d - cum[i - 1]) / len));
+  return { p: { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k }, dx: (b.x - a.x) / len, dz: (b.z - a.z) / len };
 }
 
 function Pedestrian({ spec, layout, world, env, marks, onGroup }: { spec: PedSpec; layout: SiteLayout; world: World; env: RefObject<Env>; marks: Landmarks; onGroup?: (g: THREE.Group | null) => void }) {
-  const { geo, rig } = useRig(() => [...personLimbs(spec.outfit), ...(spec.cart ? cartLimbs() : [])], [spec], { clip: true });
+  const { geo, rig } = useRig(() => personLimbs(spec.outfit), [spec], { clip: true });
   const root = useRef<THREE.Group>(null);
-  const st = layout.site.street;
-  // inner edge of each shoulder: the drain side (near) / the road side (far); plan z decreases towards the street
-  const z = (spec.lane === "near" ? st.nearShoulder[1] : st.farShoulder[1]) - spec.track;
-  const [tx0, tx1] = tileXRange(layout, z);
-  const tl = useMemo(() => buildTimeline(spec, tx0 - 3, tx1 + 3, marks), [spec, tx0, tx1, marks]);
-  const heading = useRef(spec.dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+  const tl = useMemo(() => buildTimeline(spec, layout, marks), [spec, layout, marks]);
+  const heading = useRef<number | null>(null);
   const walked = useRef(0);
+  const look = useMemo(() => ({ x: world.x(layout.center.x), z: world.z(layout.center.z) }), [layout, world]);
 
   useFrame(() => {
     const g = root.current;
@@ -168,12 +189,14 @@ function Pedestrian({ spec, layout, world, env, marks, onGroup }: { spec: PedSpe
     g.visible = true;
     const seg = tl.segs.find((s) => tt < s.t1) ?? tl.segs[tl.segs.length - 1];
     const k = seg.t1 > seg.t0 ? (tt - seg.t0) / (seg.t1 - seg.t0) : 0;
-    const d = seg.x0 + (seg.x1 - seg.x0) * k;
-    const x = spec.dir > 0 ? tx0 - 3 + d : tx1 + 3 - d;
-    g.position.set(world.x(x), 0, world.z(z));
+    const at = along(tl, seg.d0 + (seg.d1 - seg.d0) * k);
+    const X = world.x(at.p.x);
+    const Z = world.z(at.p.z);
+    g.position.set(X, 0, Z);
     const stopped = !!seg.stop;
-    // turn to look at the house (world −Z) while stopped, otherwise face the way they walk
-    const want = stopped && seg.stop?.act === "look" ? Math.PI : spec.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+    // face the way they walk (plan (dx, dz) → world (dx, −dz)); while stopped to look, turn to the houses
+    const want = stopped && seg.stop?.act === "look" ? Math.atan2(look.x - X, look.z - Z) : Math.atan2(at.dx, -at.dz);
+    if (heading.current === null) heading.current = want;
     let dh = want - heading.current;
     while (dh > Math.PI) dh -= Math.PI * 2;
     while (dh < -Math.PI) dh += Math.PI * 2;
@@ -182,12 +205,7 @@ function Pedestrian({ spec, layout, world, env, marks, onGroup }: { spec: PedSpe
     if (!stopped) walked.current += spec.speed * e.dt;
     const stride = spec.gait === "run" ? 2.2 : 1.6;
     const phase = (walked.current / (spec.scale * stride)) * Math.PI;
-    posePerson(rig.u, stopped ? (spec.cart ? "push" : "idle") : spec.gait, stopped ? 0 : phase, e.t, spec.offset);
-    if (spec.cart) {
-      rig.u.uAng.value[6] = walked.current / 1.1;
-      const ringing = stopped && seg.stop?.act === "ring" && Math.sin(e.t * 1.4) > 0.2;
-      rig.u.uAng.value[7] = ringing ? Math.sin(e.t * 22) * 0.55 : rig.u.uAng.value[7] * 0.85;
-    }
+    posePerson(rig.u, stopped ? "idle" : spec.gait, stopped ? 0 : phase, e.t, spec.offset);
   });
 
   return (
@@ -215,10 +233,20 @@ export function Pedestrians({ layout, world, env, count, movers }: { layout: Sit
     const boardGate = vacant ? (vacant.slot === "front" ? porch : (layout.compoundWalls.find((w) => w.gate === "passage" || w.gate === "main") ?? porch)) : null;
     return { gateX, boardX: boardGate ? (boardGate.a.x + boardGate.b.x) / 2 : null, centerX: (layout.plot.polygon[0].x + layout.plot.rightX) / 2 };
   }, [layout]);
+  // passers-by appear from / vanish into the island's cut edges
+  useEffect(() => {
+    const [x0, x1] = tileXRange(layout, layout.site.meadow.z0 / 2);
+    EDGE_CLIP[0].constant = -world.x(x0 + 0.2);
+    EDGE_CLIP[1].constant = world.x(x1 - 0.2);
+    return () => {
+      EDGE_CLIP[0].constant = 1e4;
+      EDGE_CLIP[1].constant = 1e4;
+    };
+  }, [layout, world]);
   return (
     <group>
       {PEDS.slice(0, count).map((p, i) => (
-        <Pedestrian key={i} spec={p} layout={layout} world={world} env={env} marks={marks} onGroup={(g) => movers?.set(`ped${i}`, g, p.cart ? 3.2 : 1.7 * p.scale)} />
+        <Pedestrian key={i} spec={p} layout={layout} world={world} env={env} marks={marks} onGroup={(g) => movers?.set(`ped${i}`, g, 1.7 * p.scale)} />
       ))}
     </group>
   );
@@ -300,11 +328,10 @@ function dogLimbs(): Limb[] {
 export function Dog({ layout, world, env, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; movers?: MoverRegistry }) {
   const { geo, rig } = useRig(dogLimbs, []);
   const g = useRef<THREE.Group>(null);
-  const st = layout.site.street;
-  const z = st.nearShoulder[1] - 0.3; // along the drain edge, inside the walkers' tracks
+  const z = -5.2; // on the grass in front of the wall, between the gate kolam and the walkers' tracks
   const gate = layout.compoundWalls.find((w) => w.kind === "gate");
   const a = gate ? (gate.a.x + gate.b.x) / 2 - 1.5 : layout.plot.polygon[0].x + 2;
-  const b = layout.plot.rightX + 5;
+  const b = layout.plot.rightX + 1.2;
   const nap = 16;
   const trot = Math.abs(b - a) / 5.5;
   const period = (nap + trot) * 2;
@@ -400,10 +427,9 @@ function cowLimbs(): Limb[] {
 export function Cow({ layout, world, env, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; movers?: MoverRegistry }) {
   const { geo, rig } = useRig(cowLimbs, []);
   const g = useRef<THREE.Group>(null);
-  const st = layout.site.street;
-  const z = st.farShoulder[0] - 0.95; // grazing on the verge beyond the far shoulder
-  const [, x1] = tileXRange(layout, z);
-  const x = Math.min(x1 - 9, layout.plot.rightX + 2);
+  // grazing on the front grass under the palms at the right, clear of the walkers' tracks
+  const z = layout.site.meadow.z0 + 3;
+  const x = layout.plot.rightX + 2;
   const neck = useRef(0);
   useFrame(() => {
     const e = env.current;
@@ -421,7 +447,7 @@ export function Cow({ layout, world, env, movers }: { layout: SiteLayout; world:
         movers?.set("cow", o, 3.6);
       }}
       position={[world.x(x), 0, world.z(z)]}
-      rotation={[0, -0.12, 0]}
+      rotation={[0, Math.PI - 0.25, 0]}
     >
       <RigMesh geo={geo} rig={rig} />
     </group>

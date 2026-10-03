@@ -1,13 +1,11 @@
 "use client";
-// The floating laterite tile (soil strata edge), the street in front of the plot, a milestone with the town name
-// (from the plot data) and a rain puddle. The EB poles live in Fixtures.tsx (they are clickable).
-import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, type RefObject } from "react";
+// The floating laterite tile (soil strata edge) with open grass all round the plot — no road (owner's request).
+// The EB poles live in Fixtures.tsx (they are clickable).
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { offsetPolygon, type Pt, type SiteLayout } from "@/lib/site-layout";
-import type { Env } from "./env";
-import { G, PAL, std } from "./materials";
-import { asphaltTex, earthTex, milestoneTex, plasterTex, strataTex, withRepeat } from "./textures";
+import { std } from "./materials";
+import { earthTex, strataTex, withRepeat } from "./textures";
 import { FLAT, planShape, rng, type World } from "./util";
 
 /** x of a polygon edge (a → b) at plan z. */
@@ -85,135 +83,4 @@ export function Tile({ layout, world }: { layout: SiteLayout; world: World }) {
       <instancedMesh ref={rockRef} args={[rockGeo, std("#6a5650", { flat: true }), rocks.length]} />
     </group>
   );
-}
-
-function quad(layout: SiteLayout, z0: number, z1: number, inset = 0): Pt[] {
-  const [a0, b0] = tileXRange(layout, z0);
-  const [a1, b1] = tileXRange(layout, z1);
-  return [
-    { x: a0 + inset, z: z0 },
-    { x: b0 - inset, z: z0 },
-    { x: b1 - inset, z: z1 },
-    { x: a1 + inset, z: z1 },
-  ];
-}
-
-export function Street({ layout, world }: { layout: SiteLayout; world: World }) {
-  const st = layout.site.street;
-  const key = `${st.x0},${st.x1},${world.cx},${world.cz}`;
-  const geos = useMemo(() => {
-    const road = new THREE.ExtrudeGeometry(planShape(quad(layout, st.road[0], st.road[1], 0.05), world), { depth: 0.2, bevelEnabled: false });
-    const near = new THREE.ShapeGeometry(planShape(quad(layout, st.nearShoulder[0], st.nearShoulder[1], 0.3), world));
-    const far = new THREE.ShapeGeometry(planShape(quad(layout, st.farShoulder[0], st.farShoulder[1], 0.3), world));
-    const drain = new THREE.ShapeGeometry(planShape(quad(layout, st.drain[0] + 0.3, st.drain[1] - 0.3, 0.3), world));
-    return { road, near, far, drain };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-  useEffect(() => () => Object.values(geos).forEach((g) => g.dispose()), [geos]);
-  // own texture instance: its offset follows the (animated) layout centre without creating new textures
-  const roadTex = useMemo(() => {
-    const t = asphaltTex().clone();
-    t.needsUpdate = true;
-    return t;
-  }, []);
-  useEffect(() => () => roadTex.dispose(), [roadTex]);
-  const roadMats = useMemo(() => [new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.85 }), std("#2f2f33", { rough: 0.9 })], [roadTex]);
-  useEffect(() => () => roadMats[0].dispose(), [roadMats]);
-  useEffect(() => {
-    const w = st.road[1] - st.road[0];
-    roadTex.repeat.set(1 / 32, 1 / w);
-    roadTex.offset.set(0, -(st.road[0] - world.cz) / w);
-  }, [roadTex, st.road, world.cz]);
-  const mud = std("#8a4f33", { map: withRepeat(plasterTex(), 1 / 6, 1 / 6), rough: 1, polygonOffset: 1 });
-
-  // drain curbs + slabs at the gates
-  const [dx0, dx1] = tileXRange(layout, st.drain[0]);
-  const len = dx1 - dx0 - 0.6;
-  const midX = (dx0 + dx1) / 2;
-  const slabs = layout.compoundWalls.filter((w) => w.kind === "gate");
-  return (
-    <group>
-      <mesh geometry={geos.road} material={roadMats} rotation={FLAT} position={[0, 0.001, 0]} receiveShadow />
-      <mesh geometry={geos.near} material={mud} rotation={FLAT} position={[0, 0.03, 0]} receiveShadow />
-      <mesh geometry={geos.far} material={mud} rotation={FLAT} position={[0, 0.03, 0]} receiveShadow />
-      <mesh geometry={geos.drain} material={std("#26302c", { rough: 0.25, metal: 0.2, polygonOffset: 2 })} rotation={FLAT} position={[0, 0.06, 0]} />
-      {[st.drain[0] + 0.15, st.drain[1] - 0.15].map((z, i) => (
-        <mesh key={i} geometry={G.box()} material={std(PAL.concrete, { rough: 0.95 })} position={[world.x(midX), 0.22, world.z(z)]} scale={[len, 0.44, 0.3]} castShadow receiveShadow />
-      ))}
-      {slabs.map((s, i) => (
-        <mesh
-          key={i}
-          geometry={G.box()}
-          material={std(PAL.concreteDark, { rough: 0.95 })}
-          position={[world.x((s.a.x + s.b.x) / 2), 0.47, world.z((st.drain[0] + st.drain[1]) / 2)]}
-          scale={[Math.abs(s.b.x - s.a.x) + 0.6, 0.16, st.drain[1] - st.drain[0] + 0.2]}
-          receiveShadow
-        />
-      ))}
-    </group>
-  );
-}
-
-/** Yellow-capped Tamil Nadu milestone showing the plot's town name. */
-export function Milestone({ layout, world }: { layout: SiteLayout; world: World }) {
-  const st = layout.site.street;
-  const z = (st.farShoulder[0] + st.farShoulder[1]) / 2;
-  const [tx0] = tileXRange(layout, z);
-  const x = tx0 + 7;
-  const face = std("#ffffff", { map: milestoneTex(layout.plot.townName), rough: 0.8 });
-  const body = std(PAL.white, { rough: 0.85 });
-  return (
-    <group position={[world.x(x), 0, world.z(z)]} rotation={[0, 0.25, 0]}>
-      <mesh geometry={G.box()} material={[body, body, body, body, face, body]} scale={[1.7, 2.3, 0.7]} position={[0, 1.15, 0]} castShadow receiveShadow />
-      <mesh geometry={G.cyl()} material={std("#f2c230", { rough: 0.7 })} scale={[1.7, 0.7, 1.7]} position={[0, 2.3, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow />
-    </group>
-  );
-}
-
-const PUDDLE_FRAG = /* glsl */ `
-  uniform vec3 uSky; uniform vec3 uTop; uniform float uTime;
-  varying vec2 vUv;
-  void main() {
-    vec2 p = vUv * 2.0 - 1.0;
-    float r = length(p);
-    float edge = 1.0 - smoothstep(0.75, 1.0, r + 0.08 * sin(atan(p.y, p.x) * 5.0));
-    float rip = 0.0;
-    for (int i = 0; i < 3; i++) {
-      float fi = float(i);
-      vec2 c = vec2(sin(fi * 2.4) * 0.4, cos(fi * 1.7) * 0.3);
-      float t = fract(uTime * 0.35 + fi * 0.33);
-      float d = length(p - c);
-      rip += (1.0 - smoothstep(0.0, 0.05, abs(d - t * 0.9))) * (1.0 - t);
-    }
-    vec3 col = mix(uSky, uTop, 0.45 + p.y * 0.3) * 0.8 + vec3(rip * 0.35);
-    gl_FragColor = vec4(col, edge * 0.92);
-    #include <colorspace_fragment>
-  }
-`;
-
-export function Puddle({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
-  const st = layout.site.street;
-  const z = (st.nearShoulder[0] + st.nearShoulder[1]) / 2 - 0.4;
-  const x = layout.plot.rightX + 4;
-  const mat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: { uSky: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uTime: { value: 0 } },
-        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-        fragmentShader: PUDDLE_FRAG,
-        transparent: true,
-        depthWrite: false,
-        polygonOffset: true,
-        polygonOffsetFactor: -4,
-        polygonOffsetUnits: -4,
-      }),
-    [],
-  );
-  useEffect(() => () => mat.dispose(), [mat]);
-  useFrame(({ clock }) => {
-    mat.uniforms.uSky.value.copy(env.current.skyHorizon);
-    mat.uniforms.uTop.value.copy(env.current.skyTop);
-    mat.uniforms.uTime.value = clock.elapsedTime;
-  });
-  return <mesh geometry={G.plane()} material={mat} rotation={FLAT} position={[world.x(x), 0.07, world.z(z)]} scale={[4.2, 2.4, 1]} />;
 }

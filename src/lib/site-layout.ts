@@ -62,16 +62,14 @@ export const SITE_DEFAULTS = {
   stairs: { widthFt: 5, runFt: 7 },
 } as const;
 
-/** Street + land tile around the plot (diorama context, not owner data). */
+/** Grassy land tile around the plot (diorama context, not owner data). No road: open grass in front of the gates. */
 export const SITE_SURROUNDINGS = {
   sideMarginFt: 16,
   backMarginFt: 10,
-  /** from the front boundary outwards: drain, near shoulder, road, far shoulder, verge */
-  drainFt: 1.75,
-  nearShoulderFt: 4.5,
-  roadFt: 16,
-  farShoulderFt: 5.5,
-  vergeFt: 2.25,
+  /** open grass between the front compound wall and the tile edge */
+  frontMarginFt: 20,
+  /** EB poles stand on the grass this far in front of the front wall */
+  poleSetbackFt: 3.5,
 } as const;
 
 const MIN_EMPTY_SLOT_DEPTH = 8;
@@ -140,7 +138,7 @@ export interface SiteFixtures {
   taxStamp: Pt & { on: "wall" | "pillar" };
   /** survey stone + ranging flag just outside the back-left corner */
   plotMarker: Pt;
-  /** EB poles on the near shoulder: [0] carries the street lamp, the meter and the service drop */
+  /** EB poles on the grass just outside the front wall, right of the plot: [0] (by the gate) carries the lamp, the meter and the service drop */
   poles: Pt[];
   poleHeightFt: number;
 }
@@ -186,7 +184,8 @@ export interface SiteLayout {
   fixtures: SiteFixtures;
   site: {
     tile: Pt[];
-    street: { x0: number; x1: number; drain: [number, number]; nearShoulder: [number, number]; road: [number, number]; farShoulder: [number, number] };
+    /** the open grass in front of the plot: plan z from the tile's front edge (z0 < 0) to the front wall (z1 = 0) */
+    meadow: { x0: number; x1: number; z0: number; z1: number };
   };
   dimensions: Dimension[];
   /** plot centre (bounding box) and a radius that contains plot + buildings, for camera framing */
@@ -418,25 +417,11 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
 
   // ── surroundings ──
   const S = SITE_SURROUNDINGS;
-  const frontMargin = S.drainFt + S.nearShoulderFt + S.roadFt + S.farShoulderFt + S.vergeFt;
-  const tile = offsetPolygon(polygon, [frontMargin, S.sideMarginFt, S.backMarginFt, S.sideMarginFt]);
-  let zc = 0;
-  const band = (w: number): [number, number] => {
-    const r: [number, number] = [zc - w, zc];
-    zc -= w;
-    return r;
-  };
-  const street = {
-    x0: Math.min(tile[0].x, tile[3].x),
-    x1: Math.max(tile[1].x, tile[2].x),
-    drain: band(S.drainFt),
-    nearShoulder: band(S.nearShoulderFt),
-    road: band(S.roadFt),
-    farShoulder: band(S.farShoulderFt),
-  };
+  const tile = offsetPolygon(polygon, [S.frontMarginFt, S.sideMarginFt, S.backMarginFt, S.sideMarginFt]);
+  const meadow = { x0: Math.min(tile[0].x, tile[3].x), x1: Math.max(tile[1].x, tile[2].x), z0: -S.frontMarginFt, z1: 0 };
 
   const compoundWalls = buildCompoundWalls(polygon, frontSlot ?? null, leftX);
-  const fixtures = buildFixtures(polygon, compoundWalls, frontSlot ?? null, street, tile);
+  const fixtures = buildFixtures(polygon, compoundWalls, frontSlot ?? null, tile);
   const maxHeightFt = slots.reduce((m, s) => Math.max(m, s.heightFt + s.parapetFt), 0);
   const center = { x: rightX / 2 + leftX(depth / 2) / 2, z: depth / 2 };
   const radius = Math.max(...tile.map((p) => Math.hypot(p.x - center.x, p.z - center.z)));
@@ -449,7 +434,7 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
     paved,
     compoundWalls,
     fixtures,
-    site: { tile, street },
+    site: { tile, meadow },
     dimensions: [],
     center,
     radius,
@@ -572,7 +557,7 @@ function xAt(a: Pt, b: Pt, z: number): number {
   return Math.abs(b.z - a.z) < 1e-9 ? a.x : a.x + ((b.x - a.x) * (z - a.z)) / (b.z - a.z);
 }
 
-function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: BuildingSlot | null, street: SiteLayout["site"]["street"], tile: Pt[]): SiteFixtures {
+function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: BuildingSlot | null, tile: Pt[]): SiteFixtures {
   const [FL, FR, , BL] = polygon;
   const porch = walls.find((w) => w.gate === "porch");
   const passage = walls.find((w) => w.gate === "passage");
@@ -588,14 +573,16 @@ function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: Building
   const zb = Math.min(7, Math.max(2.5, depth * 0.12));
   const xb = FL.x + ((BL.x - FL.x) * (zb - FL.z)) / (depth || 1);
   const noticeBoard = { x: r2(xb), z: r2(zb), widthFt: r2(clamp(depth * 0.06, 2.4, 3.6)) };
-  // poles stand at the road edge of the near shoulder (pedestrians walk inside them), one left of the plot
-  // (lamp + meter), one to the right
-  const zPole = street.nearShoulder[0] + 0.9;
+  // poles stand on the grass just outside the front wall (no road any more), both off the front-RIGHT corner so
+  // they never stand in front of the houses in the default front-left view: [0] by the gate and the stair foot
+  // carries the lamp, the meter and the service drop; [1] further right carries the line on
+  const zPole = -SITE_SURROUNDINGS.poleSetbackFt;
   const [, tFR, tBR] = tile;
   const tx1 = xAt(tFR, tBR, zPole);
+  const p0x = Math.min(tx1 - 6, FR.x + 3.5);
   const poles = [
-    { x: r2(FL.x - 6.5), z: r2(zPole) },
-    { x: r2(Math.min(tx1 - 4, FR.x + 10)), z: r2(zPole) },
+    { x: r2(p0x), z: r2(zPole) },
+    { x: r2(Math.max(p0x + 3, Math.min(tx1 - 2.5, p0x + 10))), z: r2(zPole) },
   ];
   return {
     mailbox,

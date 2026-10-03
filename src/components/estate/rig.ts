@@ -3,7 +3,7 @@
 // uniform array. Used for pedestrians, the tenant at the door, the dog and the cow (shadows animate too).
 import * as THREE from "three";
 import { bake, type Part, type V3 } from "./bake";
-import { VEHICLE_CLIP } from "./materials";
+import { EDGE_CLIP } from "./materials";
 
 export const MAX_LIMBS = 8;
 
@@ -108,8 +108,8 @@ export function rigMaterials(o: { rough?: number; clip?: boolean } = {}): RigMat
   depth.onBeforeCompile = (sh) => inject(sh, u, false);
   depth.customProgramCacheKey = () => "estate-rig-depth";
   if (o.clip) {
-    mat.clippingPlanes = VEHICLE_CLIP;
-    depth.clippingPlanes = VEHICLE_CLIP;
+    mat.clippingPlanes = EDGE_CLIP;
+    depth.clippingPlanes = EDGE_CLIP;
   }
   return {
     mat,

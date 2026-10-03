@@ -54,7 +54,7 @@ export function unitFormValues(unit?: UnitDTO | null, defaults?: Partial<UnitFor
     type: unit?.type ?? defaults?.type ?? DEFAULT_UNIT_TYPE,
     address: unit?.address ?? defaults?.address ?? "",
     position: unit ? (unit.position ?? "") : (defaults?.position ?? ""),
-    floors: unit?.floors ?? defaults?.floors ?? 2,
+    floors: unit?.floors ?? defaults?.floors ?? 1,
     builtUpSqft: unit?.builtUpSqft ?? defaults?.builtUpSqft ?? null,
     footprintWidthFt: unit?.footprintWidthFt ?? defaults?.footprintWidthFt ?? null,
     footprintDepthFt: unit?.footprintDepthFt ?? defaults?.footprintDepthFt ?? null,

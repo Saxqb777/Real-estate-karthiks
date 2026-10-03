@@ -85,11 +85,12 @@ Do instead — crafted and specific to this place:
 
 ## Living world (owner request: "lively vibe, people walking, cars going, wind — make it crazy")
 The diorama must feel alive, like a tiny Tamil Nadu street scene running in real time:
-- A **street along the plot front** (asphalt with worn edges, mud shoulder, a drain, an electric pole with sagging wires, a street lamp).
-- **Traffic loop**: auto-rickshaws (yellow/green TN autos), a TVS moped / scooter, a cyclist, an occasional small car or bus — low-poly,
-  stylised, driving both directions with headlights at night.
-- **Pedestrians**: a few stylised low-poly people walking the street (simple walk bob + limb swing), someone with an umbrella, a kid running,
-  a vendor pushing a cart; occasionally someone stops at the gate.
+- **No road (owner, 3/10/2026, after sending photos of the houses)**: the asphalt street, shoulders, drain, kerbs and all traffic were
+  removed; open natural grass surrounds the plot on the floating island. The electric pole (sagging wires, lamp, meter) stands on the
+  grass by the gate. The houses follow the photos: single storey + roof terrace, cream walls with black accents, grilled veranda,
+  straight external stair with black rails, cream compound wall with black line pattern, jaali panels and black diamond gates.
+- **Pedestrians**: a few stylised low-poly people walking across the grass and round the palms / banana garden (simple walk bob + limb
+  swing), someone with an umbrella, a kid running; occasionally someone stops at the gate. A zebu cow grazes under the palms.
 - **Wind**: palm fronds sway with gusts (shader/vertex sway, gust strength varies over time), leaves/petals drifting across the plot,
   clothes drying on a rooftop line fluttering, a small flag/bunting on the gate, ripples in a puddle.
 - **Sky life**: birds (crows / parakeets) flying in loose flocks across occasionally, clouds drifting, sun/moon arc by IST time,

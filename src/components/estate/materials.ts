@@ -1,11 +1,14 @@
 // Shared palette, cached materials and unit geometries for the estate scene.
 import * as THREE from "three";
 
-/** Materials of the actual site: lime plaster, terracotta, laterite, red oxide, coconut green. */
+/** Materials of the actual site (owner's photos): ivory-cream plaster, black accents, maroon frames, grey concrete. */
 export const PAL = {
-  plaster: "#f6e4c4",
-  plasterWarm: "#efdcbc",
-  cornice: "#fbf3e4",
+  plaster: "#f4ecd6",
+  plasterWarm: "#efe7d0",
+  cornice: "#f4efe2",
+  black: "#1a1a1c",
+  maroon: "#5a221c",
+  concreteYard: "#a9a59b",
   plinth: "#9a5a43",
   terracotta: "#b9582f",
   terracottaCap: "#d07a4c",
@@ -51,12 +54,12 @@ interface StdOpts {
   finish?: Finish;
   toneMapped?: boolean;
   polygonOffset?: number;
-  /** clip against VEHICLE_CLIP (traffic emerging from the tile's cut edge) */
+  /** clip against EDGE_CLIP (walkers emerging from the tile's cut edge) */
   clip?: boolean;
 }
 
-/** Shared clipping planes for street traffic; Traffic keeps them on the tile's left/right edges. */
-export const VEHICLE_CLIP = [new THREE.Plane(new THREE.Vector3(1, 0, 0), 1e4), new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1e4)];
+/** Shared clipping planes for passers-by; Pedestrians keeps them on the tile's left/right edges. */
+export const EDGE_CLIP = [new THREE.Plane(new THREE.Vector3(1, 0, 0), 1e4), new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1e4)];
 
 const cache = new Map<string, THREE.MeshStandardMaterial>();
 
@@ -119,7 +122,7 @@ export function std(color: string, o: StdOpts = {}): THREE.MeshStandardMaterial 
   }
   if (o.finish === "muted") applyMuted(m);
   if (o.clip) {
-    m.clippingPlanes = VEHICLE_CLIP;
+    m.clippingPlanes = EDGE_CLIP;
     m.clipShadows = true;
   }
   cache.set(key, m);

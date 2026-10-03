@@ -20,7 +20,7 @@ const unit = (over: Partial<SceneUnit> = {}): SceneUnit => ({
   id: "u1",
   name: "Unit A",
   position: "front",
-  floors: 2,
+  floors: 1,
   footprintWidthFt: null,
   footprintDepthFt: null,
   status: "occupied",
@@ -110,11 +110,16 @@ describe("computeSiteLayout — owner's site plan", () => {
     expect(b.status).toBe("vacant");
   });
 
-  it("height = floors × 10.5 ft with a 3 ft parapet", () => {
-    expect(L.slots[0].floors).toBe(2);
-    expect(L.slots[0].heightFt).toBe(21);
+  it("height = floors × 10.5 ft with a 3 ft parapet (single storey + roof terrace by default)", () => {
+    expect(L.slots[0].floors).toBe(1);
+    expect(L.slots[0].heightFt).toBe(10.5);
     expect(L.slots[0].parapetFt).toBe(3);
-    expect(L.maxHeightFt).toBe(24);
+    expect(L.maxHeightFt).toBe(13.5);
+    const two = computeSiteLayout(PLOT, [unit({ floors: 2 })]);
+    expect(two.slots[0].heightFt).toBe(21);
+    expect(two.maxHeightFt).toBe(24);
+    // missing / invalid floors fall back to 1
+    expect(computeSiteLayout(PLOT, [unit({ floors: 0 })]).slots[0].floors).toBe(1);
   });
 
   it("cuts the stepped notch (6.5 × 9.5, one step) and the 5 × 7 stair well from the front-right corner", () => {
@@ -150,13 +155,15 @@ describe("computeSiteLayout — owner's site plan", () => {
     expect(passage.b).toEqual({ x: 3.25, z: 0 });
   });
 
-  it("puts the street in front of the plot", () => {
-    const st = L.site.street;
-    expect(st.drain[1]).toBe(0);
-    expect(st.road[0]).toBeLessThan(st.road[1]);
-    expect(st.road[1]).toBeLessThan(st.drain[0]);
+  it("puts open grass (no road) in front of the plot", () => {
+    const m = L.site.meadow;
+    expect(m.z1).toBe(0);
+    expect(m.z0).toBe(-20);
+    expect(m.x0).toBeLessThan(L.plot.polygon[0].x);
+    expect(m.x1).toBeGreaterThan(L.plot.rightX);
+    expect(L.site).not.toHaveProperty("street");
     expect(L.site.tile).toHaveLength(4);
-    expect(L.site.tile[0].z).toBeCloseTo(-30, 6);
+    expect(L.site.tile[0].z).toBeCloseTo(-20, 6);
   });
 
   it("lists drawing-style dimensions from the data", () => {
@@ -167,7 +174,7 @@ describe("computeSiteLayout — owner's site plan", () => {
     expect(byKey["footprintWidthFt:front"].label).toBe(`20'`);
     expect(byKey["footprintDepthFt:back"].label).toBe(`28'`);
     expect(byKey.courtyard.label).toBe(`10'`);
-    expect(byKey["floors:front"].label).toBe(`2 floors · 21'`);
+    expect(byKey["floors:front"].label).toBe(`1 floor · 10'6"`);
     expect(byKey.areaSqft.label).toBe("1,744 sq ft"); // whole sq ft like the drawing
     expect(byKey["floors:front"].primary).toBe(false);
   });
@@ -292,16 +299,18 @@ describe("street-front fixtures (clickable world objects)", () => {
     expect(F.noticeBoard.x).toBeCloseTo(xLeft, 1);
     expect(F.noticeBoard.widthFt).toBeGreaterThanOrEqual(2.4);
   });
-  it("puts the survey stone just outside the back-left corner and the poles on the near shoulder", () => {
+  it("puts the survey stone just outside the back-left corner and the poles on the grass in front of the wall", () => {
     expect(F.plotMarker.x).toBeLessThan(BL.x);
     expect(F.plotMarker.z).toBeGreaterThan(BL.z);
-    const [n0, n1] = L.site.street.nearShoulder;
     for (const p of F.poles) {
-      expect(p.z).toBeGreaterThan(n0);
-      expect(p.z).toBeLessThan(n1);
+      expect(p.z).toBeLessThan(0);
+      expect(p.z).toBeGreaterThan(L.site.meadow.z0);
     }
-    expect(F.poles[0].x).toBeLessThan(FL.x);
-    expect(F.poles[1].x).toBeGreaterThan(FR.x);
+    // both right of the plot (clear of the house fronts in the default view); [0] = lamp + meter pole by the gate
+    expect(F.poles[0].x).toBeGreaterThan(FR.x);
+    expect(F.poles[1].x).toBeGreaterThan(F.poles[0].x);
+    const tileRight = Math.max(...L.site.tile.map((p) => p.x));
+    expect(F.poles[1].x).toBeLessThan(tileRight);
   });
   it("falls back to the main gate when no building stands on the street", () => {
     const L2 = computeSiteLayout(PLOT, [B]);

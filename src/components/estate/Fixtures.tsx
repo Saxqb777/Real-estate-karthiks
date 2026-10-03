@@ -1,7 +1,7 @@
 "use client";
 // Street-front furniture that doubles as data entry points (DESIGN.md "World objects = data entry points"):
 //   mailbox on the porch-gate pillar → payments · notice board by the passage gate → to-dos ·
-//   EB pole + meter → electricity · tax stamp on the gate pillar → property tax · survey stone + flag → plot.
+//   EB pole + meter (on the grass by the gate) → electricity · tax stamp on the gate pillar → property tax · survey stone + flag → plot.
 // Positions come from layout.fixtures (src/lib/site-layout.ts, unit tested). Each is a <Hotspot>.
 import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -128,7 +128,8 @@ function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: 
   const t = layout.fixtures.taxStamp;
   const X = world.x(t.x);
   const Z = world.z(t.z - (t.on === "wall" ? 0.38 : PILLAR / 2 + 0.05));
-  const y = t.on === "wall" ? 5.4 : 3.7;
+  // on a house it hangs high on the front wall, above the veranda sunshade; on a gate pillar at eye height
+  const y = t.on === "wall" ? 9.15 : 3.7;
   const face = useMemo(() => new THREE.MeshStandardMaterial({ map: taxStampTex(state, tamil), roughness: 0.45, metalness: 0.25, transparent: true }), [state, tamil]);
   useEffect(() => () => face.dispose(), [face]);
   const disc = useMemo(() => new THREE.CircleGeometry(0.5, 28), []);
@@ -214,7 +215,7 @@ function PoleAndMeter({ layout, world, env, lampLight, crows }: { layout: SiteLa
   const wireY = H - 1.2;
   const wires = useMemo(() => {
     const out: V3[][] = [];
-    const ends = [tx0 + 0.6, p0.x, p1.x, tx1 - 0.6];
+    const ends = [tx0 + 0.6, p0.x, p1.x, tx1 - 0.6].sort((a, b) => a - b);
     for (const dz of [-0.9, 0, 0.9]) {
       for (let s = 0; s < ends.length - 1; s++) {
         const a = ends[s];
@@ -228,11 +229,11 @@ function PoleAndMeter({ layout, world, env, lampLight, crows }: { layout: SiteLa
         out.push(pts);
       }
     }
-    // service drop to the front building
+    // service drop to the front building, landing above its meter box at the stair foot
     const f = layout.slots.find((s) => s.slot === "front" && s.unit);
     if (f) {
       const a: V3 = [world.x(p0.x), wireY - 1.5, world.z(zPole)];
-      const b: V3 = [world.x(f.rect.x0 + 0.6), f.heightFt + 1, world.z(f.rect.z0 + 0.6)];
+      const b: V3 = [world.x(f.notch.wide.x0 + 0.3), f.heightFt - 0.6, world.z(f.rect.z0 + 1.5)];
       const pts: V3[] = [];
       for (let i = 0; i <= 12; i++) {
         const t = i / 12;

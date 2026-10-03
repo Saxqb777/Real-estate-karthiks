@@ -65,7 +65,7 @@ export function Tutorial({ open, onClose, locate, units, insets, rootEl }: Tutor
       title: "This is your plot, live",
       body: (
         <>
-          Both houses, the street and the palms — on Pattukottai time. The ring around a house is its rent: <b className={s.teal}>teal</b> paid,{" "}
+          Both houses, the garden and the palms — on Pattukottai time. The ring around a house is its rent: <b className={s.teal}>teal</b> paid,{" "}
           <b className={s.marigold}>marigold</b> due soon, <b className={s.coral}>coral</b> late.
         </>
       ),
