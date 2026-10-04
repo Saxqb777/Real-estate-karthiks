@@ -183,8 +183,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       const edges = edgesOf(f === 0 ? groundOutline : slot.outline);
       edges.forEach((e, wi) => {
         const kind = classify(e);
-        // windows on the front, the lane-passage side and the back (never behind the stair in front of the house)
-        if (!["front", "side", "back"].includes(kind) || e.len < 4.2) return;
+        // windows on the front and the lane-passage side only — none on the back (owner), never behind the stair in front
+        if (!["front", "side"].includes(kind) || e.len < 4.2) return;
         const n = Math.max(1, Math.floor((e.len - 1.2) / 6.6));
         const dx = (e.b.x - e.a.x) / e.len;
         const dz = (e.b.z - e.a.z) / e.len;
