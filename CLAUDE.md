@@ -100,6 +100,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   firewood + coconuts.
 - 4/10/2026: WIND = steady gentle breeze (windAt ≈ 0.42 with a very slow slight swell), no gust ramps; sway FREQUENCIES must
   never depend on wind strength (phase jumps) — only amplitudes may.
+- 4/10/2026: school kid (palms loop) REMOVED; an ANGRY POLICEMAN (khaki, red-band cap, moustache, lathi) guards the tax
+  hut by its porch (PoliceGuard in People.tsx, placed in the hut's local frame). Domain DNS set at IONOS by owner:
+  A @ 76.76.21.21, CNAME www cname.vercel-dns.com (mail records kept).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
