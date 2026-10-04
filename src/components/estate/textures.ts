@@ -577,11 +577,11 @@ export const noticeTex = (notes: number, tamil: boolean) =>
     { repeat: false },
   );
 
-/** Woven bamboo lattice (diagonal criss-cross strips over a dark gap) for the tax hut's window and gable. Tiles. */
+/** Woven bamboo lattice (diagonal criss-cross strips, open gaps) for the tax hut's window and gable. Tiles. */
 export const bambooLatticeTex = () =>
-  make("bambooLattice", 128, 128, (ctx, w, h) => {
-    ctx.fillStyle = "#2a2116";
-    ctx.fillRect(0, 0, w, h);
+  make("bambooLattice2", 128, 128, (ctx, w, h) => {
+    // transparent gaps (alphaTest) so a lit interior can glow through the weave at night
+    ctx.clearRect(0, 0, w, h);
     ctx.strokeStyle = "#cdb47a";
     ctx.lineWidth = 9;
     for (let k = -2; k <= 2; k++) {
