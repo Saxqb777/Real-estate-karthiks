@@ -1,7 +1,7 @@
 "use client";
 // One of the owner's houses, built procedurally from a BuildingSlot (src/lib/site-layout.ts) to match his photos:
-// ivory-cream plaster with black accent lines, a flat roof terrace behind a low parapet (black coping), a raised
-// stepped parapet over the front with two arched jaali vents, a deep chajja with a black edge band over a front
+// ivory-cream plaster with black accent lines, a flat roof terrace behind a low parapet (black coping), a designed
+// front parapet centred on the façade (arched jaali panel between risers, stepped risers at both ends — photo 10), a deep chajja with a black edge band over a front
 // veranda enclosed by black diamond grills between square pillars with black flutes, maroon-framed grilled windows,
 // a dog-leg external concrete stair in the yard in front of the house (solid cream balustrades, round black hand rails)
 // up to the terrace, a maroon EB meter box at the stair foot, a black water tank on a cream stand, and a small open
@@ -77,17 +77,22 @@ export function verandaOf(slot: BuildingSlot): Rect | null {
 }
 
 /**
- * Dog-leg stair in the yard in front of the front-right corner (owner's plan + photo 6): the lower flight runs along the
- * outer lane towards the right wall, a landing at the right, the upper flight comes back along the house front and
- * arrives on the terrace through a gap in the front parapet.
+ * Dog-leg stair in the yard in front of the front-right corner (owner's plan + photos 4 / 6): the foot is by the right
+ * wall, the lower flight climbs along the outer lane towards the left, a half landing at the left, and the upper flight
+ * comes back along the house front to a top landing just inside the right corner riser of the front parapet, where it
+ * steps onto the terrace (so the centred parapet design stays whole).
  */
 export function stairOf(slot: BuildingSlot) {
   const s = slot.stairs;
   const w = s.x1 - s.x0;
-  const land = Math.min(2.6, w * 0.26);
-  const top = Math.min(1.4, w * 0.14);
+  const land = Math.min(2.0, w * 0.2);
+  const top = Math.min(1.2, w * 0.12);
+  /** right-end corner riser of the front parapet (its width) */
+  const riser = Math.min(1.4, w * 0.14);
   const zMid = (s.z0 + s.z1) / 2;
-  return { ...s, land, top, zMid };
+  /** where the top landing meets the roof edge (x range) */
+  const arrive = { x0: s.x1 - riser - top, x1: s.x1 - riser };
+  return { ...s, land, top, riser, zMid, arrive };
 }
 /** Plan edges of a CCW polygon with outward normals. */
 function edgesOf(pts: Pt[]): Omit<Edge, "kind">[] {
@@ -219,55 +224,63 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   // ── the external dog-leg stair in the yard (solid concrete, cream balustrades, round black rails) ──
   const stairs = useMemo(() => {
     const st = stair;
-    const rise = H / 2; // two flights up to the terrace
+    // two flights up to the terrace; the rise is split in proportion to each flight's run (same pitch on both)
+    const lowRunAll = st.x1 - (st.x0 + st.land);
+    const upRunAll = st.arrive.x0 - (st.x0 + st.land);
+    const rise = (H * lowRunAll) / (lowRunAll + upRunAll);
+    const rise2 = H - rise;
     const n = Math.max(5, Math.round(rise / 0.62));
+    const n2 = Math.max(4, Math.round(rise2 / 0.62));
     const r = rise / n;
+    const r2 = rise2 / n2;
     const steps: { p: V3; s: V3 }[] = [];
     const parts: Part[] = [];
     const outer = { z0: st.z0, z1: st.zMid }; // lower flight: the lane away from the house
     const inner = { z0: st.zMid, z1: st.z1 }; // upper flight: along the house front
-    const lowRun = st.x1 - st.land - st.x0;
-    const upRun = st.x1 - st.land - (st.x0 + st.top);
+    const lowRun = st.x1 - (st.x0 + st.land);
+    const upRun = st.arrive.x0 - (st.x0 + st.land);
     const tl = lowRun / n;
-    const tu = upRun / n;
+    const tu = upRun / n2;
     const lz = (a: number, b: number) => world.z((a + b) / 2);
     for (let k = 0; k < n; k++) {
-      // lower flight climbs towards the right wall (+x), solid to the ground
-      const xa = st.x0 + k * tl;
+      // lower flight climbs from the foot by the right wall towards the left (−x), solid to the ground
+      const xa = st.x1 - (k + 1) * tl;
       const top1 = (k + 1) * r;
       steps.push({ p: [world.x(xa + tl / 2), top1 / 2, lz(outer.z0, outer.z1)], s: [tl + 0.02, top1, outer.z1 - outer.z0 - 0.05] });
-      // upper flight climbs back towards the left (−x)
-      const xb = st.x1 - st.land - (k + 1) * tu;
-      const top2 = rise + (k + 1) * r;
+    }
+    for (let k = 0; k < n2; k++) {
+      // upper flight climbs back towards the right (+x) along the house front
+      const xb = st.x0 + st.land + k * tu;
+      const top2 = rise + (k + 1) * r2;
       steps.push({ p: [world.x(xb + tu / 2), top2 / 2, lz(inner.z0, inner.z1)], s: [tu + 0.02, top2, inner.z1 - inner.z0 - 0.05] });
     }
-    // half landing at the right + the top landing at the terrace edge (solid underneath)
-    parts.push(box([world.x(st.x1 - st.land / 2), rise / 2, lz(st.z0, st.z1)], [st.land, rise, st.z1 - st.z0], CREAM_LIGHT));
-    parts.push(box([world.x(st.x0 + st.top / 2), H / 2, lz(inner.z0, inner.z1)], [st.top, H, inner.z1 - inner.z0], CREAM_LIGHT));
+    // half landing at the left + the top landing at the terrace edge (solid underneath)
+    parts.push(box([world.x(st.x0 + st.land / 2), rise / 2, lz(st.z0, st.z1)], [st.land, rise, st.z1 - st.z0], CREAM_LIGHT));
+    parts.push(box([world.x((st.arrive.x0 + st.x1) / 2), H / 2, lz(inner.z0, inner.z1)], [st.x1 - st.arrive.x0, H, inner.z1 - inner.z0], CREAM_LIGHT));
     // balustrades + rails: along the outside of the lower flight, round the landing, and between the two flights
     const hb = 3.4;
-    const flight = (x0: number, x1: number, y0: number, z: number, up: 1 | -1) => {
+    const flight = (x0: number, x1: number, y0: number, dy: number, z: number, up: 1 | -1) => {
       const run = x1 - x0;
-      const pitch = Math.atan2(rise, run);
-      const L = Math.hypot(run, rise);
+      const pitch = Math.atan2(dy, run);
+      const L = Math.hypot(run, dy);
       const xm = world.x((x0 + x1) / 2);
-      const ym = y0 + rise / 2;
+      const ym = y0 + dy / 2;
       const nUp: [number, number] = [-up * Math.sin(pitch), Math.cos(pitch)]; // square to the slope (x, y)
       const off = hb / 2 - 1.0;
       parts.push(box([xm + nUp[0] * off, ym + nUp[1] * off, z], [L, hb, 0.42], CREAM_LIGHT, [0, 0, up * pitch]));
       const rr = hb - 1.0 + 0.16;
       parts.push(rod([xm + nUp[0] * rr, ym + nUp[1] * rr, z], [0.4, L + 0.2, 0.4], BLACK, [0, 0, up > 0 ? pitch - Math.PI / 2 : Math.PI / 2 - pitch]));
     };
-    flight(st.x0, st.x1 - st.land, 0, world.z(st.z0 + 0.2), 1);
-    flight(st.x0 + st.top, st.x1 - st.land, rise, world.z(st.zMid), -1);
-    // landing parapet (front + right) with rails
+    flight(st.x0 + st.land, st.x1, 0, rise, world.z(st.z0 + 0.2), -1);
+    flight(st.x0 + st.land, st.arrive.x0, rise, rise2, world.z(st.zMid), 1);
+    // landing parapet (front + left) with rails
     const ly = rise + 1.2;
-    parts.push(box([world.x(st.x1 - st.land / 2), ly, world.z(st.z0 + 0.2)], [st.land, 2.4, 0.42], CREAM_LIGHT));
-    parts.push(box([world.x(st.x1 - 0.2), ly, lz(st.z0, st.z1)], [0.42, 2.4, st.z1 - st.z0], CREAM_LIGHT));
-    parts.push(rod([world.x(st.x1 - st.land / 2), ly + 1.36, world.z(st.z0 + 0.2)], [0.4, st.land, 0.4], BLACK, [0, 0, Math.PI / 2]));
-    parts.push(rod([world.x(st.x1 - 0.2), ly + 1.36, lz(st.z0, st.z1)], [0.4, st.z1 - st.z0, 0.4], BLACK, [Math.PI / 2, 0, 0]));
-    // newel block at the foot
-    parts.push(box([world.x(st.x0 - 0.2), 1.1, world.z(st.z0 + 0.2)], [0.5, 2.2, 0.5], CREAM_LIGHT));
+    parts.push(box([world.x(st.x0 + st.land / 2), ly, world.z(st.z0 + 0.2)], [st.land, 2.4, 0.42], CREAM_LIGHT));
+    parts.push(box([world.x(st.x0 + 0.2), ly, lz(st.z0, st.z1)], [0.42, 2.4, st.z1 - st.z0], CREAM_LIGHT));
+    parts.push(rod([world.x(st.x0 + st.land / 2), ly + 1.36, world.z(st.z0 + 0.2)], [0.4, st.land, 0.4], BLACK, [0, 0, Math.PI / 2]));
+    parts.push(rod([world.x(st.x0 + 0.2), ly + 1.36, lz(st.z0, st.z1)], [0.4, st.z1 - st.z0, 0.4], BLACK, [Math.PI / 2, 0, 0]));
+    // newel block at the foot (by the right wall)
+    parts.push(box([world.x(st.x1 + 0.2), 1.1, world.z(st.z0 + 0.2)], [0.5, 2.2, 0.5], CREAM_LIGHT));
     return { steps, parts };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, stair]);
@@ -358,8 +371,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       const kind = wallKinds.get(`${e.a.x},${e.a.z}|${e.b.x},${e.b.z}`);
       if (kind === "front" && Math.abs(e.a.z - e.b.z) < 0.01) {
         const dx = (e.b.x - e.a.x) / e.len;
-        const g0 = (stair.x0 - 0.1 - e.a.x) / dx;
-        const g1 = (stair.x0 + stair.top + 0.2 - e.a.x) / dx;
+        const g0 = (stair.arrive.x0 - 0.1 - e.a.x) / dx;
+        const g1 = (stair.arrive.x1 + 0.05 - e.a.x) / dx;
         segs.length = 0;
         const lo = Math.max(0, Math.min(g0, g1));
         const hi = Math.min(e.len, Math.max(g0, g1));
@@ -380,36 +393,53 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
         parts.push(box([world.x(x), top + P - 0.07, world.z(z)], [tb - ta + 0.04, 0.16, PARAPET_T + 0.14], BLACK, [0, rotY, 0]));
       }
     }
-    // raised stepped parapet over the front (centred on the veranda / entrance), with two arched jaali vents
-    const { x0, z0 } = slot.rect;
-    const frontLen = slot.stairs.x0 - 0.6 - x0;
-    if (frontLen > 5) {
-      const cx = ver ? (ver.x0 + ver.x1) / 2 + 0.3 : x0 + frontLen / 2;
-      const Wc = Math.min(8, frontLen * 0.8);
-      const d = 1.1;
+    // the designed front parapet (photo 10): CENTRED on the front face — a raised central panel with one ornate arched
+    // jaali vent and a black coping band, flanked by two tall pillar-like risers with black caps — and the design ENDS
+    // with matching stepped corner risers (small jaali vents, black caps) at both the left and the right end
+    const { x0, x1, z0 } = slot.rect;
+    const frontW = x1 - x0;
+    if (frontW > 8) {
+      const d = 0.9;
       const Z = world.z(z0 + d / 2 - 0.12);
-      const X = world.x(cx);
+      const face = Z + d / 2 + 0.06; // world z of the front face (+Z = towards the front)
       const yb = top;
-      const hS = P + 1.0; // shoulders
-      const hC = P + 2.3; // centre
-      const wC = Wc * 0.58;
-      parts.push(box([X, yb + hS / 2, Z], [Wc, hS, d], CREAM));
-      parts.push(box([X, yb + hC / 2, Z], [wC, hC, d + 0.1], CREAM));
-      // black coping on every step + a black line across the face
-      parts.push(box([X, yb + hS + 0.07, Z], [Wc + 0.12, 0.16, d + 0.14], BLACK));
-      parts.push(box([X, yb + hC + 0.08, Z], [wC + 0.16, 0.18, d + 0.24], BLACK));
-      parts.push(box([X, yb + hC - 0.55, Z + d / 2 + 0.06], [wC + 0.02, 0.1, 0.06], BLACK));
-      // corner piers rising above the centre, with black caps
+      const cx = (x0 + x1) / 2;
+      const wP = Math.min(6.2, frontW * 0.32);
+      const hP = P + 2.0;
+      const hR = P + 2.8;
+      const X = world.x(cx);
+      parts.push(box([X, yb + hP / 2, Z], [wP, hP, d], CREAM));
+      parts.push(box([X, yb + hP + 0.09, Z], [wP + 0.16, 0.18, d + 0.2], BLACK)); // coping band
+      parts.push(box([X, yb + hP - 0.5, face], [wP, 0.12, 0.06], BLACK)); // a black line just under it
+      parts.push(box([X, yb + P - 0.35, face], [wP, 0.1, 0.06], BLACK));
+      vents.push({ pos: [X, yb + P + 0.55, face + 0.02], rotY: 0, w: 1.35, h: 1.8 });
       for (const sx of [-1, 1]) {
-        const px = X + sx * (wC / 2 + 0.05);
-        parts.push(box([px, yb + (hC + 0.7) / 2, Z], [0.55, hC + 0.7, d + 0.2], CREAM));
-        parts.push(box([px, yb + hC + 0.78, Z], [0.7, 0.16, d + 0.34], BLACK));
-        vents.push({ pos: [X + sx * wC * 0.22, yb + hC - 1.45, Z + d / 2 + 0.08], rotY: 0, w: 0.85, h: 1.15 });
+        const rx = X + sx * (wP / 2 + 0.38);
+        parts.push(box([rx, yb + hR / 2, Z], [0.76, hR, d + 0.2], CREAM));
+        parts.push(box([rx, yb + hR + 0.09, Z], [0.96, 0.18, d + 0.4], BLACK));
+        parts.push(box([rx, yb + hR - 0.55, Z], [0.86, 0.2, d + 0.3], CREAM_LIGHT)); // moulded neck
+      }
+      // stepped corner risers at both ends of the front
+      for (const [ex, sx] of [
+        [x0 + 0.7, 1],
+        [x1 - stair.riser / 2, -1],
+      ] as const) {
+        const EX = world.x(ex);
+        const hLow = P + 0.9;
+        const hHigh = P + 1.8;
+        parts.push(box([EX, yb + hLow / 2, Z], [1.4, hLow, d + 0.1], CREAM));
+        parts.push(box([EX, yb + hLow + 0.08, Z], [1.56, 0.16, d + 0.26], BLACK));
+        const UX = EX - sx * 0.25;
+        parts.push(box([UX, yb + hHigh / 2, Z], [0.8, hHigh, d + 0.15], CREAM));
+        parts.push(box([UX, yb + hHigh + 0.09, Z], [0.98, 0.18, d + 0.32], BLACK));
+        vents.push({ pos: [EX + sx * 0.12, yb + P - 0.1, face + 0.03], rotY: 0, w: 0.62, h: 0.86 });
       }
     }
-    // water tank: black HDPE cylinder on a small raised cream stand, at the rear-left corner of the terrace
-    const tx = world.x(slot.rect.x0 + 3.0);
-    const tz = world.z(slot.rect.z1 - 3.0);
+    // water tank: black HDPE cylinder on a small raised cream stand, on the terrace just behind the parapet over the
+    // back exit (the wall between the house and the rear-right backyard)
+    const ex = slot.backExit;
+    const tx = world.x(Math.min(slot.rect.x1 - 2.6, Math.max(slot.rect.x0 + 2.6, ex.x)));
+    const tz = world.z(ex.z - 2.7);
     parts.push(
       box([tx, top + 0.15, tz], [4.4, 0.3, 4.4], CREAM_LIGHT),
       ...[-1.6, 1.6].flatMap((dx) => [-1.6, 1.6].map((dz) => box([tx + dx, top + 0.9, tz + dz], [0.7, 1.5, 0.7], CREAM))),
@@ -646,7 +676,7 @@ const CLOTH_COLORS = ["#c2185b", "#f4f1ea", "#2f6fb5", "#e0a020", "#2e8b57"];
  */
 function ClothesLine({ slot, world, env, y, animate }: { slot: BuildingSlot; world: World; env: RefObject<Env>; y: number; animate: boolean }) {
   const z = slot.rect.z1 - 6.5;
-  const x0 = slot.rect.x0 + 6.5;
+  const x0 = slot.rect.x0 + 2.0;
   const x1 = Math.min(slot.notch.wide.x0 - 1.5, slot.rect.x1 - 2.5);
   const len = Math.max(4, x1 - x0);
   const cloth = useMemo(() => {

@@ -76,6 +76,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   swapped), houses flush right with the lane passage left, front yard → A → courtyard → B, stairs in the yards at the
   front-right, rear-right backyard notch (bathroom + back exit), Gate A front wall / Gate B lane wall at the courtyard. Owner:
   "move the compound outside both the property" → wall is a separate enclosure with clear strips, never against a house.
+- 4/10/2026 owner (photos 9–11): black line pattern on the compound wall on ALL sides (jaali kept inside it); front parapet
+  design CENTRED on each façade like photo 10 (arched jaali panel between two tall risers, stepped risers with small vents at
+  BOTH ends, black coping); water tank on the terrace just behind the back-exit / backyard notch; dog-leg stair foot by the
+  right wall, arriving at the front-right inside the corner riser (keeps the centred design whole).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

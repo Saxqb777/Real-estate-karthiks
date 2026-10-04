@@ -229,11 +229,12 @@ function PoleAndMeter({ layout, world, env, lampLight, crows }: { layout: SiteLa
         out.push(pts);
       }
     }
-    // service drop to the front building's passage-side corner (the poles stand right of the plot)
+    // service drop to the front building's front-right corner (the poles stand right of the plot)
     const f = layout.slots.find((s) => s.slot === "front" && s.unit);
     if (f) {
       const a: V3 = [world.x(p0.x), wireY - 1.5, world.z(zPole)];
-      const b: V3 = [world.x(f.rect.x1 - 0.6), f.heightFt + 0.8, world.z(f.rect.z0 + 0.6)];
+      // anchored on the outside of the front wall just under the roof (not over the parapet onto the terrace)
+      const b: V3 = [world.x(f.rect.x1 - 0.9), f.heightFt - 1.3, world.z(f.rect.z0 - 0.15)];
       const pts: V3[] = [];
       for (let i = 0; i <= 12; i++) {
         const t = i / 12;

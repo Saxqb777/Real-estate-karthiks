@@ -88,7 +88,7 @@ The diorama must feel alive, like a tiny Tamil Nadu street scene running in real
 - **No road (owner, 3/10/2026, after sending photos of the houses)**: the asphalt street, shoulders, drain, kerbs and all traffic were
   removed; open natural grass surrounds the plot on the floating island. The electric pole (sagging wires, lamp, meter) stands on the
   grass by the gate. The houses follow the photos: single storey + roof terrace, cream walls with black accents, grilled veranda,
-  dog-leg external stair with black rails in the yard, cream compound wall (separate enclosure) with black line pattern, jaali panels and two black diamond gates.
+  dog-leg external stair with black rails in the yard, cream compound wall (separate enclosure) with the black line pattern on all sides, jaali panels and two black diamond gates; front parapet design centred on each façade (photo 10); water tank over the back exit.
 - **Pedestrians**: a few stylised low-poly people walking across the grass and round the palms / banana garden (simple walk bob + limb
   swing), someone with an umbrella, a kid running; occasionally someone stops at the gate. A zebu cow grazes under the palms.
 - **Wind**: palm fronds sway with gusts (shader/vertex sway, gust strength varies over time), leaves/petals drifting across the plot,

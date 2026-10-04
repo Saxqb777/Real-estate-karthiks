@@ -1,7 +1,7 @@
 "use client";
 // Inside the compound (owner's photos): grey concrete yard and passage, a concrete step at each porch, and the
-// cream compound wall — square pillars, a graphic black line pattern on the long lane-side (left) wall, white
-// quatrefoil breeze-block jaali panels in black frames elsewhere, two black steel gates with a diamond motif (the main
+// cream compound wall — square pillars, a graphic black line pattern on the outer face of EVERY side, white
+// quatrefoil breeze-block jaali panels in black frames on the front / right / back walls, two black steel gates with a diamond motif (the main
 // gate at the front unit's stair foot, the back unit's gate mid-way along the lane wall) and the house-number plate
 // on the front corner pillar. The wall is a separate enclosure on the plot boundary — it never touches a house. A tulsi maadam in the courtyard and potted marigolds.
 import { useEffect, useMemo } from "react";
@@ -110,38 +110,35 @@ function wallParts(layout: SiteLayout, world: World): { solid: Part[]; jalis: In
       solid.push(box(at(t, (WALL_H + 0.45) / 2), [PILLAR, WALL_H + 0.45, PILLAR], cream, [0, rotY, 0]));
       solid.push(box(at(t, WALL_H + 0.5), [PILLAR + 0.16, 0.14, PILLAR + 0.16], PAL.cornice, [0, rotY, 0]));
     }
-    // the long lane-side (left) wall: both ends on the line FL–BL
+    // the long lane-side (left) wall keeps its plain inner face; every other wall gets jaali panels as well
     const onLane = (p: { x: number; z: number }) => Math.abs((P[3].x - P[0].x) * (p.z - P[0].z) - (P[3].z - P[0].z) * (p.x - P[0].x)) < 0.01 * (P[3].z - P[0].z);
     const lane = onLane(w.a) && onLane(w.b);
     const outFace = WALL_T / 2 + 0.025;
-    if (lane) {
-      // graphic black pattern on the lane side: a black post on every pillar, two rails per panel that step up and
-      // down from panel to panel, and short black dashes under the coping
-      for (const t of pillarTs) solid.push(box(at(t, (WALL_H + 0.1) / 2, PILLAR / 2 + 0.02), [0.28, WALL_H - 0.3, 0.05], black, [0, rotY, 0]));
-      for (let i = 0; i < nPanels; i++) {
-        const ta = pillarTs[i] + PILLAR / 2;
-        const tb = pillarTs[i + 1] - PILLAR / 2;
-        if (tb - ta < 0.6) continue;
-        const pl = tb - ta;
-        const pc = (ta + tb) / 2;
-        const ys = i % 2 ? [1.25, 2.55] : [1.85, 3.15];
-        for (const y of ys) solid.push(box(at(pc, y, outFace), [pl, 0.17, 0.05], black, [0, rotY, 0]));
-        // a short vertical link between the rails, offset in each panel
-        solid.push(box(at(pc + (i % 2 ? 0.28 : -0.28) * pl, (ys[0] + ys[1]) / 2, outFace), [0.17, ys[1] - ys[0], 0.05], black, [0, rotY, 0]));
-        for (const f of [-0.25, 0.25]) solid.push(box(at(pc + f * pl, WALL_H - 0.42, outFace), [0.55, 0.32, 0.05], black, [0, rotY, 0]));
-      }
-    } else {
-      // breeze-block jaali panels: one per panel (front / right / back walls)
-      for (let i = 0; i < nPanels; i++) {
-        const ta = pillarTs[i] + PILLAR / 2;
-        const tb = pillarTs[i + 1] - PILLAR / 2;
-        if (tb - ta < JALI + 0.4) continue;
-        const pc = (ta + tb) / 2;
-        for (const side of [1, -1]) {
-          const p = at(pc, 2.75, side * outFace);
-          jalis.push({ pos: p, rotY: side > 0 ? faceRot : faceRot + Math.PI });
+    // graphic black pattern on the OUTER face of every wall (owner: "throughout the compound wall in all sides"): a black
+    // post on every pillar, two rails per panel that step up and down from panel to panel (broken round a jaali), a
+    // short vertical link and black dashes under the coping
+    for (const t of pillarTs) solid.push(box(at(t, (WALL_H + 0.1) / 2, PILLAR / 2 + 0.02), [0.28, WALL_H - 0.3, 0.05], black, [0, rotY, 0]));
+    for (let i = 0; i < nPanels; i++) {
+      const ta = pillarTs[i] + PILLAR / 2;
+      const tb = pillarTs[i + 1] - PILLAR / 2;
+      if (tb - ta < 0.6) continue;
+      const pl = tb - ta;
+      const pc = (ta + tb) / 2;
+      const jali = !lane && pl >= JALI + 0.4;
+      const ys = i % 2 ? [1.25, 2.55] : [1.85, 3.15];
+      for (const y of ys) {
+        const crossesJali = jali && y > 2.75 - JALI / 2 - 0.15 && y < 2.75 + JALI / 2 + 0.15;
+        if (!crossesJali) solid.push(box(at(pc, y, outFace), [pl, 0.17, 0.05], black, [0, rotY, 0]));
+        else {
+          const half = (pl - JALI - 0.5) / 2; // rail either side of the jaali frame
+          if (half > 0.1) for (const sg of [-1, 1]) solid.push(box(at(pc + sg * (JALI / 2 + 0.25 + half / 2), y, outFace), [half, 0.17, 0.05], black, [0, rotY, 0]));
         }
       }
+      solid.push(box(at(pc + (i % 2 ? 0.28 : -0.28) * pl, (ys[0] + ys[1]) / 2, outFace), [0.17, ys[1] - ys[0], 0.05], black, [0, rotY, 0]));
+      for (const f of [-0.25, 0.25]) solid.push(box(at(pc + f * pl, WALL_H - 0.42, outFace), [0.55, 0.32, 0.05], black, [0, rotY, 0]));
+      // breeze-block jaali panel in the middle of the panel (front / right / back walls), both faces
+      if (jali)
+        for (const side of [1, -1]) jalis.push({ pos: at(pc, 2.75, side * (outFace + 0.03)), rotY: side > 0 ? faceRot : faceRot + Math.PI });
     }
   }
   // house-number plate on the front-left corner pillar (outer face, towards the grass)
