@@ -35,10 +35,10 @@ export type ObjectScreenFn = (kind: SceneObjectKind, unitId?: string) => ScreenP
 export const SCENE_OBJECT_INFO: Record<SceneObjectKind, { name: string; opens: string }> = {
   unit: { name: "House", opens: "Unit card" },
   mailbox: { name: "Mailbox", opens: "Payments & invoices" },
-  noticeboard: { name: "Notice board", opens: "To-dos" },
+  noticeboard: { name: "Property officer", opens: "To-dos" },
   pole: { name: "EB pole & meter", opens: "Electricity (TNPDCL)" },
   tolet: { name: "TO-LET board", opens: "New lease" },
   tenant: { name: "Tenant", opens: "Tenant profile" },
-  taxstamp: { name: "Tax stamp", opens: "Property tax" },
+  taxstamp: { name: "Tax office", opens: "Property tax" },
   plot: { name: "Plot marker", opens: "Plot dimensions" },
 };

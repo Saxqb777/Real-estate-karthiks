@@ -14,10 +14,10 @@ import { box, cone, rod, type Part } from "./bake";
 import { Baked, vcMaterial } from "./Baked";
 import { G, std } from "./materials";
 import { WireCrows } from "./People";
-import { bambooLatticeTex, bambooMatTex, glowTex, noticeTex, officeBoardTex, taxStampTex } from "./textures";
+import { bambooLatticeTex, bambooMatTex, glowTex, officeBoardTex, taxStampTex } from "./textures";
+import { PropertyOfficer } from "./People";
 import type { World } from "./util";
 
-const WALL_H = 4.6;
 const PILLAR = 0.95;
 
 /** Optional data cues shown on the objects themselves (all optional; the world looks lived-in without them). */
@@ -54,7 +54,8 @@ export function Fixtures({ layout, world, env, cues, lampLight, crows }: { layou
     <group>
       <PoleAndMeter layout={layout} world={world} env={env} lampLight={lampLight} crows={crows} />
       <Mailbox layout={layout} world={world} mail={!!cues?.mail} />
-      <NoticeBoard layout={layout} world={world} notes={cues?.todos ?? 3} tamil={tamil} />
+      {/* the to-dos live with the property officer who walks round the compound (People.tsx) */}
+      <PropertyOfficer layout={layout} world={world} env={env} />
       <TaxStamp layout={layout} world={world} state={cues?.tax ?? "plain"} tamil={tamil} />
       <PlotMarker layout={layout} world={world} env={env} />
     </group>
@@ -85,38 +86,6 @@ function Mailbox({ layout, world, mail }: { layout: SiteLayout; world: World; ma
     <Hotspot spot={{ key: "mailbox", kind: "mailbox", anchor }} hit={<mesh geometry={G.box()} position={[X, 3.3, Z]} scale={[2.6, 3.4, 2.0]} visible={false} />}>
       <group position={[X, 0, Z]}>
         <Baked parts={parts} cast material={vcMaterial(0.45)} />
-      </group>
-    </Hotspot>
-  );
-}
-
-// ───────────────────────────── notice board ─────────────────────────────
-
-function NoticeBoard({ layout, world, notes, tamil }: { layout: SiteLayout; world: World; notes: number; tamil: boolean }) {
-  const nb = layout.fixtures.noticeBoard;
-  const w = nb.widthFt;
-  const h = 2.3;
-  const y = WALL_H - h / 2 - 0.35;
-  // mounted on the outer (left) face of the side compound wall, facing the lane (world −X)
-  const X = world.x(nb.x - 0.28 - 0.12);
-  const Z = world.z(nb.z);
-  const face = useMemo(() => std("#ffffff", { map: noticeTex(Math.max(0, Math.min(6, Math.round(notes))), tamil), rough: 0.9 }), [notes, tamil]);
-  const frame = useMemo<Part[]>(
-    () => [
-      box([0, y, -0.06], [w + 0.36, h + 0.36, 0.16], "#5a3519"),
-      box([0, y + h / 2 + 0.36, 0.1], [w + 0.9, 0.12, 0.6], "#8f3424", [-0.25, 0, 0]), // little tiled hood
-      box([0, y + h / 2 + 0.2, -0.05], [w + 0.5, 0.16, 0.2], "#6b3f22"),
-      box([-w / 2 + 0.2, (y - h / 2) / 2, -0.05], [0.18, y - h / 2, 0.18], "#5a3519"),
-      box([w / 2 - 0.2, (y - h / 2) / 2, -0.05], [0.18, y - h / 2, 0.18], "#5a3519"),
-    ],
-    [w, h, y],
-  );
-  const anchor = useMemo<V3>(() => [X - 0.6, y + h / 2 + 1.2, Z], [X, y, h, Z]);
-  return (
-    <Hotspot spot={{ key: "noticeboard", kind: "noticeboard", anchor }} hit={<mesh geometry={G.box()} position={[X - 0.5, y - 0.6, Z]} scale={[1.6, h + 2.6, w + 1.6]} visible={false} />}>
-      <group position={[X, 0, Z]} rotation={[0, -Math.PI / 2, 0]}>
-        <Baked parts={frame} material={vcMaterial(0.8)} cast />
-        <mesh geometry={G.plane()} material={face} position={[0, y, 0.03]} scale={[w, h, 1]} />
       </group>
     </Hotspot>
   );

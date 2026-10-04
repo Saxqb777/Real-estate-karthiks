@@ -192,7 +192,7 @@ export function HudPanelFor({ target, data, period, onClose, onOpenUnit, side, c
 const OBJECT_NAME: Record<SceneObjectKind, string> = {
   unit: "House",
   mailbox: "Mailbox",
-  noticeboard: "Notice board",
+  noticeboard: "Property officer",
   pole: "Electric pole",
   tolet: "TO-LET board",
   tenant: "Tenant",
@@ -555,7 +555,7 @@ function useCardParts({ obj, data, openForm, onExpand }: { obj: SceneObject | nu
     case "noticeboard": {
       const items = [...data.actions.pending].sort((a, z) => Number(z.isOverdue) - Number(a.isOverdue)).slice(0, 3);
       return {
-        eyebrow: "Notice board",
+        eyebrow: "Property officer",
         title: `${data.actions.pending.length} to do`,
         body: items.length ? (
           <ul className={s.cardList}>

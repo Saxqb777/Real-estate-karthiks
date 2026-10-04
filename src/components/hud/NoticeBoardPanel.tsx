@@ -1,5 +1,5 @@
 "use client";
-// Notice board by the gate → to-dos: tick one off (with Undo), tap one to edit, add a new one.
+// Property officer walking round the plot → to-dos: tick one off (with Undo), tap one to edit, add a new one.
 import { Check, ListPlus } from "lucide-react";
 import { Badge, Button, EmptyState, toast, cx, type BadgeTone } from "@/components/ui";
 import { useActions } from "@/components/forms";
@@ -44,7 +44,7 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
     <>
       <HudPanel
         side={side}
-        eyebrow="Notice board · to-dos"
+        eyebrow="Property officer · to-dos"
         title="Things to do"
         pinId="noticeboard"
         onClose={onClose}
@@ -63,7 +63,7 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
           {late > 0 ? <Badge tone="coral" marker size="sm">{late} late</Badge> : items.length > 0 ? <Badge tone="teal" marker size="sm">None late</Badge> : null}
         </div>
         {items.length === 0 ? (
-          <EmptyState compact title="Nothing to do" description="The notice board is clear. Add a to-do when something comes up." />
+          <EmptyState compact title="Nothing to do" description="The officer has nothing on his list. Add a to-do when something comes up." />
         ) : (
           <ul className={b.todos}>
             {items.map((a) => (

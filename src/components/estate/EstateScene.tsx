@@ -313,7 +313,7 @@ interface ContentsProps extends EstateSceneProps {
 const OBJECT_HINT: Record<SceneObjectKind, string> = {
   unit: "Click for details · right-click for actions",
   mailbox: "Click to record rent",
-  noticeboard: "Click to see to-dos",
+  noticeboard: "Click him to see the to-dos",
   pole: "Click for consumer no. & pay link",
   tolet: "Click to start a lease",
   tenant: "Click for profile & call",

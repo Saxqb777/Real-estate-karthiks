@@ -106,7 +106,7 @@ export function Tutorial({ open, onClose, locate, units, insets, rootEl }: Tutor
       title: "The mailbox takes rent",
       body: (
         <>
-          Click it to record rent and see receipts. The <b>notice board</b> holds your to-dos, the <b>pole</b> has the electricity numbers, and the stamp on the
+          Click it to record rent and see receipts. The <b>property officer</b> walking round the plot holds your to-dos, the <b>pole</b> has the electricity numbers, and the stamp on the
           gate pillar is <b>property tax</b>.
         </>
       ),

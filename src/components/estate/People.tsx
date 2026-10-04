@@ -533,3 +533,112 @@ export function BlobShadows({ list, max }: { list: RefObject<Map<string, { g: TH
   });
   return <instancedMesh ref={ref} args={[G.plane(), mat, Math.max(1, max)]} frustumCulled={false} renderOrder={1} />;
 }
+
+// ───────────────────────────── property officer (the to-do list) ─────────────────────────────
+
+/** White shirt, white trousers, black shoes, a maroon register in the left hand and a pen in the right. */
+function officerLimbs(): Limb[] {
+  const white = "#f3f1ea";
+  const limbs = personLimbs({ top: white, bottom: "#ebe8df", wrap: "pants", skin: SKIN.mid, hair: "short" });
+  // long white sleeves; black shoes
+  for (const l of limbs) for (const pt of l.parts) if (pt.c === "#2b211b") pt.c = "#121212";
+  for (const i of [P_ARM_L, P_ARM_R]) {
+    const arm = limbs[i].parts[0];
+    arm.c = white;
+  }
+  limbs[0].parts.push(box([0.25, 3.9, 0.27], [0.24, 0.32, 0.04], "#1d4f91")); // ID card
+  limbs[P_ARM_L].parts.push(box([-0.55, 2.75, 0.38], [0.2, 1.25, 0.95], "#8c1f24"), box([-0.44, 2.75, 0.38], [0.04, 1.16, 0.88], "#f4efe0")); // register
+  limbs[P_ARM_R].parts.push(box([0.61, 2.6, 0.2], [0.06, 0.06, 0.48], "#1f3fa8")); // pen
+  return limbs;
+}
+const P_ARM_L = 3;
+const P_ARM_R = 4;
+
+/**
+ * The property officer: walks a slow loop round the outside of the compound at all times, stopping at each corner to
+ * write in his register. Clicking him opens the to-dos (the old notice board's job). His anchor moves with him.
+ */
+export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
+  const { geo, rig } = useRig(officerLimbs, []);
+  const root = useRef<THREE.Group>(null);
+  const anchor = useMemo<V3>(() => [0, 7.4, 0], []);
+  // a loop outside the wall: front grass → right passage → behind the back → down the lane, clear of the gates' boards
+  const loop = useMemo(() => {
+    const [FL, FR, BR, BL] = layout.plot.polygon;
+    const pts: Pt[] = [
+      { x: FL.x - 5, z: FL.z - 6.5 },
+      { x: FR.x + 3, z: FR.z - 6.5 },
+      { x: BR.x + 3, z: BR.z + 3.8 },
+      { x: BL.x - 5, z: BL.z + 3.8 },
+    ];
+    const segs = pts.map((a, i) => {
+      const b = pts[(i + 1) % pts.length];
+      return { a, b, len: Math.hypot(b.x - a.x, b.z - a.z) };
+    });
+    return { segs, total: segs.reduce((n, sg) => n + sg.len, 0) };
+  }, [layout]);
+  const SPEED = 2.1; // ft/s
+  const WRITE = 4; // s at each corner
+  const cycle = loop.total / SPEED + WRITE * loop.segs.length;
+  const heading = useRef<number | null>(null);
+  useFrame(() => {
+    const g = root.current;
+    if (!g) return;
+    const e = env.current;
+    let t = (((e.t + cycle * 0.35) % cycle) + cycle) % cycle; // starts on the right side, away from the front walkers
+    let x = 0;
+    let z = 0;
+    let dx = 1;
+    let dz = 0;
+    let writing = false;
+    let walked = 0;
+    for (const sg of loop.segs) {
+      const walkT = sg.len / SPEED;
+      if (t < WRITE) {
+        writing = true;
+        x = sg.a.x;
+        z = sg.a.z;
+        dx = sg.b.x - sg.a.x;
+        dz = sg.b.z - sg.a.z;
+        break;
+      }
+      t -= WRITE;
+      if (t < walkT) {
+        const k = t / walkT;
+        x = sg.a.x + (sg.b.x - sg.a.x) * k;
+        z = sg.a.z + (sg.b.z - sg.a.z) * k;
+        dx = sg.b.x - sg.a.x;
+        dz = sg.b.z - sg.a.z;
+        walked += t * SPEED;
+        break;
+      }
+      t -= walkT;
+      walked += sg.len;
+    }
+    const X = world.x(x);
+    const Z = world.z(z);
+    g.position.set(X, 0, Z);
+    const want = Math.atan2(dx, -dz);
+    if (heading.current === null) heading.current = want;
+    let dh = want - heading.current;
+    while (dh > Math.PI) dh -= Math.PI * 2;
+    while (dh < -Math.PI) dh += Math.PI * 2;
+    heading.current += dh * (1 - Math.exp(-e.dt * 5));
+    g.rotation.y = heading.current;
+    // walking: the register stays up in the left hand; at the corners he writes in it
+    posePerson(rig.u, writing ? "idle" : "walk", (walked / 1.6) * Math.PI, e.t, 1.7);
+    const a = rig.u.uAng.value;
+    a[P_ARM_L] = -0.95;
+    if (writing) a[P_ARM_R] = -0.85 + Math.sin(e.t * 9) * 0.05;
+    anchor[0] = X;
+    anchor[2] = Z;
+  });
+  return (
+    <Hotspot spot={{ key: "noticeboard", kind: "noticeboard", anchor }}>
+      <group ref={root}>
+        <RigMesh geo={geo} rig={rig} />
+        <mesh geometry={G.box()} position={[0, 3, 0]} scale={[2.6, 6.4, 2.6]} visible={false} />
+      </group>
+    </Hotspot>
+  );
+}
