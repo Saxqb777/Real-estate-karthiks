@@ -103,6 +103,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 4/10/2026: school kid (palms loop) REMOVED; an ANGRY POLICEMAN (khaki, red-band cap, moustache, lathi) guards the tax
   hut by its porch (PoliceGuard in People.tsx, placed in the hut's local frame). Domain DNS set at IONOS by owner:
   A @ 76.76.21.21, CNAME www cname.vercel-dns.com (mail records kept).
+- 5/10/2026: LOGIN redesigned — no 3D on /login. Game title screen over a hand-drawn street map of Pattukkottai in web-map colours
+  (src/app/login/TownMap.tsx, traced from the owner's Google Maps screenshot; no Google logo/imagery, no business names); title +
+  IST day/time + "Press any key / Tap to start" (no logo, no Tamil on the title, no location pill). Key → camera flies to the plot
+  (red pin + "QUEST · YOUR ESTATE" tag), sign-in card slides in (bottom sheet on phones), success dives onto the roof → 3D page.
+  Map area labels and the card greeting still have Tamil (owner asked about removing — pending).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
