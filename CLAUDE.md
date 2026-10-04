@@ -89,6 +89,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 4/10/2026: door-number POLE outside each gate (Gate A → front unit name, Gate B → back unit name, from the data);
   the corner-pillar "116/87" plate is gone. TO-LET board English only (no Tamil line). Fixed: empty baked part lists
   crashed the overview into the 2D fallback (bake() now returns an empty geometry).
+- 4/10/2026: number plates self-lit + bigger, pole stands BEHIND the plate. Property tax moved off the wall into a mini
+  BAMBOO VILLAGE HUT (owner's sample photo) on the grass right of Unit A, turned to face SOUTH-WEST, dried coconut-LEAF
+  thatch roof, NO name board (round paid/due seal kept); one palm removed for it; labels say "Tax office". Notice board
+  REPLACED by a walking PROPERTY OFFICER (white shirt/trousers, black shoes, register + pen) looping outside the compound
+  wall, stopping at corners to write; clicking him opens the to-dos (kind "noticeboard", label "Property officer").
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
