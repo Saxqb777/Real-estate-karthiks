@@ -106,8 +106,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: LOGIN redesigned — no 3D on /login. Game title screen over a hand-drawn street map of Pattukkottai in web-map colours
   (src/app/login/TownMap.tsx, traced from the owner's Google Maps screenshot; no Google logo/imagery, no business names); title +
   IST day/time + "Press any key / Tap to start" (no logo, no Tamil on the title, no location pill). Key → camera flies to the plot
-  (red pin + "QUEST · YOUR ESTATE" tag), sign-in card slides in (bottom sheet on phones), success dives onto the roof → 3D page.
-  Map area labels and the card greeting still have Tamil (owner asked about removing — pending).
+  (red pin), sign-in slides in, success dives onto the roof → 3D page.
+- 5/10/2026: sign-in = game HUD BAR at the bottom (owner picked mock option D): "PATTUKKOTTAI ESTATE" + IST day/time | username |
+  password | big centred "ENTER ▶"; stacks into a bottom panel on phones. No logo, no Tamil, no "your estate"/"quest" anywhere;
+  map pin tag reads "PATTUKKOTTAI ESTATE". Pending owner answer: title screen still "PATTUKOTTAI ESTATES" (rename to match?);
+  Tamil still on map area labels.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
