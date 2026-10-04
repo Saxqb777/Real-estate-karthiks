@@ -1,22 +1,53 @@
 "use client";
 // /login — a game title screen over a street map of Pattukkottai. "Press any key" flies the camera down onto the plot,
-// the sign-in card slides in, and a successful sign-in dives the last few metres before handing over to the 3D estate.
-// The greeting is in Tamil for the time of day (same day-phase helper as the HUD clock and the 3D lighting).
-import { AlertTriangle, ArrowRight, Check, Eye, EyeOff, KeyRound, User } from "lucide-react";
-import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { BrandMark } from "@/components/shell/BrandMark";
+// the sign-in bar slides up, and a successful sign-in dives the last few metres before handing over to the 3D estate.
+import {
+  AlertTriangle,
+  Check,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  Play,
+  User,
+} from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  useAnimate,
+  useReducedMotion,
+} from "motion/react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { useEpochSecond } from "@/components/shell/IstClock";
-import { Button, Field, Input, Kbd, cx, useIsClient } from "@/components/ui";
+import { Field, Input, cx, useIsClient } from "@/components/ui";
 import { api, ApiClientError } from "@/lib/client";
-import { dayPhaseAt, formatTimeIST, hourInIST, type DayPhase } from "@/lib/day-phase";
+import { formatTimeIST } from "@/lib/day-phase";
 import { MAP_H, M_PER_UNIT, PLOT, TownMap } from "./TownMap";
 import s from "./login.module.css";
 
-/** A representative IST hour per phase, so the server-rendered greeting matches the helper's wording. */
-const PHASE_HOUR: Record<DayPhase, number> = { dawn: 5, morning: 9, afternoon: 14, evening: 17.5, night: 22 };
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 const istDay = (now: Date) => {
   const d = new Date(now.getTime() + 330 * 60_000);
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
@@ -32,18 +63,27 @@ const PHONE = 768;
 
 /** whole town, filling the screen */
 function startView(W: number, H: number): View {
-  return { cx: W < PHONE ? 1125 : 1000, cy: 640, w: Math.min(1900, ((MAP_H - 40) * W) / H) };
+  return {
+    cx: W < PHONE ? 1280 : 1000,
+    cy: 640,
+    w: Math.min(1900, ((MAP_H - 40) * W) / H),
+  };
 }
-/** street level, the plot centred in the space the card leaves free (left of it; above the sheet on phones) */
+/** street level, the plot framed in the space above the sign-in bar (a taller panel on phones) */
 function endView(W: number, H: number, dive = 1): View {
   const phone = W < PHONE;
-  const w = (phone ? Math.max(150, W * 0.42) : Math.min(340, Math.max(250, W * 0.21))) * dive;
+  const w =
+    (phone ? Math.max(150, W * 0.42) : Math.min(340, Math.max(250, W * 0.21))) *
+    dive;
   const k = w / W;
-  const tx = phone ? W / 2 : Math.max(W * 0.3, (W - 470) / 2);
-  const ty = phone ? Math.max(130, (H - Math.min(500, H * 0.6)) / 2 + 10) : H / 2;
+  const tx = phone ? W * 0.4 : W / 2 - 90;
+  const ty = phone
+    ? Math.max(120, (H - 400) / 2)
+    : Math.max(160, (H - 190) / 2);
   return { cx: PLOT.x + (W / 2 - tx) * k, cy: PLOT.y + (H / 2 - ty) * k, w };
 }
-const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+const easeInOut = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 const easeIn = (t: number) => t * t * t;
 const Z_FAR = 1900;
 const Z_NEAR = 280;
@@ -65,17 +105,26 @@ function useMapCamera() {
     view.current = v;
     const svg = svgRef.current;
     if (!svg) return;
-    const W = window.innerWidth, H = window.innerHeight;
+    const W = window.innerWidth,
+      H = window.innerHeight;
     const h = (v.w * H) / W;
-    svg.setAttribute("viewBox", `${(v.cx - v.w / 2).toFixed(2)} ${(v.cy - h / 2).toFixed(2)} ${v.w.toFixed(2)} ${h.toFixed(2)}`);
+    svg.setAttribute(
+      "viewBox",
+      `${(v.cx - v.w / 2).toFixed(2)} ${(v.cy - h / 2).toFixed(2)} ${v.w.toFixed(2)} ${h.toFixed(2)}`,
+    );
     const k = v.w / W;
-    const z = Math.min(1.25, Math.max(0, Math.log(Z_FAR / v.w) / Math.log(Z_FAR / Z_NEAR)));
+    const z = Math.min(
+      1.25,
+      Math.max(0, Math.log(Z_FAR / v.w) / Math.log(Z_FAR / Z_NEAR)),
+    );
     svg.style.setProperty("--k", k.toFixed(4));
     svg.style.setProperty("--z", z.toFixed(3));
     // scale bar: a round distance about 90 px long
     const m = niceMetres(90 * k * M_PER_UNIT);
-    if (scaleLabel.current) scaleLabel.current.textContent = m >= 1000 ? `${m / 1000} km` : `${m} m`;
-    if (scaleBar.current) scaleBar.current.style.width = `${Math.round(m / M_PER_UNIT / k)}px`;
+    if (scaleLabel.current)
+      scaleLabel.current.textContent = m >= 1000 ? `${m / 1000} km` : `${m} m`;
+    if (scaleBar.current)
+      scaleBar.current.style.width = `${Math.round(m / M_PER_UNIT / k)}px`;
   }, []);
 
   const stop = useCallback(() => cancelAnimationFrame(raf.current), []);
@@ -89,7 +138,11 @@ function useMapCamera() {
       const step = (now: number) => {
         const t = Math.min(1, (now - t0) / ms);
         const e = ease(t);
-        apply({ cx: from.cx + (to.cx - from.cx) * e, cy: from.cy + (to.cy - from.cy) * e, w: from.w * (to.w / from.w) ** e });
+        apply({
+          cx: from.cx + (to.cx - from.cx) * e,
+          cy: from.cy + (to.cy - from.cy) * e,
+          w: from.w * (to.w / from.w) ** e,
+        });
         if (t < 1) raf.current = requestAnimationFrame(step);
         else done?.();
       };
@@ -105,23 +158,29 @@ function useMapCamera() {
     const step = (now: number) => {
       const t = (now - t0) / 1000;
       const b = startView(window.innerWidth, window.innerHeight);
-      apply({ cx: b.cx + Math.sin(t * 0.09) * 26, cy: b.cy + Math.sin(t * 0.07 + 1) * 14, w: b.w * (1 - 0.025 * (1 - Math.cos(t * 0.06))) });
+      apply({
+        cx: b.cx + Math.sin(t * 0.09) * 26,
+        cy: b.cy + Math.sin(t * 0.07 + 1) * 14,
+        w: b.w * (1 - 0.025 * (1 - Math.cos(t * 0.06))),
+      });
       raf.current = requestAnimationFrame(step);
     };
     raf.current = requestAnimationFrame(step);
   }, [apply, stop]);
 
   useEffect(() => stop, [stop]);
-  return useMemo(() => ({ svgRef, scaleLabel, scaleBar, apply, flyTo, drift, stop }), [apply, flyTo, drift, stop]);
+  return useMemo(
+    () => ({ svgRef, scaleLabel, scaleBar, apply, flyTo, drift, stop }),
+    [apply, flyTo, drift, stop],
+  );
 }
 
 /* ---------- screen ---------- */
 
-export function LoginScreen({ next, initialPhase }: { next: string; initialPhase: DayPhase }) {
+export function LoginScreen({ next }: { next: string }) {
   const sec = useEpochSecond();
   const hydrated = useIsClient();
   const now = sec ? new Date(sec * 1000) : null;
-  const phase = now ? dayPhaseAt(hourInIST(now)) : dayPhaseAt(PHASE_HOUR[initialPhase]);
   const reduce = useReducedMotion();
 
   const [stage, setStage] = useState<Stage>("title");
@@ -134,14 +193,18 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
   const [show, setShow] = useState(false);
   const [caps, setCaps] = useState(false);
   const [status, setStatus] = useState<"idle" | "busy" | "done">("idle");
-  const [error, setError] = useState<{ text: string; field: "username" | "password" | null } | null>(null);
+  const [error, setError] = useState<{
+    text: string;
+    field: "username" | "password" | null;
+  } | null>(null);
   const [shake, setShake] = useState(0);
   const userRef = useRef<HTMLInputElement>(null);
   const passRef = useRef<HTMLInputElement>(null);
 
   // first frame: reduced motion skips the show and lands straight on the plot
   useEffect(() => {
-    const W = window.innerWidth, H = window.innerHeight;
+    const W = window.innerWidth,
+      H = window.innerHeight;
     if (reduce) {
       cam.stop();
       cam.apply(endView(W, H));
@@ -153,8 +216,10 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
   useEffect(() => {
     const onResize = () => {
       const st = stageRef.current;
-      if (st === "login") cam.apply(endView(window.innerWidth, window.innerHeight));
-      else if (st === "title" && reduce) cam.apply(startView(window.innerWidth, window.innerHeight));
+      if (st === "login")
+        cam.apply(endView(window.innerWidth, window.innerHeight));
+      else if (st === "title" && reduce)
+        cam.apply(startView(window.innerWidth, window.innerHeight));
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -171,7 +236,12 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
     const st = stageRef.current;
     if (st === "title") {
       setStage("flying");
-      cam.flyTo(endView(window.innerWidth, window.innerHeight), FLY_MS, easeInOut, () => setStage("login"));
+      cam.flyTo(
+        endView(window.innerWidth, window.innerHeight),
+        FLY_MS,
+        easeInOut,
+        () => setStage("login"),
+      );
     } else if (st === "flying") land();
   }, [cam, land]);
 
@@ -198,14 +268,19 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
   const [cardScope, animateCard] = useAnimate<HTMLElement>();
   useEffect(() => {
     if (!shake || reduce || !cardScope.current) return;
-    void animateCard(cardScope.current, { x: [0, -9, 8, -5, 4, 0] }, { duration: 0.42, ease: "easeOut" });
+    void animateCard(
+      cardScope.current,
+      { x: [0, -9, 8, -5, 4, 0] },
+      { duration: 0.42, ease: "easeOut" },
+    );
   }, [shake, reduce, animateCard, cardScope]);
 
   // after a failed try (and once the fields are enabled again) put the cursor where the fix goes
   const errorField = error?.field;
   useEffect(() => {
     if (!shake || status !== "idle") return;
-    const target = errorField === "username" ? userRef.current : passRef.current;
+    const target =
+      errorField === "username" ? userRef.current : passRef.current;
     target?.focus();
     target?.select();
   }, [shake, status, errorField]);
@@ -218,12 +293,23 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
     setError(null);
     setStatus("busy");
     try {
-      await api("/api/auth/login", { method: "POST", body: { username: username.trim(), password } });
+      await api("/api/auth/login", {
+        method: "POST",
+        body: { username: username.trim(), password },
+      });
       setStatus("done");
       setStage("done");
       // dive the last few metres onto the roof, then hand over to the 3D estate
-      if (!reduce) cam.flyTo(endView(window.innerWidth, window.innerHeight, 0.16), DIVE_MS, easeIn);
-      window.setTimeout(() => window.location.replace(next), reduce ? 0 : DIVE_MS + 80);
+      if (!reduce)
+        cam.flyTo(
+          endView(window.innerWidth, window.innerHeight, 0.16),
+          DIVE_MS,
+          easeIn,
+        );
+      window.setTimeout(
+        () => window.location.replace(next),
+        reduce ? 0 : DIVE_MS + 80,
+      );
     } catch (err) {
       setStatus("idle");
       const ae = err instanceof ApiClientError ? err : null;
@@ -232,7 +318,8 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
     }
   };
 
-  const onKey = (e: KeyboardEvent<HTMLInputElement>) => setCaps(e.getModifierState?.("CapsLock") ?? false);
+  const onKey = (e: KeyboardEvent<HTMLInputElement>) =>
+    setCaps(e.getModifierState?.("CapsLock") ?? false);
   const busy = status !== "idle";
   const showCard = stage === "login" || stage === "done";
 
@@ -283,52 +370,64 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
         )}
       </AnimatePresence>
 
-      {/* sign-in card */}
+      {/* sign-in bar (a stacked panel on phones) */}
+      {showCard && (
+        <motion.span
+          className={s.barFade}
+          aria-hidden
+          initial={reduce ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        />
+      )}
       {showCard && (
         <motion.div
-          className={s.cardWrap}
-          initial={reduce ? false : { opacity: 0, x: 28, y: 0 }}
-          animate={stage === "done" ? { opacity: 0, x: 0, y: 10 } : { opacity: 1, x: 0, y: 0 }}
-          transition={{ duration: stage === "done" ? 0.35 : 0.5, ease: [0.22, 1, 0.36, 1], delay: stage === "done" ? 0.25 : 0 }}
+          className={s.barWrap}
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          animate={
+            stage === "done" ? { opacity: 0, y: 12 } : { opacity: 1, y: 0 }
+          }
+          transition={{
+            duration: stage === "done" ? 0.35 : 0.5,
+            ease: [0.22, 1, 0.36, 1],
+            delay: stage === "done" ? 0.25 : 0,
+          }}
         >
-          <section ref={cardScope} className={s.card} aria-labelledby="login-title">
-            <span className={s.band} aria-hidden />
-            <header className={s.brand}>
-              <BrandMark size={46} lit={phase.phase === "evening" || phase.phase === "night" || phase.phase === "dawn"} className={s.mark} />
-              <div className={s.brandText}>
-                <span className={s.kicker}>Quest · your estate</span>
-                <h1 id="login-title" className={s.brandName}>
-                  Pattukottai Estates
-                </h1>
-              </div>
-            </header>
-
-            <div className={s.greet}>
-              <p className={cx("tamil", s.greetTa)} lang="ta">
-                {phase.greetingTamil}
-              </p>
-              <p className={s.greetEn}>
-                <span className={s.phaseDot} aria-hidden />
-                {phase.english}
-                {now && (
+          {error && (
+            <p className={s.error} role="alert">
+              <AlertTriangle aria-hidden />
+              {error.text}
+            </p>
+          )}
+          <section
+            ref={cardScope}
+            className={s.bar}
+            aria-labelledby="login-title"
+          >
+            <header className={s.barTitle}>
+              <h1 id="login-title" className={s.barName}>
+                Pattukkottai Estate
+              </h1>
+              <p className={s.barTime}>
+                {now ? (
                   <>
-                    <span className={s.sep} aria-hidden>
-                      ·
-                    </span>
-                    <span className="num">{formatTimeIST(now)}</span>
-                    <span className={s.sep} aria-hidden>
-                      ·
-                    </span>
                     {istDay(now)}
+                    <span className={s.sep} aria-hidden>
+                      ·
+                    </span>
+                    <span className="num">{formatTimeIST(now)} IST</span>
                   </>
+                ) : (
+                  "\u00a0"
                 )}
               </p>
-            </div>
+            </header>
+            <span className={s.barSep} aria-hidden />
 
             {/* method="post" + a disabled button until hydrated: an Enter pressed before the page is ready can never
                 put the password in the address bar */}
             <form className={s.form} onSubmit={submit} method="post" noValidate>
-              <Field label="Username" error={error?.field === "username" ? error.text : undefined}>
+              <Field label="Username" className={s.field}>
                 <Input
                   ref={userRef}
                   name="username"
@@ -339,6 +438,7 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
                   icon={<User />}
                   value={username}
                   disabled={busy}
+                  aria-invalid={error?.field === "username"}
                   onChange={(e) => {
                     setUsername(e.target.value);
                     if (error) setError(null);
@@ -348,8 +448,12 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
               </Field>
               <Field
                 label="Password"
-                error={error?.field === "password" ? error.text : undefined}
-                aside={caps ? <span className={s.caps}>Caps Lock is on</span> : undefined}
+                className={s.field}
+                aside={
+                  caps ? (
+                    <span className={s.caps}>Caps Lock is on</span>
+                  ) : undefined
+                }
               >
                 <Input
                   ref={passRef}
@@ -359,6 +463,7 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
                   icon={<KeyRound />}
                   value={password}
                   disabled={busy}
+                  aria-invalid={error?.field === "password"}
                   onKeyUp={onKey}
                   onKeyDown={onKey}
                   onChange={(e) => {
@@ -383,30 +488,28 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
                   }
                 />
               </Field>
-
-              {error && error.field === null && (
-                <p className={s.error} role="alert">
-                  <AlertTriangle aria-hidden />
-                  {error.text}
-                </p>
-              )}
-
-              <Button
+              <button
                 type="submit"
-                variant="primary"
-                size="lg"
-                block
-                loading={status === "busy"}
-                disabled={!hydrated}
-                icon={status === "done" ? <Check /> : undefined}
-                iconRight={status === "idle" ? <ArrowRight /> : undefined}
-                className={cx(s.submit, status === "done" && s.submitDone)}
+                className={cx(s.enter, status === "done" && s.enterDone)}
+                disabled={!hydrated || busy}
               >
-                {status === "busy" ? "Signing in…" : status === "done" ? "Signed in" : "Enter estate"}
-              </Button>
-              <p className={s.hint}>
-                <Kbd keys={["enter"]} /> to sign in
-              </p>
+                {status === "busy" ? (
+                  <>
+                    <Loader2 className={s.spin} aria-hidden />
+                    Entering
+                  </>
+                ) : status === "done" ? (
+                  <>
+                    <Check aria-hidden />
+                    Welcome
+                  </>
+                ) : (
+                  <>
+                    Enter
+                    <Play className={s.play} aria-hidden />
+                  </>
+                )}
+              </button>
             </form>
           </section>
         </motion.div>
@@ -421,7 +524,11 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
             role="status"
             initial={reduce ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.45, delay: reduce ? 0 : DIVE_MS / 1000 - 0.5, ease: "easeIn" }}
+            transition={{
+              duration: 0.45,
+              delay: reduce ? 0 : DIVE_MS / 1000 - 0.5,
+              ease: "easeIn",
+            }}
           >
             <span className={s.travelText}>Arriving at your estate…</span>
             <span className={s.travelBar}>
