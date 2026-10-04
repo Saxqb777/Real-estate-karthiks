@@ -577,6 +577,59 @@ export const noticeTex = (notes: number, tamil: boolean) =>
     { repeat: false },
   );
 
+/** Woven bamboo lattice (diagonal criss-cross strips over a dark gap) for the tax hut's window and gable. Tiles. */
+export const bambooLatticeTex = () =>
+  make("bambooLattice", 128, 128, (ctx, w, h) => {
+    ctx.fillStyle = "#2a2116";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "#cdb47a";
+    ctx.lineWidth = 9;
+    for (let k = -2; k <= 2; k++) {
+      ctx.beginPath();
+      ctx.moveTo(k * 64, 0);
+      ctx.lineTo(k * 64 + w, h);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(k * 64 + w, 0);
+      ctx.lineTo(k * 64, h);
+      ctx.stroke();
+    }
+  });
+
+/** Split-bamboo mat wall: pale tan panels with fine vertical canes and darker frame battens. Tiles. */
+export const bambooMatTex = () =>
+  make("bambooMat", 128, 128, (ctx, w, h) => {
+    ctx.fillStyle = "#cbb47c";
+    ctx.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 6) {
+      ctx.fillStyle = x % 12 ? "rgba(120,95,50,0.18)" : "rgba(255,245,210,0.18)";
+      ctx.fillRect(x, 0, 3, h);
+    }
+    ctx.fillStyle = "rgba(110,85,45,0.35)";
+    ctx.fillRect(0, h / 2 - 2, w, 4);
+  });
+
+/** Name board of the little village property-tax office: white letters on government blue. */
+export const officeBoardTex = () =>
+  make(
+    "taxOfficeBoard",
+    512,
+    112,
+    (ctx, w, h) => {
+      ctx.fillStyle = "#1d4f91";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#f4f1ea";
+      ctx.lineWidth = 5;
+      ctx.strokeRect(7, 7, w - 14, h - 14);
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `800 50px ${cssFont("--font-display", "Arial, sans-serif")}`;
+      ctx.fillText("PROPERTY TAX OFFICE", w / 2, h / 2 + 3, w - 34);
+    },
+    { repeat: false },
+  );
+
 /** Round municipal property-tax stamp (rubber-stamp ink on a brass plaque). state: paid ✓ / due / plain. */
 export const taxStampTex = (state: "paid" | "due" | "plain", tamil: boolean) =>
   make(

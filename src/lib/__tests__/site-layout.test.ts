@@ -336,13 +336,13 @@ describe("front-wall fixtures (clickable world objects)", () => {
   const L = computeSiteLayout(PLOT, [A, B]);
   const F = L.fixtures;
   const [FL, FR, , BL] = L.plot.polygon;
-  it("mounts the mailbox on Gate A's pillar and the tax stamp on the front-wall pillar right of it", () => {
+  it("mounts the mailbox on Gate A's pillar and puts the tax office on the grass right of the plot", () => {
     const gate = L.compoundWalls.find((w) => w.gate === "front")!;
     expect(F.mailbox).toEqual(gate.a);
-    expect(F.taxStamp.on).toBe("pillar");
-    expect(F.taxStamp.z).toBe(0);
-    expect(F.taxStamp.x).toBeGreaterThan(gate.b.x);
-    expect(F.taxStamp.x).toBeLessThanOrEqual(FR.x);
+    expect(F.taxStamp.on).toBe("office");
+    expect(F.taxStamp.x).toBeGreaterThan(FR.x + 4); // clear of the compound wall
+    expect(F.taxStamp.x).toBeLessThan(Math.max(...L.site.tile.map((p) => p.x)) - 4); // on the island
+    expect(F.taxStamp.z).toBeGreaterThan(0);
   });
   it("hangs the notice board on the lane wall a few feet from the front, inside the plot depth", () => {
     expect(F.noticeBoard.z).toBeGreaterThan(2);
@@ -367,7 +367,7 @@ describe("front-wall fixtures (clickable world objects)", () => {
     const L2 = computeSiteLayout(PLOT, [B]);
     const gate = L2.compoundWalls.find((w) => w.gate === "front")!;
     expect(L2.fixtures.mailbox).toEqual(gate.a);
-    expect(L2.fixtures.taxStamp.on).toBe("pillar");
+    expect(L2.fixtures.taxStamp.on).toBe("office");
   });
   it("keeps objects apart so each one can be hovered on its own", () => {
     const pts = [F.mailbox, F.taxStamp, F.noticeBoard, F.poles[0], F.plotMarker];

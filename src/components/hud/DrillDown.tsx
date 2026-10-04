@@ -393,7 +393,7 @@ function ExpenseView({ id }: { id: string }) {
       {x.propertyTaxId ? (
         <p className={s.locked}>
           <Lock aria-hidden />
-          Added automatically when property tax was marked paid — change it from the tax stamp (property tax).
+          Added automatically when property tax was marked paid — change it from the tax office (property tax).
         </p>
       ) : (
         <Button variant="secondary" icon={<Pencil />} onClick={() => setEditing(true)}>

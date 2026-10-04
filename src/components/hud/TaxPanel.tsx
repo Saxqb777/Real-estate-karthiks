@@ -1,5 +1,5 @@
 "use client";
-// Tax stamp on the gate pillar → property tax per year and unit; "Mark paid" in one step (it then appears in
+// Tax office (village hut on the grass) → property tax per year and unit; "Mark paid" in one step (it then appears in
 // Expenses on the payment date — the API creates that expense, the HUD never adds it up itself).
 import { CircleCheck, Landmark, Plus } from "lucide-react";
 import { Badge, Button, EmptyState, Skeleton, StatusPill, cx } from "@/components/ui";
@@ -32,7 +32,7 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
     <>
       <HudPanel
         side={side}
-        eyebrow="Tax stamp · property tax"
+        eyebrow="Tax office · property tax"
         title="Property tax"
         pinId="tax"
         onClose={onClose}

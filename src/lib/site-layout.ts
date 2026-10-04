@@ -151,7 +151,8 @@ export interface SiteFixtures {
   /** notice board on the outer face of the lane-side (left) compound wall near the front (faces −x, the lane) */
   noticeBoard: Pt & { widthFt: number };
   /** property-tax stamp plaque on the middle pillar of the front wall right of the gate */
-  taxStamp: Pt & { on: "wall" | "pillar" };
+  /** the little village property-tax office (a thatched hut on the grass right of the plot) — the tax entry point */
+  taxStamp: Pt & { on: "office" };
   /** survey stone + ranging flag just outside the back-left corner */
   plotMarker: Pt;
   /** EB poles on the grass just outside the front wall, right of the plot: [0] (by the gate) carries the lamp, the meter and the service drop */
@@ -602,14 +603,13 @@ function xAt(a: Pt, b: Pt, z: number): number {
 function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: BuildingSlot | null, tile: Pt[]): SiteFixtures {
   const [FL, FR, , BL] = polygon;
   const gate = walls.find((w) => w.gate === "front");
-  // mailbox on Gate A's corner-side pillar; tax stamp on the middle pillar of the front wall right of the gate
-  // (the renderer puts a pillar every ~8 ft along each wall run)
+  // mailbox on Gate A's corner-side pillar
   const mailbox = gate ? { ...gate.a } : { x: FR.x - 1, z: 0 };
-  const run = walls.find((w) => w.kind === "wall" && gate && w.a.x === gate.b.x && w.a.z === 0);
-  const runLen = run ? run.b.x - run.a.x : 0;
-  const nPanels = Math.max(1, Math.round(runLen / 8));
-  const taxX = run ? run.a.x + Math.floor((nPanels + 1) / 2) * (runLen / nPanels) : FR.x;
-  const taxStamp: SiteFixtures["taxStamp"] = { x: r2(taxX), z: 0, on: "pillar" };
+  // property-tax office (owner): a mini thatched village office on the grass right of the plot, between the palms
+  // (they stand at z ≈ 5 and 23), its door facing the front
+  const [, tFR0, tBR0] = tile;
+  const taxZ = 14;
+  const taxStamp: SiteFixtures["taxStamp"] = { x: r2(Math.min(FR.x + 9.5, xAt(tFR0, tBR0, taxZ) - 5)), z: taxZ, on: "office" };
   // notice board: on the lane-side (left) compound wall a few feet in from the front, facing the lane
   const depth = BL.z - FL.z;
   const zb = Math.min(7, Math.max(2.5, depth * 0.12));

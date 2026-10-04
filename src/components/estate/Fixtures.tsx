@@ -14,7 +14,7 @@ import { box, cone, rod, type Part } from "./bake";
 import { Baked, vcMaterial } from "./Baked";
 import { G, std } from "./materials";
 import { WireCrows } from "./People";
-import { glowTex, noticeTex, taxStampTex } from "./textures";
+import { bambooLatticeTex, bambooMatTex, glowTex, noticeTex, officeBoardTex, taxStampTex } from "./textures";
 import type { World } from "./util";
 
 const WALL_H = 4.6;
@@ -122,24 +122,120 @@ function NoticeBoard({ layout, world, notes, tamil }: { layout: SiteLayout; worl
   );
 }
 
-// ───────────────────────────── tax stamp ─────────────────────────────
+// ───────────────────────────── property-tax office (bamboo village hut) ─────────────────────────────
 
+/**
+ * A mini bamboo village office on the grass right of the plot (owner's sample photo): split-bamboo mat walls framed by
+ * battens, a bamboo door, a big woven-lattice window, a lattice gable under a shaggy thatched A-frame roof, a
+ * "PROPERTY TAX OFFICE" board over the door with the round tax seal (paid ✓ / due / plain), a bench outside.
+ * Clicking it opens property tax.
+ */
 function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: World; state: "paid" | "due" | "plain"; tamil: boolean }) {
   const t = layout.fixtures.taxStamp;
   const X = world.x(t.x);
-  const Z = world.z(t.z - (t.on === "wall" ? 0.38 : PILLAR / 2 + 0.05));
-  // on a house it hangs high on the front wall, above the veranda sunshade; on a gate pillar at eye height
-  const y = t.on === "wall" ? 9.15 : 3.7;
+  const Z = world.z(t.z);
+  const W = 7.5; // across the front (x)
+  const D = 6; // deep (z)
+  const H = 6.4; // wall height
+  const B = 0.25; // stone footing
+  const top = B + H;
+  const eave = 1.1;
+  const run = W / 2 + eave;
+  const rise = 3.2;
+  const gableH = (rise * (W / 2)) / run;
+  const fz = D / 2; // the front faces the plot's front (plan −z) = world +z
   const face = useMemo(() => new THREE.MeshStandardMaterial({ map: taxStampTex(state, tamil), roughness: 0.45, metalness: 0.25, transparent: true }), [state, tamil]);
   useEffect(() => () => face.dispose(), [face]);
   const disc = useMemo(() => new THREE.CircleGeometry(0.5, 28), []);
   useEffect(() => () => disc.dispose(), [disc]);
-  const anchor = useMemo<V3>(() => [X, y + 1.4, Z], [X, y, Z]);
+  const boardMat = useMemo(() => {
+    const tex = officeBoardTex();
+    return new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: new THREE.Color("#ffffff"), emissiveIntensity: 0.35, roughness: 0.7 });
+  }, []);
+  useEffect(() => () => boardMat.dispose(), [boardMat]);
+  const mat = useMemo(() => {
+    const m = bambooMatTex().clone();
+    m.repeat.set(2.5, 2);
+    m.needsUpdate = true;
+    const l = bambooLatticeTex().clone(); // gable: UVs in feet
+    l.repeat.set(0.9, 0.9);
+    l.needsUpdate = true;
+    const lw = bambooLatticeTex().clone(); // window: UVs 0..1 over ~3 × 2.3 ft
+    lw.repeat.set(2.7, 2.1);
+    lw.needsUpdate = true;
+    return {
+      wall: new THREE.MeshStandardMaterial({ map: m, roughness: 0.9 }),
+      lattice: new THREE.MeshStandardMaterial({ map: l, roughness: 0.9, side: THREE.DoubleSide }),
+      window: new THREE.MeshStandardMaterial({ map: lw, roughness: 0.9 }),
+      thatch: new THREE.MeshStandardMaterial({ color: "#9c7d45", roughness: 1, flatShading: true }),
+      fringe: new THREE.MeshStandardMaterial({ color: "#c9ad72", roughness: 1, flatShading: true }),
+      dispose() {
+        m.dispose();
+        l.dispose();
+        lw.dispose();
+        this.window.dispose();
+        this.wall.dispose();
+        this.lattice.dispose();
+        this.thatch.dispose();
+        this.fringe.dispose();
+      },
+    };
+  }, []);
+  useEffect(() => () => mat.dispose(), [mat]);
+  // gable triangles (front + back), lattice infill; UVs in feet so the weave keeps its size
+  const gable = useMemo(() => {
+    const sh = new THREE.Shape([new THREE.Vector2(-W / 2, 0), new THREE.Vector2(W / 2, 0), new THREE.Vector2(0, gableH)]);
+    return new THREE.ShapeGeometry(sh);
+  }, [gableH]);
+  useEffect(() => () => gable.dispose(), [gable]);
+  const frame = "#8f7440";
+  const parts = useMemo<Part[]>(
+    () => [
+      box([0, B / 2, 0], [W + 0.4, B, D + 0.4], "#8d7f6c"), // stone footing
+      // corner posts + battens framing the mat panels
+      ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) => box([(sx * W) / 2, B + H / 2, (sz * D) / 2], [0.32, H, 0.32], frame))),
+      box([0, B + H - 0.1, fz + 0.04], [W, 0.22, 0.12], frame),
+      box([0, B + 2.4, fz + 0.04], [W, 0.16, 0.1], frame),
+      // bamboo door (left) with cane battens
+      box([-1.9, B + 2.85, fz + 0.06], [2.2, 5.7, 0.1], "#c2a466"),
+      ...[-0.6, 0.3].map((dy) => box([-1.9, B + 2.85 + dy * 3, fz + 0.12], [2.2, 0.12, 0.06], frame)),
+      box([-1.9, B + 2.85, fz + 0.12], [0.1, 5.6, 0.06], frame),
+      // window frame round the lattice (right)
+      box([1.55, B + 2.55, fz + 0.08], [3.2, 0.16, 0.1], frame),
+      box([1.55, B + 4.95, fz + 0.08], [3.2, 0.16, 0.1], frame),
+      box([0.0, B + 3.75, fz + 0.08], [0.16, 2.55, 0.1], frame),
+      box([3.1, B + 3.75, fz + 0.08], [0.16, 2.55, 0.1], frame),
+      // ridge pole
+      box([0, top + rise + 0.15, 0], [0.5, 0.35, D + 1.1], "#7a5f33"), // ridge capping
+      // bench outside
+      box([2.0, 1.05, fz + 1.5], [3.0, 0.16, 0.9], "#7a5233"),
+      ...[-1.2, 1.2].map((dx) => box([2.0 + dx, 0.7, fz + 1.5], [0.16, 0.7, 0.8], "#5c3c22")),
+    ],
+    [B, H, W, D, fz, top, rise],
+  );
+  const slope = Math.atan2(rise, run);
+  const len = Math.hypot(run, rise) + 0.2;
+  const anchor = useMemo<V3>(() => [X, top + rise + 2.6, Z], [X, Z, top, rise]);
   return (
-    <Hotspot spot={{ key: "taxstamp", kind: "taxstamp", anchor }} hit={<mesh geometry={G.box()} position={[X, y, Z]} scale={[2.0, 2.0, 1.4]} visible={false} />}>
-      <group position={[X, y, Z]}>
-        <mesh geometry={G.cyl()} material={std("#7a5a22", { rough: 0.5, metal: 0.4 })} rotation={[Math.PI / 2, 0, 0]} scale={[1.42, 0.08, 1.42]} />
-        <mesh geometry={disc} material={face} position={[0, 0, 0.045]} scale={1.36} />
+    <Hotspot spot={{ key: "taxstamp", kind: "taxstamp", anchor }} hit={<mesh geometry={G.box()} position={[X, 4.8, Z]} scale={[W + 2, 9.6, D + 2]} visible={false} />}>
+      <group position={[X, 0, Z]}>
+        {/* mat walls */}
+        <mesh geometry={G.box()} material={mat.wall} position={[0, B + H / 2, 0]} scale={[W, H, D]} castShadow receiveShadow />
+        <Baked parts={parts} cast material={vcMaterial(0.9)} />
+        {/* woven lattice window + gables front and back */}
+        <mesh geometry={G.plane()} material={mat.window} position={[1.55, B + 3.75, fz + 0.07]} scale={[2.95, 2.3, 1]} />
+        <mesh geometry={gable} material={mat.lattice} position={[0, top, fz - 0.05]} />
+        <mesh geometry={gable} material={mat.lattice} position={[0, top, -fz + 0.05]} rotation={[0, Math.PI, 0]} />
+        {/* shaggy thatch: two sloping slabs with a lighter frayed fringe at the eaves */}
+        {[-1, 1].map((sx) => (
+          <group key={sx}>
+            <mesh geometry={G.box()} material={mat.thatch} position={[(sx * run) / 2, top + rise / 2 + 0.2, 0]} rotation={[0, 0, -sx * slope]} scale={[len, 0.5, D + 1.0]} castShadow receiveShadow />
+            <mesh geometry={G.box()} material={mat.fringe} position={[sx * (run - 0.15), top - 0.05, 0]} rotation={[0, 0, -sx * slope * 1.6]} scale={[0.9, 0.22, D + 1.2]} />
+          </group>
+        ))}
+        {/* name board over the door + the round tax seal beside it */}
+        <mesh geometry={G.plane()} material={boardMat} position={[-0.3, top + 0.25, fz + 0.2]} scale={[4.6, 1.0, 1]} />
+        <mesh geometry={disc} material={face} position={[2.75, top + 0.25, fz + 0.21]} scale={1.05} />
       </group>
     </Hotspot>
   );

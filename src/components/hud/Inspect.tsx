@@ -196,7 +196,7 @@ const OBJECT_NAME: Record<SceneObjectKind, string> = {
   pole: "Electric pole",
   tolet: "TO-LET board",
   tenant: "Tenant",
-  taxstamp: "Tax stamp",
+  taxstamp: "Tax office",
   plot: "Plot",
 };
 
@@ -610,7 +610,7 @@ function useCardParts({ obj, data, openForm, onExpand }: { obj: SceneObject | nu
       const thisYear = new Date(data.asOf).getUTCFullYear();
       const due = (tax.data?.items ?? []).filter((t) => t.status === "Due" && t.year <= thisYear);
       return {
-        eyebrow: "Tax stamp",
+        eyebrow: "Tax office",
         title: "Property tax",
         body: due.length ? (
           <div className={s.cardBody}>

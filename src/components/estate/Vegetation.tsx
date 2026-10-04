@@ -163,7 +163,7 @@ function palmSpots(layout: SiteLayout): Pt[] {
   const spots: Pt[] = [
     { x: R + 9.2, z: M.z0 + 4.4 },
     { x: R + 13.4, z: M.z0 + 2.4 },
-    { x: R + 7, z: 5 },
+    // (the palm that stood at R+7, z 5 made way for the little property-tax hut)
     { x: R + 10.5, z: 23 },
     { x: R + 7.5, z: 42 },
     { x: R + 11, z: 58 },
