@@ -430,7 +430,7 @@ export const ventArchTex = () =>
     { repeat: false },
   );
 
-/** House-number plate on the corner pillar: black plate, gold numerals. */
+/** Door-number plate (on the pole outside each gate): black plate, gold numerals. */
 export const houseNumberTex = (no: string) =>
   make(
     `houseNo-${no}`,
@@ -445,8 +445,8 @@ export const houseNumberTex = (no: string) =>
       ctx.fillStyle = "#e3c25e";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.font = `700 46px ${cssFont("--font-display", "Arial, sans-serif")}`;
-      ctx.fillText(no, w / 2, h / 2 + 2);
+      ctx.font = `700 ${Math.min(46, Math.floor(300 / Math.max(1, no.length)))}px ${cssFont("--font-display", "Arial, sans-serif")}`;
+      ctx.fillText(no, w / 2, h / 2 + 2, w - 18);
     },
     { repeat: false },
   );

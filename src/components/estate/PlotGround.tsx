@@ -2,8 +2,8 @@
 // Inside the compound (owner's photos): grey concrete yard and passage, a concrete step at each porch, and the
 // cream compound wall — square pillars, the same unbroken black line pattern on the outer face of EVERY side (owner:
 // uniform on all sides, no jaali panels), two black steel gates with a diamond motif (the main
-// gate at the front unit's stair foot, the back unit's gate mid-way along the lane wall) and the house-number plate
-// on the front corner pillar. The wall is a separate enclosure on the plot boundary — it never touches a house. A tulsi maadam in the courtyard and potted marigolds.
+// gate at the front unit's stair foot, the back unit's gate mid-way along the lane wall) and a door-number pole
+// outside each gate. The wall is a separate enclosure on the plot boundary — it never touches a house. A tulsi maadam in the courtyard and potted marigolds.
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { BuildingSlot, CompoundWall, SiteLayout } from "@/lib/site-layout";
@@ -55,16 +55,11 @@ function Porch({ slot, world }: { slot: BuildingSlot; world: World }) {
   return <Baked parts={parts} receive material={vcMaterial(0.9)} />;
 }
 
-interface Inset {
-  pos: V3;
-  rotY: number;
-}
-
 /**
  * Compound wall from the layout segments: cream wall + coping, square pillars (ends + every ~8 ft), the black line
  * pattern on the outer face of every wall, gate pillars.
  */
-function wallParts(layout: SiteLayout, world: World): { solid: Part[]; gates: { x: number; z: number; rotY: number; len: number }[]; plate: Inset | null } {
+function wallParts(layout: SiteLayout, world: World): { solid: Part[]; gates: { x: number; z: number; rotY: number; len: number }[] } {
   const walls: CompoundWall[] = layout.compoundWalls;
   const solid: Part[] = [];
   const gates: { x: number; z: number; rotY: number; len: number }[] = [];
@@ -124,20 +119,50 @@ function wallParts(layout: SiteLayout, world: World): { solid: Part[]; gates: { 
       for (const f of [-0.25, 0.25]) solid.push(box(at(pc + f * pl, WALL_H - 0.42, outFace), [0.55, 0.32, 0.05], black, [0, rotY, 0]));
     }
   }
-  // house-number plate on the front-left corner pillar (outer face, towards the grass)
-  const FL = P[0];
-  const plate: Inset | null = { pos: [world.x(FL.x), 3.75, world.z(FL.z) + 0.55], rotY: 0 };
-  return { solid, gates, plate };
+  return { solid, gates };
+}
+
+/**
+ * A slim black pole with the unit's door number on the grass just outside each unit's own gate (owner): Gate A in the
+ * front wall carries the front unit's number (right of the gate), Gate B in the lane wall the back unit's (towards the back).
+ */
+function numberPoles(layout: SiteLayout, world: World): { pos: V3; rotY: number; no: string }[] {
+  const out: { pos: V3; rotY: number; no: string }[] = [];
+  const name = (sl: "front" | "back") => layout.slots.find((s) => s.slot === sl)?.unit?.name || HOUSE_NUMBER;
+  const front = layout.compoundWalls.find((w) => w.gate === "front");
+  if (front) out.push({ pos: [world.x(Math.max(front.a.x, front.b.x) + 1.8), 0, world.z(-1.3)], rotY: 0, no: name("front") });
+  const side = layout.compoundWalls.find((w) => w.gate === "side");
+  if (side) {
+    const x = Math.min(side.a.x, side.b.x) - 1.3;
+    out.push({ pos: [world.x(x), 0, world.z(Math.max(side.a.z, side.b.z) + 2.6)], rotY: -Math.PI / 2, no: name("back") });
+  }
+  return out;
+}
+
+function NumberPole({ pos, rotY, no }: { pos: V3; rotY: number; no: string }) {
+  const plateMat = std("#ffffff", { map: houseNumberTex(no), rough: 0.5, metal: 0.2 });
+  const parts = useMemo<Part[]>(
+    () => [rod([0, 2.6, 0], [0.22, 5.2, 0.22], "#17171a"), rod([0, 0.12, 0], [0.55, 0.24, 0.55], "#8f877b"), box([0, 5.2, -0.07], [1.75, 0.8, 0.1], "#121212")],
+    [],
+  );
+  return (
+    <group position={pos} rotation={[0, rotY, 0]}>
+      <Baked parts={parts} cast />
+      <mesh geometry={G.plane()} material={plateMat} position={[0, 5.2, 0.0]} scale={[1.65, 0.7, 1]} />
+    </group>
+  );
 }
 
 function Walls({ layout, world }: { layout: SiteLayout; world: World }) {
-  const { solid, gates, plate } = useMemo(() => wallParts(layout, world), [layout, world]);
+  const { solid, gates } = useMemo(() => wallParts(layout, world), [layout, world]);
+  const poles = useMemo(() => numberPoles(layout, world), [layout, world]);
   const gateMat = std("#ffffff", { map: gateTex(), alphaTest: 0.5, side: THREE.DoubleSide, rough: 0.5, metal: 0.4 });
-  const plateMat = std("#ffffff", { map: houseNumberTex(HOUSE_NUMBER), rough: 0.5, metal: 0.2 });
   return (
     <group>
       <Baked parts={solid} cast receive material={vcMaterial(0.92)} />
-      {plate && <mesh geometry={G.plane()} material={plateMat} position={plate.pos} rotation={[0, plate.rotY, 0]} scale={[1.35, 0.56, 1]} />}
+      {poles.map((p) => (
+        <NumberPole key={p.no + p.rotY} {...p} />
+      ))}
       {gates.map((g, i) => (
         <group key={i} position={[g.x, 0, g.z]} rotation={[0, g.rotY, 0]}>
           <mesh geometry={G.plane()} material={gateMat} position={[0, (WALL_H - 0.2) / 2 + 0.2, 0]} scale={[Math.max(0.5, g.len - 1.05), WALL_H - 0.2, 1]} castShadow />

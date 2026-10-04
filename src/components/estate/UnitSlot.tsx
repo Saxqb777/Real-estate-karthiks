@@ -302,7 +302,7 @@ function LetBoard({ slot, world, reduced, at, onWall, incoming }: { slot: Buildi
   const tamil = useTamilFont();
   const ref = useRef<THREE.Group>(null);
   const date = dayMonth(slot.unit?.moveInDate);
-  const face = useMemo(() => std("#ffffff", { map: incoming ? movingInTex(date, tamil) : toLetTex(tamil), rough: 0.7 }), [incoming, date, tamil]);
+  const face = useMemo(() => std("#ffffff", { map: incoming ? movingInTex(date, tamil) : toLetTex(false) /* English only (owner) */, rough: 0.7 }), [incoming, date, tamil]);
   const wood = std(PAL.wood, { rough: 0.85 });
   useFrame(({ clock }) => {
     if (ref.current && !reduced) ref.current.rotation.z = Math.sin(clock.elapsedTime * 1.3) * (onWall ? 0.012 : 0.025);
