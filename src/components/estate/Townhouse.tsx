@@ -1,11 +1,11 @@
 "use client";
-// One of the owner's houses, built procedurally from a BuildingSlot (src/lib/site-layout.ts) to match his photos:
-// ivory-cream plaster with black accent lines, a flat roof terrace behind a low parapet (black coping), a designed
-// front parapet centred on the façade (arched jaali panel between risers, stepped risers at both ends — photo 10), a deep chajja with a black edge band over a front
+// One of the owner's houses, built procedurally from a BuildingSlot (src/lib/site-layout.ts) to match the owner's photos:
+// ivory-cream plaster with black accent lines, a flat roof terrace behind a plain low parapet with black coping all
+// round (owner: no raised front design), a deep chajja with a black edge band over a front
 // veranda enclosed by black diamond grills between square pillars with black flutes, maroon-framed grilled windows,
 // a dog-leg external concrete stair in the yard in front of the house (solid cream balustrades, round black hand rails)
 // up to the terrace, a maroon EB meter box at the stair foot, a black water tank on a cream stand, and a small open
-// backyard at the rear-right with a bathroom ventilator and a back-exit door (owner's annotated plan). Floors come from the data (default 1).
+// backyard at the rear-right with a brown second-bathroom door and a back-exit door (owner's annotated plan). Floors come from the data (default 1).
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
@@ -78,10 +78,10 @@ export function verandaOf(slot: BuildingSlot): Rect | null {
 }
 
 /**
- * Dog-leg stair in the yard in front of the front-right corner (owner's plan + photos 4 / 6): the foot is by the right
- * wall, the lower flight climbs along the outer lane towards the left, a half landing at the left, and the upper flight
- * comes back along the house front to a top landing just inside the right corner riser of the front parapet, where it
- * steps onto the terrace (so the centred parapet design stays whole).
+ * Dog-leg stair in the yard in front of the front-right corner (owner): you come in through the gate, the foot is at
+ * the LEFT end, the lower flight climbs right along the outer side, a half landing (U-turn) by the right wall, and the
+ * upper flight comes back left along the house front to a top platform at the left end, where it steps onto the
+ * terrace through a gap in the front parapet.
  */
 export function stairOf(slot: BuildingSlot) {
   const s = slot.stairs;
@@ -91,8 +91,8 @@ export function stairOf(slot: BuildingSlot) {
   /** right-end corner riser of the front parapet (its width) */
   const riser = Math.min(1.4, w * 0.14);
   const zMid = (s.z0 + s.z1) / 2;
-  /** where the top landing meets the roof edge (x range) */
-  const arrive = { x0: s.x1 - riser - top, x1: s.x1 - riser };
+  /** where the top landing meets the roof edge (x range) — at the stair's left end */
+  const arrive = { x0: s.x0 + riser, x1: s.x0 + riser + top };
   return { ...s, land, top, riser, zMid, arrive };
 }
 /** Plan edges of a CCW polygon with outward normals. */
@@ -225,15 +225,17 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   });
 
   // ── the external dog-leg stair in the yard (photos 4 + 6) ──
-  // Foot by the right wall → lower flight climbs left along the outer lane (solid wedge under it only) → flat landing at
-  // the left end → upper flight climbs right along the house front on individual treads over a thin waist slab (open
-  // underneath) → arrival platform just inside the right corner riser of the front parapet. Cream balustrade walls follow
+  // Built in a frame with the foot on the right and then MIRRORED left↔right (owner: the foot is at the left, by the
+  // gate): foot → lower flight along the outer side (solid wedge under it only) → flat U-turn landing by the right wall →
+  // upper flight back along the house front on individual treads over a thin waist slab (open underneath) → arrival
+  // platform at the left end. Cream balustrade walls follow
   // each flight's slope with round black hand rails on top; every step has a lighter tread cap so it reads.
   const stairs = useMemo(() => {
     const st = stair;
-    const xL = st.x0; // left end (landing)
+    const mx = (x: number) => st.x0 + st.x1 - x; // build frame → real plan (mirror left↔right)
+    const xL = st.x0; // landing end (build frame)
     const xa = st.x0 + st.land; // landing edge
-    const xArr = st.arrive.x0; // start of the arrival platform
+    const xArr = st.x1 - st.riser - st.top; // start of the arrival platform (build frame)
     const xR = st.x1; // right end (foot / arrival)
     const zO = st.z0; // outer edge (towards the gate)
     const zM = st.zMid;
@@ -260,7 +262,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     const upZ0 = zM + T / 2;
     const upZ1 = zI - 0.05;
     const step = (xa0: number, xa1: number, z0s: number, z1s: number, top: number, bottom: number) => {
-      const cx = world.x((xa0 + xa1) / 2);
+      const cx = world.x(mx((xa0 + xa1) / 2));
       const cz = world.z((z0s + z1s) / 2);
       steps.push({ p: [cx, (top + bottom) / 2 - 0.04, cz], s: [xa1 - xa0, top - bottom - 0.08, z1s - z0s] });
       caps.push({ p: [cx, top - 0.04, cz], s: [xa1 - xa0 + 0.08, 0.1, z1s - z0s] }); // tread with a little nosing
@@ -271,7 +273,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     // walls as clean extruded profiles (x–y outlines extruded across z): no crossing slabs
     const geos: THREE.BufferGeometry[] = [];
     const wall = (pts: [number, number][], zc: number, depth: number) => {
-      const sh = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(world.x(x), y)));
+      const sh = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(world.x(mx(x)), y)).reverse()); // reversed: the mirror flips the winding
       const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false, curveSegments: 1 });
       g.translate(0, 0, world.z(zc) - depth / 2);
       geos.push(g);
@@ -310,8 +312,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     // round black hand rails on top of every balustrade
     const parts: Part[] = [];
     const rail = (x0: number, y0: number, x1r: number, y1: number, z: number) => {
-      const X0 = world.x(x0);
-      const X1 = world.x(x1r);
+      const X0 = world.x(mx(x0));
+      const X1 = world.x(mx(x1r));
       const L = Math.hypot(X1 - X0, y1 - y0);
       parts.push(rod([(X0 + X1) / 2, (y0 + y1) / 2 + 0.16, world.z(z)], [0.38, L + 0.12, 0.38], BLACK, [0, 0, Math.atan2(-(X1 - X0), y1 - y0)]));
     };
@@ -320,7 +322,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     rail(xa, rise1 + RAIL, xArr, H + RAIL, zM);
     rail(xArr, H + RAIL, xR, H + RAIL, zM);
     const zRail = (x: number, y: number, za: number, zb: number) =>
-      parts.push(rod([world.x(x), y + 0.16, world.z((za + zb) / 2)], [0.38, zb - za, 0.38], BLACK, [Math.PI / 2, 0, 0]));
+      parts.push(rod([world.x(mx(x)), y + 0.16, world.z((za + zb) / 2)], [0.38, zb - za, 0.38], BLACK, [Math.PI / 2, 0, 0]));
     zRail(xL + T / 2, rise1 + RAIL, zO, zI);
     zRail(xR - T / 2, H + RAIL, upZ0 - T / 2, zI);
     return { steps, caps, parts, wallGeo };
@@ -436,48 +438,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
         parts.push(box([world.x(x), top + P - 0.07, world.z(z)], [tb - ta + 0.04, 0.16, PARAPET_T + 0.14], BLACK, [0, rotY, 0]));
       }
     }
-    // the designed front parapet (photo 10): CENTRED on the front face — a raised central panel with one ornate arched
-    // jaali vent and a black coping band, flanked by two tall pillar-like risers with black caps — and the design ENDS
-    // with matching stepped corner risers (small jaali vents, black caps) at both the left and the right end
-    const { x0, x1, z0 } = slot.rect;
-    const frontW = x1 - x0;
-    if (frontW > 8) {
-      const d = 0.9;
-      const Z = world.z(z0 + d / 2 - 0.12);
-      const face = Z + d / 2 + 0.06; // world z of the front face (+Z = towards the front)
-      const yb = top;
-      const cx = (x0 + x1) / 2;
-      const wP = Math.min(6.2, frontW * 0.32);
-      const hP = P + 2.0;
-      const hR = P + 2.8;
-      const X = world.x(cx);
-      parts.push(box([X, yb + hP / 2, Z], [wP, hP, d], CREAM));
-      parts.push(box([X, yb + hP + 0.09, Z], [wP + 0.16, 0.18, d + 0.2], BLACK)); // coping band
-      parts.push(box([X, yb + hP - 0.5, face], [wP, 0.12, 0.06], BLACK)); // a black line just under it
-      parts.push(box([X, yb + P - 0.35, face], [wP, 0.1, 0.06], BLACK));
-      vents.push({ pos: [X, yb + P + 0.55, face + 0.02], rotY: 0, w: 1.35, h: 1.8 });
-      for (const sx of [-1, 1]) {
-        const rx = X + sx * (wP / 2 + 0.38);
-        parts.push(box([rx, yb + hR / 2, Z], [0.76, hR, d + 0.2], CREAM));
-        parts.push(box([rx, yb + hR + 0.09, Z], [0.96, 0.18, d + 0.4], BLACK));
-        parts.push(box([rx, yb + hR - 0.55, Z], [0.86, 0.2, d + 0.3], CREAM_LIGHT)); // moulded neck
-      }
-      // stepped corner risers at both ends of the front
-      for (const [ex, sx] of [
-        [x0 + 0.7, 1],
-        [x1 - stair.riser / 2, -1],
-      ] as const) {
-        const EX = world.x(ex);
-        const hLow = P + 0.9;
-        const hHigh = P + 1.8;
-        parts.push(box([EX, yb + hLow / 2, Z], [1.4, hLow, d + 0.1], CREAM));
-        parts.push(box([EX, yb + hLow + 0.08, Z], [1.56, 0.16, d + 0.26], BLACK));
-        const UX = EX - sx * 0.25;
-        parts.push(box([UX, yb + hHigh / 2, Z], [0.8, hHigh, d + 0.15], CREAM));
-        parts.push(box([UX, yb + hHigh + 0.09, Z], [0.98, 0.18, d + 0.32], BLACK));
-        vents.push({ pos: [EX + sx * 0.12, yb + P - 0.1, face + 0.03], rotY: 0, w: 0.62, h: 0.86 });
-      }
-    }
+    // the front parapet stays plain like the rest of the roof edge (owner: no raised design on top)
     // water tank: black HDPE cylinder on a small raised cream stand, on the terrace just behind the parapet over the
     // back exit (the wall between the house and the rear-right backyard)
     const ex = slot.backExit;
