@@ -15,7 +15,7 @@ import { Baked, vcMaterial } from "./Baked";
 import { G, std } from "./materials";
 import { WireCrows } from "./People";
 import { bambooLatticeTex, bambooMatTex, glowTex, kolamTex } from "./textures";
-import { PropertyOfficer } from "./People";
+import { PoliceGuard, PropertyOfficer } from "./People";
 import type { World } from "./util";
 
 const PILLAR = 0.95;
@@ -323,6 +323,8 @@ function TaxStamp({ layout, world, env }: { layout: SiteLayout; world: World; en
           <mesh geometry={G.box()} material={mat.tyre} position={[1.25, 2.45, 0]} scale={[0.08, 0.08, 1.1]} />
           <mesh geometry={G.box()} material={mat.tyre} position={[-0.75, 2.05, 0]} scale={[0.55, 0.12, 0.3]} />
         </group>
+        {/* an angry policeman guards the office, by the porch on the right */}
+        <PoliceGuard env={env} position={[2.3, 0, fz + PD + 2.5]} />
         {/* kolam at the step */}
         <mesh geometry={G.plane()} material={mat.kolam} position={[0, 0.03, fz + PD + 2.0]} rotation={[-Math.PI / 2, 0, 0]} scale={2.6} />
       </group>

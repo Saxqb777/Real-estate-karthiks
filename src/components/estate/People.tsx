@@ -61,12 +61,11 @@ interface PedSpec {
   stops: Stop[];
 }
 
-// three passers-by on separate tracks across the front grass (nobody walks through anybody), a school kid running
-// round the palms and a lady strolling through the banana garden
+// three passers-by on separate tracks across the front grass (nobody walks through anybody) and a lady strolling
+// through the banana garden (the school kid round the palms was removed — owner: a policeman guards the tax hut there)
 const PEDS: PedSpec[] = [
   { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", route: { kind: "cross", dist: 7, dir: 1 }, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
   { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", route: { kind: "cross", dist: 10, dir: -1 }, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
-  { outfit: { top: "#f4f1ea", bottom: "#24324a", wrap: "shorts", skin: SKIN.dark, hair: "short" }, scale: 0.62, speed: 6.5, gait: "run", route: { kind: "loop", area: "palms" }, offset: 6, wait: 0, stops: [{ at: 0.3, dur: 1.6, act: "idle" }, { at: 0.75, dur: 1.2, act: "look" }] },
   { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, scale: 0.95, speed: 2.6, gait: "walk", route: { kind: "loop", area: "garden" }, offset: 22, wait: 0, stops: [{ at: 0.22, dur: 4, act: "look" }, { at: 0.62, dur: 3, act: "idle" }] },
   { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.8, gait: "walk", route: { kind: "cross", dist: 13, dir: 1 }, offset: 30, wait: 12, stops: [{ at: "center", dur: 3, act: "look" }] },
 ];
@@ -640,5 +639,63 @@ export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; wo
         <mesh geometry={G.box()} position={[0, 3, 0]} scale={[2.6, 6.4, 2.6]} visible={false} />
       </group>
     </Hotspot>
+  );
+}
+
+// ───────────────────────────── angry policeman guarding the tax office ─────────────────────────────
+
+/** Tamil Nadu police constable: khaki uniform, red-band peaked cap, brown belt with brass buckle, black boots, a thick
+ *  moustache under angry brows, a bamboo lathi in the right hand. */
+function policeLimbs(): Limb[] {
+  const khaki = "#a98d55";
+  const limbs = personLimbs({ top: khaki, bottom: "#9c8250", wrap: "pants", skin: SKIN.mid, hair: "short" });
+  for (const l of limbs) for (const pt of l.parts) if (pt.c === "#2b211b") pt.c = "#0f0f0f";
+  for (const i of [P_ARM_L, P_ARM_R]) limbs[i].parts[0].c = khaki;
+  limbs[0].parts.push(
+    // peaked cap: khaki crown, red band, black visor
+    { g: "cyl", p: [0, 5.38, 0], s: [0.86, 0.34, 0.86], c: "#b39662" },
+    { g: "cyl", p: [0, 5.26, 0], s: [0.8, 0.14, 0.8], c: "#b3262b" },
+    box([0, 5.16, 0.36], [0.62, 0.05, 0.3], "#111111"),
+    box([0, 5.27, 0.41], [0.16, 0.12, 0.03], "#d9b24a"), // cap badge
+    // angry face: brows angled down to the nose, thick moustache
+    box([-0.15, 5.04, 0.36], [0.24, 0.06, 0.04], "#141110", [0, 0, -0.42]),
+    box([0.15, 5.04, 0.36], [0.24, 0.06, 0.04], "#141110", [0, 0, 0.42]),
+    box([0, 4.8, 0.37], [0.42, 0.09, 0.05], "#141110"),
+    // belt with brass buckle, shoulder flaps, name badge and whistle cord
+    box([0, 2.78, 0], [1.0, 0.2, 0.58], "#5a3a1e"),
+    box([0, 2.78, 0.3], [0.2, 0.16, 0.03], "#d9b24a"),
+    box([-0.42, 4.38, 0], [0.26, 0.06, 0.5], "#8a7244"),
+    box([0.42, 4.38, 0], [0.26, 0.06, 0.5], "#8a7244"),
+    box([-0.24, 3.95, 0.27], [0.24, 0.07, 0.03], "#1d1d1d"),
+    box([0.25, 3.85, 0.27], [0.03, 0.4, 0.03], "#d8d8d8"),
+  );
+  // lathi (bamboo baton) held in the right hand, pointing down and forward
+  limbs[P_ARM_R].parts.push({ g: "cyl", p: [0.66, 2.1, 0.45], s: [0.1, 2.8, 0.1], c: "#8a6a3a", r: [0.55, 0, 0] });
+  return limbs;
+}
+
+/**
+ * The policeman guarding the tax office: stands by the porch, legs apart, left hand on the hip, tapping his lathi,
+ * slowly turning to scan the grounds with a scowl. Placed in the hut's local frame (see TaxStamp in Fixtures.tsx).
+ */
+export function PoliceGuard({ env, position, rotationY = 0 }: { env: RefObject<Env>; position: V3; rotationY?: number }) {
+  const { geo, rig } = useRig(policeLimbs, []);
+  const root = useRef<THREE.Group>(null);
+  useFrame(() => {
+    const e = env.current;
+    const t = e.t;
+    const a = rig.u.uAng.value;
+    a[1] = 0.1; // legs apart
+    a[2] = -0.1;
+    a[P_ARM_L] = 0.35; // hand on the hip
+    a[P_ARM_R] = -0.45 + Math.max(0, Math.sin(t * 2.6)) * 0.22; // tapping the lathi
+    rig.u.uShift.value.set(0, Math.sin(t * 1.4) * 0.015, 0);
+    rig.u.uLean.value = -0.03; // chest out
+    if (root.current) root.current.rotation.y = rotationY + Math.sin(t * 0.32) * 0.5; // scanning the grounds
+  });
+  return (
+    <group ref={root} position={position} scale={1.08}>
+      <RigMesh geo={geo} rig={rig} />
+    </group>
   );
 }
