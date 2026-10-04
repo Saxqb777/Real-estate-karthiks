@@ -1,7 +1,7 @@
 "use client";
 // Inside the compound (owner's photos): grey concrete yard and passage, a concrete step at each porch, and the
-// cream compound wall — square pillars, a graphic black line pattern on the outer face of EVERY side, white
-// quatrefoil breeze-block jaali panels in black frames on the front / right / back walls, two black steel gates with a diamond motif (the main
+// cream compound wall — square pillars, the same unbroken black line pattern on the outer face of EVERY side (owner:
+// uniform on all sides, no jaali panels), two black steel gates with a diamond motif (the main
 // gate at the front unit's stair foot, the back unit's gate mid-way along the lane wall) and the house-number plate
 // on the front corner pillar. The wall is a separate enclosure on the plot boundary — it never touches a house. A tulsi maadam in the courtyard and potted marigolds.
 import { useEffect, useMemo } from "react";
@@ -10,13 +10,12 @@ import type { BuildingSlot, CompoundWall, SiteLayout } from "@/lib/site-layout";
 import { ball, box, rod, type Part, type V3 } from "./bake";
 import { Baked, vcMaterial } from "./Baked";
 import { G, PAL, std } from "./materials";
-import { gateTex, houseNumberTex, jaliTex, plasterTex, withRepeat } from "./textures";
+import { gateTex, houseNumberTex, plasterTex, withRepeat } from "./textures";
 import { FLAT, planShape, type World } from "./util";
 
 const WALL_H = 4.6;
 const WALL_T = 0.55;
 const PILLAR = 0.95;
-const JALI = 1.5;
 /** the owner's door number, painted on the corner pillar */
 export const HOUSE_NUMBER = "116/87";
 
@@ -63,12 +62,11 @@ interface Inset {
 
 /**
  * Compound wall from the layout segments: cream wall + coping, square pillars (ends + every ~8 ft), the black line
- * pattern on the outer face of the lane-side (left) wall, jaali panels on the other walls, gate pillars.
+ * pattern on the outer face of every wall, gate pillars.
  */
-function wallParts(layout: SiteLayout, world: World): { solid: Part[]; jalis: Inset[]; gates: { x: number; z: number; rotY: number; len: number }[]; plate: Inset | null } {
+function wallParts(layout: SiteLayout, world: World): { solid: Part[]; gates: { x: number; z: number; rotY: number; len: number }[]; plate: Inset | null } {
   const walls: CompoundWall[] = layout.compoundWalls;
   const solid: Part[] = [];
-  const jalis: Inset[] = [];
   const gates: { x: number; z: number; rotY: number; len: number }[] = [];
   const cream = PAL.plasterWarm;
   const black = PAL.black;
@@ -91,7 +89,6 @@ function wallParts(layout: SiteLayout, world: World): { solid: Part[]; jalis: In
     const nx = uz * away;
     const nz = -ux * away;
     const at = (t: number, y: number, out = 0): V3 => [mx + ux * t + nx * out, y, mz + uz * t + nz * out];
-    const faceRot = Math.atan2(nx, nz); // a plane rotated by this faces outwards
     if (w.kind === "gate") {
       for (const sgn of [-1, 1]) {
         solid.push(box(at((sgn * len) / 2, (WALL_H + 0.7) / 2), [1.05, WALL_H + 0.7, 1.05], cream, [0, rotY, 0]));
@@ -110,12 +107,9 @@ function wallParts(layout: SiteLayout, world: World): { solid: Part[]; jalis: In
       solid.push(box(at(t, (WALL_H + 0.45) / 2), [PILLAR, WALL_H + 0.45, PILLAR], cream, [0, rotY, 0]));
       solid.push(box(at(t, WALL_H + 0.5), [PILLAR + 0.16, 0.14, PILLAR + 0.16], PAL.cornice, [0, rotY, 0]));
     }
-    // the long lane-side (left) wall keeps its plain inner face; every other wall gets jaali panels as well
-    const onLane = (p: { x: number; z: number }) => Math.abs((P[3].x - P[0].x) * (p.z - P[0].z) - (P[3].z - P[0].z) * (p.x - P[0].x)) < 0.01 * (P[3].z - P[0].z);
-    const lane = onLane(w.a) && onLane(w.b);
     const outFace = WALL_T / 2 + 0.025;
     // graphic black pattern on the OUTER face of every wall (owner: "throughout the compound wall in all sides"): a black
-    // post on every pillar, two rails per panel that step up and down from panel to panel (broken round a jaali), a
+    // post on every pillar, two rails per panel that step up and down from panel to panel, a
     // short vertical link and black dashes under the coping
     for (const t of pillarTs) solid.push(box(at(t, (WALL_H + 0.1) / 2, PILLAR / 2 + 0.02), [0.28, WALL_H - 0.3, 0.05], black, [0, rotY, 0]));
     for (let i = 0; i < nPanels; i++) {
@@ -124,38 +118,25 @@ function wallParts(layout: SiteLayout, world: World): { solid: Part[]; jalis: In
       if (tb - ta < 0.6) continue;
       const pl = tb - ta;
       const pc = (ta + tb) / 2;
-      const jali = !lane && pl >= JALI + 0.4;
       const ys = i % 2 ? [1.25, 2.55] : [1.85, 3.15];
-      for (const y of ys) {
-        const crossesJali = jali && y > 2.75 - JALI / 2 - 0.15 && y < 2.75 + JALI / 2 + 0.15;
-        if (!crossesJali) solid.push(box(at(pc, y, outFace), [pl, 0.17, 0.05], black, [0, rotY, 0]));
-        else {
-          const half = (pl - JALI - 0.5) / 2; // rail either side of the jaali frame
-          if (half > 0.1) for (const sg of [-1, 1]) solid.push(box(at(pc + sg * (JALI / 2 + 0.25 + half / 2), y, outFace), [half, 0.17, 0.05], black, [0, rotY, 0]));
-        }
-      }
+      for (const y of ys) solid.push(box(at(pc, y, outFace), [pl, 0.17, 0.05], black, [0, rotY, 0]));
       solid.push(box(at(pc + (i % 2 ? 0.28 : -0.28) * pl, (ys[0] + ys[1]) / 2, outFace), [0.17, ys[1] - ys[0], 0.05], black, [0, rotY, 0]));
       for (const f of [-0.25, 0.25]) solid.push(box(at(pc + f * pl, WALL_H - 0.42, outFace), [0.55, 0.32, 0.05], black, [0, rotY, 0]));
-      // breeze-block jaali panel in the middle of the panel (front / right / back walls), both faces
-      if (jali)
-        for (const side of [1, -1]) jalis.push({ pos: at(pc, 2.75, side * (outFace + 0.03)), rotY: side > 0 ? faceRot : faceRot + Math.PI });
     }
   }
   // house-number plate on the front-left corner pillar (outer face, towards the grass)
   const FL = P[0];
   const plate: Inset | null = { pos: [world.x(FL.x), 3.75, world.z(FL.z) + 0.55], rotY: 0 };
-  return { solid, jalis, gates, plate };
+  return { solid, gates, plate };
 }
 
 function Walls({ layout, world }: { layout: SiteLayout; world: World }) {
-  const { solid, jalis, gates, plate } = useMemo(() => wallParts(layout, world), [layout, world]);
+  const { solid, gates, plate } = useMemo(() => wallParts(layout, world), [layout, world]);
   const gateMat = std("#ffffff", { map: gateTex(), alphaTest: 0.5, side: THREE.DoubleSide, rough: 0.5, metal: 0.4 });
-  const jaliMat = std("#ffffff", { map: jaliTex(), rough: 0.85, polygonOffset: 1 });
   const plateMat = std("#ffffff", { map: houseNumberTex(HOUSE_NUMBER), rough: 0.5, metal: 0.2 });
   return (
     <group>
       <Baked parts={solid} cast receive material={vcMaterial(0.92)} />
-      <JaliPanels list={jalis} material={jaliMat} />
       {plate && <mesh geometry={G.plane()} material={plateMat} position={plate.pos} rotation={[0, plate.rotY, 0]} scale={[1.35, 0.56, 1]} />}
       {gates.map((g, i) => (
         <group key={i} position={[g.x, 0, g.z]} rotation={[0, g.rotY, 0]}>
@@ -164,26 +145,6 @@ function Walls({ layout, world }: { layout: SiteLayout; world: World }) {
       ))}
     </group>
   );
-}
-
-/** Every jaali panel (both faces of the wall) in one instanced draw call. */
-function JaliPanels({ list, material }: { list: Inset[]; material: THREE.Material }) {
-  const mesh = useMemo(() => {
-    const m = new THREE.InstancedMesh(G.plane(), material, Math.max(1, list.length));
-    const o = new THREE.Object3D();
-    list.forEach((j, i) => {
-      o.position.set(...j.pos);
-      o.rotation.set(0, j.rotY, 0);
-      o.scale.set(JALI, JALI, 1);
-      o.updateMatrix();
-      m.setMatrixAt(i, o.matrix);
-    });
-    m.count = list.length;
-    m.computeBoundingSphere();
-    return m;
-  }, [list, material]);
-  useEffect(() => () => mesh.dispose(), [mesh]);
-  return <primitive object={mesh} />;
 }
 
 /** Tulsi maadam — the holy-basil planter found in Tamil courtyards. */
