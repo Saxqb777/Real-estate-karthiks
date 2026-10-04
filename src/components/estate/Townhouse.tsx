@@ -9,6 +9,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { SITE_DEFAULTS, offsetPolygon, type BuildingSlot, type Pt, type Rect } from "@/lib/site-layout";
 import { gustAt, type Env } from "./env";
 import { ball, box, rod, type Part, type V3 } from "./bake";
@@ -85,8 +86,8 @@ export function verandaOf(slot: BuildingSlot): Rect | null {
 export function stairOf(slot: BuildingSlot) {
   const s = slot.stairs;
   const w = s.x1 - s.x0;
-  const land = Math.min(2.0, w * 0.2);
-  const top = Math.min(1.2, w * 0.12);
+  const land = Math.min(2.4, w * 0.24);
+  const top = Math.min(1.8, w * 0.18);
   /** right-end corner riser of the front parapet (its width) */
   const riser = Math.min(1.4, w * 0.14);
   const zMid = (s.z0 + s.z1) / 2;
@@ -160,14 +161,16 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const holo = useMemo(() => (ghost ? holoMaterial() : null), [ghost]);
   useEffect(() => () => holo?.dispose(), [holo]);
   const M = useMemo(() => {
-    if (holo) return { plaster: holo, roof: holo, plinth: holo, black: holo, stair: holo, grill: holo, vent: holo };
+    if (holo) return { plaster: holo, roof: holo, plinth: holo, black: holo, stair: holo, tread: holo, stairWall: holo, grill: holo, vent: holo };
     const f = finish;
     return {
       plaster: std(CREAM, { map: withRepeat(plasterTex(), 1 / 9, 1 / 9), rough: 0.92, finish: f }),
       roof: std("#f3f0e8", { map: withRepeat(plasterTex(), 1 / 14, 1 / 14), rough: 0.95, finish: f }),
       plinth: std("#e2dac4", { map: withRepeat(plasterTex(), 1 / 5, 1 / 5), rough: 0.92, finish: f }),
       black: std(BLACK, { rough: 0.6, finish: f }),
-      stair: std(CREAM_LIGHT, { map: withRepeat(plasterTex(), 1 / 4, 1 / 4), rough: 0.9, finish: f }),
+      stair: std("#e2dccb", { map: withRepeat(plasterTex(), 1 / 4, 1 / 4), rough: 0.92, finish: f }),
+      tread: std("#faf8f1", { rough: 0.85, finish: f }),
+      stairWall: std(CREAM_LIGHT, { map: withRepeat(plasterTex(), 1 / 5, 1 / 5), rough: 0.9, finish: f }),
       grill: std("#ffffff", { map: verandaGrillTex(), alphaTest: 0.5, side: THREE.DoubleSide, rough: 0.5, metal: 0.3, finish: f }),
       vent: std("#ffffff", { map: ventArchTex(), alphaTest: 0.5, rough: 0.8, finish: f }),
     };
@@ -221,69 +224,109 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     if (holo) holo.uniforms.uTime.value = clock.elapsedTime;
   });
 
-  // ── the external dog-leg stair in the yard (solid concrete, cream balustrades, round black rails) ──
+  // ── the external dog-leg stair in the yard (photos 4 + 6) ──
+  // Foot by the right wall → lower flight climbs left along the outer lane (solid wedge under it only) → flat landing at
+  // the left end → upper flight climbs right along the house front on individual treads over a thin waist slab (open
+  // underneath) → arrival platform just inside the right corner riser of the front parapet. Cream balustrade walls follow
+  // each flight's slope with round black hand rails on top; every step has a lighter tread cap so it reads.
   const stairs = useMemo(() => {
     const st = stair;
-    // two flights up to the terrace; the rise is split in proportion to each flight's run (same pitch on both)
-    const lowRunAll = st.x1 - (st.x0 + st.land);
-    const upRunAll = st.arrive.x0 - (st.x0 + st.land);
-    const rise = (H * lowRunAll) / (lowRunAll + upRunAll);
-    const rise2 = H - rise;
-    const n = Math.max(5, Math.round(rise / 0.62));
-    const n2 = Math.max(4, Math.round(rise2 / 0.62));
-    const r = rise / n;
+    const xL = st.x0; // left end (landing)
+    const xa = st.x0 + st.land; // landing edge
+    const xArr = st.arrive.x0; // start of the arrival platform
+    const xR = st.x1; // right end (foot / arrival)
+    const zO = st.z0; // outer edge (towards the gate)
+    const zM = st.zMid;
+    const zI = st.z1; // the house front
+    const runL = xR - xa;
+    const runU = xArr - xa;
+    const rise1 = (H * runL) / (runL + runU);
+    const rise2 = H - rise1;
+    const n1 = Math.max(5, Math.round(rise1 / 0.62));
+    const n2 = Math.max(3, Math.round(rise2 / 0.62));
+    const r1 = rise1 / n1;
     const r2 = rise2 / n2;
+    const t1 = runL / n1;
+    const t2 = runU / n2;
+    const T = 0.4; // wall thickness
+    const RAIL = 2.2; // balustrade height above the nosing line
+    const BAND = 0.35; // how far the balustrade band reaches below the nosing line (the stepped profile shows below it)
+    const yL = (x: number) => (rise1 * (xR - x)) / runL; // lower nosing (0 at the foot, rise1 at the landing)
+    const yU = (x: number) => (x >= xArr ? H : rise1 + (rise2 * (x - xa)) / runU); // upper nosing
     const steps: { p: V3; s: V3 }[] = [];
-    const parts: Part[] = [];
-    const outer = { z0: st.z0, z1: st.zMid }; // lower flight: the lane away from the house
-    const inner = { z0: st.zMid, z1: st.z1 }; // upper flight: along the house front
-    const lowRun = st.x1 - (st.x0 + st.land);
-    const upRun = st.arrive.x0 - (st.x0 + st.land);
-    const tl = lowRun / n;
-    const tu = upRun / n2;
-    const lz = (a: number, b: number) => world.z((a + b) / 2);
-    for (let k = 0; k < n; k++) {
-      // lower flight climbs from the foot by the right wall towards the left (−x), solid to the ground
-      const xa = st.x1 - (k + 1) * tl;
-      const top1 = (k + 1) * r;
-      steps.push({ p: [world.x(xa + tl / 2), top1 / 2, lz(outer.z0, outer.z1)], s: [tl + 0.02, top1, outer.z1 - outer.z0 - 0.05] });
-    }
-    for (let k = 0; k < n2; k++) {
-      // upper flight climbs back towards the right (+x) along the house front
-      const xb = st.x0 + st.land + k * tu;
-      const top2 = rise + (k + 1) * r2;
-      steps.push({ p: [world.x(xb + tu / 2), top2 / 2, lz(inner.z0, inner.z1)], s: [tu + 0.02, top2, inner.z1 - inner.z0 - 0.05] });
-    }
-    // half landing at the left + the top landing at the terrace edge (solid underneath)
-    parts.push(box([world.x(st.x0 + st.land / 2), rise / 2, lz(st.z0, st.z1)], [st.land, rise, st.z1 - st.z0], CREAM_LIGHT));
-    parts.push(box([world.x((st.arrive.x0 + st.x1) / 2), H / 2, lz(inner.z0, inner.z1)], [st.x1 - st.arrive.x0, H, inner.z1 - inner.z0], CREAM_LIGHT));
-    // balustrades + rails: along the outside of the lower flight, round the landing, and between the two flights
-    const hb = 3.4;
-    const flight = (x0: number, x1: number, y0: number, dy: number, z: number, up: 1 | -1) => {
-      const run = x1 - x0;
-      const pitch = Math.atan2(dy, run);
-      const L = Math.hypot(run, dy);
-      const xm = world.x((x0 + x1) / 2);
-      const ym = y0 + dy / 2;
-      const nUp: [number, number] = [-up * Math.sin(pitch), Math.cos(pitch)]; // square to the slope (x, y)
-      const off = hb / 2 - 1.0;
-      parts.push(box([xm + nUp[0] * off, ym + nUp[1] * off, z], [L, hb, 0.42], CREAM_LIGHT, [0, 0, up * pitch]));
-      const rr = hb - 1.0 + 0.16;
-      parts.push(rod([xm + nUp[0] * rr, ym + nUp[1] * rr, z], [0.4, L + 0.2, 0.4], BLACK, [0, 0, up > 0 ? pitch - Math.PI / 2 : Math.PI / 2 - pitch]));
+    const caps: { p: V3; s: V3 }[] = [];
+    const lowZ0 = zO + 0.03; // just inside the balustrade face (no coplanar flicker)
+    const lowZ1 = zM - T / 2;
+    const upZ0 = zM + T / 2;
+    const upZ1 = zI - 0.05;
+    const step = (xa0: number, xa1: number, z0s: number, z1s: number, top: number, bottom: number) => {
+      const cx = world.x((xa0 + xa1) / 2);
+      const cz = world.z((z0s + z1s) / 2);
+      steps.push({ p: [cx, (top + bottom) / 2 - 0.04, cz], s: [xa1 - xa0, top - bottom - 0.08, z1s - z0s] });
+      caps.push({ p: [cx, top - 0.04, cz], s: [xa1 - xa0 + 0.08, 0.1, z1s - z0s] }); // tread with a little nosing
     };
-    flight(st.x0 + st.land, st.x1, 0, rise, world.z(st.z0 + 0.2), -1);
-    flight(st.x0 + st.land, st.arrive.x0, rise, rise2, world.z(st.zMid), 1);
-    // landing parapet (front + left) with rails
-    const ly = rise + 1.2;
-    parts.push(box([world.x(st.x0 + st.land / 2), ly, world.z(st.z0 + 0.2)], [st.land, 2.4, 0.42], CREAM_LIGHT));
-    parts.push(box([world.x(st.x0 + 0.2), ly, lz(st.z0, st.z1)], [0.42, 2.4, st.z1 - st.z0], CREAM_LIGHT));
-    parts.push(rod([world.x(st.x0 + st.land / 2), ly + 1.36, world.z(st.z0 + 0.2)], [0.4, st.land, 0.4], BLACK, [0, 0, Math.PI / 2]));
-    parts.push(rod([world.x(st.x0 + 0.2), ly + 1.36, lz(st.z0, st.z1)], [0.4, st.z1 - st.z0, 0.4], BLACK, [Math.PI / 2, 0, 0]));
-    // newel block at the foot (by the right wall)
-    parts.push(box([world.x(st.x1 + 0.2), 1.1, world.z(st.z0 + 0.2)], [0.5, 2.2, 0.5], CREAM_LIGHT));
-    return { steps, parts };
+    for (let k = 0; k < n1; k++) step(xR - (k + 1) * t1, xR - k * t1, lowZ0, lowZ1, (k + 1) * r1, 0); // solid wedge
+    for (let k = 0; k < n2; k++) step(xa + k * t2, xa + (k + 1) * t2, upZ0, upZ1, rise1 + (k + 1) * r2, rise1 + (k + 1) * r2 - Math.max(0.55, r2 * 1.4));
+
+    // walls as clean extruded profiles (x–y outlines extruded across z): no crossing slabs
+    const geos: THREE.BufferGeometry[] = [];
+    const wall = (pts: [number, number][], zc: number, depth: number) => {
+      const sh = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(world.x(x), y)));
+      const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false, curveSegments: 1 });
+      g.translate(0, 0, world.z(zc) - depth / 2);
+      geos.push(g);
+    };
+    // outer balustrade: a band following the lower flight's slope (its stepped profile shows below it), flat over the
+    // landing
+    wall([[xR, Math.max(0, -BAND)], [xR, RAIL], [xa, rise1 + RAIL], [xL, rise1 + RAIL], [xL, rise1 - BAND], [xa, rise1 - BAND], [xR - (BAND * runL) / rise1, 0]].filter((p, i, a) => i === 0 || p[0] !== a[i - 1][0] || p[1] !== a[i - 1][1]) as [number, number][], zO + T / 2, T);
+    // landing: solid block under it, with a parapet on its left end
+    wall([[xL, 0], [xa, 0], [xa, rise1], [xL, rise1]], (zO + zI) / 2, zI - zO - 0.02);
+    wall([[xL, rise1], [xL + T, rise1], [xL + T, rise1 + RAIL], [xL, rise1 + RAIL]], (zO + zI) / 2, zI - zO - 0.02);
+    // divider between the flights: the lower flight's inner side (solid, ground → its rail) and, above it, the upper
+    // flight's outer balustrade (its slope + rail); the gap between the two stays open
+    wall([[xR - (BAND * runL) / rise1, 0], [xR, 0], [xR, RAIL], [xa, rise1 + RAIL], [xa, rise1 - BAND]], zM, T);
+    {
+      const xs = [xa, xArr, xR];
+      // bottom of the upper balustrade = max(its nosing − 1, the lower wall's top + a hair)
+      const bot = (x: number) => Math.max(yU(x) - BAND - 0.3, yL(x) + RAIL + 0.02);
+      // where the two bottom lines cross (yU − 1 = yL + RAIL), so the outline has its exact kink
+      const kU = rise2 / runU;
+      const kL = rise1 / runL;
+      const xc = xa + (RAIL + BAND + 0.3) / (kU + kL);
+      const samples = [xa, ...(xc > xa && xc < xArr ? [xc] : []), xArr, xR];
+      const top: [number, number][] = xs.map((x) => [x, yU(x) + RAIL]);
+      const bottom: [number, number][] = [...samples].reverse().map((x) => [x, bot(x)]);
+      wall([...top, ...bottom], zM, T);
+    }
+    // waist slab under the upper flight's treads (thin, follows the slope) + the arrival platform + its column
+    wall([[xa, rise1 - 0.7], [xArr, H - 0.7], [xArr, H - 0.3], [xa, rise1 - 0.3]], (upZ0 + upZ1) / 2, upZ1 - upZ0);
+    wall([[xArr, H - 0.55], [xR, H - 0.55], [xR, H], [xArr, H]], (upZ0 + upZ1) / 2, upZ1 - upZ0);
+    wall([[xR - 0.65, 0], [xR, 0], [xR, H - 0.55], [xR - 0.65, H - 0.55]], (upZ0 + upZ1) / 2, 0.65);
+    // arrival platform: parapet on its right end
+    wall([[xR - T, H], [xR, H], [xR, H + RAIL], [xR - T, H + RAIL]], (upZ0 + upZ1) / 2, upZ1 - upZ0);
+    const wallGeo = mergeGeometries(geos) ?? new THREE.BufferGeometry();
+    geos.forEach((g) => g.dispose());
+
+    // round black hand rails on top of every balustrade
+    const parts: Part[] = [];
+    const rail = (x0: number, y0: number, x1r: number, y1: number, z: number) => {
+      const X0 = world.x(x0);
+      const X1 = world.x(x1r);
+      const L = Math.hypot(X1 - X0, y1 - y0);
+      parts.push(rod([(X0 + X1) / 2, (y0 + y1) / 2 + 0.16, world.z(z)], [0.38, L + 0.12, 0.38], BLACK, [0, 0, Math.atan2(-(X1 - X0), y1 - y0)]));
+    };
+    rail(xR, RAIL, xa, rise1 + RAIL, zO + T / 2);
+    rail(xa, rise1 + RAIL, xL, rise1 + RAIL, zO + T / 2);
+    rail(xa, rise1 + RAIL, xArr, H + RAIL, zM);
+    rail(xArr, H + RAIL, xR, H + RAIL, zM);
+    const zRail = (x: number, y: number, za: number, zb: number) =>
+      parts.push(rod([world.x(x), y + 0.16, world.z((za + zb) / 2)], [0.38, zb - za, 0.38], BLACK, [Math.PI / 2, 0, 0]));
+    zRail(xL + T / 2, rise1 + RAIL, zO, zI);
+    zRail(xR - T / 2, H + RAIL, upZ0 - T / 2, zI);
+    return { steps, caps, parts, wallGeo };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, stair]);
+  useEffect(() => () => stairs.wallGeo.dispose(), [stairs]);
 
   // ── veranda: pillars with black flutes, knee walls, the spandrel above, grill panels ──
   const veranda = useMemo(() => {
@@ -504,6 +547,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   );
 
   const stepRef = useRef<THREE.InstancedMesh>(null);
+  const capRef = useRef<THREE.InstancedMesh>(null);
   const winRef = useRef<THREE.InstancedMesh>(null);
   const litRef = useRef<THREE.InstancedMesh>(null);
   const shadeRef = useRef<THREE.InstancedMesh>(null);
@@ -554,19 +598,21 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     };
     panels(grillRef.current, veranda.grills);
     panels(ventRef.current, roof.vents);
-    const sm = stepRef.current;
-    if (sm) {
-      stairs.steps.forEach((st, i) => {
+    const boxes = (m: THREE.InstancedMesh | null, list: { p: V3; s: V3 }[]) => {
+      if (!m) return;
+      list.forEach((st, i) => {
         o.position.set(...st.p);
         o.rotation.set(0, 0, 0);
         o.scale.set(...st.s);
         o.updateMatrix();
-        sm.setMatrixAt(i, o.matrix);
+        m.setMatrixAt(i, o.matrix);
       });
-      sm.count = stairs.steps.length;
-      sm.instanceMatrix.needsUpdate = true;
-      sm.computeBoundingSphere();
-    }
+      m.count = list.length;
+      m.instanceMatrix.needsUpdate = true;
+      m.computeBoundingSphere();
+    };
+    boxes(stepRef.current, stairs.steps);
+    boxes(capRef.current, stairs.caps);
   }, [windows, litWin, darkWin, stairs, veranda, roof]);
 
   const furniture = useMemo(() => [...stairs.parts, ...veranda.parts, ...chajja, ...roof.parts, ...extras], [stairs, veranda, chajja, roof, extras]);
@@ -610,6 +656,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
 
       {/* stair treads (instanced) + baked balustrades, rails, veranda, chajja, parapets, tank, meter box */}
       <instancedMesh ref={stepRef} args={[G.box(), M.stair, Math.max(1, stairs.steps.length)]} castShadow={!ghost} receiveShadow />
+      <instancedMesh ref={capRef} args={[G.box(), M.tread, Math.max(1, stairs.caps.length)]} receiveShadow />
+      <mesh geometry={stairs.wallGeo} material={M.stairWall} castShadow={!ghost} receiveShadow />
       <Baked parts={furniture} cast={!ghost} receive material={furnitureMat} />
 
       {/* kolam at the door */}
