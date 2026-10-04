@@ -140,15 +140,17 @@ function numberPoles(layout: SiteLayout, world: World): { pos: V3; rotY: number;
 }
 
 function NumberPole({ pos, rotY, no }: { pos: V3; rotY: number; no: string }) {
-  const plateMat = std("#ffffff", { map: houseNumberTex(no), rough: 0.5, metal: 0.2 });
+  // self-lit (emissive = the plate itself) so the gold numerals stay readable at dusk and night
+  const tex = houseNumberTex(no);
+  const plateMat = std("#ffffff", { map: tex, emissive: "#ffffff", emissiveMap: tex, emissiveIntensity: 0.85, rough: 0.6 });
   const parts = useMemo<Part[]>(
-    () => [rod([0, 2.6, 0], [0.22, 5.2, 0.22], "#17171a"), rod([0, 0.12, 0], [0.55, 0.24, 0.55], "#8f877b"), box([0, 5.2, -0.07], [1.75, 0.8, 0.1], "#121212")],
+    () => [rod([0, 2.7, 0], [0.24, 5.4, 0.24], "#17171a"), rod([0, 0.12, 0], [0.55, 0.24, 0.55], "#8f877b"), box([0, 5.4, -0.07], [2.3, 1.02, 0.1], "#121212")],
     [],
   );
   return (
     <group position={pos} rotation={[0, rotY, 0]}>
       <Baked parts={parts} cast />
-      <mesh geometry={G.plane()} material={plateMat} position={[0, 5.2, 0.0]} scale={[1.65, 0.7, 1]} />
+      <mesh geometry={G.plane()} material={plateMat} position={[0, 5.4, 0.0]} scale={[2.2, 0.92, 1]} />
     </group>
   );
 }

@@ -433,20 +433,20 @@ export const ventArchTex = () =>
 /** Door-number plate (on the pole outside each gate): black plate, gold numerals. */
 export const houseNumberTex = (no: string) =>
   make(
-    `houseNo-${no}`,
-    192,
-    80,
+    `houseNo2-${no}`,
+    512,
+    208,
     (ctx, w, h) => {
-      ctx.fillStyle = "#121212";
+      ctx.fillStyle = "#0e0e0e";
       ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = "#c9a646";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(5, 5, w - 10, h - 10);
-      ctx.fillStyle = "#e3c25e";
+      ctx.strokeStyle = "#e3c25e";
+      ctx.lineWidth = 8;
+      ctx.strokeRect(12, 12, w - 24, h - 24);
+      ctx.fillStyle = "#ffd66b";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.font = `700 ${Math.min(46, Math.floor(300 / Math.max(1, no.length)))}px ${cssFont("--font-display", "Arial, sans-serif")}`;
-      ctx.fillText(no, w / 2, h / 2 + 2, w - 18);
+      ctx.font = `800 ${Math.min(128, Math.floor(820 / Math.max(1, no.length)))}px ${cssFont("--font-display", "Arial, sans-serif")}`;
+      ctx.fillText(no, w / 2, h / 2 + 6, w - 56);
     },
     { repeat: false },
   );
