@@ -14,7 +14,7 @@ import { box, cone, rod, type Part } from "./bake";
 import { Baked, vcMaterial } from "./Baked";
 import { G, std } from "./materials";
 import { WireCrows } from "./People";
-import { bambooLatticeTex, bambooMatTex, glowTex, officeBoardTex, taxStampTex } from "./textures";
+import { bambooLatticeTex, bambooMatTex, glowTex, taxStampTex } from "./textures";
 import { PropertyOfficer } from "./People";
 import type { World } from "./util";
 
@@ -96,7 +96,7 @@ function Mailbox({ layout, world, mail }: { layout: SiteLayout; world: World; ma
 /**
  * A mini bamboo village office on the grass right of the plot (owner's sample photo): split-bamboo mat walls framed by
  * battens, a bamboo door, a big woven-lattice window, a lattice gable under a dried coconut-leaf thatched roof, a
- * "PROPERTY TAX OFFICE" board over the door with the round tax seal (paid ✓ / due / plain), a bench outside.
+ * round tax seal (paid ✓ / due / plain) by the gable, a bench outside.
  * Clicking it opens property tax.
  */
 function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: World; state: "paid" | "due" | "plain"; tamil: boolean }) {
@@ -117,11 +117,6 @@ function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: 
   useEffect(() => () => face.dispose(), [face]);
   const disc = useMemo(() => new THREE.CircleGeometry(0.5, 28), []);
   useEffect(() => () => disc.dispose(), [disc]);
-  const boardMat = useMemo(() => {
-    const tex = officeBoardTex();
-    return new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: new THREE.Color("#ffffff"), emissiveIntensity: 0.35, roughness: 0.7 });
-  }, []);
-  useEffect(() => () => boardMat.dispose(), [boardMat]);
   const mat = useMemo(() => {
     const m = bambooMatTex().clone();
     m.repeat.set(2.5, 2);
@@ -240,8 +235,7 @@ function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: 
         <mesh geometry={gable} material={mat.lattice} position={[0, top, -fz + 0.05]} rotation={[0, Math.PI, 0]} />
         {/* dried coconut-leaf thatch */}
         <Baked parts={leafRoof} cast receive material={vcMaterial(1)} />
-        {/* name board over the door + the round tax seal beside it */}
-        <mesh geometry={G.plane()} material={boardMat} position={[-0.3, top + 0.25, fz + 0.2]} scale={[4.6, 1.0, 1]} />
+        {/* the round tax seal (paid ✓ / due) — no name board (owner) */}
         <mesh geometry={disc} material={face} position={[2.75, top + 0.25, fz + 0.21]} scale={1.05} />
       </group>
     </Hotspot>
