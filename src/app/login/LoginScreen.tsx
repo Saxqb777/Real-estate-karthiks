@@ -2,7 +2,7 @@
 // /login — a game title screen over a street map of Pattukkottai. "Press any key" flies the camera down onto the plot,
 // the sign-in card slides in, and a successful sign-in dives the last few metres before handing over to the 3D estate.
 // The greeting is in Tamil for the time of day (same day-phase helper as the HUD clock and the 3D lighting).
-import { AlertTriangle, ArrowRight, Check, Eye, EyeOff, KeyRound, MapPin, User } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Eye, EyeOff, KeyRound, User } from "lucide-react";
 import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { BrandMark } from "@/components/shell/BrandMark";
@@ -241,11 +241,6 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
       <TownMap svgRef={cam.svgRef} className={s.map} detail={hydrated} />
 
       {/* map chrome */}
-      <div className={s.search} aria-hidden>
-        <MapPin className={s.searchPin} />
-        <span className={s.searchText}>Pattukkottai, Tamil Nadu</span>
-        <span className={s.searchMeta}>10.42°N 79.33°E</span>
-      </div>
       <div className={s.scale} aria-hidden>
         <span ref={cam.scaleLabel}>200 m</span>
         <i ref={cam.scaleBar} />

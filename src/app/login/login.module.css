@@ -231,40 +231,6 @@
 }
 
 /* map chrome */
-.search {
-  position: absolute;
-  z-index: 2;
-  top: 18px;
-  left: 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 46px;
-  padding: 0 18px 0 14px;
-  max-width: calc(100vw - 36px);
-  background: #ffffff;
-  border-radius: 23px;
-  box-shadow:
-    0 1px 2px rgba(60, 64, 67, 0.3),
-    0 2px 8px rgba(60, 64, 67, 0.18);
-  font-family: var(--ff-body);
-  white-space: nowrap;
-}
-.searchPin {
-  width: 20px;
-  height: 20px;
-  color: #ea4335;
-  flex: none;
-}
-.searchText {
-  font-size: 15px;
-  font-weight: 600;
-  color: #202124;
-}
-.searchMeta {
-  font-size: 12.5px;
-  color: #70757a;
-}
 .scale {
   position: absolute;
   z-index: 2;
@@ -602,14 +568,6 @@
   .page {
     align-items: flex-end;
     padding: 0;
-  }
-  .search {
-    top: 12px;
-    left: 12px;
-    height: 40px;
-  }
-  .searchMeta {
-    display: none;
   }
   .page[data-stage="login"] .scale,
   .page[data-stage="done"] .scale {
