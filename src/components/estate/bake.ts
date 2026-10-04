@@ -38,6 +38,8 @@ const col = new THREE.Color();
 
 /** Merge parts (local transforms + sRGB hex colours) into one geometry with a `color` attribute. */
 export function bake(parts: Part[]): THREE.BufferGeometry {
+  // nothing to draw (e.g. no pots, no flowers): three's mergeGeometries throws on an empty list
+  if (parts.length === 0) return new THREE.BufferGeometry();
   const geos = parts.map((pt) => {
     const g = unit(pt.g).clone();
     const s = typeof pt.s === "number" ? [pt.s, pt.s, pt.s] : pt.s;
