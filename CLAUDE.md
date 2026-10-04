@@ -94,6 +94,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   thatch roof, NO name board (round paid/due seal kept); one palm removed for it; labels say "Tax office". Notice board
   REPLACED by a walking PROPERTY OFFICER (white shirt/trousers, black shoes, register + pen) looping outside the compound
   wall, stopping at corners to write; clicking him opens the to-dos (kind "noticeboard", label "Property officer").
+- 4/10/2026: tax hut UPGRADED (owner: "should be impressed"): no round seal; raised mud floor + kolam, bamboo poles with
+  nodes, plank door, lattice window/gables glowing at night, layered leaf thatch with loose strips + crossed ridge sticks,
+  leaf-roofed porch with clerk's desk (files, ledger, bell, stool), clay pot, hurricane lantern + point light, bicycle,
+  firewood + coconuts.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
