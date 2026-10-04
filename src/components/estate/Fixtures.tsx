@@ -360,7 +360,7 @@ function PlotMarker({ layout, world, env }: { layout: SiteLayout; world: World; 
     const e = env.current;
     const g = gustAt(e, X, Z);
     // flag streams downwind and flutters harder in a gust
-    f.rotation.y = -Math.atan2(e.windDir[1], e.windDir[0]) + Math.sin(e.t * (6 + g * 8)) * (0.12 + g * 0.18);
+    f.rotation.y = -Math.atan2(e.windDir[1], e.windDir[0]) + Math.sin(e.t * 9.4) * (0.12 + g * 0.18);
   });
   const anchor = useMemo<V3>(() => [X + 0.75, 8.6, Z + 0.3], [X, Z]);
   return (

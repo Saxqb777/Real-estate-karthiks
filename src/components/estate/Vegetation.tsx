@@ -281,7 +281,7 @@ export function Palms({ layout, world, env, animate, count }: { layout: SiteLayo
       for (const f of p.fronds) {
         const yawW = p.yaw + f.yaw;
         const along = Math.cos(yawW) * wx - Math.sin(yawW) * wz; // + = frond points downwind
-        const flutter = animate ? Math.sin(t * (2.2 + g * 2.5) + p.phase + f.yaw * 3) * (0.03 + g * 0.09) : 0;
+        const flutter = animate ? Math.sin(t * 3.25 + p.phase + f.yaw * 3) * (0.03 + g * 0.09) : 0;
         o.position.set(0, 0, 0);
         o.rotation.set(0, f.yaw, f.pitch + flutter - along * g * 0.22 + (f.dead ? 0 : -g * 0.05), "YXZ");
         o.scale.setScalar(f.len);
@@ -502,7 +502,7 @@ export function Garden({ layout, world, env, animate }: { layout: SiteLayout; wo
       const g = e && animate ? gustAt(e, c.x, c.z) : 0.3;
       const t = e?.t ?? 0;
       for (const l of c.leaves) {
-        const flutter = animate ? Math.sin(t * (2 + g * 3) + l.ph) * (0.05 + g * 0.12) : 0;
+        const flutter = animate ? Math.sin(t * 3.2 + l.ph) * (0.05 + g * 0.12) : 0;
         o.position.set(c.x, c.h, c.z);
         o.rotation.set(0, l.yaw, l.pitch + flutter, "YXZ");
         o.scale.setScalar(l.len);

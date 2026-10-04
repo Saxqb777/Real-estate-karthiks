@@ -163,11 +163,12 @@ export function stepHour(current: number, target: number, dt: number, rate = 2.4
   return (current + d * (1 - Math.exp(-dt * rate)) + 24) % 24;
 }
 
-/** Gusty wind strength 0.15..1 (frame-rate independent, deterministic in time). */
+/**
+ * Wind strength — a steady, gentle breeze (owner: no gust ramps; trees and laundry should sway smoothly all the time).
+ * Only a very slow, slight swell remains so the motion never looks mechanical. Deterministic in time.
+ */
 export function windAt(t: number): number {
-  const base = 0.5 + 0.22 * Math.sin(t * 0.21) + 0.12 * Math.sin(t * 0.53 + 1.3);
-  const gust = Math.max(0, Math.sin(t * 0.37 + Math.sin(t * 0.11) * 2)) ** 3 * 0.45;
-  return Math.min(1, Math.max(0.15, base + gust));
+  return 0.42 + 0.04 * Math.sin(t * 0.07);
 }
 
 /** Prevailing wind heading in the ground plane (world x/z), slowly veering. */

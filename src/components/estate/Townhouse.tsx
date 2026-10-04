@@ -745,7 +745,7 @@ function ClothesLine({ slot, world, env, y, animate }: { slot: BuildingSlot; wor
       const bx = b[i * 3];
       const by = b[i * 3 + 1];
       const hang = (5.1 - by) / 3.2;
-      pos.setZ(i, Math.sin(t * (4 + g * 4) + bx * 1.8) * 0.3 * hang * wind + hang * hang * 0.9 * wind * e.windDir[1]);
+      pos.setZ(i, Math.sin(t * 5.7 + bx * 1.8) * 0.3 * hang * wind + hang * hang * 0.9 * wind * e.windDir[1]);
       pos.setX(i, bx + hang * hang * 0.5 * wind * e.windDir[0]);
     }
     pos.needsUpdate = true;
