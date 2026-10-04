@@ -223,8 +223,8 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       lateFeeGraceDays: 3,
     });
     expect(d.plot).toEqual({
-      frontWidthFt: 22.25,
-      backWidthFt: 23.25,
+      frontWidthFt: 23.25,
+      backWidthFt: 22.25,
       depthFt: 76.66,
       areaSqft: 1744.02,
       townName: "Pattukottai",

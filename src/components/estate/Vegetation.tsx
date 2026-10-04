@@ -358,7 +358,9 @@ export function Greenery({ layout, world, grassCount }: { layout: SiteLayout; wo
     const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
     const bushes: { x: number; z: number; s: number; c: number }[] = [];
     // a few shrubs along the far half of the left wall (the near half shows the wall's black line pattern)
-    for (let z = D * 0.55; z < D; z += 4.5 + r() * 3) bushes.push({ x: leftX(z) - 1.5 - r() * 0.6, z, s: 1.2 + r() * 0.8, c: r() });
+    const gateB = layout.compoundWalls.find((w) => w.gate === "side");
+    const gz = gateB ? (gateB.a.z + gateB.b.z) / 2 : -99;
+    for (let z = D * 0.55; z < D; z += 4.5 + r() * 3) if (Math.abs(z - gz) > 4.5) bushes.push({ x: leftX(z) - 1.5 - r() * 0.6, z, s: 1.2 + r() * 0.8, c: r() });
     for (let x = BL.x + 1; x < BR.x; x += 2.6 + r() * 1.4) bushes.push({ x, z: D + 1.4 + r() * 0.5, s: 1.3 + r() * 0.9, c: r() });
     const rightX = (z: number) => FR.x + ((BR.x - FR.x) * z) / D;
     for (let z = 3; z < D; z += 5 + r() * 4) bushes.push({ x: rightX(z) + 1.5 + r() * 0.6, z, s: 1.0 + r() * 0.8, c: r() });

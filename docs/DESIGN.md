@@ -13,7 +13,7 @@ every entity (unit, tenant, payment) is clickable, and the 3D model is driven by
 - The plot sits on a floating **laterite soil tile** (red earth, cut edge shows soil strata, like a game board tile),
   trapezoid shaped exactly per plot fields (front width, back width, depth).
 - Two cream-plaster **townhouses** with terracotta parapet + a Chettinad-style accent band, flat roofs with the classic
-  black **water tank** found on Tamil Nadu roofs, external staircase, stepped front-left (lane-side) notch (see CLAUDE.md site plan).
+  black **water tank** found on Tamil Nadu roofs, external staircase, external dog-leg stair in the yard in front of each house, rear-right backyard notch, compound wall as a separate enclosure with two gates (see CLAUDE.md site plan — the owner's annotated plan).
 - **Coconut palms** around the plot (Pattukottai is coconut country), compound wall with gate, a white **kolam** at each entrance,
   soft clouds, gentle ambient motion (palm sway, drifting clouds, fireflies at night).
 - **Day / dusk / night** lighting follows the real IST clock (toggle available). Windows glow warm at night when occupied.
@@ -88,7 +88,7 @@ The diorama must feel alive, like a tiny Tamil Nadu street scene running in real
 - **No road (owner, 3/10/2026, after sending photos of the houses)**: the asphalt street, shoulders, drain, kerbs and all traffic were
   removed; open natural grass surrounds the plot on the floating island. The electric pole (sagging wires, lamp, meter) stands on the
   grass by the gate. The houses follow the photos: single storey + roof terrace, cream walls with black accents, grilled veranda,
-  straight external stair with black rails, cream compound wall with black line pattern, jaali panels and black diamond gates.
+  dog-leg external stair with black rails in the yard, cream compound wall (separate enclosure) with black line pattern, jaali panels and two black diamond gates.
 - **Pedestrians**: a few stylised low-poly people walking across the grass and round the palms / banana garden (simple walk bob + limb
   swing), someone with an umbrella, a kid running; occasionally someone stops at the gate. A zebu cow grazes under the palms.
 - **Wind**: palm fronds sway with gusts (shader/vertex sway, gust strength varies over time), leaves/petals drifting across the plot,

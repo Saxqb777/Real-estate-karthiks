@@ -3,7 +3,7 @@
 // cream compound wall — square pillars, a graphic black line pattern on the long lane-side (left) wall, white
 // quatrefoil breeze-block jaali panels in black frames elsewhere, two black steel gates with a diamond motif (the main
 // gate at the front unit's stair foot, the back unit's gate mid-way along the lane wall) and the house-number plate
-// on the front corner pillar. A tulsi maadam in the courtyard and potted marigolds.
+// on the front corner pillar. The wall is a separate enclosure on the plot boundary — it never touches a house. A tulsi maadam in the courtyard and potted marigolds.
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { BuildingSlot, CompoundWall, SiteLayout } from "@/lib/site-layout";
@@ -46,12 +46,12 @@ export function PlotGround({ layout, world }: { layout: SiteLayout; world: World
   );
 }
 
-/** Concrete floor of the stepped porch notch at the stair foot (baked: one draw call). */
+/** Concrete floor of the rear-right backyard notch + the pad under the stair (baked: one draw call). */
 function Porch({ slot, world }: { slot: BuildingSlot; world: World }) {
   const parts = useMemo<Part[]>(() => {
     const r = (x0: number, x1: number, z0: number, z1: number, h: number, c: string) => box([world.x((x0 + x1) / 2), h / 2, world.z((z0 + z1) / 2)], [x1 - x0, h, z1 - z0], c);
     const { wide, step } = slot.notch;
-    return [r(wide.x0, wide.x1, wide.z0, wide.z1, 0.3, "#b9b4a9"), r(step.x0, step.x1, step.z0, step.z1, 0.3, "#b9b4a9"), r(slot.stairs.x0, slot.stairs.x1, slot.stairs.z0, slot.stairs.z1, 0.25, "#b3aea3")];
+    return [r(wide.x0, wide.x1, wide.z0, wide.z1, 0.2, "#b3aea3"), r(step.x0, step.x1, step.z0, step.z1, 0.2, "#b3aea3"), r(slot.stairs.x0 - 0.3, slot.stairs.x1, slot.stairs.z0 - 0.3, slot.stairs.z1, 0.12, "#c4bfb3")];
   }, [slot, world]);
   return <Baked parts={parts} receive material={vcMaterial(0.9)} />;
 }
@@ -194,8 +194,8 @@ function Tulsi({ layout, world }: { layout: SiteLayout; world: World }) {
   const parts = useMemo<Part[]>(() => {
     const c = layout.courtyard!;
     const back = layout.slots.find((s) => s.slot === "back");
-    const X = world.x((back ? back.rect.x1 : layout.plot.rightX) - 3.2); // passage side, clear of the lane gate
-    const Z = world.z((c.z0 + c.z1) / 2);
+    const X = world.x((back ? back.rect.x0 : layout.plot.rightX - 12) + 3.0); // courtyard, left of Unit B's stair
+    const Z = world.z(c.z0 + Math.min(2.2, (c.z1 - c.z0) * 0.25)); // against the front house, clear of Gate B
     const p = (x: number, y: number, z: number): [number, number, number] => [X + x, y, Z + z];
     return [
       box(p(0, 0.25, 0), [2.2, 0.5, 2.2], PAL.plaster),
@@ -215,15 +215,12 @@ function Pots({ layout, world }: { layout: SiteLayout; world: World }) {
     const spots: [number, number][] = [];
     for (const s of layout.slots) {
       if (s.status === "empty") continue;
-      spots.push([s.notch.wide.x1 - 0.9, s.rect.z0 + 0.8]);
-    }
-    if (layout.courtyard) {
-      const rx = layout.plot.polygon[1].x + ((layout.plot.polygon[2].x - layout.plot.polygon[1].x) * layout.courtyard.z1) / layout.plot.depthFt;
-      spots.push([rx - 1.2, layout.courtyard.z1 - 1.2]);
-      spots.push([rx - 2.6, layout.courtyard.z1 - 1.0]);
+      // either side of the entrance steps
+      spots.push([s.rect.x0 + 0.9, s.rect.z0 - 0.9]);
+      spots.push([s.stairs.x0 - 1.0, s.rect.z0 - 0.9]);
     }
     return spots.flatMap(([x, z], i) => {
-      const raised = layout.slots.some((s) => s.status !== "empty" && x <= s.notch.wide.x1 + 0.01 && z <= s.notch.wide.z1 && z >= s.rect.z0) ? 0.3 : 0;
+      const raised = 0;
       const X = world.x(x);
       const Z = world.z(z);
       return [

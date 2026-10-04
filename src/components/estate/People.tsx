@@ -227,10 +227,10 @@ export interface MoverRegistry {
 
 export function Pedestrians({ layout, world, env, count, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; count: number; movers?: MoverRegistry }) {
   const marks = useMemo<Landmarks>(() => {
-    const porch = layout.compoundWalls.find((w) => w.gate === "porch" || w.gate === "main") ?? layout.compoundWalls.find((w) => w.kind === "gate");
+    const porch = layout.compoundWalls.find((w) => w.gate === "front") ?? layout.compoundWalls.find((w) => w.kind === "gate");
     const gateX = porch ? (porch.a.x + porch.b.x) / 2 : layout.plot.rightX / 2;
     const vacant = layout.slots.find((s) => s.status === "vacant" || s.status === "incoming");
-    // the back house's board hangs on its lane-side wall, off the walkers' tracks: they only stop for the front one
+    // the back house's board stands at Gate B on the lane side, off the walkers' tracks: they only stop for the front one
     const boardGate = vacant && vacant.slot === "front" ? porch : null;
     return { gateX, boardX: boardGate ? (boardGate.a.x + boardGate.b.x) / 2 : null, centerX: (layout.plot.polygon[0].x + layout.plot.rightX) / 2 };
   }, [layout]);
@@ -261,25 +261,20 @@ const TENANT_OUTFITS: Outfit[] = [
 ];
 
 /**
- * The tenant of an occupied house: standing at the unit's gate on the street (the front door itself faces away from
- * the default camera), or up on the roof terrace by the clothes line (a back house hides its door behind the front
- * one). Clickable → "tenant". Waves when hovered.
+ * The tenant of an occupied house, standing just outside the unit's own gate (Gate to Unit A in the front wall, Gate to
+ * Unit B in the lane wall), or at the entrance when there is no gate. Clickable → "tenant". Waves when hovered.
  */
-export function TenantFigure({ slot, world, env, index, gateAt }: { slot: BuildingSlot; world: World; env: RefObject<Env>; index: number; gateAt?: { x: number; z: number } }) {
+export function TenantFigure({ slot, world, env, index, gateAt }: { slot: BuildingSlot; world: World; env: RefObject<Env>; index: number; gateAt?: { x: number; z: number; side?: boolean } }) {
   const api = useScene();
   const hovered = !!slot.unit && api.hovered === spotKey("tenant", slot.unit.id);
   const outfit = TENANT_OUTFITS[index % TENANT_OUTFITS.length];
   const { geo, rig } = useRig(() => personLimbs(outfit), [outfit]);
-  const onRoof = slot.slot === "back" && slot.rect.z0 > 1;
+  const side = !!gateAt?.side;
   const pos = useMemo<V3>(() => {
-    if (onRoof) {
-      const s = slot.stairs;
-      return [world.x(s.x1 + 2.2), slot.heightFt + 0.1, world.z(s.z1 + 1.6)];
-    }
-    if (gateAt) return [world.x(gateAt.x + 0.9), 0.47, world.z(-1.0)];
-    const { wide } = slot.notch;
-    return [world.x(Math.max(wide.x0 + 1.2, slot.door.x - 1.5)), 0.6, world.z(Math.max(wide.z0 + 1.3, slot.door.z - 1.6))];
-  }, [onRoof, slot, world, gateAt]);
+    if (gateAt && side) return [world.x(gateAt.x + 1.6), 0, world.z(gateAt.z + 0.9)];
+    if (gateAt) return [world.x(gateAt.x + 0.9), 0, world.z(-1.0)];
+    return [world.x(slot.door.x + 1.4), 0, world.z(slot.door.z - 1.4)];
+  }, [slot, world, gateAt, side]);
   const anchor = useMemo<V3>(() => [pos[0], pos[1] + 7.2, pos[2]], [pos]);
   const unitId = slot.unit?.id;
   useFrame(() => {
@@ -292,8 +287,8 @@ export function TenantFigure({ slot, world, env, index, gateAt }: { slot: Buildi
       spot={{ key: spotKey("tenant", unitId), kind: "tenant", unitId, anchor }}
       hit={<mesh geometry={G.box()} position={[pos[0], pos[1] + 3, pos[2]]} scale={[2.6, 6.4, 2.6]} visible={false} />}
     >
-      {/* faces the street (world +Z) */}
-      <group position={pos} rotation={[0, onRoof ? -0.5 : -0.55, 0]}>
+      {/* faces out of the gate: the front grass (world +Z) or the lane (world −X) */}
+      <group position={pos} rotation={[0, side ? -Math.PI / 2 + 0.35 : -0.55, 0]}>
         <RigMesh geo={geo} rig={rig} />
       </group>
     </Hotspot>

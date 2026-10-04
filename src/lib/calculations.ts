@@ -728,8 +728,8 @@ export function depositsLedger(rows: DepositRow[]): DepositsLedger {
 
 // ───────────────────────────── plot ─────────────────────────────
 
-/** Owner's site plan: 22'3" front, 23'3" back, 76.66 ft deep. */
-export const SITE_PLAN_DEFAULTS = { frontWidthFt: 22.25, backWidthFt: 23.25, depthFt: 76.66 } as const;
+/** Owner's annotated site plan: 23'3" front (Gate to Unit A), 22'3" back, 76.66 ft deep. */
+export const SITE_PLAN_DEFAULTS = { frontWidthFt: 23.25, backWidthFt: 22.25, depthFt: 76.66 } as const;
 
 /** Trapezoid area (front + back) / 2 × depth, in integer hundredths so 22.25/23.25/76.66 → 1744.02 exactly. */
 export function trapezoidArea(frontWidthFt: number, backWidthFt: number, depthFt: number): number {

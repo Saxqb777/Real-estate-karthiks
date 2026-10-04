@@ -1,5 +1,5 @@
 "use client";
-// Architectural dimension lines built from the layout data (22'3", 23'3", 76'8", 20', 28'…).
+// Architectural dimension lines built from the layout data (23'3", 22'3", 76'8", 20', 28'…).
 // `highlight` (a config field name) pulses the matching dimension so forms can show which field maps where.
 // Labels are DOM (see Overlay.tsx): dimensionLabels() describes them, the lines live here.
 import { Line } from "@react-three/drei";

@@ -2,9 +2,13 @@
 // Every value is in FEET, in "plan" coordinates as seen on the owner's drawing:
 //   x grows left → right when standing on the street looking at the plot,
 //   z grows from the front edge (z = 0, on the street) to the back edge (z = depthFt).
-// Oriented like the owner's photos (photo 7): the LEFT boundary (x = 0) runs along the lane and is straight; the right
-// boundary slants from frontWidthFt to backWidthFt. Both buildings sit flush to the lane-side (left) boundary with the
-// stepped notch + external stair at their front-LEFT corner (by the main gate) and the ~3 ft side passage on the right.
+// Oriented like the owner's annotated site plan (images/8.jpg): the RIGHT boundary is straight (x = plot.rightX); the
+// LEFT boundary runs along the lane and slants from frontWidthFt (23'3" at the front) to backWidthFt (22'3" at the back).
+// From the front: front yard (Unit A's entrance + stair, "Gate to Unit A" in the front wall) → Unit A → courtyard (Unit B's
+// entrance + stair, "Gate to Unit B" in the lane wall) → Unit B against the back. The compound wall is a separate
+// enclosure on the boundary: the ~3 ft lane-side passage on the left and a ~1.5 ft clear strip on the right and at the
+// back keep every wall clear of the houses. Each house: entrance at its front-left (veranda), external stair in front of
+// its front-right, and a small open backyard (notch) at its rear-right with a bathroom and a back-exit door.
 import type { PlotGeometry, RentState, UnitBreakdown, UnitStatus } from "./dashboard-types";
 import { SITE_PLAN_DEFAULTS, trapezoidArea } from "./calculations";
 import { formatIndianNumber } from "./format";
@@ -53,14 +57,20 @@ export const SITE_DEFAULTS = {
   ...SITE_PLAN_DEFAULTS,
   footprintWidthFt: 20,
   footprintDepthFt: 28,
-  courtyardFt: 10,
-  minCourtyardFt: 4,
+  /** open yard in front of each house (front yard for Unit A, courtyard for Unit B) — holds its entrance + stair */
+  yardFt: 10,
+  /** the yard never gets smaller than this (the stair needs it) */
+  minYardFt: 5.5,
+  /** lane-side passage between the lane wall and the houses */
+  passageFt: 3,
+  /** clear strip between the houses and the right / back compound walls (the wall never touches a house) */
+  wallClearFt: 1.5,
   floorHeightFt: 10.5,
   parapetFt: 3,
-  /** stepped front-left (lane-side) notch: 6.5 wide × 9.5 deep, narrowing by one small step to the stair width */
-  notch: { widthFt: 6.5, depthFt: 9.5, stepDepthFt: 2 },
-  /** external staircase straight behind the notch, against the lane-side (left) boundary (width across × run along z) */
-  stairs: { widthFt: 5, runFt: 7 },
+  /** rear-right backyard notch: 6.5 wide at the back × 9.5 deep, narrowing by one small step (bathroom) towards the front */
+  notch: { widthFt: 6.5, depthFt: 9.5, stepDepthFt: 4 },
+  /** external dog-leg staircase in front of the house's front-right corner (width along the front × depth into the yard) */
+  stairs: { widthFt: 10, depthFt: 5 },
 } as const;
 
 /** Grassy land tile around the plot (diorama context, not owner data). No road: open grass in front of the gates. */
@@ -76,8 +86,8 @@ export const SITE_SURROUNDINGS = {
 const MIN_EMPTY_SLOT_DEPTH = 8;
 const LIMITS = { width: [4, 400], depth: [10, 1000] } as const;
 
-/** "side" = the passage-side wall (windows); "party" = flush to the lane-side boundary (blank) */
-export type WallKind = "front" | "side" | "back" | "porch" | "stair" | "party";
+/** "side" = the lane-passage wall (windows); "party" = the right wall (blank); "notch" = the backyard walls */
+export type WallKind = "front" | "side" | "back" | "notch" | "party";
 export interface Wall {
   a: Pt;
   b: Pt;
@@ -102,18 +112,22 @@ export interface BuildingSlot {
   /** wall height (floors × 10.5 ft), parapet on top */
   heightFt: number;
   parapetFt: number;
-  /** footprint polygon, counter-clockwise, with the stepped notch + stair well cut out of the front-left corner */
+  /** footprint polygon, counter-clockwise, with the stepped backyard notch cut out of the rear-right corner */
   outline: Pt[];
-  /** porch notch: wide part (front) and the narrower stepped part behind it */
+  /** rear-right backyard: wide part (against the back) and the narrower stepped part in front of it (bathroom side) */
   notch: { wide: Rect; step: Rect };
-  /** open external staircase well, behind the notch, flush to the lane-side (left) boundary */
+  /** external dog-leg staircase OUTSIDE the footprint, in the yard in front of the front-right corner */
   stairs: Rect;
-  /** main door on the notch's inner (right) wall, facing −x into the porch */
+  /** house entrance on the front face at the front-left (facing −z, onto the yard) */
   door: { x: number; z: number; widthFt: number };
-  /** where the kolam is drawn (porch floor in front of the door) */
+  /** back-exit door from the house into the backyard (on the notch's front wall, facing +z) */
+  backExit: { x: number; z: number; widthFt: number };
+  /** where the kolam is drawn (in front of the entrance) */
   kolam: { x: number; z: number; sizeFt: number };
   walls: Wall[];
-  /** side passage width (building → right boundary) at the building front */
+  /** open yard in front of the house (front yard / courtyard), ft */
+  yardFt: number;
+  /** lane-side passage width (left boundary → building) at the building front */
   passageFt: number;
   /** enclosed floor area of one floor (sq ft) */
   floorAreaSqft: number;
@@ -123,11 +137,8 @@ export interface CompoundWall {
   a: Pt;
   b: Pt;
   kind: "wall" | "gate";
-  /**
-   * which gate: "porch" = the front unit's main gate at its stair foot (front wall, by the lane corner), "side" = the
-   * back unit's gate in the middle of the long lane-side wall, "main" = the front-wall gate when no house stands on the front
-   */
-  gate?: "porch" | "side" | "main";
+  /** "front" = Gate to Unit A in the front wall; "side" = Gate to Unit B in the lane wall at the courtyard */
+  gate?: "front" | "side";
 }
 
 /**
@@ -135,11 +146,11 @@ export interface CompoundWall {
  * Mount points are on the plot boundary (z = 0) unless noted; the renderer pushes each one out to the street face.
  */
 export interface SiteFixtures {
-  /** letter box on a gate pillar (the front unit's main gate, else the open-front gate) */
+  /** letter box on the corner-side pillar of the front gate (Gate to Unit A) */
   mailbox: Pt;
   /** notice board on the outer face of the lane-side (left) compound wall near the front (faces −x, the lane) */
   noticeBoard: Pt & { widthFt: number };
-  /** property-tax stamp plaque: on the front building's street wall (left of its first window), else on a gate pillar */
+  /** property-tax stamp plaque on the middle pillar of the front wall right of the gate */
   taxStamp: Pt & { on: "wall" | "pillar" };
   /** survey stone + ranging flag just outside the back-left corner */
   plotMarker: Pt;
@@ -345,14 +356,15 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
   const areaSqft = isPos(plotIn.areaSqft) ? plotIn.areaSqft : trapezoidArea(front, back, depth);
   const rightX = Math.max(front, back);
   const widthAt = (z: number) => front + (back - front) * clamp(z / depth, 0, 1);
-  /** x of the (slanting) right boundary at plan z; the left boundary is x = 0 */
-  const rightAt = (z: number) => widthAt(z);
+  /** x of the (slanting) lane-side boundary at plan z; the right boundary is x = rightX */
+  const leftX = (z: number) => rightX - widthAt(z);
   const polygon: Pt[] = [
-    { x: 0, z: 0 },
-    { x: front, z: 0 },
-    { x: back, z: depth },
-    { x: 0, z: depth },
+    { x: leftX(0), z: 0 },
+    { x: rightX, z: 0 },
+    { x: rightX, z: depth },
+    { x: leftX(depth), z: depth },
   ];
+  const D = SITE_DEFAULTS;
 
   // ── slots ──
   const { bySlot, unplaced, warnings: slotWarnings } = assignSlots(units);
@@ -365,18 +377,20 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
   const req = { front: { w: want("front", "footprintWidthFt"), d: want("front", "footprintDepthFt") }, back: { w: want("back", "footprintWidthFt"), d: want("back", "footprintDepthFt") } };
   const d: Record<SlotName, number> = { front: req.front.d, back: req.back.d };
 
-  // Real buildings get the room first; with no units both placeholders are fitted together.
+  // Real buildings get the room first; with no units both placeholders are fitted together. Every drawn house needs a
+  // yard in front of it (front yard / courtyard) and the back house keeps a clear strip to the back wall.
   const anchors = SLOT_NAMES.filter((s) => real[s]);
   const fitSet = anchors.length ? anchors : [...SLOT_NAMES];
-  const gapNeeded = fitSet.length === 2 ? SITE_DEFAULTS.minCourtyardFt : 0;
+  const usable = depth - D.wallClearFt;
+  const gapNeeded = D.minYardFt * fitSet.length;
   const fitSum = fitSet.reduce((s, k) => s + d[k], 0);
-  if (fitSum + gapNeeded > depth) {
-    const s = (depth - gapNeeded) / fitSum;
+  if (fitSum + gapNeeded > usable) {
+    const s = (usable - gapNeeded) / fitSum;
     for (const k of fitSet) d[k] *= s;
     const realFit = fitSet.filter((k) => real[k]);
     if (realFit.length === 2) {
       warnings.push(
-        `Front + back footprint depths (${formatFeetInches(req.front.d)} + ${formatFeetInches(req.back.d)}) and a ${formatFeetInches(gapNeeded)} courtyard do not fit the ${formatFeetInches(depth)} plot — both drawn scaled.`,
+        `Front + back footprint depths (${formatFeetInches(req.front.d)} + ${formatFeetInches(req.back.d)}) and their two ${formatFeetInches(D.minYardFt)} yards do not fit the ${formatFeetInches(depth)} plot — both drawn scaled.`,
       );
     } else if (realFit.length === 1) {
       const k = realFit[0];
@@ -385,28 +399,38 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
   }
   for (const k of SLOT_NAMES) {
     if (fitSet.includes(k)) continue;
-    const room = depth - fitSet.reduce((s, f) => s + d[f], 0) - SITE_DEFAULTS.minCourtyardFt;
+    const room = usable - fitSet.reduce((s, f) => s + d[f], 0) - D.minYardFt * (fitSet.length + 1);
     d[k] = room >= MIN_EMPTY_SLOT_DEPTH ? Math.min(d[k], room) : 0;
   }
   const drawn = SLOT_NAMES.filter((s) => d[s] > 0);
-  const both = drawn.length === 2;
-  const courtyardFt = both ? Math.min(SITE_DEFAULTS.courtyardFt, depth - d.front - d.back) : 0;
-  const z0: Record<SlotName, number> = {
-    front: 0,
-    back: d.front > 0 ? d.front + courtyardFt : Math.max(0, depth - d.back - SITE_DEFAULTS.courtyardFt),
-  };
+  // the back house sits against the back (clear strip only); the open space in front of it is shared between the front
+  // yard and the courtyard (≈ 10 ft each on the owner's plan)
+  const z0: Record<SlotName, number> = { front: 0, back: 0 };
+  if (d.back > 0) z0.back = usable - d.back;
+  if (d.front > 0) {
+    const open = (d.back > 0 ? z0.back : usable) - d.front;
+    z0.front = d.back > 0 ? clamp(open / 2, Math.min(D.minYardFt, open / 2), D.yardFt) : Math.min(D.yardFt, Math.max(0, open));
+    if (d.back > 0 && open - z0.front > D.yardFt) z0.front = open - D.yardFt; // a long plot: the courtyard stays 10 ft
+  }
 
   const slots: BuildingSlot[] = drawn.map((s) => {
     const unit = bySlot[s];
     const zA = z0[s];
     const zB = zA + d[s];
-    const room = Math.min(widthAt(zA), widthAt(zB));
+    // the house sits between the lane passage and the right-wall clear strip (no wall ever touches it)
+    const plotW = Math.min(widthAt(zA), widthAt(zB));
+    const x1 = rightX - D.wallClearFt;
+    const room = Math.max(4, Math.min(plotW - D.wallClearFt - D.passageFt, x1 - Math.max(leftX(zA), leftX(zB)) - D.passageFt));
     const w = Math.min(req[s].w, room);
-    if (unit && w < req[s].w - 1e-9) {
-      warnings.push(`"${unit.name}" footprint width ${formatFeetInches(req[s].w)} is wider than the plot (${formatFeetInches(room)}) — drawn scaled to fit.`);
+    if (unit && req[s].w > plotW + 1e-9) {
+      warnings.push(`"${unit.name}" footprint width ${formatFeetInches(req[s].w)} is wider than the plot (${formatFeetInches(plotW)}) — drawn scaled to fit.`);
     }
+    const yardFt = s === "front" ? zA : zA - (d.front > 0 ? z0.front + d.front : 0);
     const floors = clamp(Math.round(unit?.floors ?? 1), 1, 10);
-    return buildSlot(s, unit, { x0: 0, x1: w, z0: zA, z1: zB }, floors, req[s], rightAt);
+    const b = buildSlot(s, unit, { x0: x1 - w, x1, z0: zA, z1: zB }, floors, req[s], leftX, yardFt);
+    // drawn a little narrower only to keep the passage + wall clearance: that is not "scaled" (labels keep the data width)
+    b.scaled = req[s].w > plotW + 1e-9 || b.depthFt < req[s].d - 1e-9;
+    return b;
   });
 
   const built = slots.filter((s) => s.unit);
@@ -415,10 +439,10 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
   const backSlot = slots.find((s) => s.slot === "back");
   const courtyard = frontSlot && backSlot ? { z0: frontSlot.rect.z1, z1: backSlot.rect.z0 } : null;
   const paved: Pt[] = [
-    { x: 0, z: 0 },
-    { x: rightAt(0), z: 0 },
-    { x: rightAt(lastZ), z: lastZ },
-    { x: 0, z: lastZ },
+    { x: leftX(0), z: 0 },
+    { x: rightX, z: 0 },
+    { x: rightX, z: lastZ },
+    { x: leftX(lastZ), z: lastZ },
   ];
 
   // ── surroundings ──
@@ -426,10 +450,10 @@ export function computeSiteLayout(plotIn: PlotLike, units: SceneUnit[]): SiteLay
   const tile = offsetPolygon(polygon, [S.frontMarginFt, S.sideMarginFt, S.backMarginFt, S.sideMarginFt]);
   const meadow = { x0: Math.min(tile[0].x, tile[3].x), x1: Math.max(tile[1].x, tile[2].x), z0: -S.frontMarginFt, z1: 0 };
 
-  const compoundWalls = buildCompoundWalls(polygon, frontSlot ?? null, backSlot ?? null, courtyard);
+  const compoundWalls = buildCompoundWalls(polygon, frontSlot ?? null, backSlot ?? null, courtyard, leftX);
   const fixtures = buildFixtures(polygon, compoundWalls, frontSlot ?? null, tile);
   const maxHeightFt = slots.reduce((m, s) => Math.max(m, s.heightFt + s.parapetFt), 0);
-  const center = { x: rightAt(depth / 2) / 2, z: depth / 2 };
+  const center = { x: rightX / 2 + leftX(depth / 2) / 2, z: depth / 2 };
   const radius = Math.max(...tile.map((p) => Math.hypot(p.x - center.x, p.z - center.z)));
 
   const layout: SiteLayout = {
@@ -458,34 +482,37 @@ function buildSlot(
   rect: Rect,
   floors: number,
   req: { w: number; d: number },
-  rightAt: (z: number) => number,
+  leftX: (z: number) => number,
+  yardFt: number,
 ): BuildingSlot {
   const { x0, x1, z0, z1 } = rect;
   const w = x1 - x0;
   const dep = z1 - z0;
   const D = SITE_DEFAULTS;
-  // notch + stair well at the front-LEFT (lane-side) corner, clamped so tiny footprints stay valid
+  // backyard notch at the rear-right corner, clamped so tiny footprints stay valid
   const nW = Math.min(D.notch.widthFt, w * 0.36);
-  const stW = Math.min(D.stairs.widthFt, nW * 0.78);
+  const stW = nW * 0.8; // the bathroom narrows the notch by one small step
   const nD = Math.min(D.notch.depthFt, dep * 0.36);
-  const sD = Math.min(D.notch.stepDepthFt, nD * 0.25);
-  const stD = Math.min(D.stairs.runFt, dep * 0.26);
-  const wide: Rect = { x0, x1: x0 + nW, z0, z1: z0 + nD - sD };
-  const step: Rect = { x0, x1: x0 + stW, z0: z0 + nD - sD, z1: z0 + nD };
-  const stairs: Rect = { x0, x1: x0 + stW, z0: z0 + nD, z1: z0 + nD + stD };
-  // counter-clockwise from the notch's front corner: front → passage side → back → lane side → stair well → porch
+  const sD = Math.min(D.notch.stepDepthFt, nD * 0.45);
+  const wide: Rect = { x0: x1 - nW, x1, z0: z1 - nD + sD, z1 };
+  const step: Rect = { x0: x1 - stW, x1, z0: z1 - nD, z1: z1 - nD + sD };
+  // counter-clockwise from the front-left corner: front → right → backyard notch → back → lane side
   const outline: Pt[] = [
-    { x: wide.x1, z: z0 },
+    { x: x0, z: z0 },
     { x: x1, z: z0 },
-    { x: x1, z: z1 },
+    { x: x1, z: step.z0 },
+    { x: step.x0, z: step.z0 },
+    { x: step.x0, z: wide.z0 },
+    { x: wide.x0, z: wide.z0 },
+    { x: wide.x0, z: z1 },
     { x: x0, z: z1 },
-    { x: x0, z: stairs.z1 },
-    { x: stairs.x1, z: stairs.z1 },
-    { x: stairs.x1, z: wide.z1 },
-    { x: wide.x1, z: wide.z1 },
   ];
+  // the stair stands in the yard in front of the front-right corner
+  const sw = Math.min(D.stairs.widthFt, w * 0.56);
+  const sd = Math.max(0.5, Math.min(D.stairs.depthFt, yardFt - 0.6));
+  const stairs: Rect = { x0: x1 - sw, x1, z0: z0 - sd, z1: z0 };
   const heightFt = floors * D.floorHeightFt;
-  const porchDepth = wide.z1 - z0;
+  const entranceX = x0 + Math.min(3.2, w * 0.18);
   return {
     slot,
     unit,
@@ -502,10 +529,12 @@ function buildSlot(
     outline,
     notch: { wide, step },
     stairs,
-    door: { x: wide.x1, z: z0 + porchDepth * 0.55, widthFt: Math.min(3.5, porchDepth * 0.5) },
-    kolam: { x: wide.x1 - nW * 0.55, z: z0 + porchDepth * 0.42, sizeFt: Math.min(nW * 0.62, porchDepth * 0.62) },
+    door: { x: r2(entranceX), z: z0, widthFt: 3.2 },
+    backExit: { x: r2((step.x0 + x1) / 2), z: step.z0, widthFt: Math.min(3, stW * 0.6) },
+    kolam: { x: r2(entranceX), z: r2(z0 - Math.min(2, yardFt * 0.3)), sizeFt: Math.min(3.2, yardFt * 0.4) },
     walls: wallsOf(outline),
-    passageFt: rightAt(z0) - x1,
+    yardFt: r2(yardFt),
+    passageFt: x0 - leftX(z0),
     floorAreaSqft: r2(Math.abs(polygonArea(outline))),
   };
 }
@@ -520,47 +549,47 @@ function wallsOf(outline: Pt[]): Wall[] {
   };
   const walls = [
     mk(p0, p1, "front"),
-    mk(p1, p2, "side"),
-    mk(p2, p3, "back"),
-    mk(p3, p4, "party"),
-    mk(p4, p5, "stair"),
-    mk(p5, p6, "stair"),
-    mk(p6, p7, "porch"),
-    mk(p7, p0, "porch"),
+    mk(p1, p2, "party"),
+    mk(p2, p3, "notch"),
+    mk(p3, p4, "notch"),
+    mk(p4, p5, "notch"),
+    mk(p5, p6, "notch"),
+    mk(p6, p7, "back"),
+    mk(p7, p0, "side"),
   ];
   return walls.filter((w) => w.length > 0.05);
 }
 
-function buildCompoundWalls(polygon: Pt[], frontSlot: BuildingSlot | null, backSlot: BuildingSlot | null, courtyard: { z0: number; z1: number } | null): CompoundWall[] {
+function buildCompoundWalls(
+  polygon: Pt[],
+  frontSlot: BuildingSlot | null,
+  backSlot: BuildingSlot | null,
+  courtyard: { z0: number; z1: number } | null,
+  leftX: (z: number) => number,
+): CompoundWall[] {
   const [FL, FR, BR, BL] = polygon;
   const out: CompoundWall[] = [];
-  const realFront = frontSlot && frontSlot.unit && frontSlot.rect.z0 < 0.01;
-  if (realFront) {
-    // the front building stands on the boundary: ONE main gate at its stair foot (front-left, by the lane corner),
-    // a short wall from the corner pillar to it, and a wall across the side passage on the right
-    const nx = frontSlot.notch.wide.x1;
-    const gw = Math.min(4, nx * 0.7);
-    out.push({ a: FL, b: { x: nx - gw, z: 0 }, kind: "wall" });
-    out.push({ a: { x: nx - gw, z: 0 }, b: { x: nx, z: 0 }, kind: "gate", gate: "porch" });
-    if (FR.x - frontSlot.rect.x1 > 0.05) out.push({ a: { x: frontSlot.rect.x1, z: 0 }, b: FR, kind: "wall" });
-  } else {
-    // open front: wall with a main gate near the lane corner
-    const gx0 = FL.x + 0.8;
-    const gw = Math.min(8, (FR.x - FL.x) * 0.4);
-    out.push({ a: FL, b: { x: gx0, z: 0 }, kind: "wall" });
-    out.push({ a: { x: gx0, z: 0 }, b: { x: gx0 + gw, z: 0 }, kind: "gate", gate: "main" });
-    out.push({ a: { x: gx0 + gw, z: 0 }, b: FR, kind: "wall" });
-  }
+  // the wall runs on the boundary all round (never against a house). Gate to Unit A: left / centre of the front wall,
+  // opening onto the front yard in front of Unit A's entrance (its stair is on the right)
+  const width = FR.x - FL.x;
+  const gw = Math.min(4, width * 0.25);
+  const doorX = frontSlot ? frontSlot.door.x : FL.x + width * 0.3;
+  const stairX0 = frontSlot ? frontSlot.stairs.x0 : FR.x;
+  const ga = clamp(doorX - gw / 2 + 0.6, FL.x + Math.min(3, width * 0.15), Math.max(FL.x + 1, stairX0 - gw - 0.6));
+  out.push({ a: FL, b: { x: r2(ga), z: 0 }, kind: "wall" });
+  out.push({ a: { x: r2(ga), z: 0 }, b: { x: r2(ga + gw), z: 0 }, kind: "gate", gate: "front" });
+  out.push({ a: { x: r2(ga + gw), z: 0 }, b: FR, kind: "wall" });
   out.push({ a: FR, b: BR, kind: "wall" });
   out.push({ a: BR, b: BL, kind: "wall" });
-  // the long lane-side wall, with the back unit's gate in its middle section (into the courtyard)
-  if (backSlot && backSlot.unit) {
+  // Gate to Unit B: in the lane wall at the courtyard (in front of Unit B's entrance)
+  if (backSlot) {
     const depth = BL.z;
     const zc = courtyard && courtyard.z1 - courtyard.z0 > 4.6 ? (courtyard.z0 + courtyard.z1) / 2 : clamp(backSlot.rect.z0 - 2.5, 3, depth - 3);
-    const gw = Math.min(4, courtyard ? courtyard.z1 - courtyard.z0 - 0.6 : 4);
-    out.push({ a: BL, b: { x: 0, z: zc + gw / 2 }, kind: "wall" });
-    out.push({ a: { x: 0, z: zc + gw / 2 }, b: { x: 0, z: zc - gw / 2 }, kind: "gate", gate: "side" });
-    out.push({ a: { x: 0, z: zc - gw / 2 }, b: FL, kind: "wall" });
+    const gb = Math.min(4, courtyard ? Math.max(2, courtyard.z1 - courtyard.z0 - 0.8) : 4);
+    const p = (z: number): Pt => ({ x: r2(leftX(z)), z: r2(z) });
+    out.push({ a: BL, b: p(zc + gb / 2), kind: "wall" });
+    out.push({ a: p(zc + gb / 2), b: p(zc - gb / 2), kind: "gate", gate: "side" });
+    out.push({ a: p(zc - gb / 2), b: FL, kind: "wall" });
   } else out.push({ a: BL, b: FL, kind: "wall" });
   return out;
 }
@@ -572,14 +601,15 @@ function xAt(a: Pt, b: Pt, z: number): number {
 
 function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: BuildingSlot | null, tile: Pt[]): SiteFixtures {
   const [FL, FR, , BL] = polygon;
-  const porch = walls.find((w) => w.gate === "porch");
-  const main = walls.find((w) => w.gate === "main") ?? walls.find((w) => w.kind === "gate" && w.gate !== "side");
-  // mailbox on the front gate's corner-side pillar, tax stamp on the house front (or the other gate pillar)
-  const mailbox = porch ? { ...porch.a } : main ? { ...main.b } : { x: FR.x - 1, z: 0 };
-  const onBoundary = frontSlot && frontSlot.unit && frontSlot.rect.z0 < 0.01 && frontSlot.rect.x1 - frontSlot.notch.wide.x1 > 4;
-  const taxStamp: SiteFixtures["taxStamp"] = onBoundary
-    ? { x: r2(frontSlot.notch.wide.x1 + 2.2), z: 0, on: "wall" }
-    : { ...(main ? main.a : porch ? porch.b : FL), on: "pillar" };
+  const gate = walls.find((w) => w.gate === "front");
+  // mailbox on Gate A's corner-side pillar; tax stamp on the middle pillar of the front wall right of the gate
+  // (the renderer puts a pillar every ~8 ft along each wall run)
+  const mailbox = gate ? { ...gate.a } : { x: FR.x - 1, z: 0 };
+  const run = walls.find((w) => w.kind === "wall" && gate && w.a.x === gate.b.x && w.a.z === 0);
+  const runLen = run ? run.b.x - run.a.x : 0;
+  const nPanels = Math.max(1, Math.round(runLen / 8));
+  const taxX = run ? run.a.x + Math.floor((nPanels + 1) / 2) * (runLen / nPanels) : FR.x;
+  const taxStamp: SiteFixtures["taxStamp"] = { x: r2(taxX), z: 0, on: "pillar" };
   // notice board: on the lane-side (left) compound wall a few feet in from the front, facing the lane
   const depth = BL.z - FL.z;
   const zb = Math.min(7, Math.max(2.5, depth * 0.12));
@@ -624,8 +654,10 @@ function buildDimensions(L: SiteLayout): Dimension[] {
     const { x0, x1, z0, z1 } = s.rect;
     const base = { slot: s.slot, unitId: s.unit?.id };
     const real = !!s.unit; // an empty slot's footprint is a placeholder: only drawn when its field is highlighted
+    // the footprint is drawn slightly inset (passage + wall clearance) — the label keeps the unit's real width
+    const shownW = s.requestedWidthFt > s.widthFt && !s.scaled ? s.requestedWidthFt : s.widthFt;
     dims.push(
-      { key: `footprintWidthFt:${s.slot}`, kind: "footprint", ...base, valueFt: s.widthFt, label: formatFeetInches(s.widthFt), a: { x: x0, y: top, z: z1 }, b: { x: x1, y: top, z: z1 }, dir: { x: 0, y: 0, z: 1 }, offset: 1.6, primary: real },
+      { key: `footprintWidthFt:${s.slot}`, kind: "footprint", ...base, valueFt: shownW, label: formatFeetInches(shownW), a: { x: x0, y: top, z: z1 }, b: { x: x1, y: top, z: z1 }, dir: { x: 0, y: 0, z: 1 }, offset: 1.6, primary: real },
       { key: `footprintDepthFt:${s.slot}`, kind: "footprint", ...base, valueFt: s.depthFt, label: formatFeetInches(s.depthFt), a: { x: x0, y: top, z: z0 }, b: { x: x0, y: top, z: z1 }, dir: { x: -1, y: 0, z: 0 }, offset: 1.6, primary: real },
       {
         key: `floors:${s.slot}`,
@@ -643,7 +675,7 @@ function buildDimensions(L: SiteLayout): Dimension[] {
   }
   if (L.courtyard && L.courtyard.z1 - L.courtyard.z0 > 0.5) {
     const backSlot = L.slots.find((s) => s.slot === "back")!;
-    const x = backSlot.rect.x1 - 3; // towards the passage side, clear of the lane gate
+    const x = (BL.x + backSlot.rect.x0) / 2 + 1.2; // in the lane-side passage
     const gap = L.courtyard.z1 - L.courtyard.z0;
     dims.push({ key: "courtyard", kind: "gap", valueFt: gap, label: formatFeetInches(gap), a: { x, y, z: L.courtyard.z0 }, b: { x, y, z: L.courtyard.z1 }, dir: { x: 1, y: 0, z: 0 }, offset: 0, primary: true });
   }

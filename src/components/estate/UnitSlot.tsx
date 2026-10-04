@@ -184,8 +184,8 @@ function BuiltSlot({ slot, world, env, mode, selected, highlighted, interactive,
       {!look.ring && (highlighted || selected) && <StatusRing slot={slot} world={world} color={PAL.marigold} pulse={false} dashed={false} boost={1} />}
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
       {empty && <LetBoard slot={slot} world={world} reduced={reduced} at={signAt} onWall={!!boardOnWall} incoming={slot.status === "incoming"} />}
-      {slot.status === "occupied" && mode !== "preview" && interactive && <TenantFigure slot={slot} world={world} env={env} index={index} gateAt={slot.rect.z0 < 0.01 ? signAt : undefined} />}
-      {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x - (signAt.side ? 0.4 : 0))} z={world.z(signAt.z - (signAt.side ? 0 : 1.2))} env={env} />}
+      {slot.status === "occupied" && mode !== "preview" && interactive && <TenantFigure slot={slot} world={world} env={env} index={index} gateAt={signAt} />}
+      {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x - (signAt.side ? 1.2 : 0))} z={world.z(signAt.z - (signAt.side ? 0 : 1.2))} env={env} />}
     </group>
   );
 }
@@ -298,7 +298,7 @@ function QuestMarker({ x, y, z, roof, reduced }: { x: number; y: number; z: numb
 
 // ───────────────────────────── vacant: TO-LET board · incoming: "Moving in D/M" slate ─────────────────────────────
 
-function LetBoard({ slot, world, reduced, at, onWall, incoming }: { slot: BuildingSlot; world: World; reduced: boolean; at?: { x: number; z: number }; onWall: boolean; incoming: boolean }) {
+function LetBoard({ slot, world, reduced, at, onWall, incoming }: { slot: BuildingSlot; world: World; reduced: boolean; at?: { x: number; z: number; side?: boolean }; onWall: boolean; incoming: boolean }) {
   const tamil = useTamilFont();
   const ref = useRef<THREE.Group>(null);
   const date = dayMonth(slot.unit?.moveInDate);
@@ -308,12 +308,13 @@ function LetBoard({ slot, world, reduced, at, onWall, incoming }: { slot: Buildi
     if (ref.current && !reduced) ref.current.rotation.z = Math.sin(clock.elapsedTime * 1.3) * (onWall ? 0.012 : 0.025);
   });
   const unitId = slot.unit!.id;
-  // board on the grass at the unit's front gate, facing out — or hung on the house's lane-side wall facing the lane (world −X)
+  // board on the grass outside the unit's own gate (Gate A in the front wall, Gate B in the lane wall), facing out
   const wallY = Math.min(slot.heightFt - 2.2, slot.floors > 1 ? 10.5 + 2.2 : 6.7);
   const pos: V3 = onWall
     ? [world.x(slot.rect.x0 - 0.3), 0, world.z(slot.rect.z0 + Math.min(slot.depthFt * 0.4, 9))]
-    : [world.x(at ? at.x : slot.notch.wide.x0 + (slot.notch.wide.x1 - slot.notch.wide.x0) * 0.45), 0, world.z(at ? at.z : slot.rect.z0 - 2.4)];
-  const rotY = onWall ? -Math.PI / 2 : -0.12;
+    : [world.x(at ? at.x : slot.door.x), 0, world.z(at ? at.z : slot.rect.z0 - 2.4)];
+  // at a lane-wall gate the board faces the lane (world −X), at the front gate it faces the front
+  const rotY = onWall ? -Math.PI / 2 : at?.side ? -Math.PI / 2 - 0.12 : -0.12;
   const boardY = onWall ? wallY : 6.0;
   const anchor = useMemo<V3>(() => [pos[0] - (onWall ? 0.5 : 0), boardY + 2.4, pos[2]], [pos[0], pos[2], boardY, onWall]); // eslint-disable-line react-hooks/exhaustive-deps
   return (

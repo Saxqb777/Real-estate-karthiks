@@ -14,7 +14,7 @@ import {
 } from "../site-layout";
 import type { UnitBreakdown } from "../dashboard-types";
 
-const PLOT = { frontWidthFt: 22.25, backWidthFt: 23.25, depthFt: 76.66, areaSqft: 1744.02, townName: "Pattukottai" };
+const PLOT = { frontWidthFt: 23.25, backWidthFt: 22.25, depthFt: 76.66, areaSqft: 1744.02, townName: "Pattukottai" };
 
 const unit = (over: Partial<SceneUnit> = {}): SceneUnit => ({
   id: "u1",
@@ -81,86 +81,127 @@ describe("polygon helpers", () => {
   });
 });
 
-describe("computeSiteLayout — owner's site plan", () => {
+describe("computeSiteLayout — owner's annotated site plan (images/8.jpg)", () => {
   const L = computeSiteLayout(PLOT, [A, B]);
+  const [f, b] = L.slots;
 
-  it("draws the trapezoid with a straight left (lane-side) boundary and a slanting right boundary", () => {
+  it("draws the trapezoid: 23'3\" front, 22'3\" back, straight right boundary, slanting lane-side (left) boundary", () => {
     expect(L.plot.rightX).toBe(23.25);
     expect(L.plot.polygon).toEqual([
       { x: 0, z: 0 },
-      { x: 22.25, z: 0 },
+      { x: 23.25, z: 0 },
       { x: 23.25, z: 76.66 },
-      { x: 0, z: 76.66 },
+      { x: 1, z: 76.66 }, // 23.25 − 22.25
     ]);
-    expect(polygonArea(L.plot.polygon)).toBeCloseTo(1744.015, 3); // (22.25 + 23.25) / 2 × 76.66
+    expect(polygonArea(L.plot.polygon)).toBeCloseTo(1744.015, 3);
     expect(L.warnings).toEqual([]);
   });
 
-  it("places the front building at 0–28 ft and the back one after a 10 ft courtyard, flush to the lane side (left)", () => {
-    const [f, b] = L.slots;
+  it("orders front yard → Unit A → courtyard → Unit B against the back, with a clear strip to the back wall", () => {
     expect(f.slot).toBe("front");
-    expect(f.rect).toEqual({ x0: 0, x1: 20, z0: 0, z1: 28 });
-    expect(b.rect).toEqual({ x0: 0, x1: 20, z0: 38, z1: 66 });
-    expect(L.courtyard).toEqual({ z0: 28, z1: 38 });
-    expect(L.rearYard.z0).toBe(66);
-    expect(L.rearYard.z1).toBe(76.66);
-    // the side passage is on the right, between the building and the slanting boundary
-    expect(f.passageFt).toBeCloseTo(2.25, 6);
-    expect(b.passageFt).toBeCloseTo(22.25 + 38 / 76.66 - 20, 6);
     expect(f.unit?.id).toBe("u1");
     expect(b.status).toBe("vacant");
+    // usable depth = 76.66 − 1.5 back clearance; the 19.16 ft of open ground is shared by the front yard and the courtyard
+    expect(b.rect.z1).toBeCloseTo(75.16, 6);
+    expect(b.rect.z0).toBeCloseTo(47.16, 6);
+    expect(f.rect.z0).toBeCloseTo(9.58, 6);
+    expect(f.rect.z1).toBeCloseTo(37.58, 6);
+    expect(L.courtyard!.z0).toBeCloseTo(37.58, 6);
+    expect(L.courtyard!.z1).toBeCloseTo(47.16, 6);
+    expect(f.yardFt).toBeCloseTo(9.58, 2);
+    expect(b.yardFt).toBeCloseTo(9.58, 2);
+    expect(L.rearYard.z1 - L.rearYard.z0).toBeCloseTo(1.5, 6);
+  });
+
+  it("keeps every house clear of the compound wall: ≥ 3 ft lane passage on the left, 1.5 ft strip on the right", () => {
+    for (const s of L.slots) {
+      expect(s.rect.x1).toBeCloseTo(23.25 - SITE_DEFAULTS.wallClearFt, 6);
+      const leftAt = (z: number) => 23.25 - (23.25 + (22.25 - 23.25) * (z / 76.66));
+      expect(s.rect.x0 - Math.max(leftAt(s.rect.z0), leftAt(s.rect.z1))).toBeGreaterThanOrEqual(SITE_DEFAULTS.passageFt - 1e-9);
+      expect(s.passageFt).toBeGreaterThanOrEqual(3);
+      // drawn a little narrower than 20 ft only for the clearance: not "scaled", and the label keeps 20'
+      expect(s.widthFt).toBeLessThan(20);
+      expect(s.scaled).toBe(false);
+    }
   });
 
   it("height = floors × 10.5 ft with a 3 ft parapet (single storey + roof terrace by default)", () => {
-    expect(L.slots[0].floors).toBe(1);
-    expect(L.slots[0].heightFt).toBe(10.5);
-    expect(L.slots[0].parapetFt).toBe(3);
+    expect(f.floors).toBe(1);
+    expect(f.heightFt).toBe(10.5);
+    expect(f.parapetFt).toBe(3);
     expect(L.maxHeightFt).toBe(13.5);
     const two = computeSiteLayout(PLOT, [unit({ floors: 2 })]);
     expect(two.slots[0].heightFt).toBe(21);
     expect(two.maxHeightFt).toBe(24);
-    // missing / invalid floors fall back to 1
     expect(computeSiteLayout(PLOT, [unit({ floors: 0 })]).slots[0].floors).toBe(1);
   });
 
-  it("cuts the stepped notch (6.5 × 9.5, one step) and the 5 × 7 stair well from the front-left (lane-side) corner", () => {
-    const f = L.slots[0];
-    expect(f.notch.wide).toEqual({ x0: 0, x1: 6.5, z0: 0, z1: 7.5 });
-    expect(f.notch.step).toEqual({ x0: 0, x1: 5, z0: 7.5, z1: 9.5 });
-    expect(f.stairs).toEqual({ x0: 0, x1: 5, z0: 9.5, z1: 16.5 });
-    expect(f.outline).toEqual([
-      { x: 6.5, z: 0 },
-      { x: 20, z: 0 },
-      { x: 20, z: 28 },
-      { x: 0, z: 28 },
-      { x: 0, z: 16.5 },
-      { x: 5, z: 16.5 },
-      { x: 5, z: 7.5 },
-      { x: 6.5, z: 7.5 },
+  it("cuts the backyard notch (6.5 × 9.5, one step for the bathroom) from the rear-right corner, with a back exit", () => {
+    const { x0, x1, z1 } = f.rect;
+    expect(f.notch.wide).toEqual({ x0: x1 - 6.5, x1, z0: z1 - 5.5, z1 });
+    expect(f.notch.step.x0).toBeCloseTo(x1 - 5.2, 6);
+    expect(f.notch.step.z0).toBeCloseTo(z1 - 9.5, 6);
+    expect(f.outline.map((p) => [+p.x.toFixed(2), +p.z.toFixed(2)])).toEqual([
+      [+x0.toFixed(2), 9.58],
+      [21.75, 9.58],
+      [21.75, 28.08],
+      [16.55, 28.08],
+      [16.55, 32.08],
+      [15.25, 32.08],
+      [15.25, 37.58],
+      [+x0.toFixed(2), 37.58],
     ]);
-    // 20 × 28 − porch 6.5 × 7.5 − step 5 × 2 − stairs 5 × 7
-    expect(f.floorAreaSqft).toBe(466.25);
     expect(polygonArea(f.outline)).toBeGreaterThan(0); // counter-clockwise
-    expect(f.door.x).toBe(6.5);
-    expect(f.walls.map((w) => w.kind)).toEqual(["front", "side", "back", "party", "stair", "stair", "porch", "porch"]);
-    // outward normals: front faces the grass, the side wall faces the passage (+x), the party wall the lane (−x)
+    expect(f.floorAreaSqft).toBeCloseTo(f.widthFt * 28 - 6.5 * 5.5 - 5.2 * 4, 1);
+    expect(f.walls.map((w) => w.kind)).toEqual(["front", "party", "notch", "notch", "notch", "notch", "back", "side"]);
     expect(f.walls[0].n).toEqual({ x: 0, z: -1 });
-    expect(f.walls[1].n).toEqual({ x: 1, z: -0 });
-    expect(f.walls[3].n).toEqual({ x: -1, z: -0 });
+    expect(f.backExit.z).toBeCloseTo(z1 - 9.5, 6); // the notch's front wall
+    expect(f.backExit.x).toBeGreaterThan(f.notch.step.x0);
   });
 
-  it("has exactly two gates: the main gate at the front unit's stair foot and the back unit's gate mid-way along the lane wall", () => {
+  it("puts the house entrance at the front-left and the stair outside, in the yard in front of the front-right corner", () => {
+    for (const s of L.slots) {
+      expect(s.door.z).toBe(s.rect.z0);
+      expect(s.door.x).toBeLessThan((s.rect.x0 + s.rect.x1) / 2);
+      expect(s.stairs.x1).toBe(s.rect.x1);
+      expect(s.stairs.z1).toBe(s.rect.z0);
+      expect(s.stairs.z1 - s.stairs.z0).toBe(5);
+      expect(s.stairs.x1 - s.stairs.x0).toBeGreaterThan(9.5);
+      expect(s.stairs.x1 - s.stairs.x0).toBeLessThanOrEqual(10);
+      expect(s.stairs.x0).toBeGreaterThan(s.door.x);
+    }
+    expect(f.stairs.z0).toBeGreaterThan(0); // inside the front yard
+    expect(b.stairs.z0).toBeGreaterThan(L.courtyard!.z0); // inside the courtyard
+  });
+
+  it("has exactly two gates: Gate to Unit A in the front wall (left/centre), Gate to Unit B in the lane wall at the courtyard", () => {
     const gates = L.compoundWalls.filter((w) => w.kind === "gate");
-    expect(gates.map((w) => w.gate)).toEqual(["porch", "side"]);
-    const main = gates[0];
-    expect(main.a).toEqual({ x: 2.5, z: 0 });
-    expect(main.b).toEqual({ x: 6.5, z: 0 }); // ends at the house front, in front of the notch / stair
-    const side = gates[1];
-    expect([side.a.x, side.b.x]).toEqual([0, 0]); // on the lane-side boundary
-    expect((side.a.z + side.b.z) / 2).toBe(33); // middle of the 28–38 courtyard
-    expect(Math.abs(side.a.z - side.b.z)).toBe(4);
-    // a front unit alone has only the main gate
-    expect(computeSiteLayout(PLOT, [A]).compoundWalls.filter((w) => w.kind === "gate").map((w) => w.gate)).toEqual(["porch"]);
+    expect(gates.map((w) => w.gate)).toEqual(["front", "side"]);
+    const [ga, gb] = gates;
+    expect(ga.a.z).toBe(0);
+    expect(ga.b.x - ga.a.x).toBeCloseTo(4, 6);
+    expect(ga.b.x).toBeLessThan(f.stairs.x0); // clear of the stair on the right
+    expect(ga.a.x).toBeLessThan(23.25 / 2);
+    const zc = (gb.a.z + gb.b.z) / 2;
+    expect(zc).toBeCloseTo((L.courtyard!.z0 + L.courtyard!.z1) / 2, 2);
+    for (const p of [gb.a, gb.b]) expect(p.x).toBeCloseTo(23.25 - (23.25 - p.z / 76.66), 2); // on the lane boundary
+  });
+
+  it("runs the compound wall round the whole boundary, never touching a house", () => {
+    const P = L.plot.polygon;
+    const onBoundary = (p: { x: number; z: number }) =>
+      P.some((a, i) => {
+        const c = P[(i + 1) % P.length];
+        const cross = (c.x - a.x) * (p.z - a.z) - (c.z - a.z) * (p.x - a.x);
+        return Math.abs(cross) < 0.05 * Math.hypot(c.x - a.x, c.z - a.z);
+      });
+    for (const w of L.compoundWalls) {
+      expect(onBoundary(w.a)).toBe(true);
+      expect(onBoundary(w.b)).toBe(true);
+    }
+    const len = L.compoundWalls.reduce((n, w) => n + Math.hypot(w.b.x - w.a.x, w.b.z - w.a.z), 0);
+    const perimeter = P.reduce((n, a, i) => n + Math.hypot(P[(i + 1) % 4].x - a.x, P[(i + 1) % 4].z - a.z), 0);
+    expect(len).toBeCloseTo(perimeter, 1); // continuous, gates included
   });
 
   it("puts open grass (no road) in front of the plot", () => {
@@ -170,20 +211,19 @@ describe("computeSiteLayout — owner's site plan", () => {
     expect(m.x0).toBeLessThan(L.plot.polygon[0].x);
     expect(m.x1).toBeGreaterThan(L.plot.rightX);
     expect(L.site).not.toHaveProperty("street");
-    expect(L.site.tile).toHaveLength(4);
     expect(L.site.tile[0].z).toBeCloseTo(-20, 6);
   });
 
   it("lists drawing-style dimensions from the data", () => {
     const byKey = Object.fromEntries(L.dimensions.map((d) => [d.key, d]));
-    expect(byKey.frontWidthFt.label).toBe(`22'3"`);
-    expect(byKey.backWidthFt.label).toBe(`23'3"`);
+    expect(byKey.frontWidthFt.label).toBe(`23'3"`);
+    expect(byKey.backWidthFt.label).toBe(`22'3"`);
     expect(byKey.depthFt.label).toBe(`76'8"`);
-    expect(byKey["footprintWidthFt:front"].label).toBe(`20'`);
+    expect(byKey["footprintWidthFt:front"].label).toBe(`20'`); // the unit's real width, though drawn inset
     expect(byKey["footprintDepthFt:back"].label).toBe(`28'`);
-    expect(byKey.courtyard.label).toBe(`10'`);
+    expect(byKey.courtyard.label).toBe(formatFeetInches(L.courtyard!.z1 - L.courtyard!.z0));
     expect(byKey["floors:front"].label).toBe(`1 floor · 10'6"`);
-    expect(byKey.areaSqft.label).toBe("1,744 sq ft"); // whole sq ft like the drawing
+    expect(byKey.areaSqft.label).toBe("1,744 sq ft");
     expect(byKey["floors:front"].primary).toBe(false);
   });
 });
@@ -195,9 +235,7 @@ describe("computeSiteLayout — slots and edge cases", () => {
       ["front", "empty"],
       ["back", "empty"],
     ]);
-    // open front wall with a main gate
-    expect(L.compoundWalls.filter((w) => w.kind === "gate").map((w) => w.gate)).toEqual(["main"]);
-    // nothing built yet: no paving, placeholder footprints only appear when highlighted
+    expect(L.compoundWalls.filter((w) => w.kind === "gate").map((w) => w.gate)).toEqual(["front", "side"]);
     expect(L.paved[2].z).toBe(0);
     expect(L.dimensions.filter((d) => d.kind === "footprint").every((d) => !d.primary)).toBe(true);
   });
@@ -224,47 +262,52 @@ describe("computeSiteLayout — slots and edge cases", () => {
   it("uses each unit's own footprint and floors", () => {
     const L = computeSiteLayout(PLOT, [unit({ footprintWidthFt: 18, footprintDepthFt: 24, floors: 3 })]);
     const f = L.slots[0];
-    expect(f.rect).toEqual({ x0: 0, x1: 18, z0: 0, z1: 24 });
+    expect(f.rect.x1).toBeCloseTo(21.75, 6);
+    expect(f.rect.x0).toBeCloseTo(3.75, 6); // 18 ft fits with the passage
+    expect(f.rect.z1 - f.rect.z0).toBe(24);
     expect(f.heightFt).toBe(31.5);
-    expect(L.slots[1].rect.z0).toBe(34); // 24 + 10 courtyard
+    // a long plot: the courtyard stays 10 ft and the front yard takes the rest
+    expect(L.slots[1].rect.z0 - f.rect.z1).toBeCloseTo(10, 6);
   });
 
   it("scales footprints that do not fit and warns", () => {
     const L = computeSiteLayout(PLOT, [unit({ footprintWidthFt: 30 }), unit({ id: "u2", position: "back", footprintDepthFt: 50 })]);
     const [f, b] = L.slots;
-    expect(f.widthFt).toBeCloseTo(22.25, 6); // the plot is 22'3" at the front
     expect(f.scaled).toBe(true);
-    // depth: 28 + 50 + 4 (min courtyard) > 76.66 → both scaled by (76.66 − 4) / 78
-    expect(f.depthFt).toBeCloseTo(28 * (72.66 / 78), 6);
-    expect(b.depthFt).toBeCloseTo(50 * (72.66 / 78), 6);
-    expect(b.rect.z0 - f.rect.z1).toBeCloseTo(4, 6);
-    expect(b.rect.z1).toBeCloseTo(76.66, 6);
-    expect(L.warnings).toHaveLength(2); // one width warning + one combined depth warning
+    expect(f.rect.x0 - f.passageFt).toBeGreaterThanOrEqual(-1e-9);
+    // depth: 28 + 50 + two 5.5 ft yards > 75.16 usable → both scaled by (75.16 − 11) / 78
+    expect(f.depthFt).toBeCloseTo(28 * (64.16 / 78), 6);
+    expect(b.depthFt).toBeCloseTo(50 * (64.16 / 78), 6);
+    expect(b.rect.z0 - f.rect.z1).toBeCloseTo(5.5, 6);
+    expect(f.rect.z0).toBeCloseTo(5.5, 6);
+    expect(L.warnings).toHaveLength(2);
     expect(L.warnings[0]).toContain("Front + back footprint depths (28' + 50')");
+    expect(L.warnings[1]).toContain("wider than the plot");
   });
 
   it("an empty slot gets only the room left over by a real unit, or is dropped", () => {
     const L = computeSiteLayout({ ...PLOT, depthFt: 40 }, [unit({ footprintDepthFt: 30 })]);
-    expect(L.slots.map((s) => s.slot)).toEqual(["front"]); // 40 − 30 − 4 = 6 < 8 → no room
+    expect(L.slots.map((s) => s.slot)).toEqual(["front"]); // 38.5 − 30 − 2 × 5.5 < 8 → no room
     const L2 = computeSiteLayout({ ...PLOT, depthFt: 50 }, [unit()]);
     expect(L2.slots[1].status).toBe("empty");
-    expect(L2.slots[1].depthFt).toBeCloseTo(18, 6); // 50 − 28 − 4
+    expect(L2.slots[1].depthFt).toBeCloseTo(9.5, 6); // 48.5 − 28 − 11
   });
 
   it("missing / invalid plot sizes fall back to the site plan", () => {
     const L = computeSiteLayout({ frontWidthFt: undefined, backWidthFt: -3, depthFt: Number.NaN }, [A]);
-    expect(L.plot.frontWidthFt).toBe(SITE_DEFAULTS.frontWidthFt);
-    expect(L.plot.backWidthFt).toBe(SITE_DEFAULTS.backWidthFt);
+    expect(L.plot.frontWidthFt).toBe(23.25);
+    expect(L.plot.backWidthFt).toBe(22.25);
     expect(L.plot.depthFt).toBe(SITE_DEFAULTS.depthFt);
     expect(L.plot.areaSqft).toBe(1744.02);
     expect(L.warnings).toHaveLength(2);
   });
 
-  it("keeps the notch valid on a tiny footprint", () => {
+  it("keeps the notch and stair valid on a tiny footprint", () => {
     const L = computeSiteLayout(PLOT, [unit({ footprintWidthFt: 8, footprintDepthFt: 10 })]);
     const f = L.slots[0];
-    expect(f.notch.wide.x1).toBeLessThan(f.rect.x1);
-    expect(f.stairs.z1).toBeLessThan(f.rect.z1);
+    expect(f.notch.wide.x0).toBeGreaterThan(f.rect.x0);
+    expect(f.notch.step.z0).toBeGreaterThan(f.rect.z0);
+    expect(f.stairs.z1).toBe(f.rect.z0);
     expect(f.floorAreaSqft).toBeGreaterThan(0);
   });
 });
@@ -289,18 +332,19 @@ describe("highlight matching", () => {
   });
 });
 
-describe("street-front fixtures (clickable world objects)", () => {
+describe("front-wall fixtures (clickable world objects)", () => {
   const L = computeSiteLayout(PLOT, [A, B]);
   const F = L.fixtures;
   const [FL, FR, , BL] = L.plot.polygon;
-  it("mounts the mailbox on the main-gate pillar and the tax stamp on the house front beside the notch", () => {
-    const porch = L.compoundWalls.find((w) => w.gate === "porch")!;
-    expect(F.mailbox).toEqual(porch.a);
-    const front = L.slots.find((s) => s.slot === "front")!;
-    expect(F.taxStamp).toEqual({ x: front.notch.wide.x1 + 2.2, z: 0, on: "wall" });
-    expect(F.taxStamp.x).toBeLessThan(front.rect.x1);
+  it("mounts the mailbox on Gate A's pillar and the tax stamp on the front-wall pillar right of it", () => {
+    const gate = L.compoundWalls.find((w) => w.gate === "front")!;
+    expect(F.mailbox).toEqual(gate.a);
+    expect(F.taxStamp.on).toBe("pillar");
+    expect(F.taxStamp.z).toBe(0);
+    expect(F.taxStamp.x).toBeGreaterThan(gate.b.x);
+    expect(F.taxStamp.x).toBeLessThanOrEqual(FR.x);
   });
-  it("hangs the notice board on the left wall a few feet from the street, inside the plot depth", () => {
+  it("hangs the notice board on the lane wall a few feet from the front, inside the plot depth", () => {
     expect(F.noticeBoard.z).toBeGreaterThan(2);
     expect(F.noticeBoard.z).toBeLessThan(10);
     const xLeft = FL.x + ((BL.x - FL.x) * F.noticeBoard.z) / L.plot.depthFt;
@@ -314,17 +358,15 @@ describe("street-front fixtures (clickable world objects)", () => {
       expect(p.z).toBeLessThan(0);
       expect(p.z).toBeGreaterThan(L.site.meadow.z0);
     }
-    // both right of the plot (clear of the house fronts in the default view); [0] = lamp + meter pole by the gate
     expect(F.poles[0].x).toBeGreaterThan(FR.x);
     expect(F.poles[1].x).toBeGreaterThan(F.poles[0].x);
-    const tileRight = Math.max(...L.site.tile.map((p) => p.x));
-    expect(F.poles[1].x).toBeLessThan(tileRight);
+    expect(F.poles[1].x).toBeLessThan(Math.max(...L.site.tile.map((p) => p.x)));
   });
-  it("falls back to the main gate when no building stands on the street", () => {
+  it("keeps Gate A (and its mailbox) when no house stands at the front", () => {
     const L2 = computeSiteLayout(PLOT, [B]);
-    const main = L2.compoundWalls.find((w) => w.gate === "main")!;
-    expect(L2.fixtures.mailbox).toEqual(main.b);
-    expect(L2.fixtures.taxStamp).toEqual({ ...main.a, on: "pillar" });
+    const gate = L2.compoundWalls.find((w) => w.gate === "front")!;
+    expect(L2.fixtures.mailbox).toEqual(gate.a);
+    expect(L2.fixtures.taxStamp.on).toBe("pillar");
   });
   it("keeps objects apart so each one can be hovered on its own", () => {
     const pts = [F.mailbox, F.taxStamp, F.noticeBoard, F.poles[0], F.plotMarker];

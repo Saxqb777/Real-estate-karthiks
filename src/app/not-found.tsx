@@ -28,7 +28,7 @@ export default function NotFound() {
       </div>
       <div className={styles.sheet} aria-hidden>
         <svg viewBox="0 0 300 380" className={styles.plan} fill="none">
-          {/* plot boundary (front 22'3" at the bottom, back 23'3" at the top, 76' deep) */}
+          {/* plot boundary (front 23'3" at the bottom, back 22'3" at the top, 76' deep) */}
           <path d="M66 46 L234 46 L228 330 L72 330 Z" stroke="var(--plaster)" strokeOpacity=".55" strokeDasharray="5 4" />
           {/* back building, front building — both missing */}
           <rect x="96" y="58" width="126" height="98" stroke="var(--line-bright)" strokeDasharray="2 4" />

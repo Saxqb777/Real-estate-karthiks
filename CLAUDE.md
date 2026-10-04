@@ -21,14 +21,17 @@ The owner wants it **visually stunning, game-like and highly interactive** — a
 - Expense totals: Property Tax marked Paid auto-creates a linked Expense (category "Property Tax"), so expense totals come from the Expense table only.
 - Singletons: Settings id=1, Plot id=1 (seeded).
 
-## Site plan (from owner's drawing)
-Plot: front width 22'3" (22.25 ft), back width 23'3" (23.25 ft), depth 76' (label 76.66 ft), area 1,744 sqft.
-Two identical buildings, each ~20 ft wide × 28 ft deep. 3D orientation follows the owner's photos (photo 7): the LEFT
-boundary runs along the lane (straight, x = 0); houses are flush to it with the ~3 ft side passage on the RIGHT.
-Front building at 0–28 ft, ~10 ft open courtyard gap, back building ~38–66 ft, ~10 ft rear yard.
-Each building has a stepped notch at its front-LEFT (lane-side) corner (~6.5 ft wide × ~9.5 ft deep, one small step) and an
-external staircase just behind it (~7 ft × ~5 ft); the 3D draws one straight flight from the main gate up to the terrace.
-Gates: ONE main gate in the front wall at the front unit's stair foot + the back unit's gate mid-way along the lane wall. These defaults are used when Plot/Unit dimension fields are empty.
+## Site plan (owner's ANNOTATED plan, images/8.jpg — source of truth)
+Plot: FRONT width 23'3" (23.25 ft, "Gate to Unit A"), BACK width 22'3" (22.25 ft), depth 76' (label 76.66 ft), area 1,744.02 sqft.
+Right boundary straight; left boundary = the LANE side (slants). Drawing bottom = front.
+From the front: front yard ~10 ft (Unit A entrance + stair) → Unit A (front, 20×28) → courtyard ~10 ft (Unit B entrance +
+stair; "Gate to Unit B" in the lane wall here) → Unit B (back, 20×28) against the back.
+Each house: entrance + grilled veranda at its front-LEFT; external dog-leg stair OUTSIDE the footprint in the yard in front of
+its front-RIGHT corner, up to the terrace; rear-RIGHT notch = small open backyard with a bathroom and a back-exit door.
+Compound wall = a separate enclosure on the boundary (never touches a house): ~3 ft lane passage on the left, 1.5 ft clear
+strip on the right and at the back (the 3D draws the houses slightly narrower than 20 ft for this; labels keep 20').
+Exactly two gates: Gate A in the front wall (left/centre, before the stair), Gate B in the lane wall at the courtyard.
+These defaults are used when Plot/Unit dimension fields are empty (SITE_PLAN_DEFAULTS / SITE_DEFAULTS).
 
 ## Local dev in the cloud container
 The container cannot reach Neon (egress policy). Use the local Postgres: `service postgresql start`,
@@ -69,6 +72,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 3/10/2026 follow-up (owner): layout MIRRORED to match photos 6/7 — lane on the left long side (black-banded wall), houses
   flush to it, notch + stair + main gate at the front-left (lane corner, "116/87" pillar), veranda at the front-right,
   passage on the right; second gate mid-way along the lane wall for the back unit. Default camera (front-left) unchanged.
+- 4/10/2026 owner sent the ANNOTATED site plan (images/8.jpg) — supersedes the mirror guess: front 23'3"/back 22'3" (defaults
+  swapped), houses flush right with the lane passage left, front yard → A → courtyard → B, stairs in the yards at the
+  front-right, rear-right backyard notch (bathroom + back exit), Gate A front wall / Gate B lane wall at the courtyard. Owner:
+  "move the compound outside both the property" → wall is a separate enclosure with clear strips, never against a house.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

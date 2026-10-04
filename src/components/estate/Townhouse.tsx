@@ -3,8 +3,9 @@
 // ivory-cream plaster with black accent lines, a flat roof terrace behind a low parapet (black coping), a raised
 // stepped parapet over the front with two arched jaali vents, a deep chajja with a black edge band over a front
 // veranda enclosed by black diamond grills between square pillars with black flutes, maroon-framed grilled windows,
-// a straight external concrete stair (solid cream balustrades, round black hand rails) up to the terrace, a maroon
-// EB meter box at the stair foot and a black water tank on a cream stand. Floors come from the data (default 1).
+// a dog-leg external concrete stair in the yard in front of the house (solid cream balustrades, round black hand rails)
+// up to the terrace, a maroon EB meter box at the stair foot, a black water tank on a cream stand, and a small open
+// backyard at the rear-right with a bathroom ventilator and a back-exit door (owner's annotated plan). Floors come from the data (default 1).
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
@@ -57,31 +58,37 @@ interface Edge {
   b: Pt;
   n: Pt;
   len: number;
-  kind: "front" | "side" | "back" | "porch" | "stair" | "party" | "veranda";
+  kind: "front" | "side" | "back" | "notch" | "party" | "veranda";
 }
 
 function extrude(pts: Pt[], world: World, depth: number, holes: Pt[][] = []) {
   return new THREE.ExtrudeGeometry(planShape(pts, world, holes), { depth, bevelEnabled: false, curveSegments: 1 });
 }
 
-/** The front-right veranda (recessed under the roof, open on the front and the passage side), or null when too small. */
+/**
+ * The veranda round the house entrance at the front-left (recessed under the roof, open on the front and the lane-passage
+ * side), clear of the stair in front of the front-right corner — or null when too small.
+ */
 export function verandaOf(slot: BuildingSlot): Rect | null {
-  const { x1, z0 } = slot.rect;
-  const frontLen = x1 - slot.notch.wide.x1;
-  if (frontLen < 8 || slot.depthFt < 14) return null;
-  return { x0: x1 - Math.min(9.5, frontLen * 0.72), x1, z0, z1: z0 + Math.min(6.5, slot.depthFt * 0.24) };
+  const { x0, z0 } = slot.rect;
+  const room = slot.stairs.x0 - x0 - 2.4; // leave a bit of solid wall (with the meter box) next to the stair
+  if (room < 5 || slot.depthFt < 14) return null;
+  return { x0, x1: x0 + Math.min(9, room), z0, z1: z0 + Math.min(6.5, slot.depthFt * 0.24) };
 }
 
-/** Straight external stair against the lane-side boundary: from just inside the main gate up to the roof edge. */
+/**
+ * Dog-leg stair in the yard in front of the front-right corner (owner's plan + photo 6): the lower flight runs along the
+ * outer lane towards the right wall, a landing at the right, the upper flight comes back along the house front and
+ * arrives on the terrace through a gap in the front parapet.
+ */
 export function stairOf(slot: BuildingSlot) {
-  const { wide, step } = slot.notch;
   const s = slot.stairs;
-  const w = Math.min(3.6, s.x1 - s.x0);
-  const x0 = s.x0 + 0.28; // inner face of the lane-side compound wall
-  const z0 = wide.z0 + Math.min(3.2, (step.z1 - wide.z0) * 0.34);
-  return { x0, x1: x0 + w, z0, z1: s.z1 };
+  const w = s.x1 - s.x0;
+  const land = Math.min(2.6, w * 0.26);
+  const top = Math.min(1.4, w * 0.14);
+  const zMid = (s.z0 + s.z1) / 2;
+  return { ...s, land, top, zMid };
 }
-
 /** Plan edges of a CCW polygon with outward normals. */
 function edgesOf(pts: Pt[]): Omit<Edge, "kind">[] {
   return pts.map((a, i) => {
@@ -102,8 +109,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const groundOutline = useMemo<Pt[]>(() => {
     const o = slot.outline;
     if (!ver) return o;
-    // o = [notch front corner, front-right, back-right, …]: cut the front-right corner
-    return [o[0], { x: ver.x0, z: ver.z0 }, { x: ver.x0, z: ver.z1 }, { x: ver.x1, z: ver.z1 }, ...o.slice(2)];
+    // o = [front-left, front-right, …, back-left]: cut the front-left corner
+    return [{ x: ver.x0, z: ver.z1 }, { x: ver.x1, z: ver.z1 }, { x: ver.x1, z: ver.z0 }, ...o.slice(1)];
   }, [slot.outline, ver]);
 
   // classify every wall edge (windows go on front / left / back / porch walls)
@@ -115,12 +122,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const classify = (e: Omit<Edge, "kind">): Edge["kind"] => {
     const k = wallKinds.get(`${e.a.x},${e.a.z}|${e.b.x},${e.b.z}`);
     if (k) return k;
-    if (ver && Math.min(e.a.x, e.b.x) >= ver.x0 - 0.01 && Math.max(e.a.z, e.b.z) <= ver.z1 + 0.01) {
-      if (Math.abs(e.a.z - ver.z0) < 0.01 && Math.abs(e.b.z - ver.z0) < 0.01) return "front";
-      if (Math.abs(e.a.x - ver.x1) < 0.01 && Math.abs(e.b.x - ver.x1) < 0.01) return "side";
-      return "veranda";
-    }
-    return e.n.z < -0.5 ? "front" : e.n.x > 0.5 ? "side" : e.n.z > 0.5 ? "back" : "party";
+    if (ver && Math.max(e.a.x, e.b.x) <= ver.x1 + 0.01 && Math.max(e.a.z, e.b.z) <= ver.z1 + 0.01) return "veranda";
+    return e.n.z < -0.5 ? "front" : e.n.x < -0.5 ? "side" : e.n.z > 0.5 ? "back" : "party";
   };
 
   const geo = useMemo(() => {
@@ -172,17 +175,15 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       const edges = edgesOf(f === 0 ? groundOutline : slot.outline);
       edges.forEach((e, wi) => {
         const kind = classify(e);
-        // windows on the front / passage side / back / porch walls, and on the lane-side wall (it looks over the lane wall)
-        const laneSide = kind === "party" && e.n.x < -0.5;
-        if ((!["front", "side", "back", "porch"].includes(kind) && !laneSide) || e.len < 4.2) return;
+        // windows on the front, the lane-passage side and the back (never behind the stair in front of the house)
+        if (!["front", "side", "back"].includes(kind) || e.len < 4.2) return;
         const n = Math.max(1, Math.floor((e.len - 1.2) / 6.6));
         const dx = (e.b.x - e.a.x) / e.len;
         const dz = (e.b.z - e.a.z) / e.len;
         const rotY = Math.atan2(e.n.x, -e.n.z);
         for (let i = 0; i < n; i++) {
-          let t = ((i + 0.5) * e.len) / n;
-          // the meter box hangs at the front end of the porch wall: keep the window behind it
-          if (kind === "porch" && f === 0 && Math.abs(dz) > 0.5) t = Math.max(0, Math.min(e.len, (Math.max(slot.rect.z0 + 4.2, Math.min(e.a.z, e.b.z) + 1.6) - e.a.z) / dz));
+          const t = ((i + 0.5) * e.len) / n;
+          if (kind === "front" && f === 0 && e.a.x + dx * t > slot.stairs.x0 - 2.2) continue;
           const px = e.a.x + dx * t + e.n.x * 0.06;
           const pz = e.a.z + dz * t + e.n.z * 0.06;
           const y = f * FH + 3.1 + WIN_H / 2;
@@ -215,48 +216,58 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     if (holo) holo.uniforms.uTime.value = clock.elapsedTime;
   });
 
-  // ── the external stair: one straight flight per floor (alternating direction), solid on the ground floor ──
+  // ── the external dog-leg stair in the yard (solid concrete, cream balustrades, round black rails) ──
   const stairs = useMemo(() => {
     const st = stair;
-    const run = Math.max(2, st.z1 - st.z0);
-    const n = Math.max(6, Math.round(FH / 0.62));
-    const rise = FH / n;
-    const tread = run / n;
-    const cx = world.x((st.x0 + st.x1) / 2);
-    const w = st.x1 - st.x0;
+    const rise = H / 2; // two flights up to the terrace
+    const n = Math.max(5, Math.round(rise / 0.62));
+    const r = rise / n;
     const steps: { p: V3; s: V3 }[] = [];
     const parts: Part[] = [];
-    const pitch = Math.atan2(FH, run);
-    const L = Math.hypot(run, FH);
-    const hb = 3.4; // balustrade: ~1 ft below the nosing line + ~2.4 ft above it (measured square to the slope)
-    for (let f = 0; f < slot.floors; f++) {
-      const up = f % 2 === 0; // even flights climb front → back
-      for (let k = 0; k < n; k++) {
-        const za = up ? st.z0 + k * tread : st.z1 - (k + 1) * tread;
-        const top = f * FH + (k + 1) * rise;
-        const bottom = f === 0 ? 0 : top - rise * 2.2;
-        steps.push({ p: [cx, (top + bottom) / 2, world.z(za + tread / 2)], s: [w - 0.05, top - bottom, tread + 0.02] });
-      }
-      // sloped solid balustrades + round black hand rails along both sides
-      const zm = world.z((st.z0 + st.z1) / 2);
-      const ym = f * FH + FH / 2;
-      const sgn = up ? 1 : -1;
-      const nUp: V3 = [0, Math.cos(pitch), sgn * Math.sin(pitch)]; // square to the slope, "up"
-      for (const x of [st.x0 + 0.2, st.x1 - 0.2]) {
-        const X = world.x(x);
-        const off = hb / 2 - 1.0;
-        parts.push(box([X, ym + nUp[1] * off, zm + nUp[2] * off], [0.42, hb, L], CREAM_LIGHT, [sgn * pitch, 0, 0]));
-        const r = hb - 1.0 + 0.16;
-        parts.push(rod([X, ym + nUp[1] * r, zm + nUp[2] * r], [0.4, L + 0.2, 0.4], BLACK, [up ? pitch - Math.PI / 2 : Math.PI / 2 - pitch, 0, 0]));
-      }
-      // landing at the front for flights that arrive there (upper floors only)
-      if (!up) {
-        const zl0 = slot.notch.wide.z0 + 0.6;
-        parts.push(box([cx, (f + 1) * FH - 0.25, world.z((zl0 + st.z0) / 2)], [w, 0.5, Math.max(0.5, st.z0 - zl0)], CREAM_LIGHT));
-      }
+    const outer = { z0: st.z0, z1: st.zMid }; // lower flight: the lane away from the house
+    const inner = { z0: st.zMid, z1: st.z1 }; // upper flight: along the house front
+    const lowRun = st.x1 - st.land - st.x0;
+    const upRun = st.x1 - st.land - (st.x0 + st.top);
+    const tl = lowRun / n;
+    const tu = upRun / n;
+    const lz = (a: number, b: number) => world.z((a + b) / 2);
+    for (let k = 0; k < n; k++) {
+      // lower flight climbs towards the right wall (+x), solid to the ground
+      const xa = st.x0 + k * tl;
+      const top1 = (k + 1) * r;
+      steps.push({ p: [world.x(xa + tl / 2), top1 / 2, lz(outer.z0, outer.z1)], s: [tl + 0.02, top1, outer.z1 - outer.z0 - 0.05] });
+      // upper flight climbs back towards the left (−x)
+      const xb = st.x1 - st.land - (k + 1) * tu;
+      const top2 = rise + (k + 1) * r;
+      steps.push({ p: [world.x(xb + tu / 2), top2 / 2, lz(inner.z0, inner.z1)], s: [tu + 0.02, top2, inner.z1 - inner.z0 - 0.05] });
     }
-    // newel blocks at the foot of the stair
-    for (const x of [st.x0 + 0.2, st.x1 - 0.2]) parts.push(box([world.x(x), 1.1, world.z(st.z0 + 0.25)], [0.5, 2.2, 0.5], CREAM_LIGHT));
+    // half landing at the right + the top landing at the terrace edge (solid underneath)
+    parts.push(box([world.x(st.x1 - st.land / 2), rise / 2, lz(st.z0, st.z1)], [st.land, rise, st.z1 - st.z0], CREAM_LIGHT));
+    parts.push(box([world.x(st.x0 + st.top / 2), H / 2, lz(inner.z0, inner.z1)], [st.top, H, inner.z1 - inner.z0], CREAM_LIGHT));
+    // balustrades + rails: along the outside of the lower flight, round the landing, and between the two flights
+    const hb = 3.4;
+    const flight = (x0: number, x1: number, y0: number, z: number, up: 1 | -1) => {
+      const run = x1 - x0;
+      const pitch = Math.atan2(rise, run);
+      const L = Math.hypot(run, rise);
+      const xm = world.x((x0 + x1) / 2);
+      const ym = y0 + rise / 2;
+      const nUp: [number, number] = [-up * Math.sin(pitch), Math.cos(pitch)]; // square to the slope (x, y)
+      const off = hb / 2 - 1.0;
+      parts.push(box([xm + nUp[0] * off, ym + nUp[1] * off, z], [L, hb, 0.42], CREAM_LIGHT, [0, 0, up * pitch]));
+      const rr = hb - 1.0 + 0.16;
+      parts.push(rod([xm + nUp[0] * rr, ym + nUp[1] * rr, z], [0.4, L + 0.2, 0.4], BLACK, [0, 0, up > 0 ? pitch - Math.PI / 2 : Math.PI / 2 - pitch]));
+    };
+    flight(st.x0, st.x1 - st.land, 0, world.z(st.z0 + 0.2), 1);
+    flight(st.x0 + st.top, st.x1 - st.land, rise, world.z(st.zMid), -1);
+    // landing parapet (front + right) with rails
+    const ly = rise + 1.2;
+    parts.push(box([world.x(st.x1 - st.land / 2), ly, world.z(st.z0 + 0.2)], [st.land, 2.4, 0.42], CREAM_LIGHT));
+    parts.push(box([world.x(st.x1 - 0.2), ly, lz(st.z0, st.z1)], [0.42, 2.4, st.z1 - st.z0], CREAM_LIGHT));
+    parts.push(rod([world.x(st.x1 - st.land / 2), ly + 1.36, world.z(st.z0 + 0.2)], [0.4, st.land, 0.4], BLACK, [0, 0, Math.PI / 2]));
+    parts.push(rod([world.x(st.x1 - 0.2), ly + 1.36, lz(st.z0, st.z1)], [0.4, st.z1 - st.z0, 0.4], BLACK, [Math.PI / 2, 0, 0]));
+    // newel block at the foot
+    parts.push(box([world.x(st.x0 - 0.2), 1.1, world.z(st.z0 + 0.2)], [0.5, 2.2, 0.5], CREAM_LIGHT));
     return { steps, parts };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, stair]);
@@ -267,7 +278,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     const parts: Part[] = [];
     const grills: Panel[] = [];
     const pz = ver.z0 + 0.5;
-    const px = ver.x1 - 0.5;
+    const px = ver.x0 + 0.5;
     const yTop = CHAJJA_Y;
     const ph = yTop - PLINTH;
     const pillar = (x: number, z: number, faces: ("front" | "side")[]) => {
@@ -278,7 +289,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       parts.push(box([X, yTop - 0.35, Z], [1.2, 0.5, 1.2], CREAM));
       for (const f of faces)
         for (const d of [-0.28, 0, 0.28]) {
-          const sx = f === "front" ? d : 0.52;
+          const sx = f === "front" ? d : -0.52;
           const sz = f === "front" ? 0.52 : d;
           parts.push(box([X + sx, PLINTH + 0.75 + (ph - 1.5) / 2, Z + sz], f === "front" ? [0.09, ph - 1.5, 0.04] : [0.04, ph - 1.5, 0.09], BLACK));
         }
@@ -300,10 +311,10 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       const c = (a + b) / 2;
       const [X, Z] = along === "x" ? [world.x(c), world.z(pz)] : [world.x(px), world.z(c)];
       parts.push(box([X, PLINTH + kneeH / 2, Z], along === "x" ? [len, kneeH, 0.5] : [0.5, kneeH, len], CREAM));
-      grills.push({ pos: [X, gy0 + gh / 2, Z], rotY: along === "x" ? 0 : Math.PI / 2, w: len, h: gh });
+      grills.push({ pos: [X, gy0 + gh / 2, Z], rotY: along === "x" ? 0 : -Math.PI / 2, w: len, h: gh });
     };
-    run(ver.x0, midX - 0.5, "x");
-    run(midX + 0.5, px - 0.5, "x");
+    run(px + 0.5, midX - 0.5, "x");
+    run(midX + 0.5, ver.x1, "x");
     if (ver.z1 - ver.z0 > 4.5) {
       run(pz + 0.5, midZ - 0.5, "z");
       run(midZ + 0.5, ver.z1, "z");
@@ -313,8 +324,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
 
   // ── chajja (sunshade) with black edge band, wrapped round the veranda corner ──
   const chajja = useMemo<Part[]>(() => {
-    const { x1, z0 } = slot.rect;
-    const xStart = slot.notch.wide.x1;
+    const { x0, z0 } = slot.rect;
+    const xEnd = slot.stairs.x0 - 0.3; // stops short of the stair in front of the house
     const parts: Part[] = [];
     const slab = (xa: number, xb: number, za: number, zb: number) =>
       parts.push(box([world.x((xa + xb) / 2), CHAJJA_Y + 0.2, world.z((za + zb) / 2)], [xb - xa, 0.4, zb - za], CREAM_LIGHT));
@@ -323,16 +334,18 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       parts.push(box([world.x((xa + xb) / 2), CHAJJA_Y - 0.24, world.z((za + zb) / 2)], [Math.max(0.36, xb - xa + 0.06), 0.2, Math.max(0.36, zb - za + 0.06)], BLACK));
       parts.push(box([world.x((xa + xb) / 2), CHAJJA_Y + 0.44, world.z((za + zb) / 2)], [Math.max(0.36, xb - xa + 0.06), 0.08, Math.max(0.36, zb - za + 0.06)], BLACK));
     };
-    const right = ver ? CHAJJA_OUT : 0;
-    slab(xStart, x1 + right, z0 - CHAJJA_OUT, z0 + 0.3);
-    fascia(xStart, x1 + right, z0 - CHAJJA_OUT, z0 - CHAJJA_OUT + 0.3);
-    if (ver) {
-      const zEnd = ver.z1 + 1.0;
-      slab(x1 - 0.3, x1 + CHAJJA_OUT, z0, zEnd);
-      fascia(x1 + CHAJJA_OUT - 0.3, x1 + CHAJJA_OUT, z0 - CHAJJA_OUT, zEnd);
+    if (xEnd - x0 > 2) {
+      const left = ver ? CHAJJA_OUT : 0;
+      slab(x0 - left, xEnd, z0 - CHAJJA_OUT, z0 + 0.3);
+      fascia(x0 - left, xEnd, z0 - CHAJJA_OUT, z0 - CHAJJA_OUT + 0.3);
+      if (ver) {
+        const zEnd = ver.z1 + 1.0;
+        slab(x0 - CHAJJA_OUT, x0 + 0.3, z0, zEnd);
+        fascia(x0 - CHAJJA_OUT, x0 - CHAJJA_OUT + 0.3, z0 - CHAJJA_OUT, zEnd);
+      }
     }
     return parts;
-  }, [slot.rect, slot.notch.wide.x1, ver, world]);
+  }, [slot.rect, slot.stairs.x0, ver, world]);
 
   // ── roof: low parapet with black coping (gap where the stair arrives) + the raised stepped front parapet ──
   const roof = useMemo(() => {
@@ -341,12 +354,12 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     const top = H;
     for (const e of edgesOf(slot.outline)) {
       const segs: [number, number][] = [[0, e.len]];
-      // the stair arrives through the parapet on the stair-well edge
+      // the stair's top landing arrives through a gap in the front parapet
       const kind = wallKinds.get(`${e.a.x},${e.a.z}|${e.b.x},${e.b.z}`);
-      if (kind === "stair" && Math.abs(e.a.z - e.b.z) < 0.01) {
+      if (kind === "front" && Math.abs(e.a.z - e.b.z) < 0.01) {
         const dx = (e.b.x - e.a.x) / e.len;
-        const g0 = (stair.x0 - 0.3 - e.a.x) / dx;
-        const g1 = (stair.x1 + 0.3 - e.a.x) / dx;
+        const g0 = (stair.x0 - 0.1 - e.a.x) / dx;
+        const g1 = (stair.x0 + stair.top + 0.2 - e.a.x) / dx;
         segs.length = 0;
         const lo = Math.max(0, Math.min(g0, g1));
         const hi = Math.min(e.len, Math.max(g0, g1));
@@ -367,12 +380,12 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
         parts.push(box([world.x(x), top + P - 0.07, world.z(z)], [tb - ta + 0.04, 0.16, PARAPET_T + 0.14], BLACK, [0, rotY, 0]));
       }
     }
-    // raised stepped parapet over the front (centred on the veranda), with two arched jaali vents
-    const { x1, z0 } = slot.rect;
-    const frontLen = x1 - slot.notch.wide.x1;
+    // raised stepped parapet over the front (centred on the veranda / entrance), with two arched jaali vents
+    const { x0, z0 } = slot.rect;
+    const frontLen = slot.stairs.x0 - 0.6 - x0;
     if (frontLen > 5) {
-      const cx = ver ? (ver.x0 + ver.x1) / 2 - 0.4 : slot.notch.wide.x1 + frontLen / 2;
-      const Wc = Math.min(8, frontLen * 0.62);
+      const cx = ver ? (ver.x0 + ver.x1) / 2 + 0.3 : x0 + frontLen / 2;
+      const Wc = Math.min(8, frontLen * 0.8);
       const d = 1.1;
       const Z = world.z(z0 + d / 2 - 0.12);
       const X = world.x(cx);
@@ -394,8 +407,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
         vents.push({ pos: [X + sx * wC * 0.22, yb + hC - 1.45, Z + d / 2 + 0.08], rotY: 0, w: 0.85, h: 1.15 });
       }
     }
-    // water tank: black HDPE cylinder on a small raised cream stand, at the rear passage-side corner of the terrace
-    const tx = world.x(slot.rect.x1 - 3.0);
+    // water tank: black HDPE cylinder on a small raised cream stand, at the rear-left corner of the terrace
+    const tx = world.x(slot.rect.x0 + 3.0);
     const tz = world.z(slot.rect.z1 - 3.0);
     parts.push(
       box([tx, top + 0.15, tz], [4.4, 0.3, 4.4], CREAM_LIGHT),
@@ -409,37 +422,47 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, stair, ver, wallKinds]);
 
-  // ── meter box, rain pipes, door ──
+  // ── meter box, rain pipes, back exit + bathroom ventilator ──
   const extras = useMemo<Part[]>(() => {
     const top = H;
-    const { wide } = slot.notch;
+    const { wide, step } = slot.notch;
     const parts: Part[] = [
-        // PVC rain-water down pipes at the passage-side corners
+      // PVC rain-water down pipes at the lane-side corners
       ...[slot.rect.z0 + (ver ? ver.z1 - slot.rect.z0 + 0.3 : 0.45), slot.rect.z1 - 0.45].flatMap((z) => {
-        const x = world.x(slot.rect.x1 + 0.28);
+        const x = world.x(slot.rect.x0 - 0.28);
         const Z = world.z(z);
-        return [rod([x, (top + 0.8) / 2, Z], [0.3, top + 0.8, 0.3], "#e6e1d3"), box([x + 0.25, 0.35, Z], [0.7, 0.22, 0.32], "#e6e1d3")];
+        return [rod([x, (top + 0.8) / 2, Z], [0.3, top + 0.8, 0.3], "#e6e1d3"), box([x - 0.25, 0.35, Z], [0.7, 0.22, 0.32], "#e6e1d3")];
       }),
     ];
-    // maroon EB meter box in a cream frame on the porch wall at the stair foot (faces the stair and the gate)
-    if (wide.z1 - wide.z0 > 3) {
-      const X = world.x(wide.x1);
-      const Z = world.z(wide.z0 + 1.5);
+    // maroon EB meter box in a cream frame on the front wall just left of the stair foot (photo 4)
+    if (!ver || slot.stairs.x0 - ver.x1 > 1.6) {
+      const X = world.x(slot.stairs.x0 - 1.1);
+      const Z = world.z(slot.rect.z0);
       parts.push(
-        box([X - 0.12, 5.0, Z], [0.24, 2.3, 2.2], CREAM_LIGHT),
-        box([X - 0.3, 5.0, Z], [0.2, 1.7, 1.6], PAL.maroon),
-        box([X - 0.42, 5.25, Z + 0.3], [0.08, 0.55, 0.42], "#cfd3d6"),
-        box([X - 0.42, 4.7, Z - 0.4], [0.1, 0.5, 0.5], "#8e2a22"),
+        box([X, 5.0, Z + 0.12], [2.2, 2.3, 0.24], CREAM_LIGHT),
+        box([X, 5.0, Z + 0.3], [1.6, 1.7, 0.2], PAL.maroon),
+        box([X + 0.3, 5.25, Z + 0.42], [0.42, 0.55, 0.08], "#cfd3d6"),
+        box([X - 0.4, 4.7, Z + 0.42], [0.5, 0.5, 0.1], "#8e2a22"),
       );
     }
-    // entrance steps at the front of the veranda / porch
-    if (ver) parts.push(box([world.x(ver.x0 + (ver.x1 - ver.x0) * 0.25), 0.3, world.z(ver.z0 - 0.4)], [2.6, 0.6, 0.8], "#d9d2bf"));
+    // back exit: a maroon-framed door from the house into the backyard (notch front wall, facing the back)
+    const bx = world.x(slot.backExit.x);
+    const bz = world.z(slot.backExit.z);
+    const bw = slot.backExit.widthFt;
+    parts.push(box([bx, 3.6, bz - 0.06], [bw + 0.5, 7.2, 0.14], PAL.maroon), box([bx, 3.5, bz - 0.13], [bw, 6.8, 0.06], "#5e3319"));
+    // bathroom ventilator high on the notch's inner wall
+    const vx = world.x(wide.x0 + 0.06);
+    const vz = world.z((wide.z0 + wide.z1) / 2);
+    parts.push(box([vx, 7.6, vz], [0.14, 1.2, 1.7], CREAM_LIGHT), box([vx + 0.06, 7.6, vz], [0.08, 0.8, 1.3], "#2a2622"));
+    // a small concrete step out of the back exit
+    parts.push(box([bx, 0.18, world.z(step.z0 + 0.5)], [bw + 0.6, 0.36, 1.0], "#d9d2bf"));
+    // entrance steps in front of the veranda
+    if (ver) parts.push(box([world.x(ver.x0 + (ver.x1 - ver.x0) * 0.66), 0.3, world.z(ver.z0 - 0.4)], [2.6, 0.6, 0.8], "#d9d2bf"));
     return parts;
   }, [slot, ver, world, H]);
 
   const door = slot.door;
-  const doorOnVeranda = !!ver;
-  const doorPos: V3 = ver ? [world.x(ver.x0 + (ver.x1 - ver.x0) * 0.34), PLINTH + 3.5, world.z(ver.z1 - 0.07)] : [world.x(door.x - 0.07), 0.6 + 3.5, world.z(door.z)];
+  const doorPos: V3 = ver ? [world.x(ver.x0 + (ver.x1 - ver.x0) * 0.66), PLINTH + 3.5, world.z(ver.z1 - 0.07)] : [world.x(door.x), 0.6 + 3.5, world.z(door.z - 0.07)];
   const doorW = ver ? 3.2 : door.widthFt;
   const doorTrim = useMemo<Part[]>(
     () => [
@@ -519,8 +542,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
   const furniture = useMemo(() => [...stairs.parts, ...veranda.parts, ...chajja, ...roof.parts, ...extras], [stairs, veranda, chajja, roof, extras]);
   const furnitureMat = holo ?? vcMaterial(0.8, finish);
   const kolam = ver
-    ? { x: ver.x0 + (ver.x1 - ver.x0) * 0.4, z: ver.z0 + (ver.z1 - ver.z0) * 0.55, s: Math.min(ver.x1 - ver.x0, ver.z1 - ver.z0) * 0.62, y: PLINTH + 0.03 }
-    : { x: slot.kolam.x, z: slot.kolam.z, s: slot.kolam.sizeFt, y: 0.62 };
+    ? { x: ver.x0 + (ver.x1 - ver.x0) * 0.6, z: ver.z0 + (ver.z1 - ver.z0) * 0.55, s: Math.min(ver.x1 - ver.x0, ver.z1 - ver.z0) * 0.62, y: PLINTH + 0.03 }
+    : { x: slot.kolam.x, z: slot.kolam.z, s: slot.kolam.sizeFt, y: 0.08 };
 
   return (
     <group>
@@ -547,7 +570,8 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
       <instancedMesh ref={ventRef} args={[G.plane(), M.vent, Math.max(1, roof.vents.length)]} />
 
       {/* main door with frame + lamp */}
-      <group position={doorPos} rotation={[0, doorOnVeranda ? 0 : -Math.PI / 2, 0]}>
+      {/* house entrance (faces the yard) */}
+      <group position={doorPos}>
         <Baked parts={doorTrim} cast={!ghost} material={furnitureMat} />
         <mesh geometry={G.plane()} material={ghost ? M.plaster : std("#ffffff", { map: doorTex(), rough: 0.6, finish })} scale={[doorW, 7, 1]} position={[0, 0, 0.06]} />
         {!ghost && <mesh geometry={G.sphere()} material={lampMat} scale={0.4} position={[doorW / 2 + 0.75, 2.6, 0.3]} />}
@@ -622,8 +646,8 @@ const CLOTH_COLORS = ["#c2185b", "#f4f1ea", "#2f6fb5", "#e0a020", "#2e8b57"];
  */
 function ClothesLine({ slot, world, env, y, animate }: { slot: BuildingSlot; world: World; env: RefObject<Env>; y: number; animate: boolean }) {
   const z = slot.rect.z1 - 6.5;
-  const x0 = Math.max(slot.stairs.x1 + 1.5, slot.rect.x0 + 2.5);
-  const x1 = slot.rect.x1 - 6.5;
+  const x0 = slot.rect.x0 + 6.5;
+  const x1 = Math.min(slot.notch.wide.x0 - 1.5, slot.rect.x1 - 2.5);
   const len = Math.max(4, x1 - x0);
   const cloth = useMemo(() => {
     const geos: THREE.PlaneGeometry[] = [];

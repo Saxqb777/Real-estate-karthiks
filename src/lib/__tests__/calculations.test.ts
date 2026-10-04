@@ -494,10 +494,10 @@ describe("Plot geometry", () => {
   const plot = { frontWidthFt: null, backWidthFt: null, depthFt: null, areaSqft: null, townName: "Pattukottai", sitePlanImageUrl: null };
 
   it("falls back to the owner's site plan", () => {
-    // (22.25 + 23.25) / 2 × 76.66 = 22.75 × 76.66 = 1,744.015 → 1,744.02
+    // annotated plan: 23'3" front, 22'3" back → (23.25 + 22.25) / 2 × 76.66 = 22.75 × 76.66 = 1,744.015 → 1,744.02
     expect(plotGeometry(plot)).toEqual({
-      frontWidthFt: 22.25,
-      backWidthFt: 23.25,
+      frontWidthFt: 23.25,
+      backWidthFt: 22.25,
       depthFt: 76.66,
       areaSqft: 1744.02,
       townName: "Pattukottai",
@@ -514,9 +514,9 @@ describe("Plot geometry", () => {
   });
 
   it("partial fallback flags usingDefaults", () => {
-    // front 22, back default 23.25, depth 76 → (22 + 23.25)/2 × 76 = 1,719.5
+    // front 22, back default 22.25, depth 76 → (22 + 22.25)/2 × 76 = 1,681.5
     const g = plotGeometry({ ...plot, frontWidthFt: 22, depthFt: 76 });
-    expect(g).toMatchObject({ frontWidthFt: 22, backWidthFt: 23.25, depthFt: 76, areaSqft: 1719.5, usingDefaults: true });
+    expect(g).toMatchObject({ frontWidthFt: 22, backWidthFt: 22.25, depthFt: 76, areaSqft: 1681.5, usingDefaults: true });
     expect(trapezoidArea(22.25, 23.25, 76.66)).toBe(1744.02);
   });
 });
