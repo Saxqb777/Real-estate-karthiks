@@ -497,7 +497,8 @@
   gap: 12px;
   width: 200px;
   height: 62px;
-  margin-bottom: -8px;
+  align-self: center;
+  margin-top: -5px; /* the 5px pressed-edge shadow below counts toward the visual centre */
   font-family: var(--ff-display);
   font-size: 22px;
   font-weight: 700;
