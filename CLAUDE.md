@@ -98,6 +98,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   nodes, plank door, lattice window/gables glowing at night, layered leaf thatch with loose strips + crossed ridge sticks,
   leaf-roofed porch with clerk's desk (files, ledger, bell, stool), clay pot, hurricane lantern + point light, bicycle,
   firewood + coconuts.
+- 4/10/2026: WIND = steady gentle breeze (windAt ≈ 0.42 with a very slow slight swell), no gust ramps; sway FREQUENCIES must
+  never depend on wind strength (phase jumps) — only amplitudes may.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
