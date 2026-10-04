@@ -95,7 +95,7 @@ function Mailbox({ layout, world, mail }: { layout: SiteLayout; world: World; ma
 
 /**
  * A mini bamboo village office on the grass right of the plot (owner's sample photo): split-bamboo mat walls framed by
- * battens, a bamboo door, a big woven-lattice window, a lattice gable under a shaggy thatched A-frame roof, a
+ * battens, a bamboo door, a big woven-lattice window, a lattice gable under a dried coconut-leaf thatched roof, a
  * "PROPERTY TAX OFFICE" board over the door with the round tax seal (paid ✓ / due / plain), a bench outside.
  * Clicking it opens property tax.
  */
@@ -136,8 +136,6 @@ function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: 
       wall: new THREE.MeshStandardMaterial({ map: m, roughness: 0.9 }),
       lattice: new THREE.MeshStandardMaterial({ map: l, roughness: 0.9, side: THREE.DoubleSide }),
       window: new THREE.MeshStandardMaterial({ map: lw, roughness: 0.9 }),
-      thatch: new THREE.MeshStandardMaterial({ color: "#9c7d45", roughness: 1, flatShading: true }),
-      fringe: new THREE.MeshStandardMaterial({ color: "#c9ad72", roughness: 1, flatShading: true }),
       dispose() {
         m.dispose();
         l.dispose();
@@ -145,8 +143,6 @@ function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: 
         this.window.dispose();
         this.wall.dispose();
         this.lattice.dispose();
-        this.thatch.dispose();
-        this.fringe.dispose();
       },
     };
   }, []);
@@ -175,19 +171,66 @@ function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: 
       box([0.0, B + 3.75, fz + 0.08], [0.16, 2.55, 0.1], frame),
       box([3.1, B + 3.75, fz + 0.08], [0.16, 2.55, 0.1], frame),
       // ridge pole
-      box([0, top + rise + 0.15, 0], [0.5, 0.35, D + 1.1], "#7a5f33"), // ridge capping
       // bench outside
       box([2.0, 1.05, fz + 1.5], [3.0, 0.16, 0.9], "#7a5233"),
       ...[-1.2, 1.2].map((dx) => box([2.0 + dx, 0.7, fz + 1.5], [0.16, 0.7, 0.8], "#5c3c22")),
     ],
-    [B, H, W, D, fz, top, rise],
+    [B, H, W, D, fz],
   );
   const slope = Math.atan2(rise, run);
-  const len = Math.hypot(run, rise) + 0.2;
+  // dried coconut-leaf thatch (owner: leaf, not bamboo): overlapping courses of plaited fronds down each slope, every
+  // course ending in a ragged row of hanging leaf blades, and a row of leaves folded over the ridge
+  const leafRoof = useMemo<Part[]>(() => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const tones = ["#a48a52", "#8e7744", "#b39b62", "#7c6a3c", "#9a8a4e", "#857f45"];
+    const tone = () => tones[Math.floor(rnd() * tones.length)];
+    const out: Part[] = [];
+    const L = Math.hypot(run, rise);
+    const courses = 5;
+    const depth = D + 1.0;
+    for (const sx of [-1, 1]) {
+      const rz = -sx * slope;
+      for (let k = 0; k < courses; k++) {
+        const t0 = k / courses;
+        const t1 = (k + 1) / courses + 0.06;
+        const tm = (t0 + t1) / 2;
+        // a point at fraction t down the slope (0 = ridge, 1 = eave), lifted a little so lower courses lap over
+        const at = (t: number, lift: number): [number, number] => [sx * run * t, top + rise * (1 - t) + 0.2 + lift];
+        const [cx, cy] = at(tm, 0.06 * (courses - k));
+        out.push(box([cx, cy, 0], [L * (t1 - t0) + 0.1, 0.16, depth], tone(), [0, 0, rz]));
+        // ragged leaf blades hanging off the course's lower edge
+        const [ex, ey] = at(t1, 0.06 * (courses - k) - 0.05);
+        const n = 26;
+        for (let i = 0; i < n; i++) {
+          const z = -depth / 2 + ((i + 0.5) / n) * depth + (rnd() - 0.5) * 0.18;
+          const bl = 0.55 + rnd() * (k === courses - 1 ? 0.9 : 0.45);
+          const droop = slope + 0.25 + rnd() * 0.35;
+          out.push(box([ex + sx * Math.cos(droop) * bl * 0.4, ey - Math.sin(droop) * bl * 0.4, z], [bl, 0.035, 0.2], tone(), [rnd() * 0.25 - 0.12, (rnd() - 0.5) * 0.25, -sx * droop]));
+        }
+      }
+    }
+    // leaves folded over the ridge
+    const n = 22;
+    for (let i = 0; i < n; i++) {
+      const z = -(D + 1.1) / 2 + ((i + 0.5) / n) * (D + 1.1);
+      for (const sx of [-1, 1]) out.push(box([sx * 0.35, top + rise + 0.32, z], [0.95, 0.05, 0.26], tone(), [0, (rnd() - 0.5) * 0.3, -sx * (slope + 0.15)]));
+    }
+    // ragged ends along the front and back rakes
+    for (const zf of [-1, 1])
+      for (const sx of [-1, 1])
+        for (let i = 0; i < 9; i++) {
+          const t = (i + 0.5) / 9;
+          out.push(box([sx * run * t, top + rise * (1 - t) + 0.05, zf * ((D + 1.0) / 2 + 0.12)], [0.2, 0.55 + rnd() * 0.35, 0.04], tone(), [zf * 0.35, 0, -sx * slope * 0.3]));
+        }
+    return out;
+  }, [run, rise, top, slope, D]);
   const anchor = useMemo<V3>(() => [X, top + rise + 2.6, Z], [X, Z, top, rise]);
   return (
-    <Hotspot spot={{ key: "taxstamp", kind: "taxstamp", anchor }} hit={<mesh geometry={G.box()} position={[X, 4.8, Z]} scale={[W + 2, 9.6, D + 2]} visible={false} />}>
-      <group position={[X, 0, Z]}>
+    <Hotspot spot={{ key: "taxstamp", kind: "taxstamp", anchor }}>
+      {/* turned to face south-west (towards the front-left, owner) */}
+      <group position={[X, 0, Z]} rotation={[0, -Math.PI / 4, 0]}>
+        <mesh geometry={G.box()} position={[0, 4.8, 0]} scale={[W + 2, 9.6, D + 2]} visible={false} />
         {/* mat walls */}
         <mesh geometry={G.box()} material={mat.wall} position={[0, B + H / 2, 0]} scale={[W, H, D]} castShadow receiveShadow />
         <Baked parts={parts} cast material={vcMaterial(0.9)} />
@@ -195,13 +238,8 @@ function TaxStamp({ layout, world, state, tamil }: { layout: SiteLayout; world: 
         <mesh geometry={G.plane()} material={mat.window} position={[1.55, B + 3.75, fz + 0.07]} scale={[2.95, 2.3, 1]} />
         <mesh geometry={gable} material={mat.lattice} position={[0, top, fz - 0.05]} />
         <mesh geometry={gable} material={mat.lattice} position={[0, top, -fz + 0.05]} rotation={[0, Math.PI, 0]} />
-        {/* shaggy thatch: two sloping slabs with a lighter frayed fringe at the eaves */}
-        {[-1, 1].map((sx) => (
-          <group key={sx}>
-            <mesh geometry={G.box()} material={mat.thatch} position={[(sx * run) / 2, top + rise / 2 + 0.2, 0]} rotation={[0, 0, -sx * slope]} scale={[len, 0.5, D + 1.0]} castShadow receiveShadow />
-            <mesh geometry={G.box()} material={mat.fringe} position={[sx * (run - 0.15), top - 0.05, 0]} rotation={[0, 0, -sx * slope * 1.6]} scale={[0.9, 0.22, D + 1.2]} />
-          </group>
-        ))}
+        {/* dried coconut-leaf thatch */}
+        <Baked parts={leafRoof} cast receive material={vcMaterial(1)} />
         {/* name board over the door + the round tax seal beside it */}
         <mesh geometry={G.plane()} material={boardMat} position={[-0.3, top + 0.25, fz + 0.2]} scale={[4.6, 1.0, 1]} />
         <mesh geometry={disc} material={face} position={[2.75, top + 0.25, fz + 0.21]} scale={1.05} />
