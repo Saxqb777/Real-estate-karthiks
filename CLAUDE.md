@@ -86,6 +86,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   wall facing the backyard (vent above it); dog-leg stair MIRRORED — foot at its LEFT end (by the gate), lower flight
   climbs right, U-turn landing at the right wall, upper flight back left onto the terrace; front parapet PLAIN (raised
   design removed) on both houses. Owner works edit-by-edit, reviews screenshots, then says "deploy".
+- 4/10/2026: door-number POLE outside each gate (Gate A → front unit name, Gate B → back unit name, from the data);
+  the corner-pillar "116/87" plate is gone. TO-LET board English only (no Tamil line). Fixed: empty baked part lists
+  crashed the overview into the 2D fallback (bake() now returns an empty geometry).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
