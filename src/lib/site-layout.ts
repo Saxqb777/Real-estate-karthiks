@@ -615,16 +615,17 @@ function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: Building
   const zb = Math.min(7, Math.max(2.5, depth * 0.12));
   const xb = FL.x + ((BL.x - FL.x) * (zb - FL.z)) / (depth || 1);
   const noticeBoard = { x: r2(xb), z: r2(zb), widthFt: r2(clamp(depth * 0.06, 2.4, 3.6)) };
-  // poles stand on the grass just outside the front wall (no road any more), both off the front-RIGHT corner so
-  // they never stand in front of the houses in the default front-left view: [0] by the gate and the stair foot
-  // carries the lamp, the meter and the service drop; [1] further right carries the line on
+  // poles stand on the grass just outside the front wall (no road any more), one either side of the plot (owner):
+  // [0] off the front-RIGHT corner carries the lamp, the meter and the service drop; [1] off the front-LEFT
+  // (lane) corner carries the line on
   const zPole = -SITE_SURROUNDINGS.poleSetbackFt;
-  const [, tFR, tBR] = tile;
+  const [tFL, tFR, tBR, tBL] = tile;
+  const tx0 = xAt(tFL, tBL, zPole);
   const tx1 = xAt(tFR, tBR, zPole);
   const p0x = Math.min(tx1 - 6, FR.x + 3.5);
   const poles = [
     { x: r2(p0x), z: r2(zPole) },
-    { x: r2(Math.max(p0x + 3, Math.min(tx1 - 2.5, p0x + 10))), z: r2(zPole) },
+    { x: r2(Math.min(FL.x - 1.5, Math.max(tx0 + 2.5, FL.x - 3.5))), z: r2(zPole) },
   ];
   return {
     mailbox,

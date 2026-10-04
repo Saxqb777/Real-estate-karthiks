@@ -359,8 +359,9 @@ describe("front-wall fixtures (clickable world objects)", () => {
       expect(p.z).toBeGreaterThan(L.site.meadow.z0);
     }
     expect(F.poles[0].x).toBeGreaterThan(FR.x);
-    expect(F.poles[1].x).toBeGreaterThan(F.poles[0].x);
-    expect(F.poles[1].x).toBeLessThan(Math.max(...L.site.tile.map((p) => p.x)));
+    // one pole either side of the plot: [1] off the front-left (lane) corner, still on the island
+    expect(F.poles[1].x).toBeLessThan(FL.x);
+    expect(F.poles[1].x).toBeGreaterThan(Math.min(...L.site.tile.map((p) => p.x)));
   });
   it("keeps Gate A (and its mailbox) when no house stands at the front", () => {
     const L2 = computeSiteLayout(PLOT, [B]);
