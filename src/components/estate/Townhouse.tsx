@@ -495,7 +495,7 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig, stair, ver, wallKinds]);
 
-  // ── meter box, rain pipes, back exit + bathroom ventilator ──
+  // ── meter box, rain pipes, back exit + bathroom door ──
   const extras = useMemo<Part[]>(() => {
     const top = H;
     const { wide, step } = slot.notch;
@@ -523,10 +523,19 @@ export function Townhouse({ slot, world, env, finish, ghost, lived, clothes, ani
     const bz = world.z(slot.backExit.z);
     const bw = slot.backExit.widthFt;
     parts.push(box([bx, 3.6, bz - 0.06], [bw + 0.5, 7.2, 0.14], PAL.maroon), box([bx, 3.5, bz - 0.13], [bw, 6.8, 0.06], "#5e3319"));
-    // bathroom ventilator high on the notch's inner wall
+    // second bathroom (owner): a brown door on the notch's inner wall, opening onto the backyard, with its
+    // ventilator above it and a small step out
     const vx = world.x(wide.x0 + 0.06);
     const vz = world.z((wide.z0 + wide.z1) / 2);
-    parts.push(box([vx, 7.6, vz], [0.14, 1.2, 1.7], CREAM_LIGHT), box([vx + 0.06, 7.6, vz], [0.08, 0.8, 1.3], "#2a2622"));
+    const dw = Math.max(1.8, Math.min(2.6, wide.z1 - wide.z0 - 1.2));
+    parts.push(
+      box([vx, 3.5, vz], [0.14, 7.0, dw + 0.5], "#4a2a16"),
+      box([vx + 0.06, 3.4, vz], [0.08, 6.6, dw], "#7a4a26"),
+      box([vx + 0.12, 3.4, vz + dw * 0.32], [0.06, 0.12, 0.3], "#c9a75a"),
+      box([vx, 8.5, vz], [0.14, 0.9, 1.5], CREAM_LIGHT),
+      box([vx + 0.06, 8.5, vz], [0.08, 0.55, 1.1], "#2a2622"),
+      box([vx + 0.5, 0.15, vz], [1.0, 0.3, dw + 0.4], "#d9d2bf"),
+    );
     // a small concrete step out of the back exit
     parts.push(box([bx, 0.18, world.z(step.z0 + 0.5)], [bw + 0.6, 0.36, 1.0], "#d9d2bf"));
     // entrance steps in front of the veranda
