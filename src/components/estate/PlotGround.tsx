@@ -144,9 +144,10 @@ function NumberPole({ pos, rotY, no }: { pos: V3; rotY: number; no: string }) {
   const tex = houseNumberTex(no);
   const plateMat = std("#ffffff", { map: tex, emissive: "#ffffff", emissiveMap: tex, emissiveIntensity: 0.85, rough: 0.6 });
   const parts = useMemo<Part[]>(
-    () => [rod([0, 2.7, 0], [0.24, 5.4, 0.24], "#17171a"), rod([0, 0.12, 0], [0.55, 0.24, 0.55], "#8f877b"), box([0, 5.4, -0.07], [2.3, 1.02, 0.1], "#121212")],
+    () => [rod([0, 2.6, -0.24], [0.24, 5.2, 0.24], "#17171a"), rod([0, 0.12, -0.24], [0.55, 0.24, 0.55], "#8f877b"), box([0, 5.4, -0.07], [2.3, 1.02, 0.1], "#121212")],
     [],
   );
+  // the pole stands BEHIND the plate (holds it from the back) so it never cuts across the numbers
   return (
     <group position={pos} rotation={[0, rotY, 0]}>
       <Baked parts={parts} cast />
