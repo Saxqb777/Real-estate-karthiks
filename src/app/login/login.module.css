@@ -325,14 +325,7 @@
   align-items: center;
   text-align: center;
 }
-.titleMark {
-  border-radius: 12px;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.6),
-    0 8px 30px rgba(255, 181, 71, 0.35);
-}
 .titleName {
-  margin-top: 18px;
   font-family: var(--ff-display);
   font-size: clamp(34px, 6.4vw, 76px);
   font-weight: 700;
@@ -344,12 +337,6 @@
     0 2px 0 #7a3418,
     0 4px 0 rgba(0, 0, 0, 0.5),
     0 10px 40px rgba(255, 181, 71, 0.35);
-}
-.titleTa {
-  margin-top: 10px;
-  font-size: clamp(16px, 2.2vw, 24px);
-  font-weight: 600;
-  color: var(--marigold);
 }
 .press {
   margin-top: clamp(22px, 4vh, 40px);
@@ -389,16 +376,12 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-top: 18px;
+  margin-top: 16px;
   font-family: var(--ff-display);
-  font-size: 13px;
+  font-size: clamp(15px, 1.6vw, 19px);
   font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
-}
-.titleGreet {
-  font-size: 15px;
-  letter-spacing: 0;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--plaster);
 }
 

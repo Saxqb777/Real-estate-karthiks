@@ -267,25 +267,21 @@ export function LoginScreen({ next, initialPhase }: { next: string; initialPhase
           >
             <span className={s.titleShade} aria-hidden />
             <span className={s.titleBlock}>
-              <BrandMark size={58} lit className={s.titleMark} />
               <span className={s.titleName}>Pattukottai Estates</span>
-              <span className={cx("tamil", s.titleTa)} lang="ta">
-                பட்டுக்கோட்டை எஸ்டேட்ஸ்
+              <span className={s.titleMeta}>
+                {now ? (
+                  <>
+                    {istDay(now)}
+                    <span className={s.sep}>·</span>
+                    <span className="num">{formatTimeIST(now)} IST</span>
+                  </>
+                ) : (
+                  "\u00a0"
+                )}
               </span>
               <span className={s.press}>
                 <span className={s.pressKeys}>Press any key to start</span>
                 <span className={s.pressTap}>Tap to start</span>
-              </span>
-              <span className={s.titleMeta}>
-                <span className={cx("tamil", s.titleGreet)} lang="ta">
-                  {phase.greetingTamil}
-                </span>
-                {now && (
-                  <>
-                    <span className={s.sep}>·</span>
-                    <span className="num">{formatTimeIST(now)} IST</span>
-                  </>
-                )}
               </span>
             </span>
           </motion.button>
