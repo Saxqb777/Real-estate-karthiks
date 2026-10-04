@@ -80,6 +80,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   design CENTRED on each façade like photo 10 (arched jaali panel between two tall risers, stepped risers with small vents at
   BOTH ends, black coping); water tank on the terrace just behind the back-exit / backyard notch; dog-leg stair foot by the
   right wall, arriving at the front-right inside the corner riser (keeps the centred design whole).
+- 4/10/2026 owner edit round (deployed together): compound wall = the SAME unbroken black-line pattern on every side,
+  outer face only, NO jaali panels; NO windows on the back wall of either house; EB poles one at each FRONT corner
+  (right one keeps lamp/meter/service drop, left one off the lane corner); brown door to the 2nd bathroom on the house
+  wall facing the backyard (vent above it); dog-leg stair MIRRORED — foot at its LEFT end (by the gate), lower flight
+  climbs right, U-turn landing at the right wall, upper flight back left onto the terrace; front parapet PLAIN (raised
+  design removed) on both houses. Owner works edit-by-edit, reviews screenshots, then says "deploy".
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
