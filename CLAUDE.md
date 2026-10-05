@@ -111,6 +111,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   password | big centred "ENTER ▶"; stacks into a bottom panel on phones. No logo, no Tamil, no "your estate"/"quest" anywhere;
   map pin tag reads "PATTUKKOTTAI ESTATE". Pending owner answer: title screen still "PATTUKOTTAI ESTATES" (rename to match?);
   Tamil still on map area labels.
+- 5/10/2026: "?" help view = name TAGS on the world objects only (no "opens" sub-line, no help/shortcut box, no HUD hint
+  boxes). Owner wants the overview to become JUST the 3D model (remove shell top bar + overview top strip + bottom dock/
+  timeline), everything reachable from world objects — plan proposed (milestone → property+charts, sun/moon → time/period,
+  officer register → Data, plot marker → Config); pending owner answers on logout placement + Data/Config "Back" button.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
