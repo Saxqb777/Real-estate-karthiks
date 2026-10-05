@@ -37,7 +37,7 @@ import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
 import { useOverviewCommands } from "./commands";
 import { HelpOverlay } from "./HelpOverlay";
 import { LeavePrompt } from "./LeavePrompt";
-import { SkyCard, SkyTarget, TimePanel } from "./SkyTime";
+import { SkyTarget, TimePanel } from "./SkyTime";
 import { MOBILE_QUERY, QUEST_KEY, TOUR_KEY, useFlag, useHotkeys, useMediaQuery } from "./hooks";
 import { MobileSheet, type SheetTab } from "./MobileSheet";
 import { QuestLog } from "./QuestLog";
@@ -145,7 +145,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const [askLeave, setAskLeave] = useState(false);
   // the sun / moon opens TIME TRAVEL (as-of timeline + FY/calendar period)
   const [timeOpen, setTimeOpen] = useState(false);
-  const [skyCard, setSkyCard] = useState(false);
   const stay = useCallback(() => setAskLeave(false), []);
   const driveOff = useCallback(() => {
     setAskLeave(false);
@@ -248,7 +247,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   const onObjectClick = useCallback(
     (obj: SceneObject) => {
-      setSkyCard(false);
       // the car keeps its own exit (owner): click → "Leave Pattukkottai Estates?" straight away, no card
       if (obj.kind === "car") {
         closeCard();
@@ -460,19 +458,12 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   const skyEl = (
     <>
+      {/* sun / moon click opens TIME TRAVEL straight away (owner, 5/10/2026: no card for it) */}
       <SkyTarget
-        active={timeOpen || skyCard}
+        active={timeOpen}
         onClick={() => {
           closeCard();
-          setSkyCard((v) => !v);
-        }}
-      />
-      <SkyCard
-        open={skyCard}
-        onClose={() => setSkyCard(false)}
-        onOpen={() => {
-          setSkyCard(false);
-          setTimeOpen(true);
+          setTimeOpen((v) => !v);
         }}
       />
       {data && hasUnits && (

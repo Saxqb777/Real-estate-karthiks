@@ -10,8 +10,7 @@
   cursor: pointer;
 }
 .target:hover,
-.target:focus-visible,
-.target[data-active] {
+.target:focus-visible {
   box-shadow: 0 0 0 2px rgba(255, 207, 135, 0.55), 0 0 26px rgba(255, 181, 71, 0.45);
   outline: none;
 }

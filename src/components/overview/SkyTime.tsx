@@ -47,11 +47,9 @@ export function SkyTarget({ onClick, active }: { onClick: () => void; active: bo
       onClick={onClick}
       onPointerEnter={() => setHover(true)}
       onPointerLeave={() => setHover(false)}
-      onFocus={() => setHover(true)}
-      onBlur={() => setHover(false)}
     >
       <AnimatePresence>
-        {(hover || active) && now && home && (
+        {hover && now && home && (
           <motion.span key="tag" className={s.tag} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
             <span>
               <b className="num">{formatTimeIST(now)}</b> IST

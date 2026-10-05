@@ -167,7 +167,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: POP-UPS = option D (owner): EVERY world object (house, manager, mailbox, pole, tax hut, TO-LET, plot marker,
   sun/moon) goes hover TAG → the same GOLD CARD at the object (✕, key facts, actions, "Open ›" last) → "Open" →
   ONE panel on the RIGHT (property panel moved from the left; only one right panel at a time). Card + panel share the gold
-  frame (2px #c9922e, radius 10, glow, uppercase titles). CAR is the exception (owner, 5/10): click → leave prompt straight away, no card; sun card (IST/GST) "Open"
+  frame (2px #c9922e, radius 10, glow, uppercase titles). CAR is the exception (owner, 5/10): click → leave prompt straight away, no card; sun/moon: NO card — click opens time travel straight away; ring + time tag show ONLY while hovering (owner 5/10); was: sun card (IST/GST) "Open"
   → time travel. DIRECT list empty; no "Enter to expand" hint.
 - 5/10/2026: OPENED PANEL = CENTRE GAME MENU (owner picked option 3 over floating-right / grow-in-place / bottom drawer):
   "Open" shows the panel as one wide window (≤1080px) in the middle over a darkened world (.centreShade, click = close
