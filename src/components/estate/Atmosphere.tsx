@@ -131,11 +131,13 @@ export function Backdrop({ env, insets }: { env: RefObject<Env>; insets?: SceneI
     const span = Math.max(0.2, r - l);
     // sun: rises at the left of the free sky, sets at its right
     const day = (e.hour - 5.9) / (18.4 - 5.9);
-    // kept high in the open sky above the island (owner clicks it for time travel), arcing a little through the day
-    u.uSun.value.set(l + span * (0.1 + 0.8 * day), 0.76 + 0.12 * Math.sin(Math.min(1, Math.max(0, day)) * Math.PI) - (day < 0 || day > 1 ? 0.2 : 0));
+    // owner (5/10/2026): the path DIPS in the middle instead of peaking there, so the sun / moon (and its hover time tag)
+    // never slide under the floating OVERVIEW · DATA · CONFIG menu at the top centre; still high enough to clear the palms.
+    const arc = (t: number) => 0.78 + 0.05 * (1 - Math.sin(Math.min(1, Math.max(0, t)) * Math.PI));
+    u.uSun.value.set(l + span * (0.1 + 0.8 * day), arc(day) - (day < 0 || day > 1 ? 0.2 : 0));
     u.uSunVis.value = e.sunVis * (1 - e.night * 0.8);
     const nightP = (((e.hour - 18.6 + 24) % 24) / (24 - 18.6 + 5.6));
-    u.uMoon.value.set(l + span * (0.12 + 0.76 * nightP), 0.76 + 0.12 * Math.sin(Math.min(1, Math.max(0, nightP)) * Math.PI));
+    u.uMoon.value.set(l + span * (0.12 + 0.76 * nightP), arc(nightP));
     u.uMoonVis.value = e.moonVis;
     // publish the brighter body's screen position for the HUD's sun/moon target
     const sunV = u.uSunVis.value as number;

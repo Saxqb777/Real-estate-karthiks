@@ -202,6 +202,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   .cr* classes): cream amount box with a 5px gold left edge (amount, words, RENT FOR month), list Received from / Property /
   Paid by / Monthly rent, owner's signature line, revenue-stamp box only for cash > ₹5,000, deposit line at the foot.
   Reports print: cream KPI boxes with gold left edge, gold-brown headings, light zebra tables.
+- 5/10/2026: SUN/MOON PATH (owner): still moves with the real time (fixed position rejected — bad day/night transition), but the
+  arc now DIPS in the middle (y = 0.78 centre … 0.83 edges, was 0.76→0.88 peaking at the centre) so the body and its hover
+  time tag never slide under the floating top-centre nav. Atmosphere.tsx `arc()`.
 - 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.
