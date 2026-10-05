@@ -16,7 +16,7 @@ import {
   useTenants,
   type RailItem,
 } from "@/components/forms";
-import { ReportsHub } from "@/components/reports/ReportsHub";
+import { ReportLibrary } from "@/components/reports/ReportLibrary";
 import { todayIST } from "@/lib/dates";
 import { ExpensesTab } from "./ExpensesTab";
 import { LeasesTab } from "./LeasesTab";
@@ -89,7 +89,7 @@ export function DataScreen() {
         {active === "expenses" && <ExpensesTab {...props("expenses")} />}
         {active === "property-tax" && <PropertyTaxTab {...props("property-tax")} />}
         {active === "todos" && <TodosTab {...props("todos")} />}
-        {active === "reports" && <ReportsHub />}
+        {active === "reports" && <ReportLibrary />}
       </RailScreen>
       <QuickAddHost />
     </Screen>

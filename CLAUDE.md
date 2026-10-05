@@ -189,6 +189,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   after the world shows), brake dip + settle rock, then parks (hazards). Path = forward-time speed/turn profile integrated
   BACKWARDS from the parked pose (arrivalPath in Fixtures.tsx) so it always ends exactly in the spot. Skipped for reduced
   motion. Exit (Drive off) unchanged.
+- 5/10/2026: REPORTS = LIBRARY (owner picked sample 1): Data → Reports home = 8 cards with a key number each → one clean
+  report per card (‹ Reports back, Print / PDF on each, light A4 via PrintPortal): Income & expenses (year: 3 KPIs, month
+  table, where-the-money-went bars, by unit) · Rent roll · Dues & arrears · Occupancy & vacancy (year) · Tenant statement
+  (lease picker, month-by-month with receipts + running balance) · Property value & returns · Property tax (year × unit)
+  · Deposits held. Year + FY/Calendar control only on the year-based ones; others "As of today". Component
+  src/components/reports/ReportLibrary.tsx (+ rlib.module.css); old ReportsHub/AnnualStatement/UnitStory kept but unused.
+  Old ?report=ledger&lease= links open the tenant statement.
 - 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.
