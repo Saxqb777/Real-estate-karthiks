@@ -142,6 +142,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: chart dock has NO open/close arrow — click a tab to open, the same tab again to close (keys 1–6 too);
   LIFE ON button sits above the dock with its right edge aligned to the dock's (insets.right + 14). Dock tabs: no number
   badges (keys 1–6 still work), icon + label centred in equal slots.
+- 5/10/2026: SHELL TOP BAR REMOVED — only a floating OVERVIEW · DATA · CONFIG pill at the top centre (HudBar.tsx →
+  .floatNav; hidden on phones, which keep MobileTabBar; non-overview pages get 60px top padding). ⌘K still opens search.
+- 5/10/2026: NO TAMIL anywhere on the site (owner): Data/Config headings, receipt/report letterheads, login map labels,
+  3D Tamil lettering (useTamilFont → false). (day-phase.ts still holds Tamil phase names as data; not rendered.)
+- 5/10/2026: NO INSTRUCTIONS anywhere (owner): first-run tour never auto-starts, setup quest log hidden, "not opened yet"
+  hint dots off, Field `hint` text + FormSection `note` not rendered (errors still are), RailScreen key-hint footer gone.
+  Kept (counts/labels, not instructions): rail item sublines ("1 current"), ₹ previews, switch labels, empty-state lines.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
