@@ -67,8 +67,18 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
   const columns: Column<PropertyTaxDTO>[] = narrow
     ? [
         { key: "what", header: "Tax", wrap: true, cell: (t) => <Stack2 top={`${t.year} · ${t.unit.name}`} bottom={t.paymentDate ? `Paid ${formatDate(t.paymentDate)}` : "Not paid yet"} />, footer },
-        { key: "amount", header: "Amount", numeric: true, cell: (t) => money(t.amount) },
-        { key: "status", header: "", align: "right", cell: (t) => (t.status === "Due" ? action(t) : <StatusPill status="paid" size="sm" />) },
+        // phones: amount with the Mark paid button / Paid pill under it — two columns, nothing runs off the screen
+        {
+          key: "amount",
+          header: "Amount",
+          numeric: true,
+          cell: (t) => (
+            <span className={s.taxAmt}>
+              <span className="num">{money(t.amount)}</span>
+              {t.status === "Due" ? action(t) : <StatusPill status="paid" size="sm" />}
+            </span>
+          ),
+        },
       ]
     : [
         { key: "year", header: "Tax year", sortValue: (t) => t.year, cell: (t) => <span className={`${s.strong} num`}>{t.year}</span>, footer },

@@ -224,6 +224,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   every report table (TableBox in ReportLibrary) becomes one small CARD PER ROW on phones (first cell = heading, other
   cells "COLUMN … value", labels copied from the header row into data-label). Site meta DESCRIPTION removed (owner: link
   previews must be plain — title only).
+- 5/10/2026: DATA → PROPERTY TAX on phones: 2 columns — "year · unit / paid date" + amount with the MARK PAID button or
+  PAID pill stacked under it (.taxAmt); nothing runs off the right edge.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
