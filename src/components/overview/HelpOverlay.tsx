@@ -1,6 +1,5 @@
 "use client";
-// "?" help overlay: labels every hotspot in the 3D world (from the scene's live object positions) and every HUD
-// control (elements carrying data-help="…") — names only. Esc / ? / a click closes it.
+// "?" help overlay: labels every hotspot in the 3D world (from the scene's live object positions) — names only. Esc / ? / a click closes it.
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -36,16 +35,6 @@ interface Placed {
   side: "left" | "right";
   title: string;
   opens: string;
-}
-
-interface HudLabel {
-  key: string;
-  box: { x: number; y: number; w: number; h: number };
-  text: string;
-  lx: number;
-  ly: number;
-  lw: number;
-  lh: number;
 }
 
 function worldSpots(units: UnitBreakdown[], mobile: boolean): Spot[] {
@@ -96,42 +85,15 @@ function placeWorld(spots: Spot[], locate: ObjectScreenFn | null): Placed[] {
   return out;
 }
 
-function placeHud(): HudLabel[] {
-  const els = [...document.querySelectorAll<HTMLElement>("[data-help]")];
-  const vh = window.innerHeight;
-  const vw = window.innerWidth;
-  const placed: HudLabel[] = [];
-  els.forEach((el, n) => {
-    const r = el.getBoundingClientRect();
-    if (r.width < 4 || r.height < 4) return;
-    const text = el.dataset.help ?? "";
-    const below = r.top < vh / 2;
-    const lw = Math.min(Math.max(text.length * 6.7 + 18, 90), 300);
-    const lines = Math.ceil((text.length * 6.7) / (lw - 16));
-    const lh = 12 + lines * 16;
-    const lx = Math.min(Math.max(r.left, 10), vw - lw - 10);
-    let ly = below ? r.bottom + 8 : r.top - 8 - lh;
-    for (let guard = 0; guard < 8; guard++) {
-      const hit = placed.find((p) => lx < p.lx + p.lw + 6 && lx + lw + 6 > p.lx && ly < p.ly + p.lh + 4 && ly + lh + 4 > p.ly);
-      if (!hit) break;
-      ly = below ? hit.ly + hit.lh + 6 : hit.ly - lh - 6;
-    }
-    placed.push({ key: `${n}`, box: { x: r.left, y: r.top, w: r.width, h: r.height }, text, lx, ly, lw, lh });
-  });
-  return placed;
-}
-
 export function HelpOverlay({ open, onClose, locate, units, mobile = false }: HelpOverlayProps) {
   const isClient = useIsClient();
   const [world, setWorld] = useState<Placed[]>([]);
-  const [hud, setHud] = useState<HudLabel[]>([]);
 
   useLayoutEffect(() => {
     if (!open) return;
     const spots = worldSpots(units, mobile);
     const place = () => {
       setWorld(placeWorld(spots, locate));
-      setHud(placeHud());
     };
     place();
     const id = window.setInterval(place, 400);
@@ -172,14 +134,6 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false }: He
           transition={{ duration: 0.2 }}
           onClick={onClose}
         >
-          {hud.map((h) => (
-            <div key={h.key}>
-              <span className={s.hudBox} style={{ left: h.box.x - 3, top: h.box.y - 3, width: h.box.w + 6, height: h.box.h + 6 }} />
-              <span className={s.hudLabel} style={{ left: h.lx, top: h.ly, width: h.lw }}>
-                {h.text}
-              </span>
-            </div>
-          ))}
           {world.map((w) => (
             <div key={w.key}>
               <span className={s.pin} style={{ left: w.x, top: w.y }} />
