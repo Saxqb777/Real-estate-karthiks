@@ -7,7 +7,7 @@
 // Clicking the ground / Esc / ✕ closes panels (📌 keeps them); the camera reframes the plot into the free area
 // (insets) and the world dims while numbers are being read. Phones get the world on top + a bottom sheet.
 // Every figure comes from /api/dashboard (src/lib/calculations.ts) — nothing here does maths.
-import { CircleHelp, Eye, History, Maximize, PanelLeft, RotateCcw, Swords } from "lucide-react";
+import { CircleHelp, Eye, History, Maximize, RotateCcw, Swords } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import EstateSceneLazy, { type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind } from "@/components/estate/EstateSceneLazy";
@@ -380,7 +380,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   const showDots = !tourOpen && !hudHidden;
   const hintObjects = showDots ? ([...dots].filter((k) => WORLD_HINTS.has(k)) as SceneObjectKind[]) : [];
   const dockHints = showDots ? [...dots].filter((k) => DOCK_IDS.has(k)) : [];
-  const propertyDot = showDots && dots.has("property");
 
   // ---------------------------------------------------------------- world cues (letters in the mailbox, notes on the board, tax stamp)
   const cues = useMemo(() => {
@@ -588,18 +587,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
             >
               <div className={s.topLeft}>
                 <div className={s.chipGroup} data-tour="chips">
-                  <button
-                    type="button"
-                    className={cx(s.chipBtn, propertyOpen && s.chipBtnOn)}
-                    onClick={toggleProperty}
-                    aria-pressed={propertyOpen}
-                    data-help="Property totals (P)"
-                  >
-                    <PanelLeft aria-hidden />
-                    <span>Property</span>
-                    <Kbd>P</Kbd>
-                    {propertyDot && <span className={s.dot} aria-label="not opened yet" />}
-                  </button>
                   {showQuests && (
                     <button
                       type="button"
