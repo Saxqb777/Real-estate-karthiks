@@ -1,6 +1,5 @@
 "use client";
 // Live 3D preview for the Plot and Units forms: draws the UNSAVED values and lights up the dimension of the focused field.
-import { MousePointerClick } from "lucide-react";
 import EstateSceneLazy, { type EstateSceneProps } from "@/components/estate/EstateSceneLazy";
 import { cx } from "@/components/ui";
 import s from "./config.module.css";
@@ -43,13 +42,9 @@ export function LivePreview({ plot, units, highlight, focusLabel, dirty, selecte
         </span>
         {dirty && <span className={s.unsavedChip}>Unsaved — not stored yet</span>}
         <span className={s.previewHint} aria-live="polite">
-        {focusLabel ? (
+        {focusLabel && (
           <>
             <span className={s.hintKey}>Showing</span> {focusLabel}
-          </>
-        ) : (
-          <>
-            <MousePointerClick aria-hidden /> Click into a field — its measurement lights up on the model
           </>
         )}
         </span>

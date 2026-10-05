@@ -1,7 +1,7 @@
 "use client";
 import { Coins, DoorOpen, FileSignature, Plus, ReceiptText } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge, Button, EmptyState, StatusPill, Table, type Column } from "@/components/ui";
+import { Badge, Button, EmptyState, StatusPill } from "@/components/ui";
 import {
   ChoiceGroup,
   Facts,
@@ -14,11 +14,10 @@ import {
   useLeases,
   type LeasePhase,
 } from "@/components/forms";
-import { sumAmounts } from "@/lib/calculations";
 import { useApi } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
-import { leaseDeleteBlockedMessage, type LeaseDetail, type LeaseListItem } from "@/lib/schemas/lease";
+import { leaseDeleteBlockedMessage, type LeaseDetail } from "@/lib/schemas/lease";
 import {
   BlockedNote,
   DataPanel,
@@ -30,14 +29,12 @@ import {
   RecordDrawer,
   Spacer,
   Stack2,
-  TotalLabel,
   editInDrawer,
-  shortPeriod,
   useCreate,
-  useNarrow,
   useNewSignal,
   useSelection,
 } from "./shared";
+import { CardGrid, GameCard, initials } from "./cards";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
@@ -56,7 +53,6 @@ export function PhasePill({ phase, size = "sm" }: { phase: LeasePhase; size?: "s
 
 export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
   const leases = useLeases();
-  const narrow = useNarrow();
   const sel = useSelection(openId, onOpened);
   const create = useCreate();
   useNewSignal(newSignal, create.start);
@@ -69,42 +65,7 @@ export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
     return c;
   }, [all]);
   const rows = useMemo(() => (all ? all.filter((l) => filter === "all" || leasePhase(l) === filter) : undefined), [all, filter]);
-  const collected = rows ? sumAmounts(rows.map((l) => ({ amount: l.paymentsTotal }))) : 0;
 
-  const footerLabel = rows?.length ? <TotalLabel scope="All time" count={rows.length} noun={["lease", "leases"]} /> : undefined;
-  const columns: Column<LeaseListItem>[] = narrow
-    ? [
-        { key: "who", header: "Lease", wrap: true, cell: (l) => <Stack2 top={l.tenant.name} bottom={`${l.unit.name} · ${leaseSpan(l)}`} />, footer: footerLabel },
-        { key: "rent", header: "Rent / mo", numeric: true, cell: (l) => formatINR(l.monthlyRent) },
-      ]
-    : [
-        { key: "unit", header: "Unit", sortValue: (l) => l.unit.name, cell: (l) => <span className={s.strong}>{l.unit.name}</span>, footer: footerLabel },
-        { key: "tenant", header: "Tenant", sortValue: (l) => l.tenant.name, cell: (l) => l.tenant.name },
-        { key: "start", header: "First day", sortValue: (l) => l.startDate, cell: (l) => <span className="num">{formatDate(l.startDate)}</span> },
-        {
-          key: "end",
-          header: "Last day",
-          sortValue: (l) => l.endDate ?? "9999",
-          cell: (l) => (l.endDate ? <span className="num">{formatDate(l.endDate)}</span> : <span className="faint">open</span>),
-        },
-        { key: "rent", header: "Rent / month", numeric: true, sortValue: (l) => l.monthlyRent, cell: (l) => formatINR(l.monthlyRent) },
-        { key: "deposit", header: "Deposit", numeric: true, sortValue: (l) => l.securityDeposit, cell: (l) => (l.securityDeposit ? formatINR(l.securityDeposit) : <span className="faint">—</span>) },
-        {
-          key: "collected",
-          header: "Rent collected",
-          numeric: true,
-          sortValue: (l) => l.paymentsTotal,
-          cell: (l) => formatINR(l.paymentsTotal, l.paymentsTotal % 1 !== 0),
-          footer: rows?.length ? <span className="pos">{formatINR(collected, collected % 1 !== 0)}</span> : undefined,
-        },
-        {
-          key: "last",
-          header: "Last paid",
-          sortValue: (l) => (l.lastPaidPeriod ? l.lastPaidPeriod.year * 12 + l.lastPaidPeriod.month : 0),
-          cell: (l) => (l.lastPaidPeriod ? <span className="num">{shortPeriod(l.lastPaidPeriod)}</span> : <span className="faint">—</span>),
-        },
-        { key: "status", header: "Status", cell: (l) => <PhasePill phase={leasePhase(l)} /> },
-      ];
 
   const emptyText: Record<Filter, string> = {
     current: "Nobody is renting right now.",
@@ -139,20 +100,14 @@ export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
           </>
         }
       >
-        <Table
-          fill
-          columns={columns}
-          rows={rows}
-          loading={leases.loading}
-          rowKey={(l) => l.id}
-          onRowClick={(l) => sel.select(l.id)}
-          selectedKey={sel.selected}
-          caption="Leases"
+        <CardGrid
+          loading={leases.loading && !rows}
+          addLabel="Sign lease"
+          onAdd={create.start}
           empty={
             <EmptyState
               compact={Boolean(all?.length)}
               title={emptyText[filter]}
-              description={all?.length ? undefined : "A lease links a tenant to a unit with a rent and a deposit. Sign one to start tracking rent."}
               action={
                 all?.length && filter !== "all" ? (
                   <Button size="sm" variant="secondary" onClick={() => setFilter("all")}>
@@ -166,7 +121,26 @@ export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
               }
             />
           }
-        />
+        >
+          {(rows ?? []).map((l) => {
+            const phase = leasePhase(l);
+            return (
+              <GameCard
+                key={l.id}
+                badge={initials(l.tenant.name)}
+                title={l.tenant.name}
+                tag={{ text: l.unit.name, tone: phase === "current" ? "teal" : phase === "incoming" ? "marigold" : "muted" }}
+                line={leaseSpan(l)}
+                stats={[
+                  { label: "Rent", value: `${formatINR(l.monthlyRent)} /mo`, tone: phase === "past" ? "muted" : "teal" },
+                  { label: "Collected", value: formatINR(l.paymentsTotal, l.paymentsTotal % 1 !== 0) },
+                ]}
+                selected={sel.selected === l.id}
+                onOpen={() => sel.select(l.id)}
+              />
+            );
+          })}
+        </CardGrid>
       </DataPanel>
 
       <LeaseForm

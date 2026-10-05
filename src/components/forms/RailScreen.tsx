@@ -1,5 +1,6 @@
 "use client";
-// One-screen frame for Data and Config: a game-style tab rail on the left (a chip strip on phones) and one panel.
+// One-screen frame for Data and Config ("option C", owner): chunky game buttons for the sections across the top, one
+// gold-bordered panel below, all over a blurred picture of the estate.
 // Number keys 1–9 switch tabs and N runs the active tab's "add" action (ignored while typing or in a dialog).
 import { useEffect, useRef, type ReactNode } from "react";
 import { cx, isFocusTrapActive } from "@/components/ui";
@@ -37,7 +38,7 @@ export interface RailScreenProps {
 const isTyping = (el: Element | null) =>
   !!el && (el.matches("input, textarea, select, [contenteditable='true']") || !!el.closest("[role='dialog']"));
 
-export function RailScreen({ eyebrow, title, tamil, items, value, onChange, onNew, children, label }: RailScreenProps) {
+export function RailScreen({ eyebrow, title, items, value, onChange, onNew, children, label }: RailScreenProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const latest = useRef({ items, onChange, onNew });
   useEffect(() => {
@@ -84,16 +85,12 @@ export function RailScreen({ eyebrow, title, tamil, items, value, onChange, onNe
 
   return (
     <div className={s.screen}>
+      <div className={s.backdrop} aria-hidden />
       <nav className={s.rail} aria-label={label}>
-        <header className={s.head}>
-          <div className={s.eyebrow}>
-            <span className={s.pip} aria-hidden />
-            {eyebrow}
-          </div>
-          <h1 className={s.title}>{title}</h1>
-          {tamil && <div className={cx(s.tamil, "tamil")}>{tamil}</div>}
-        </header>
-        <div ref={listRef} role="tablist" aria-orientation="vertical" aria-label={label} className={s.list} onKeyDown={onListKey}>
+        <h1 className={s.srOnly}>
+          {title} · {eyebrow}
+        </h1>
+        <div ref={listRef} role="tablist" aria-orientation="horizontal" aria-label={label} className={s.list} onKeyDown={onListKey}>
           {items.map((it, i) => {
             const on = it.id === value;
             return (
@@ -119,7 +116,7 @@ export function RailScreen({ eyebrow, title, tamil, items, value, onChange, onNe
           })}
         </div>
       </nav>
-      <div className={s.main} role="tabpanel" aria-label={items.find((it) => it.id === value)?.label}>
+      <div className={s.main} data-game-main role="tabpanel" aria-label={items.find((it) => it.id === value)?.label}>
         {children}
       </div>
     </div>

@@ -26,6 +26,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import { useEpochSecond } from "@/components/shell/IstClock";
 import { Field, Input, cx, useIsClient } from "@/components/ui";
 import { api, ApiClientError } from "@/lib/client";
@@ -178,6 +179,7 @@ function useMapCamera() {
 /* ---------- screen ---------- */
 
 export function LoginScreen({ next }: { next: string }) {
+  const router = useRouter();
   const sec = useEpochSecond();
   const hydrated = useIsClient();
   const now = sec ? new Date(sec * 1000) : null;
@@ -235,6 +237,8 @@ export function LoginScreen({ next }: { next: string }) {
   const start = useCallback(() => {
     const st = stageRef.current;
     if (st === "title") {
+      // fetch the 3D estate code while the owner types, so the hand-over doesn't wait on it
+      void import("@/components/estate/EstateScene");
       setStage("flying");
       cam.flyTo(
         endView(window.innerWidth, window.innerHeight),
@@ -307,7 +311,7 @@ export function LoginScreen({ next }: { next: string }) {
           easeIn,
         );
       window.setTimeout(
-        () => window.location.replace(next),
+        () => router.replace(next),
         reduce ? 0 : DIVE_MS + 80,
       );
     } catch (err) {

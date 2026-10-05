@@ -62,6 +62,8 @@ export interface EstateSceneProps {
   wheelZoom?: "focus" | "always";
   /** Hero fly-in on first load (default true in hero mode). */
   intro?: boolean;
+  /** Called once the scene has drawn its first few frames (shaders warmed up) — or straight away when the 2D fallback shows. */
+  onFirstFrame?: () => void;
   /** Override the default camera angle: theta (azimuth, rad, 0 = straight from the street), phi (from vertical), fit (zoom multiplier). */
   cameraView?: { theta?: number; phi?: number; fit?: number };
   /** Show fps / draw calls / triangles (for performance checks). */
@@ -119,6 +121,17 @@ class SceneBoundary extends Component<{ fallback: ReactNode; children: ReactNode
   }
 }
 
+/** Fires `onDone` once after a few rendered frames, when the first-render hitch (shader compile, uploads) is behind us. */
+function FirstFrames({ onDone }: { onDone: () => void }) {
+  const n = useRef(0);
+  const done = useRef(onDone);
+  done.current = onDone;
+  useFrame(() => {
+    if (++n.current === 4) done.current();
+  });
+  return null;
+}
+
 interface ThreeHandle {
   camera: THREE.Camera;
   canvas: HTMLCanvasElement;
@@ -147,7 +160,9 @@ export default function EstateScene(props: EstateSceneProps) {
   const spots = useRef(new Map<string, Spot>());
 
   useEffect(() => {
-    setWebgl(hasWebGL());
+    const gl = hasWebGL();
+    setWebgl(gl);
+    if (!gl) props.onFirstFrame?.();
     const rm = prefersReducedMotion();
     setReduced(rm);
     const phone = window.matchMedia?.("(max-width: 720px) and (pointer: coarse), (max-width: 520px)").matches ?? false;
@@ -244,6 +259,7 @@ export default function EstateScene(props: EstateSceneProps) {
               spots={spots}
               onCursor={setHoverCursor}
             />
+            {props.onFirstFrame && <FirstFrames onDone={props.onFirstFrame} />}
             {props.debug && <DebugStats target={debugEl} tier={tier} />}
             {!props.quality && tier !== "low" && (
               <PerformanceMonitor flipflops={1} onDecline={() => setAutoTier((t) => (t === "high" ? "mid" : "low"))} />

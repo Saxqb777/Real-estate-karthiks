@@ -1,11 +1,11 @@
 "use client";
 import { FileSignature, MessageCircle, Phone, Plus, UserPlus } from "lucide-react";
-import { Button, EmptyState, Table, type Column } from "@/components/ui";
+import { Button, EmptyState } from "@/components/ui";
 import { Facts, TenantForm, drawerFrame, leasePhase, leaseSpan, quickAdd, useTenants } from "@/components/forms";
 import { useApi } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
-import type { TenantDetail, TenantListItem } from "@/lib/schemas/tenant";
+import type { TenantDetail } from "@/lib/schemas/tenant";
 import {
   BlockedNote,
   DataPanel,
@@ -19,11 +19,11 @@ import {
   Stack2,
   editInDrawer,
   useCreate,
-  useNarrow,
   useNewSignal,
   useSelection,
 } from "./shared";
 import { PhasePill } from "./LeasesTab";
+import { CardGrid, GameCard, initials } from "./cards";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
@@ -36,58 +36,11 @@ const waHref = (phone: string) => {
 
 export function TenantsTab({ openId, onOpened, goto, newSignal }: TabProps) {
   const tenants = useTenants();
-  const narrow = useNarrow();
   const sel = useSelection(openId, onOpened);
   const create = useCreate();
   useNewSignal(newSignal, create.start);
   const items = tenants.data?.items;
 
-  const columns: Column<TenantListItem>[] = narrow
-    ? [
-        {
-          key: "name",
-          header: "Tenant", wrap: true,
-          cell: (t) => <Stack2 top={t.name} bottom={t.activeLease ? `${t.activeLease.unitName} · since ${formatDate(t.activeLease.startDate)}` : "Not renting now"} />,
-        },
-        { key: "rent", header: "Rent / mo", numeric: true, cell: (t) => (t.activeLease ? formatINR(t.activeLease.monthlyRent) : <span className="faint">—</span>) },
-      ]
-    : [
-        { key: "name", header: "Name", sortValue: (t) => t.name, cell: (t) => <span className={s.strong}>{t.name}</span> },
-        {
-          key: "phone",
-          header: "Phone",
-          cell: (t) =>
-            t.phone ? (
-              <a href={telHref(t.phone)} className={s.tel} onClick={(e) => e.stopPropagation()}>
-                <Phone aria-hidden />
-                {t.phone}
-              </a>
-            ) : (
-              <span className="faint">—</span>
-            ),
-        },
-        {
-          key: "unit",
-          header: "Lives in",
-          sortValue: (t) => t.activeLease?.unitName ?? "",
-          cell: (t) => (t.activeLease ? t.activeLease.unitName : <span className="faint">Not renting now</span>),
-        },
-        {
-          key: "since",
-          header: "Since",
-          sortValue: (t) => t.activeLease?.startDate ?? "",
-          cell: (t) => (t.activeLease ? <span className="num">{formatDate(t.activeLease.startDate)}</span> : <span className="faint">—</span>),
-        },
-        {
-          key: "rent",
-          header: "Rent / month",
-          numeric: true,
-          sortValue: (t) => t.activeLease?.monthlyRent ?? null,
-          cell: (t) => (t.activeLease ? formatINR(t.activeLease.monthlyRent) : <span className="faint">—</span>),
-        },
-        { key: "leases", header: "Leases", numeric: true, sortValue: (t) => t.leasesCount, cell: (t) => t.leasesCount },
-      ];
-  if (items?.length) columns[0] = { ...columns[0], footer: <span className={s.totalLabel}>{items.length} {items.length === 1 ? "tenant" : "tenants"}</span> };
 
   return (
     <>
@@ -100,20 +53,13 @@ export function TenantsTab({ openId, onOpened, goto, newSignal }: TabProps) {
           </Button>
         }
       >
-        <Table
-          fill
-          columns={columns}
-          rows={items}
-          loading={tenants.loading}
-          rowKey={(t) => t.id}
-          onRowClick={(t) => sel.select(t.id)}
-          selectedKey={sel.selected}
-          defaultSort={{ key: "name", dir: "asc" }}
-          caption="Tenants"
+        <CardGrid
+          loading={tenants.loading && !items}
+          addLabel="New tenant"
+          onAdd={create.start}
           empty={
             <EmptyState
               title="No tenants yet"
-              description="Add the people who rent your units. Then sign a lease to link each one to a unit."
               action={
                 <Button variant="primary" size="sm" icon={<UserPlus />} onClick={create.start}>
                   Add tenant
@@ -121,7 +67,39 @@ export function TenantsTab({ openId, onOpened, goto, newSignal }: TabProps) {
               }
             />
           }
-        />
+        >
+          {[...(items ?? [])]
+            .sort((a, b) => Number(Boolean(b.activeLease)) - Number(Boolean(a.activeLease)) || a.name.localeCompare(b.name))
+            .map((t) => (
+              <GameCard
+                key={t.id}
+                badge={initials(t.name)}
+                title={t.name}
+                tag={t.activeLease ? { text: t.activeLease.unitName, tone: "teal" } : { text: "Not renting", tone: "muted" }}
+                line={
+                  t.phone ? (
+                    <span className={s.tel}>
+                      <Phone aria-hidden />
+                      {t.phone}
+                    </span>
+                  ) : undefined
+                }
+                stats={
+                  t.activeLease
+                    ? [
+                        { label: "Rent", value: `${formatINR(t.activeLease.monthlyRent)} /mo`, tone: "teal" },
+                        { label: "Since", value: formatDate(t.activeLease.startDate) },
+                      ]
+                    : [
+                        { label: "Leases", value: `${t.leasesCount} past` },
+                        { label: "Rent", value: "—", tone: "muted" },
+                      ]
+                }
+                selected={sel.selected === t.id}
+                onOpen={() => sel.select(t.id)}
+              />
+            ))}
+        </CardGrid>
       </DataPanel>
 
       <TenantForm

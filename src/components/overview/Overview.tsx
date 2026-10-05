@@ -63,6 +63,23 @@ export function Overview({ layout = "immersive" }: OverviewProps) {
 
   // a bad / failed as-of date snaps back to today with a plain message
   const failedAsOf = asOf && dash.error ? dash.error.message : null;
+
+  // ARRIVAL: one calm loading screen (same as the login hand-over) covers the page until the figures are in and the
+  // 3D world has drawn its first frames; then it fades away and the whole game appears at once — no pop-ins.
+  const [sceneReady, setSceneReady] = useState(false);
+  const [arrived, setArrived] = useState(false);
+  const loadFailed = !data && Boolean(dash.error);
+  useEffect(() => {
+    void import("@/components/estate/EstateScene"); // fetch the 3D code while the figures load
+    const safety = window.setTimeout(() => setArrived(true), 15000);
+    return () => window.clearTimeout(safety);
+  }, []);
+  useEffect(() => {
+    if (!sceneReady && !loadFailed) return;
+    const t = window.setTimeout(() => setArrived(true), loadFailed ? 0 : 250);
+    return () => window.clearTimeout(t);
+  }, [sceneReady, loadFailed]);
+  const onSceneReady = useCallback(() => setSceneReady(true), []);
   useEffect(() => {
     if (!failedAsOf) return;
     toast.error("Couldn't show that date", { description: failedAsOf });
@@ -81,8 +98,19 @@ export function Overview({ layout = "immersive" }: OverviewProps) {
           error={!data ? dash.error?.message : undefined}
           retry={dash.reload}
           layout={layout}
+          onSceneReady={onSceneReady}
         />
       )}
+      <AnimatePresence>
+        {!arrived && (
+          <motion.div key="arrival" className={s.arrival} role="status" exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
+            <span className={s.arrivalText}>Arriving at your estate…</span>
+            <span className={s.arrivalBar}>
+              <i />
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Screen>
   );
 }
@@ -97,9 +125,10 @@ interface GameProps {
   error?: string;
   retry: () => void;
   layout: "immersive" | "framed";
+  onSceneReady: () => void;
 }
 
-function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps) {
+function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady }: GameProps) {
   const mobile = useMediaQuery(MOBILE_QUERY);
   const narrow = useMediaQuery("(max-width: 1179px)");
   const [period, setPeriod] = usePeriod();
@@ -406,7 +435,8 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   const sceneUnits = useMemo(() => sceneUnitsFromBreakdown(units), [units]);
   const framed = layout === "framed" && !mobile;
 
-  const scene = (
+  // the world waits for the figures, so the houses don't pop in (and re-frame the camera) after the first frames
+  const scene = (data || error) && (
     <EstateSceneLazy
       className={s.scene}
       plot={data?.plot ?? {}}
@@ -426,6 +456,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       getObjectScreen={getObjectScreen}
       cues={cues}
       hud={!mobile}
+      onFirstFrame={onSceneReady}
     />
   );
 

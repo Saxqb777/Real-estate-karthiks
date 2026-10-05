@@ -30,8 +30,8 @@ interface Flight {
   to: Pose;
   /** "home" / "focus": keeps following its goal if the framing changes mid-flight */
   goal: "home" | "focus" | null;
-  /** clock time the flight started (set on its first frame) */
-  start: number | null;
+  /** seconds flown so far (advanced by capped frame time, so a slow frame pauses the flight instead of skipping it) */
+  elapsed: number;
   dur: number;
   ease: (t: number) => number;
 }
@@ -221,7 +221,7 @@ export function CameraRig({
       flight.current = null;
       return;
     }
-    flight.current = { from: poseOf(camera, c.target), to, start: null, dur, ease, goal };
+    flight.current = { from: poseOf(camera, c.target), to, elapsed: 0, dur, ease, goal };
   };
 
   // view offset (HUD shift), eased every frame
@@ -239,7 +239,7 @@ export function CameraRig({
     } else if (intro && !reduced) {
       const from = { ...home, radius: home.radius * 1.9, phi: 0.45, theta: home.theta - 1.25 };
       apply(from);
-      flight.current = { from, to: home, start: null, dur: 3.2, ease: easeOutCubic, goal: "home" };
+      flight.current = { from, to: home, elapsed: 0, dur: 3.2, ease: easeOutCubic, goal: "home" };
     } else {
       apply(home);
     }
@@ -309,7 +309,7 @@ export function CameraRig({
     };
   }, [dom, zoomEnabled, mode]);
 
-  useFrame(({ clock }, dt) => {
+  useFrame((_, dt) => {
     const c = controls.current;
     const f = flight.current;
     // HUD view offset: the projection centre sits in the middle of the free area
@@ -325,8 +325,8 @@ export function CameraRig({
     }
     if (!c) return;
     if (f) {
-      f.start ??= clock.elapsedTime;
-      const t = Math.min(1, (clock.elapsedTime - f.start) / f.dur);
+      f.elapsed += Math.min(dt, 1 / 30);
+      const t = Math.min(1, f.elapsed / f.dur);
       const e = f.ease(t);
       const target = f.from.target.clone().lerp(f.to.target, e);
       apply({

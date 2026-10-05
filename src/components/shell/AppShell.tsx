@@ -49,7 +49,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             key={pathname}
             className={pathname === "/" ? styles.main : `${styles.main} ${styles.mainPadded}`}
             tabIndex={-1}
-            initial={{ opacity: 0 }}
+            // the overview brings its own arrival screen (it covers the page until the 3D world is drawn) — no fade under it
+            initial={pathname === "/" ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25 }}
           >

@@ -111,7 +111,6 @@ export function UnitsTab() {
                 <span className={s.buildCta}>
                   <Plus aria-hidden /> Build unit
                 </span>
-                <span className={s.slotNote}>Empty slot on the plot</span>
               </button>
             );
           })}
