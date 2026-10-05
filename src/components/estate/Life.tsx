@@ -6,7 +6,7 @@ import type { RefObject } from "react";
 import type { SiteLayout } from "@/lib/site-layout";
 import type { Tier } from "./Effects";
 import type { Env } from "./env";
-import { BlobShadows, Cow, Dog, Pedestrians, useMovers } from "./People";
+import { BlobShadows, Cow, Dog, Pedestrians, Photographer, useMovers } from "./People";
 import { Birds, Petals } from "./SkyLife";
 import type { World } from "./util";
 
@@ -24,6 +24,7 @@ export function Life({ layout, world, env, enabled, tier, mobile }: { layout: Si
       <Pedestrians layout={layout} world={world} env={env} count={n.ped} movers={movers.registry} />
       <Dog layout={layout} world={world} env={env} movers={movers.registry} />
       <Cow layout={layout} world={world} env={env} movers={movers.registry} />
+      <Photographer layout={layout} world={world} env={env} />
       <BlobShadows list={movers.list} max={n.ped + 2} />
       {n.birds && <Birds layout={layout} env={env} />}
       {n.petals > 0 && <Petals layout={layout} world={world} env={env} count={n.petals} />}

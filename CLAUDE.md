@@ -246,6 +246,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   overrides (postcss ^8.5.29, deepmerge-ts ^8.0.2); old unused report screens deleted (ReportsHub, AnnualStatement,
   UnitStory, RentLedgerReport, reports/charts, parts, selection). REPORTS have NO Print / PDF any more (owner) — header =
   title + year / lease / "As of" control only; rent receipts (/invoice) keep their Print button.
+- 6/10/2026: PHOTOGRAPHER (owner): blue shirt, dark trousers, camera on a TRIPOD (owner preferred a stand) on the grass
+  beside the hand pump by 116/B7 (plan: lane-side x − 10 ft, z = depth·0.26 — between the pump and the banana clumps,
+  clear of the garden walker's loop and the manager's path). 10 s loop: looks the house over → leans in to the viewfinder
+  → two shots, each a soft white FLASH sprite + a quick point light → checks the screen → turns the stand a little.
+  Photographer() in People.tsx, mounted in Life.tsx (so LIFE OFF hides him). Not clickable.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
