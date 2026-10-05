@@ -11,7 +11,7 @@ import { CircleHelp, Eye, History, Maximize, PanelLeft, RotateCcw, Swords } from
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import EstateSceneLazy, { type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind } from "@/components/estate/EstateSceneLazy";
-import { Button, EmptyState, IconButton, Kbd, Screen, confirmDialog, cx, toast, useIsClient } from "@/components/ui";
+import { Button, EmptyState, IconButton, Kbd, Screen, cx, toast, useIsClient } from "@/components/ui";
 import { QuickAddHost, quickAdd, usePropertyTax, useTenants, useYearMode } from "@/components/forms";
 import {
   DOCK_TABS,
@@ -38,6 +38,7 @@ import { formatDate } from "@/lib/dates";
 import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
 import { useOverviewCommands } from "./commands";
 import { HelpOverlay } from "./HelpOverlay";
+import { LeavePrompt } from "./LeavePrompt";
 import { MOBILE_QUERY, QUEST_KEY, TOUR_KEY, useFlag, useHotkeys, useMediaQuery } from "./hooks";
 import { MobileSheet, type SheetTab } from "./MobileSheet";
 import { QuestLog } from "./QuestLog";
@@ -116,9 +117,10 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   const [hudHidden, setHudHidden] = useState(false);
   // sign out = drive off in the owner's car (click it): it backs out and leaves while the screen fades to the title screen
   const [leaving, setLeaving] = useState(false);
-  const leaveEstate = useCallback(async () => {
-    const ok = await confirmDialog({ title: "Leave the estate?", message: "You'll get in the car, drive off and be signed out.", confirmLabel: "Drive off", cancelLabel: "Stay" });
-    if (!ok) return;
+  const [askLeave, setAskLeave] = useState(false);
+  const stay = useCallback(() => setAskLeave(false), []);
+  const driveOff = useCallback(() => {
+    setAskLeave(false);
     setLeaving(true);
     window.dispatchEvent(new Event("estate:leave"));
     window.setTimeout(() => void logout(), 4600);
@@ -233,7 +235,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   const onObjectClick = useCallback(
     (obj: SceneObject) => {
       if (obj.kind === "car") {
-        void leaveEstate();
+        setAskLeave(true);
         return;
       }
       setHudHidden(false);
@@ -255,7 +257,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       }
       inspect.onObjectClick(obj);
     },
-    [data, markExplored, openUnit, forms, inspect, narrow, pinProperty, setPropertyOpen, leaveEstate],
+    [data, markExplored, openUnit, forms, inspect, narrow, pinProperty, setPropertyOpen],
   );
 
   // hover hint after a short beat (the outline is instant) so sweeping the mouse across the world stays calm
@@ -461,16 +463,21 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       </button>
     ) : null;
 
-  const leaveEl = leaving && (
-    <motion.div
-      className={s.leaving}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 3, duration: 1.2, ease: "easeIn" }}
-      role="status"
-    >
-      <span>Leaving the estate…</span>
-    </motion.div>
+  const leaveEl = (
+    <>
+      <LeavePrompt open={askLeave} onStay={stay} onLeave={driveOff} />
+      {leaving && (
+        <motion.div
+          className={s.leaving}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 3, duration: 1.2, ease: "easeIn" }}
+          role="status"
+        >
+          <span>Leaving the estate…</span>
+        </motion.div>
+      )}
+    </>
   );
   const tourEl = <Tutorial open={tourOpen} onClose={endTour} locate={locate} units={units} insets={insets} rootEl={rootEl} />;
   const helpEl = (
