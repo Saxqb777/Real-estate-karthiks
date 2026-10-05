@@ -132,6 +132,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   FY; ⌘K can still switch). Sun/moon path kept high (y 0.76–0.88) so it's never hidden behind the island. Timeline left the
   bottom bar; top shell bar lost its IST/UAE clock and its sign-out button (car does that; ⌘K "Sign out" remains).
   Desktop only so far — phones still use their bottom sheet for the timeline.
+- 5/10/2026: floating unit labels ("116/B7" chips above the houses) REMOVED from the overview (showLabels off); names show on hover / "?" tags.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
