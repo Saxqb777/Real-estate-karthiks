@@ -42,7 +42,7 @@ const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 =
 /** "In arrears · due 10th of next month" / "In advance · due 1st" */
 function rentTimingLabel(timing: string, day: number | null): string {
   const on = day ? ordinal(day) : "usual due day";
-  return timing === "arrears" ? `In arrears · due ${on} of next month` : `In advance · due ${on}`;
+  return timing === "arrears" ? `IN ARREARS · due ${on} of next month` : `IN ADVANCE · due ${on}`;
 }
 
 type Filter = "current" | "incoming" | "past" | "all";

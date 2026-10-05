@@ -172,7 +172,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.
-  Lease form: "Rent billing" (In advance | In arrears) + "Due on day"; lease details "Rent billing". Payment form: "Other" method + Note removed.
+  Lease form: "Rent billing" (IN ADVANCE | IN ARREARS) + "Due on day"; lease details "Rent billing". Payment form: "Other" method + Note removed.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

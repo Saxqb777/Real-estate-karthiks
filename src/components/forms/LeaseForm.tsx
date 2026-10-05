@@ -185,8 +185,8 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
             value={v.rentTiming}
             onChange={(e) => form.set("rentTiming", e.target.value === "arrears" ? "arrears" : "advance")}
             options={[
-              { value: "advance", label: "In advance" },
-              { value: "arrears", label: "In arrears" },
+              { value: "advance", label: "IN ADVANCE" },
+              { value: "arrears", label: "IN ARREARS" },
             ]}
           />
         </Field>
