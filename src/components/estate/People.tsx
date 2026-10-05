@@ -861,7 +861,7 @@ function tripodParts(): Part[] {
 /**
  * Owner, 6/10/2026: a photographer on the grass beside the hand pump, by 116/B7 (the front unit), clear of the garden
  * walker's loop and the property manager's path. Camera on a TRIPOD (reads better than a hand-held one at this cartoon
- * scale): he stands at the camera and takes one picture every 15 s — the shot FLASHES (white burst + a quick point light).
+ * scale): he stands at the camera and takes two pictures every 15 s — each shot FLASHES (white burst + a quick point light).
  */
 export function Photographer({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
   const { geo, rig } = useRig(photographerLimbs, []);
@@ -881,9 +881,9 @@ export function Photographer({ layout, world, env }: { layout: SiteLayout; world
     const Z = world.z(p.z);
     return { X, Z, yaw: Math.atan2(world.x(aim.x) - X, world.z(aim.z) - Z) };
   }, [layout, world]);
-  // owner, 6/10/2026: no leaning in, no turning the stand — he just stands at the camera and takes a picture every 15 s
+  // owner, 6/10/2026: no leaning in, no turning the stand — he just stands at the camera; every 15 s two clicks, two flashes
   const CYCLE = 15;
-  const SHOTS = [1.2];
+  const SHOTS = [1.2, 2.6]; // two clicks, two flashes (owner)
   useFrame(() => {
     const g = root.current;
     if (!g) return;
@@ -892,7 +892,7 @@ export function Photographer({ layout, world, env }: { layout: SiteLayout; world
     g.rotation.y = spot.yaw;
     posePerson(rig.u, "idle", 0, e.t, 4.1);
     // right hand to the shutter button for the click, then back down
-    const press = t < 0.5 ? smoothstep(0, 0.5, t) : t < 1.8 ? 1 : t < 2.3 ? 1 - smoothstep(1.8, 2.3, t) : 0;
+    const press = t < 0.5 ? smoothstep(0, 0.5, t) : t < 3.2 ? 1 : t < 3.7 ? 1 - smoothstep(3.2, 3.7, t) : 0;
     const a = rig.u.uAng.value;
     a[P_ARM_R] = a[P_ARM_R] * (1 - press) - 1.1 * press;
     let f = 0;
