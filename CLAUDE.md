@@ -160,6 +160,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: SMOOTH ARRIVAL: login hands over with router.replace (soft nav) and preloads the 3D chunk; overview shows ONE
   "Arriving at your estate…" cover (same as login hand-over) until data + 4 rendered frames (EstateScene `onFirstFrame`),
   then fades 0.6 s; scene mounts only once data is in; no main fade on "/"; camera flights advance by capped dt (no jumps).
+- 5/10/2026: Settings "Subtitle" field + Categories "Built-in categories keep their names…" note REMOVED (owner). SMOOTHNESS
+  pass 2: 3D quality tier is fixed for the session (PerformanceMonitor used to drop high→mid during the slow first frames →
+  rebuilt the world, palms/grass popped); now it only nudges render resolution (dpr ±0.25, starts after 5 s; caps high 1.5,
+  mid 1.25). No live backdrop blur on HUD over the canvas (float nav, dock, Life button) or the Data/Config game panels.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

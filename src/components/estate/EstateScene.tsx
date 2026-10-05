@@ -149,6 +149,9 @@ export default function EstateScene(props: EstateSceneProps) {
   const [lifeState, setLifeState] = useState<boolean | null>(null);
   const [zoomFocus, setZoomFocus] = useState(false);
   const [autoTier, setAutoTier] = useState<Tier>("high");
+  // render resolution: adapts quietly to the device (the tier — and so what is in the world — never changes mid-session)
+  const [dpr, setDpr] = useState(1);
+  const [monitor, setMonitor] = useState(false);
   const [labels, setLabels] = useState<LabelSpec[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [hoverCursor, setHoverCursor] = useState(false);
@@ -184,6 +187,13 @@ export default function EstateScene(props: EstateSceneProps) {
   }, [mode]);
 
   const tier: Tier = props.quality ?? autoTier;
+  const maxDpr = tier === "high" ? 1.5 : tier === "mid" ? 1.25 : 1.75;
+  useEffect(() => {
+    setDpr(Math.min(window.devicePixelRatio || 1, maxDpr));
+    // judge the frame rate only once the first-load work (shader compile, uploads) is over
+    const t = window.setTimeout(() => setMonitor(true), 5000);
+    return () => window.clearTimeout(t);
+  }, [maxDpr]);
   const life = props.life ?? lifeState ?? !reduced;
   const hud = props.hud ?? mode === "hero";
   const active = onScreen && pageVisible;
@@ -234,7 +244,7 @@ export default function EstateScene(props: EstateSceneProps) {
           <Canvas
             className={`${s.canvas} ${s.fadeIn}`}
             shadows={{ type: THREE.PCFShadowMap }}
-            dpr={tier === "high" ? [1, 2] : tier === "mid" ? [1, 1.5] : [1, 1.75]}
+            dpr={dpr}
             frameloop={active ? "always" : "never"}
             camera={{ fov: FOV, near: 2, far: 6000, position: [-120, 140, 220] }}
             gl={{ antialias, powerPreference: "high-performance", stencil: false }}
@@ -261,8 +271,12 @@ export default function EstateScene(props: EstateSceneProps) {
             />
             {props.onFirstFrame && <FirstFrames onDone={props.onFirstFrame} />}
             {props.debug && <DebugStats target={debugEl} tier={tier} />}
-            {!props.quality && tier !== "low" && (
-              <PerformanceMonitor flipflops={1} onDecline={() => setAutoTier((t) => (t === "high" ? "mid" : "low"))} />
+            {monitor && (
+              <PerformanceMonitor
+                flipflops={4}
+                onDecline={() => setDpr((d) => Math.max(1, +(d - 0.25).toFixed(2)))}
+                onIncline={() => setDpr((d) => Math.min(Math.min(window.devicePixelRatio || 1, maxDpr), +(d + 0.25).toFixed(2)))}
+              />
             )}
           </Canvas>
         </SceneBoundary>

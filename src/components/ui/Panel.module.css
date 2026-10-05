@@ -226,9 +226,7 @@
 /* Data / Config ("option C", owner): the page panel sits on the estate backdrop in the game style — gold border with a
    soft glow, title in the display face. Applied to the panel directly inside a RailScreen main area. */
 :global([data-game-main]) .panel:not(.panel .panel) {
-  background: rgba(22, 17, 12, 0.74);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: rgba(22, 17, 12, 0.84); /* the backdrop image is already blurred — no live blur needed */
   border: 2px solid #c9922e;
   border-radius: 10px;
   box-shadow:

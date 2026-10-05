@@ -73,10 +73,6 @@ export function CategoriesTab() {
         </Button>
       }
     >
-      <p className={s.panelNote}>
-        <Lock aria-hidden /> Built-in categories keep their names (reports and the automatic property-tax expenses rely on them) — you can still recolour them.
-        Each colour is used for its category in every chart, table and legend.
-      </p>
       <Table fill columns={columns} rows={items} loading={cats.loading} rowKey={(c) => c.id} onRowClick={edit} caption="Expense categories" />
     </Panel>
   );

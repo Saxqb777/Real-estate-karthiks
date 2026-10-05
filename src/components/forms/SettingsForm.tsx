@@ -60,9 +60,6 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
           <Field label="Brand name" required error={form.error("brandName")}>
             <Input {...form.text("brandName")} icon={<Type />} autoComplete="off" />
           </Field>
-          <Field label="Subtitle" aside="optional" error={form.error("subtitle")} hint="Second line on rent receipts">
-            <Input {...form.text("subtitle")} autoComplete="off" placeholder="Rental homes · Pattukottai" />
-          </Field>
         </FormGrid>
       </FormSection>
 
