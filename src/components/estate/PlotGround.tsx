@@ -3,12 +3,14 @@
 // cream compound wall — square pillars, the same unbroken black line pattern on the outer face of EVERY side (owner:
 // uniform on all sides, no jaali panels), two black steel gates with a diamond motif (the main
 // gate at the front unit's stair foot, the back unit's gate mid-way along the lane wall) and a door-number pole
-// outside each gate. The wall is a separate enclosure on the plot boundary — it never touches a house. A tulsi maadam in the courtyard and potted marigolds.
-import { useEffect, useMemo } from "react";
+// outside each gate. The wall is a separate enclosure on the plot boundary — it never touches a house. Potted marigolds (the courtyard tulsi maadam was removed — owner).
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { BuildingSlot, CompoundWall, SiteLayout } from "@/lib/site-layout";
 import { ball, box, rod, type Part, type V3 } from "./bake";
 import { Baked, vcMaterial } from "./Baked";
+import { gateNear } from "./gate-state";
 import { G, PAL, std } from "./materials";
 import { gateTex, houseNumberTex, plasterTex, withRepeat } from "./textures";
 import { FLAT, planShape, type World } from "./util";
@@ -39,7 +41,6 @@ export function PlotGround({ layout, world }: { layout: SiteLayout; world: World
         <Porch key={s.slot} slot={s} world={world} />
       ))}
       <Walls layout={layout} world={world} />
-      {layout.courtyard && layout.courtyard.z1 - layout.courtyard.z0 > 5 && <Tulsi layout={layout} world={world} />}
       <Pots layout={layout} world={world} />
     </group>
   );
@@ -59,10 +60,11 @@ function Porch({ slot, world }: { slot: BuildingSlot; world: World }) {
  * Compound wall from the layout segments: cream wall + coping, square pillars (ends + every ~8 ft), the black line
  * pattern on the outer face of every wall, gate pillars.
  */
-function wallParts(layout: SiteLayout, world: World): { solid: Part[]; gates: { x: number; z: number; rotY: number; len: number }[] } {
+type GateSpot = { x: number; z: number; rotY: number; len: number; which: "front" | "side"; swing: number };
+function wallParts(layout: SiteLayout, world: World): { solid: Part[]; gates: GateSpot[] } {
   const walls: CompoundWall[] = layout.compoundWalls;
   const solid: Part[] = [];
-  const gates: { x: number; z: number; rotY: number; len: number }[] = [];
+  const gates: GateSpot[] = [];
   const cream = PAL.plasterWarm;
   const black = PAL.black;
   const P = layout.plot.polygon;
@@ -89,7 +91,10 @@ function wallParts(layout: SiteLayout, world: World): { solid: Part[]; gates: { 
         solid.push(box(at((sgn * len) / 2, (WALL_H + 0.7) / 2), [1.05, WALL_H + 0.7, 1.05], cream, [0, rotY, 0]));
         solid.push(box(at((sgn * len) / 2, WALL_H + 0.78), [1.25, 0.18, 1.25], PAL.cornice, [0, rotY, 0]));
       }
-      gates.push({ x: mx, z: mz, rotY, len });
+      // the leaf turns about its left end; +rotation swings its tip towards local −Z → pick the sign that swings it INTO the plot
+      const lz = { x: Math.sin(rotY), z: Math.cos(rotY) };
+      const swing = lz.x * nx + lz.z * nz > 0 ? 1 : -1;
+      gates.push({ x: mx, z: mz, rotY, len, which: w.gate === "side" ? "side" : "front", swing });
       continue;
     }
     solid.push(box(at(0, WALL_H / 2), [len, WALL_H, WALL_T], cream, [0, rotY, 0]));
@@ -156,6 +161,25 @@ function NumberPole({ pos, rotY, no }: { pos: V3; rotY: number; no: string }) {
   );
 }
 
+/** A gate leaf hinged on its left pillar: swings into the plot while a tenant walks through (gate-state.ts), then shuts. */
+function GateLeaf({ g, material }: { g: GateSpot; material: THREE.Material }) {
+  const hinge = useRef<THREE.Group>(null);
+  const open = useRef(0);
+  const w = Math.max(0.5, g.len - 1.05);
+  useFrame((_, dt) => {
+    const want = gateNear[g.which] ? 1 : 0;
+    open.current += (want - open.current) * (1 - Math.exp(-Math.min(dt, 0.1) * 3.2));
+    if (hinge.current) hinge.current.rotation.y = g.swing * open.current * 1.45;
+  });
+  return (
+    <group position={[g.x, 0, g.z]} rotation={[0, g.rotY, 0]}>
+      <group ref={hinge} position={[-w / 2, 0, 0]}>
+        <mesh geometry={G.plane()} material={material} position={[w / 2, (WALL_H - 0.2) / 2 + 0.2, 0]} scale={[w, WALL_H - 0.2, 1]} castShadow />
+      </group>
+    </group>
+  );
+}
+
 function Walls({ layout, world }: { layout: SiteLayout; world: World }) {
   const { solid, gates } = useMemo(() => wallParts(layout, world), [layout, world]);
   const poles = useMemo(() => numberPoles(layout, world), [layout, world]);
@@ -167,32 +191,10 @@ function Walls({ layout, world }: { layout: SiteLayout; world: World }) {
         <NumberPole key={p.no + p.rotY} {...p} />
       ))}
       {gates.map((g, i) => (
-        <group key={i} position={[g.x, 0, g.z]} rotation={[0, g.rotY, 0]}>
-          <mesh geometry={G.plane()} material={gateMat} position={[0, (WALL_H - 0.2) / 2 + 0.2, 0]} scale={[Math.max(0.5, g.len - 1.05), WALL_H - 0.2, 1]} castShadow />
-        </group>
+        <GateLeaf key={i} g={g} material={gateMat} />
       ))}
     </group>
   );
-}
-
-/** Tulsi maadam — the holy-basil planter found in Tamil courtyards. */
-function Tulsi({ layout, world }: { layout: SiteLayout; world: World }) {
-  const parts = useMemo<Part[]>(() => {
-    const c = layout.courtyard!;
-    const back = layout.slots.find((s) => s.slot === "back");
-    const X = world.x((back ? back.rect.x0 : layout.plot.rightX - 12) + 3.0); // courtyard, left of Unit B's stair
-    const Z = world.z(c.z0 + Math.min(2.2, (c.z1 - c.z0) * 0.25)); // against the front house, clear of Gate B
-    const p = (x: number, y: number, z: number): [number, number, number] => [X + x, y, Z + z];
-    return [
-      box(p(0, 0.25, 0), [2.2, 0.5, 2.2], PAL.plaster),
-      box(p(0, 1.8, 0), [1.6, 2.6, 1.6], PAL.plaster),
-      box(p(0, 3.15, 0), [1.75, 0.22, 1.75], PAL.terracotta),
-      box(p(0, 1.2, 0), [0.9, 0.18, 1.62], PAL.terracotta),
-      box(p(0, 1.9, 0.78), [0.5, 0.6, 0.1], "#2a1a12"),
-      ...[0, 1, 2, 3, 4].map((i) => ball(p(Math.sin(i * 2.1) * 0.35, 3.6 + i * 0.32, Math.cos(i * 2.1) * 0.35), 0.9 - i * 0.08, i % 2 ? "#3f7d3a" : "#4b8a40")),
-    ];
-  }, [layout, world]);
-  return <Baked parts={parts} cast receive />;
 }
 
 /** Terracotta pots of marigolds at porch mouths and courtyard corners. */

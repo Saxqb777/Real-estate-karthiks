@@ -226,6 +226,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   previews must be plain — title only).
 - 5/10/2026: DATA → PROPERTY TAX on phones: 2 columns — "year · unit / paid date" + amount with the MARK PAID button or
   PAID pill stacked under it (.taxAmt); nothing runs off the right edge.
+- 5/10/2026: courtyard TULSI MAADAM removed (owner). TENANTS WALK (owner): each tenant waits outside the unit's own gate,
+  the gate leaf (hinged on its left pillar, GateLeaf in PlotGround, swings INTO the plot) opens when they are within
+  2.4 ft (estate/gate-state.ts gateNear), they walk in, climb the dog-leg stair (lower flight → landing → upper flight →
+  platform), stroll on the terrace (pause looking out front), come back down, out of the gate and it shuts. Route =
+  tenantRoute() in People.tsx (plan ft legs with speeds + pauses, ~14 s wait outside). Still clickable (moving hotspot).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

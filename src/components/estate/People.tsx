@@ -11,6 +11,7 @@ import type { BuildingSlot, Pt, SiteLayout } from "@/lib/site-layout";
 import type { Env } from "./env";
 import { tileXRange } from "./Island";
 import { Hotspot, spotKey, useScene, type V3 } from "./Interact";
+import { gateNear } from "./gate-state";
 import { EDGE_CLIP, G } from "./materials";
 import { ball, box, cone, type Part } from "./bake";
 import { SKIN, personLimbs, posePerson, rigGeometry, rigMaterials, type Gait, type Limb, type Outfit, type RigMaterials } from "./rig";
@@ -259,36 +260,152 @@ const TENANT_OUTFITS: Outfit[] = [
   { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", towel: "#d9b26a", skin: SKIN.dark },
 ];
 
+/** One leg of the tenant's walk: to (x, z) in plan feet at height y, at this speed (ft/s), then a pause. */
+type Leg = { x: number; z: number; y: number; speed: number; pause?: number; look?: "front" };
+
 /**
- * The tenant of an occupied house, standing just outside the unit's own gate (Gate to Unit A in the front wall, Gate to
- * Unit B in the lane wall), or at the entrance when there is no gate. Clickable → "tenant". Waves when hovered.
+ * The tenant's day (owner, 5/10/2026): waits outside the unit's own gate, the gate swings open, walks in, climbs the
+ * dog-leg stair (lower flight → U-turn landing → upper flight → arrival platform), strolls out on the terrace and looks
+ * round, comes back down, walks out and the gate shuts behind. Loops on scene time.
+ */
+function tenantRoute(slot: BuildingSlot, gate: { x: number; z: number; side: boolean }): Leg[] {
+  const st = slot.stairs;
+  const w = st.x1 - st.x0;
+  const land = Math.min(2.4, w * 0.24);
+  const top = Math.min(1.8, w * 0.18);
+  const riser = Math.min(1.4, w * 0.14);
+  const H = slot.heightFt;
+  const runL = w - land;
+  const runU = w - riser - top - land;
+  const rise1 = (H * runL) / (runL + runU);
+  const zMid = (st.z0 + st.z1) / 2;
+  const lowZ = (st.z0 + zMid) / 2; // lower flight lane (towards the yard)
+  const upZ = (zMid + st.z1) / 2; // upper flight lane (along the house front)
+  const xLand = st.x1 - land / 2;
+  const xArr = st.x0 + riser + top / 2; // the gap in the front parapet
+  const r = slot.rect;
+  // outside / just outside / just inside the gate
+  const out = gate.side ? { x: gate.x - 4, z: gate.z + 0.6 } : { x: gate.x + 0.9, z: gate.z - 4 };
+  const near = gate.side ? { x: gate.x - 1.6, z: gate.z } : { x: gate.x, z: gate.z - 1.6 };
+  const inside = gate.side ? { x: gate.x + 2.2, z: gate.z } : { x: gate.x, z: gate.z + 2.2 };
+  const foot = { x: st.x0 - 1.0, z: lowZ };
+  const walk = 3.0;
+  const climb = 1.7;
+  const up: Leg[] = [
+    { ...near, y: 0, speed: walk, pause: 1.1 }, // the gate swings open
+    { ...inside, y: 0, speed: walk },
+    { ...foot, y: 0, speed: walk },
+    { x: st.x0 + 0.3, z: lowZ, y: 0, speed: walk },
+    { x: st.x1 - land, z: lowZ, y: rise1, speed: climb },
+    { x: xLand, z: lowZ, y: rise1, speed: climb },
+    { x: xLand, z: upZ, y: rise1, speed: climb },
+    { x: st.x1 - land - 0.1, z: upZ, y: rise1, speed: climb },
+    { x: st.x0 + riser + top, z: upZ, y: H, speed: climb },
+    { x: xArr, z: upZ, y: H, speed: climb },
+  ];
+  const terrace: Leg[] = [
+    { x: xArr, z: st.z1 + 1.6, y: H, speed: walk },
+    { x: (r.x0 + r.x1) / 2, z: r.z0 + (r.z1 - r.z0) * 0.35, y: H, speed: walk * 0.8, pause: 6, look: "front" },
+    { x: r.x0 + 3.5, z: r.z0 + 3, y: H, speed: walk * 0.8, pause: 3.5 },
+    { x: xArr, z: st.z1 + 1.6, y: H, speed: walk * 0.8 },
+  ];
+  // back down = the climb in reverse, then out of the gate and away (the gate shuts once they've stepped clear)
+  const rev = [...up].reverse();
+  // going down: stair pace until the foot, then a normal walk
+  const down = rev.map((l, i) => ({ ...l, pause: undefined, speed: i === 0 || l.y > 0 || rev[i - 1].y > 0 ? climb : walk }));
+  return [{ ...out, y: 0, speed: walk, pause: 14 }, ...up, ...terrace, ...down.slice(0, -1), { ...near, y: 0, speed: walk }, { ...out, y: 0, speed: walk }];
+}
+
+type Timed = { a: Leg; b: Leg; t0: number; t1: number; p1: number };
+function legTimeline(legs: Leg[]): { segs: Timed[]; period: number } {
+  const segs: Timed[] = [];
+  let t = 0;
+  for (let i = 0; i < legs.length; i++) {
+    const a = legs[i];
+    const b = legs[(i + 1) % legs.length];
+    const len = Math.hypot(b.x - a.x, b.z - a.z, b.y - a.y);
+    const dur = len / b.speed;
+    segs.push({ a, b, t0: t, t1: t + dur, p1: t + dur + (b.pause ?? 0) });
+    t += dur + (b.pause ?? 0);
+  }
+  return { segs, period: t };
+}
+
+/**
+ * The tenant of an occupied house (clickable → "tenant", waves when hovered while standing). Starts outside the unit's
+ * own gate (Gate to Unit A in the front wall, Gate to Unit B in the lane wall) and goes up to the terrace and back.
  */
 export function TenantFigure({ slot, world, env, index, gateAt }: { slot: BuildingSlot; world: World; env: RefObject<Env>; index: number; gateAt?: { x: number; z: number; side?: boolean } }) {
   const api = useScene();
   const hovered = !!slot.unit && api.hovered === spotKey("tenant", slot.unit.id);
   const outfit = TENANT_OUTFITS[index % TENANT_OUTFITS.length];
   const { geo, rig } = useRig(() => personLimbs(outfit), [outfit]);
+  const root = useRef<THREE.Group>(null);
+  const anchor = useMemo<V3>(() => [0, 7.2, 0], []);
   const side = !!gateAt?.side;
-  const pos = useMemo<V3>(() => {
-    if (gateAt && side) return [world.x(gateAt.x + 1.6), 0, world.z(gateAt.z + 0.9)];
-    if (gateAt) return [world.x(gateAt.x + 0.9), 0, world.z(-1.0)];
-    return [world.x(slot.door.x + 1.4), 0, world.z(slot.door.z - 1.4)];
-  }, [slot, world, gateAt, side]);
-  const anchor = useMemo<V3>(() => [pos[0], pos[1] + 7.2, pos[2]], [pos]);
-  const unitId = slot.unit?.id;
-  useFrame(() => {
+  // the gate itself (signAt sits 2.6 ft outside it: in front of Gate A, on the lane side of Gate B)
+  const gate = useMemo(() => (gateAt ? (side ? { x: gateAt.x + 2.6, z: gateAt.z, side } : { x: gateAt.x, z: 0, side }) : null), [gateAt, side]);
+  const tl = useMemo(() => (gate ? legTimeline(tenantRoute(slot, gate)) : null), [slot, gate]);
+  const heading = useRef<number | null>(null);
+  const walked = useRef(0);
+  const lastPick = useRef(0);
+  useEffect(() => () => {
+    if (gate) gateNear[gate.side ? "side" : "front"] = false;
+  }, [gate]);
+  useFrame((state) => {
+    const g = root.current;
+    if (!g) return;
     const e = env.current;
-    posePerson(rig.u, hovered ? "wave" : "idle", 0, e.t, index * 2.3);
+    let x = slot.door.x + 1.4;
+    let z = slot.door.z - 1.4;
+    let y = 0;
+    let dx = 0;
+    let dz = -1;
+    let moving = false;
+    let look: Leg["look"];
+    if (tl) {
+      const tt = (((e.t + index * 23) % tl.period) + tl.period) % tl.period;
+      const sg = tl.segs.find((s) => tt < s.p1) ?? tl.segs[tl.segs.length - 1];
+      const k = sg.t1 > sg.t0 ? Math.min(1, Math.max(0, (tt - sg.t0) / (sg.t1 - sg.t0))) : 1;
+      x = sg.a.x + (sg.b.x - sg.a.x) * k;
+      z = sg.a.z + (sg.b.z - sg.a.z) * k;
+      y = sg.a.y + (sg.b.y - sg.a.y) * k;
+      moving = tt < sg.t1 && Math.hypot(sg.b.x - sg.a.x, sg.b.z - sg.a.z) > 0.01;
+      dx = sg.b.x - sg.a.x;
+      dz = sg.b.z - sg.a.z;
+      if (!moving) look = sg.b.look;
+      if (gate) gateNear[gate.side ? "side" : "front"] = Math.hypot(x - gate.x, z - gate.z) < 2.4;
+      // a moving click target: re-pick now and then so hover follows them
+      if (state.clock.elapsedTime - lastPick.current > 0.15) {
+        lastPick.current = state.clock.elapsedTime;
+        state.events.update?.();
+      }
+    }
+    const X = world.x(x);
+    const Z = world.z(z);
+    g.position.set(X, y, Z);
+    const want = look === "front" ? 0 : Math.atan2(dx, -dz);
+    if (heading.current === null) heading.current = want;
+    if (moving || look) {
+      let dh = want - heading.current;
+      while (dh > Math.PI) dh -= Math.PI * 2;
+      while (dh < -Math.PI) dh += Math.PI * 2;
+      heading.current += dh * (1 - Math.exp(-e.dt * 6));
+    }
+    g.rotation.y = heading.current;
+    if (moving) walked.current += 2.4 * e.dt;
+    posePerson(rig.u, moving ? "walk" : hovered ? "wave" : "idle", (walked.current / 1.6) * Math.PI, e.t, index * 2.3);
+    anchor[0] = X;
+    anchor[1] = y + 7.2;
+    anchor[2] = Z;
   });
+  const unitId = slot.unit?.id;
   if (!unitId) return null;
   return (
-    <Hotspot
-      spot={{ key: spotKey("tenant", unitId), kind: "tenant", unitId, anchor }}
-      hit={<mesh geometry={G.box()} position={[pos[0], pos[1] + 3, pos[2]]} scale={[2.6, 6.4, 2.6]} visible={false} />}
-    >
-      {/* faces out of the gate: the front grass (world +Z) or the lane (world −X) */}
-      <group position={pos} rotation={[0, side ? -Math.PI / 2 + 0.35 : -0.55, 0]}>
+    <Hotspot spot={{ key: spotKey("tenant", unitId), kind: "tenant", unitId, anchor }}>
+      <group ref={root}>
         <RigMesh geo={geo} rig={rig} />
+        <mesh geometry={G.box()} position={[0, 3, 0]} scale={[2.6, 6.4, 2.6]} visible={false} />
       </group>
     </Hotspot>
   );
