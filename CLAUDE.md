@@ -136,6 +136,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: overview TOP STRIP REMOVED entirely on desktop (Property (P) button — plot marker opens plot + property
   breakdown — status chips, Setup quest button, as-of chip, ? and full-screen buttons). Keys still work (P, ?, F, ⌘K).
   Remaining HUD: shell top bar (brand · Overview/Data/Config · Jump to…) and the bottom chart dock.
+- 5/10/2026: walking man = PROPERTY MANAGER (renamed from officer everywhere). Hover bug fixed: a moving hotspot re-registers
+  with its new anchor on every hover change and the cleanup cleared the hover — now cleared only if the spot is really gone
+  (queueMicrotask check in EstateScene register); he is also re-picked ~8×/s (events.update) and has a bigger hit box.
+- 5/10/2026: chart dock has NO open/close arrow — click a tab to open, the same tab again to close (keys 1–6 too);
+  LIFE ON button sits 20 px above the dock.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
