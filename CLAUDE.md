@@ -152,6 +152,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: units are called by their NAMES (door numbers 116/B7 front, 116/B8 back) everywhere — positionLabel() returns
   null so chips/panels/charts show the unit name, never "Front"/"Back" unit; dock tab 3 = "<back name> vs <front name>"
   (live: "116/B8 vs 116/B7"). Plot "front/back width" and the unit Position picker in Config keep their geometry words.
+- 5/10/2026: panel footers carry no instruction ("Click a number for its breakdown", Esc hints, drill-down hint lines removed);
+  figure hover tips show the exact amount only. Click-to-drill still works.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
