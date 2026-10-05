@@ -298,8 +298,8 @@ function TaxStamp({ layout, world, env }: { layout: SiteLayout; world: World; en
   const anchor = useMemo<V3>(() => [X, top + rise + 3.0, Z], [X, Z, top, rise]);
   return (
     <Hotspot spot={{ key: "taxstamp", kind: "taxstamp", anchor }}>
-      {/* turned to face south-west (towards the front-left, owner) */}
-      <group position={[X, 0, Z]} rotation={[0, -Math.PI / 4, 0]}>
+      {/* turned to face south-south-west (owner) */}
+      <group position={[X, 0, Z]} rotation={[0, -Math.PI / 8, 0]}>
         <mesh geometry={G.box()} position={[0, 5, PD / 2]} scale={[W + 2.4, 10, D + PD + 2]} visible={false} />
         {/* mat walls */}
         <mesh geometry={G.box()} material={mat.wall} position={[0, B + H / 2, 0]} scale={[W, H, D]} castShadow receiveShadow />
