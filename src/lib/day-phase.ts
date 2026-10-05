@@ -55,7 +55,7 @@ export function formatTimeIST(now: Date = new Date()): string {
 }
 
 /** Owner's home clock (UAE, Gulf Standard Time, UTC+4, no DST). The property clock is IST. */
-export const HOME_ZONE = { label: "UAE", name: "Your time", offsetMin: 240 } as const;
+export const HOME_ZONE = { label: "GST", name: "Your time", offsetMin: 240 } as const;
 
 /** Clock parts for a fixed UTC offset (minutes): "1:00" "AM", weekday/day/month, fractional hour. */
 export function clockAt(now: Date, offsetMin: number) {
