@@ -184,6 +184,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   coral warnings)/.hint; "Click an offer…" list hint, copy-toast and setup toast descriptions removed.
 - 5/10/2026: BUG FIX (owner): a pinned window (e.g. the EB pole) reopened on every page load — the pinned-panel restore
   on load is REMOVED; the overview always starts on the clean 3D world. 📌 still keeps a window open while clicking around.
+- 5/10/2026: CAR ARRIVAL (owner): each time the estate opens the Land Cruiser drives in from beyond the island's front edge
+  (lamps on), slows while turning right, stops past its spot, then REVERSES in with the nose swinging (≈6 s, starts 0.7 s
+  after the world shows), brake dip + settle rock, then parks (hazards). Path = forward-time speed/turn profile integrated
+  BACKWARDS from the parked pose (arrivalPath in Fixtures.tsx) so it always ends exactly in the spot. Skipped for reduced
+  motion. Exit (Drive off) unchanged.
 - 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.

@@ -486,23 +486,100 @@ function PoleAndMeter({ layout, world, env, lampLight, crows }: { layout: SiteLa
 export const LEAVE_EVENT = "estate:leave";
 const CAR_YAW = Math.PI / 8; // ENE = 22.5° north of east; east = +X, north = −Z in the world, the car's nose points +X
 
+/**
+ * ARRIVAL (owner): every time the estate opens, the car drives up from the front of the island with its lamps on, turns,
+ * stops just past its spot, then REVERSES into it (nose swinging in), rocks on its springs and parks (hazards blink again).
+ * Built backwards from the parked pose so it always ends exactly in the spot: the forward-time speed / turn profile below
+ * is integrated in reverse from the parking pose, then played forwards.
+ */
+const ARRIVE_DELAY = 0.7; // s after the world appears
+const ARRIVE_DT = 1 / 60;
+function arrivalProfile(t: number): { v: number; w: number } {
+  // 0–1.0 s straight in from the front · 1.0–3.4 s slowing while turning right · 3.4–3.8 s stopped
+  // 3.8–5.9 s reversing into the spot while the nose swings in · then parked
+  if (t < 1.0) return { v: 9, w: 0 };
+  if (t < 3.4) {
+    const k = (t - 1.0) / 2.4;
+    return { v: 9 * Math.pow(1 - k, 1.6), w: -1.08 * Math.sin(Math.PI * k) };
+  }
+  if (t < 3.8) return { v: 0, w: 0 };
+  if (t < 5.9) {
+    const k = (t - 3.8) / 2.1;
+    const s = Math.sin(Math.PI * k);
+    return { v: -2.7 * s, w: 0.5 * s };
+  }
+  return { v: 0, w: 0 };
+}
+const ARRIVE_END = 5.9;
+const PARKED_AT = 3.4; // end of the forward run (brake dip)
+
+interface Pose {
+  x: number;
+  z: number;
+  yaw: number;
+}
+function arrivalPath(end: Pose): Pose[] {
+  // integrate backwards in time from the parked pose
+  const n = Math.round(ARRIVE_END / ARRIVE_DT);
+  const out: Pose[] = new Array(n + 1);
+  let { x, z, yaw } = end;
+  out[n] = { x, z, yaw };
+  for (let i = n - 1; i >= 0; i--) {
+    const { v, w } = arrivalProfile((i + 0.5) * ARRIVE_DT);
+    x -= Math.cos(yaw) * v * ARRIVE_DT;
+    z += Math.sin(yaw) * v * ARRIVE_DT;
+    yaw -= w * ARRIVE_DT;
+    out[i] = { x, z, yaw };
+  }
+  return out;
+}
+
 function ParkedCar({ layout, world }: { layout: SiteLayout; world: World }) {
   const FL = layout.plot.polygon[0];
   const M = layout.site.meadow;
   const X = world.x(FL.x - 5.5);
   const Z = world.z(M.z0 + 6.2);
   const g = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
   const [leaving, setLeaving] = useState(false);
+  // the arrival plays once per visit (not for reduced motion)
+  const [arriving, setArriving] = useState(() => typeof window === "undefined" || !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  const path = useMemo(() => arrivalPath({ x: X, z: Z, yaw: CAR_YAW }), [X, Z]);
+  const arrive = useRef({ t: -ARRIVE_DELAY });
   const run = useRef({ t: -1, x: X, z: Z, yaw: CAR_YAW });
   useEffect(() => {
-    const go = () => setLeaving(true);
+    const go = () => {
+      setArriving(false);
+      setLeaving(true);
+    };
     window.addEventListener(LEAVE_EVENT, go);
     return () => window.removeEventListener(LEAVE_EVENT, go);
   }, []);
   useFrame((_, dt) => {
-    if (!leaving || !g.current) return;
-    const r = run.current;
+    if (!g.current) return;
     const step = Math.min(dt, 0.05);
+    if (arriving && !leaving) {
+      const a = arrive.current;
+      a.t += step;
+      const t = Math.max(0, a.t);
+      g.current.visible = a.t >= 0;
+      const p = path[Math.min(path.length - 1, Math.floor(t / ARRIVE_DT))];
+      g.current.position.set(p.x, 0, p.z);
+      g.current.rotation.y = p.yaw;
+      // springs: dip when braking at the end of the run, rock back when the reverse stops
+      if (body.current) {
+        const dip = t > PARKED_AT ? -Math.exp(-(t - PARKED_AT) * 5) * Math.sin((t - PARKED_AT) * 16) * 0.035 : 0;
+        const rock = t > ARRIVE_END ? Math.exp(-(t - ARRIVE_END) * 5) * Math.sin((t - ARRIVE_END) * 16) * 0.03 : 0;
+        body.current.rotation.z = dip + rock;
+      }
+      if (t > ARRIVE_END + 1) {
+        if (body.current) body.current.rotation.z = 0;
+        setArriving(false);
+      }
+      return;
+    }
+    if (!leaving) return;
+    const r = run.current;
     r.t = r.t < 0 ? 0 : r.t + step;
     const t = r.t;
     const ease = (a: number, b: number) => Math.min(1, Math.max(0, (t - a) / (b - a)));
@@ -523,10 +600,13 @@ function ParkedCar({ layout, world }: { layout: SiteLayout; world: World }) {
     g.current.position.set(r.x, 0, r.z);
     g.current.rotation.y = r.yaw;
   });
+  const start = arriving ? path[0] : { x: X, z: Z, yaw: CAR_YAW };
   return (
     <Hotspot spot={{ key: "car", kind: "car", anchor: [X, 7, Z] }}>
-      <group ref={g} position={[X, 0, Z]} rotation={[0, CAR_YAW, 0]}>
-        <LandCruiser leaving={leaving} />
+      <group ref={g} position={[start.x, 0, start.z]} rotation={[0, start.yaw, 0]} visible={!arriving}>
+        <group ref={body}>
+          <LandCruiser leaving={leaving || arriving} />
+        </group>
       </group>
     </Hotspot>
   );
