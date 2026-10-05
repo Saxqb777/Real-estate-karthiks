@@ -470,3 +470,19 @@
 .mobile .asOfText {
   font-size: 12px;
 }
+
+/* sign-out: the car drives off while this fades in (then /login) */
+.leaving {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--bg-0);
+  font-family: var(--ff-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--marigold);
+}

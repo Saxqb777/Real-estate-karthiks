@@ -49,6 +49,7 @@ export function panelFor(obj: SceneObject): PanelTarget {
     case "taxstamp":
       return { kind: "tax" };
     case "plot":
+    case "car":
       return { kind: "property" };
   }
 }
@@ -198,6 +199,7 @@ const OBJECT_NAME: Record<SceneObjectKind, string> = {
   tenant: "Tenant",
   taxstamp: "Tax office",
   plot: "Plot",
+  car: "Car",
 };
 
 type Tone = "teal" | "marigold" | "coral" | "sky" | "neutral";
@@ -254,6 +256,8 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
       return { title: "Property tax", lines: ["Per year, per unit"], tone: "marigold", action: "Click to see what's due" };
     case "plot":
       return { title: `Plot · ${data.plot.areaSqft.toLocaleString("en-IN")} sqft`, lines: [`${data.plot.frontWidthFt}′ front · ${data.plot.depthFt}′ deep`], tone: "neutral", action: "Click for the plot" };
+    case "car":
+      return { title: "Land Cruiser", lines: ["Get in and drive off"], tone: "neutral", action: "Click to leave the estate (sign out)" };
   }
 }
 
@@ -659,5 +663,7 @@ function useCardParts({ obj, data, openForm, onExpand }: { obj: SceneObject | nu
           </>
         ),
       };
+    case "car":
+      return null;
   }
 }

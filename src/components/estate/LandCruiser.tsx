@@ -319,15 +319,19 @@ function buildCarGeometries(): Partial<Record<MatKey, THREE.BufferGeometry>> {
   return out;
 }
 
-export function LandCruiser(props: ThreeElements["group"]) {
+export function LandCruiser({ leaving = false, ...props }: ThreeElements["group"] & { leaving?: boolean }) {
   const geos = useMemo(buildCarGeometries, []);
   const mats = useMemo(
     () => Object.fromEntries(Object.entries(MATERIALS).map(([k, p]) => [k, new THREE.MeshStandardMaterial(p)])) as Record<MatKey, THREE.MeshStandardMaterial>,
     [],
   );
   // hazard lights: the four corner indicators (and the side repeaters) blink amber together, ~85 times a minute
+  // when driving off (sign-out) the hazards stop and the headlamps and tail lamps come on
   useFrame(({ clock }) => {
-    const on = clock.elapsedTime % 0.7 < 0.38;
+    mats.lens.emissive.set(leaving ? "#fff4d6" : "#3a3a32");
+    mats.lens.emissiveIntensity = leaving ? 2.4 : 0.25;
+    mats.red.emissiveIntensity = leaving ? 1.6 : 0.4;
+    const on = !leaving && clock.elapsedTime % 0.7 < 0.38;
     const a = mats.amber;
     a.emissive.set(on ? "#ffb21e" : "#3a2205");
     a.emissiveIntensity = on ? 2.6 : 0.3;

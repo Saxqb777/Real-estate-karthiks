@@ -492,10 +492,54 @@ function PoleAndMeter({ layout, world, env, lampLight, crows }: { layout: SiteLa
 }
 
 /** The owner's white Land Cruiser, parked on the open grass at the front-left of the island, nose to the ENE (owner).
- *  The walkers crossing the front grass keep to the strip between it and the front wall. */
+ *  The walkers crossing the front grass keep to the strip between it and the front wall.
+ *  Clicking it signs out (owner): the overview fires `estate:leave`, the car backs out, swings its nose to the front
+ *  and drives off the island while the screen fades to the title screen. */
+export const LEAVE_EVENT = "estate:leave";
+const CAR_YAW = Math.PI / 8; // ENE = 22.5° north of east; east = +X, north = −Z in the world, the car's nose points +X
+
 function ParkedCar({ layout, world }: { layout: SiteLayout; world: World }) {
   const FL = layout.plot.polygon[0];
   const M = layout.site.meadow;
-  // ENE = 22.5° north of east; east = +X, north = −Z in the world, and the car's nose points +X
-  return <LandCruiser position={[world.x(FL.x - 5.5), 0, world.z(M.z0 + 6.2)]} rotation={[0, Math.PI / 8, 0]} />;
+  const X = world.x(FL.x - 5.5);
+  const Z = world.z(M.z0 + 6.2);
+  const g = useRef<THREE.Group>(null);
+  const [leaving, setLeaving] = useState(false);
+  const run = useRef({ t: -1, x: X, z: Z, yaw: CAR_YAW });
+  useEffect(() => {
+    const go = () => setLeaving(true);
+    window.addEventListener(LEAVE_EVENT, go);
+    return () => window.removeEventListener(LEAVE_EVENT, go);
+  }, []);
+  useFrame((_, dt) => {
+    if (!leaving || !g.current) return;
+    const r = run.current;
+    const step = Math.min(dt, 0.05);
+    r.t = r.t < 0 ? 0 : r.t + step;
+    const t = r.t;
+    const ease = (a: number, b: number) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+    // 0–0.6 s lamps on · 0.6–2.4 s reverse while the nose swings right · pause · from 2.8 s drive off to the front
+    let v = 0;
+    let w = 0;
+    if (t > 0.6 && t < 2.4) {
+      const k = Math.sin(ease(0.6, 2.4) * Math.PI);
+      v = -2.6 * k;
+      w = -0.62 * k;
+    } else if (t >= 2.8) {
+      v = 3 + 16 * ease(2.8, 4.6);
+      w = r.yaw > -Math.PI / 2 ? -0.75 : 0;
+    }
+    r.yaw += w * step;
+    r.x += Math.cos(r.yaw) * v * step;
+    r.z -= Math.sin(r.yaw) * v * step;
+    g.current.position.set(r.x, 0, r.z);
+    g.current.rotation.y = r.yaw;
+  });
+  return (
+    <Hotspot spot={{ key: "car", kind: "car", anchor: [X, 7, Z] }}>
+      <group ref={g} position={[X, 0, Z]} rotation={[0, CAR_YAW, 0]}>
+        <LandCruiser leaving={leaving} />
+      </group>
+    </Hotspot>
+  );
 }

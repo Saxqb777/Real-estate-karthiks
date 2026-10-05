@@ -2,9 +2,9 @@
 // implements them in EstateScene.tsx. Pure types — safe to import from server or client code.
 
 /** Every interactive object in the world (DESIGN.md "World objects = data entry points"). */
-export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot";
+export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot" | "car";
 
-export const SCENE_OBJECT_KINDS: readonly SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "tolet", "tenant", "taxstamp", "plot"];
+export const SCENE_OBJECT_KINDS: readonly SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "tolet", "tenant", "taxstamp", "plot", "car"];
 
 /** Screen position in VIEWPORT pixels (same space as MouseEvent.clientX / clientY). */
 export interface ScreenPoint {
@@ -41,4 +41,5 @@ export const SCENE_OBJECT_INFO: Record<SceneObjectKind, { name: string; opens: s
   tenant: { name: "Tenant", opens: "Tenant profile" },
   taxstamp: { name: "Tax office", opens: "Property tax" },
   plot: { name: "Plot marker", opens: "Plot dimensions" },
+  car: { name: "Car", opens: "Leave the estate (sign out)" },
 };

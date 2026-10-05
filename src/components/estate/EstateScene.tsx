@@ -319,6 +319,7 @@ const OBJECT_HINT: Record<SceneObjectKind, string> = {
   tenant: "Click for profile & call",
   taxstamp: "Click to see or mark tax paid",
   plot: "Click for plot dimensions",
+  car: "Click to drive off (sign out)",
 };
 
 function SceneContents({
