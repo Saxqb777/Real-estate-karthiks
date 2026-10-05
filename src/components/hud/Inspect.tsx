@@ -637,9 +637,7 @@ function useCardParts({
               </div>
             ))}
           </div>
-        ) : (
-          <p className={s.cardText}>{tax.loading ? "Checking…" : "Nothing due."}</p>
-        ),
+        ) : null,
         actions: details,
       };
     }
