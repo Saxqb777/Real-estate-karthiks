@@ -140,7 +140,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   with its new anchor on every hover change and the cleanup cleared the hover — now cleared only if the spot is really gone
   (queueMicrotask check in EstateScene register); he is also re-picked ~8×/s (events.update) and has a bigger hit box.
 - 5/10/2026: chart dock has NO open/close arrow — click a tab to open, the same tab again to close (keys 1–6 too);
-  LIFE ON button sits 20 px above the dock.
+  LIFE ON button sits above the dock with its right edge aligned to the dock's (insets.right + 14). Dock tabs: no number
+  badges (keys 1–6 still work), icon + label centred in equal slots.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
