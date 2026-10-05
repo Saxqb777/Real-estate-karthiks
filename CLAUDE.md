@@ -182,6 +182,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   "— best offer"/"days let ÷ days owned" label tails, deposits line now "Deposits held ₹…"); static EmptyState descriptions
   removed (errors still show); FormNote renders only tone="warn"; reports hide .tableNote/.secNote/.lineNote/.note (not
   coral warnings)/.hint; "Click an offer…" list hint, copy-toast and setup toast descriptions removed.
+- 5/10/2026: BUG FIX (owner): a pinned window (e.g. the EB pole) reopened on every page load — the pinned-panel restore
+  on load is REMOVED; the overview always starts on the clean 3D world. 📌 still keeps a window open while clicking around.
 - 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.

@@ -229,20 +229,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
     }
   };
 
-  // 📌 pinned panels come back with the page (the right one by its last target)
-  const [lastPanel, setLastPanel] = useFlag(LAST_PANEL_KEY);
-  useEffect(() => {
-    if (panel && pinRight) setLastPanel(JSON.stringify(panel));
-  }, [panel, pinRight, setLastPanel]);
-  const pinInit = useRef(false);
-  useEffect(() => {
-    if (pinInit.current || !data) return;
-    pinInit.current = true;
-    if (mobile) return;
-    if (pinProperty) setPropertyOpen(true);
-    const t = parsePanel(lastPanel);
-    if (t && isPinned(t.kind) && (t.kind !== "unit" || data.units.some((u) => u.id === t.unitId))) openPanel(t);
-  }, [data, pinProperty, mobile, setPropertyOpen, lastPanel, openPanel]);
+  // pinned windows no longer reopen on page load (owner, 5/10/2026): the overview always starts on the clean 3D world
 
   // a panel whose unit doesn't exist on the as-of date closes
   useEffect(() => {
@@ -709,32 +696,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       {helpEl}
     </div>
   );
-}
-
-// ---------------------------------------------------------------- pinned right panel
-
-const LAST_PANEL_KEY = "pe.overview.panel";
-const PANEL_KINDS = ["unit", "mailbox", "noticeboard", "pole", "tax"];
-
-function parsePanel(raw: string | null): PanelTarget | null {
-  if (!raw) return null;
-  try {
-    const t = JSON.parse(raw) as PanelTarget;
-    if (!t || !PANEL_KINDS.includes(t.kind)) return null;
-    if (t.kind === "unit" && typeof t.unitId !== "string") return null;
-    return t;
-  } catch {
-    return null;
-  }
-}
-
-/** Same store as the HUD's usePinned (read once at load). */
-function isPinned(id: string): boolean {
-  try {
-    return (window.localStorage.getItem("pe.hud.pins") ?? "").split(",").includes(id);
-  } catch {
-    return false;
-  }
 }
 
 // ---------------------------------------------------------------- insets
