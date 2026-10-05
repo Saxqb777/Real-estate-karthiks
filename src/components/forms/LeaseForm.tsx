@@ -180,13 +180,13 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         >
           <NumberInput {...form.number("monthlyRent")} currency placeholder="18,000" />
         </Field>
-        <Field label="Rent is paid" error={form.error("rentTiming")}>
+        <Field label="Rent billing" error={form.error("rentTiming")}>
           <Select
             value={v.rentTiming}
             onChange={(e) => form.set("rentTiming", e.target.value === "arrears" ? "arrears" : "advance")}
             options={[
-              { value: "advance", label: "In advance — October's rent in October" },
-              { value: "arrears", label: "After the month — October's rent in November" },
+              { value: "advance", label: "In advance" },
+              { value: "arrears", label: "In arrears" },
             ]}
           />
         </Field>
