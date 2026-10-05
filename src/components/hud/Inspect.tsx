@@ -190,18 +190,6 @@ export function HudPanelFor({ target, data, period, onClose, onOpenUnit, side, c
 
 // ---------------------------------------------------------------- hover hint
 
-const OBJECT_NAME: Record<SceneObjectKind, string> = {
-  unit: "House",
-  mailbox: "Mailbox",
-  noticeboard: "Property officer",
-  pole: "Electric pole",
-  tolet: "TO-LET board",
-  tenant: "Tenant",
-  taxstamp: "Tax office",
-  plot: "Plot",
-  car: "Car",
-};
-
 type Tone = "teal" | "marigold" | "coral" | "sky" | "neutral";
 
 function unitTone(u: UnitBreakdown): Tone {
@@ -261,18 +249,29 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
   }
 }
 
-/** Depth 1: small hover label that follows the object. Render it while `obj` is hovered and no card is open. */
+/** Depth 1: hovering a world object shows just its name tag (owner: same tags as the "?" view, no detail box). */
+const TAG_NAME: Record<SceneObjectKind, string> = {
+  unit: "House",
+  mailbox: "Mailbox",
+  noticeboard: "Property officer",
+  pole: "EB pole",
+  tolet: "TO-LET board",
+  tenant: "Tenant",
+  taxstamp: "Tax office",
+  plot: "Plot marker",
+  car: "Car",
+};
 export function WorldHint({ obj, data }: { obj: SceneObject | null; data: DashboardData }) {
   const isClient = useIsClient();
   if (!isClient) return null;
-  const h = obj?.screen ? hintFor(obj, data) : null;
+  const u = obj?.kind === "unit" && obj.unitId ? data.units.find((x) => x.id === obj.unitId) : undefined;
+  const name = obj ? (u?.name ?? TAG_NAME[obj.kind]) : "";
   return createPortal(
     <AnimatePresence>
-      {obj?.screen && h && (
+      {obj?.screen && (
         <motion.div
           key={`${obj.kind}:${obj.unitId ?? ""}`}
-          className={s.worldHint}
-          data-tone={h.tone}
+          className={s.worldTag}
           style={{ left: obj.screen.x, top: obj.screen.y }}
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
@@ -280,14 +279,7 @@ export function WorldHint({ obj, data }: { obj: SceneObject | null; data: Dashbo
           transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
           role="tooltip"
         >
-          <span className={s.hintKind}>{OBJECT_NAME[obj.kind]}</span>
-          <span className={s.hintTitle}>{h.title}</span>
-          {h.lines.map((l, i) => (
-            <span key={i} className={s.hintLine}>
-              {l}
-            </span>
-          ))}
-          <span className={s.hintAction}>{h.action}</span>
+          {name}
         </motion.div>
       )}
     </AnimatePresence>,
