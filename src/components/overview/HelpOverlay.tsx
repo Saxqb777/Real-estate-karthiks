@@ -1,12 +1,11 @@
 "use client";
 // "?" help overlay: labels every hotspot in the 3D world (from the scene's live object positions) and every HUD
-// control (elements carrying data-help="…"), plus the keyboard shortcuts. Esc / ? / a click closes it.
-import { PlayCircle, X } from "lucide-react";
+// control (elements carrying data-help="…") — names only. Esc / ? / a click closes it.
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ObjectScreenFn, SceneObjectKind } from "@/components/estate/EstateSceneLazy";
-import { Button, IconButton, Kbd, cx, useIsClient } from "@/components/ui";
+import { cx, useIsClient } from "@/components/ui";
 import { useEscape } from "@/components/hud";
 import type { UnitBreakdown } from "@/lib/dashboard-types";
 import s from "./help.module.css";
@@ -72,7 +71,7 @@ function worldSpots(units: UnitBreakdown[], mobile: boolean): Spot[] {
   return out;
 }
 
-const LABEL_H = 38;
+const LABEL_H = 28;
 
 function placeWorld(spots: Spot[], locate: ObjectScreenFn | null): Placed[] {
   if (!locate) return [];
@@ -89,7 +88,7 @@ function placeWorld(spots: Spot[], locate: ObjectScreenFn | null): Placed[] {
       const ly = Math.max(p.y - LABEL_H / 2, lastY + LABEL_H + 6);
       lastY = ly;
       // keep the whole label on screen (its width is estimated from the text)
-      const w = Math.max(sp.title.length * 8.2, sp.opens.length * 6.3) + 22;
+      const w = sp.title.length * 8.2 + 22;
       const lx = side === "left" ? Math.max(p.x - 44, w + 6) : Math.min(p.x + 44, vw - w - 6);
       out.push({ key: sp.key, x: p.x, y: p.y, lx, ly, side, title: sp.title, opens: sp.opens });
     }
@@ -122,7 +121,7 @@ function placeHud(): HudLabel[] {
   return placed;
 }
 
-export function HelpOverlay({ open, onClose, locate, units, mobile = false, onReplayTour }: HelpOverlayProps) {
+export function HelpOverlay({ open, onClose, locate, units, mobile = false }: HelpOverlayProps) {
   const isClient = useIsClient();
   const [world, setWorld] = useState<Placed[]>([]);
   const [hud, setHud] = useState<HudLabel[]>([]);
@@ -159,39 +158,6 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
 
   if (!isClient) return null;
 
-  // [key, what it does, full row?]
-  const keys: [ReactNode, string, boolean?][] = mobile
-    ? [
-        ["Tap a house", "its tenant, rent and value"],
-        ["Hold a house", "the action wheel"],
-        ["Tap the mailbox", "record rent"],
-        ["Swipe the sheet", "next tab"],
-        ["Drag the timeline", "see any past date"],
-      ]
-    : [
-        ["Click a house", "its tenant, rent and value", true],
-        ["Right-click a house", "action wheel — then keys 1–6", true],
-        [<Kbd key="p">P</Kbd>, "property totals"],
-        [
-          <span key="n" className={s.keyRange}>
-            <Kbd>1</Kbd>–<Kbd>6</Kbd>
-          </span>,
-          "charts",
-        ],
-        [<Kbd key="f">F</Kbd>, "just the world"],
-        [<Kbd key="k" keys={["mod", "k"]} />, "commands"],
-        [<Kbd key="e">Esc</Kbd>, "back one step"],
-        [<Kbd key="q">?</Kbd>, "this help"],
-        [
-          <span key="a" className={s.keyRange}>
-            <Kbd>←</Kbd>
-            <Kbd>→</Kbd>
-          </span>,
-          "on the timeline: one month at a time (Shift: a year)",
-          true,
-        ],
-      ];
-
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -222,45 +188,9 @@ export function HelpOverlay({ open, onClose, locate, units, mobile = false, onRe
               </svg>
               <span className={cx(s.label, w.side === "left" && s.labelLeft)} style={{ left: w.lx, top: w.ly }}>
                 <b>{w.title}</b>
-                <span>{w.opens}</span>
               </span>
             </div>
           ))}
-          <motion.section
-            className={cx(s.card, mobile && s.cardMobile)}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, delay: 0.05 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <header className={s.cardHead}>
-              <div>
-                <span className={s.eyebrow}>Help</span>
-                <h2 className={s.title}>What you can do here</h2>
-              </div>
-              <IconButton size="sm" label="Close (Esc)" icon={<X />} onClick={onClose} />
-            </header>
-            <p className={s.lead}>Everything in the world that glows when you point at it opens something. The labels show what.</p>
-            <dl className={s.keys}>
-              {keys.map(([k, v, wide], n) => (
-                <div key={n} className={cx(s.keyRow, wide && s.keyWide)}>
-                  <dt>{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className={s.cardActions}>
-              {!mobile && (
-                <Button size="sm" variant="secondary" icon={<PlayCircle />} onClick={onReplayTour}>
-                  Replay the tour
-                </Button>
-              )}
-              <span className={s.flex} />
-              <Button size="sm" variant="primary" onClick={onClose}>
-                Got it
-              </Button>
-            </div>
-          </motion.section>
         </motion.div>
       )}
     </AnimatePresence>,
