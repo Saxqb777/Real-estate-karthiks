@@ -1,0 +1,92 @@
+/* the sun / moon target + the TIME TRAVEL panel */
+.target {
+  position: fixed;
+  z-index: 30;
+  display: none;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.target:hover,
+.target:focus-visible,
+.target[data-active] {
+  box-shadow: 0 0 0 2px rgba(255, 207, 135, 0.55), 0 0 26px rgba(255, 181, 71, 0.45);
+  outline: none;
+}
+.tag {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: var(--ff-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: var(--marigold);
+  background: rgba(24, 21, 18, 0.96);
+  border: 1px solid rgba(255, 181, 71, 0.5);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+.tag b {
+  color: #fff6e6;
+  letter-spacing: 0.04em;
+}
+.dot {
+  width: 4px;
+  height: 4px;
+  background: var(--marigold);
+  transform: rotate(45deg);
+  opacity: 0.7;
+}
+
+.panel {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  bottom: clamp(70px, 10vh, 96px);
+  width: min(1040px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 12px 14px 10px;
+  background: rgba(22, 17, 12, 0.95);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
+  backdrop-filter: blur(10px) saturate(115%);
+  border: 2px solid #c9922e;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 5px rgba(201, 146, 46, 0.15),
+    0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.title {
+  font-family: var(--ff-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffcf87;
+}
+.period {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+.timeline {
+  min-width: 0;
+}

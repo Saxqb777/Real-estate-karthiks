@@ -4,6 +4,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
+import { skyBody } from "./sky-body";
 import { evalEnv, stepHour, targetHour, windAt, windDir, type Env, type TimeOfDay } from "./env";
 import type { SceneInsets } from "./types";
 import { damp } from "./util";
@@ -85,6 +86,7 @@ const BACK_FRAG = /* glsl */ `
  */
 export function Backdrop({ env, insets }: { env: RefObject<Env>; insets?: SceneInsets }) {
   const size = useThree((s) => s.size);
+  const gl = useThree((s) => s.gl);
   const freeX: [number, number] = [Math.min(0.45, (insets?.left ?? 0) / Math.max(1, size.width)), Math.max(0.55, 1 - (insets?.right ?? 0) / Math.max(1, size.width))];
   const geo = useMemo(() => new THREE.PlaneGeometry(2, 2), []);
   useEffect(() => () => geo.dispose(), [geo]);
@@ -129,12 +131,30 @@ export function Backdrop({ env, insets }: { env: RefObject<Env>; insets?: SceneI
     const span = Math.max(0.2, r - l);
     // sun: rises at the left of the free sky, sets at its right
     const day = (e.hour - 5.9) / (18.4 - 5.9);
-    u.uSun.value.set(l + span * (0.1 + 0.8 * day), 0.5 + 0.34 * Math.sin(Math.min(1, Math.max(0, day)) * Math.PI) - (day < 0 || day > 1 ? 0.2 : 0));
+    // kept high in the open sky above the island (owner clicks it for time travel), arcing a little through the day
+    u.uSun.value.set(l + span * (0.1 + 0.8 * day), 0.76 + 0.12 * Math.sin(Math.min(1, Math.max(0, day)) * Math.PI) - (day < 0 || day > 1 ? 0.2 : 0));
     u.uSunVis.value = e.sunVis * (1 - e.night * 0.8);
     const nightP = (((e.hour - 18.6 + 24) % 24) / (24 - 18.6 + 5.6));
-    u.uMoon.value.set(l + span * (0.12 + 0.76 * nightP), 0.56 + 0.3 * Math.sin(Math.min(1, Math.max(0, nightP)) * Math.PI));
+    u.uMoon.value.set(l + span * (0.12 + 0.76 * nightP), 0.76 + 0.12 * Math.sin(Math.min(1, Math.max(0, nightP)) * Math.PI));
     u.uMoonVis.value = e.moonVis;
+    // publish the brighter body's screen position for the HUD's sun/moon target
+    const sunV = u.uSunVis.value as number;
+    const moonV = e.moonVis;
+    const body = sunV >= moonV ? (u.uSun.value as THREE.Vector2) : (u.uMoon.value as THREE.Vector2);
+    const rect = gl.domElement.getBoundingClientRect();
+    skyBody.kind = sunV >= moonV ? "sun" : "moon";
+    skyBody.vis = Math.max(sunV, moonV);
+    skyBody.x = rect.left + body.x * rect.width;
+    skyBody.y = rect.top + (1 - body.y) * rect.height;
+    skyBody.r = 0.04 * rect.height;
+    skyBody.live = true;
   });
+  useEffect(
+    () => () => {
+      skyBody.live = false;
+    },
+    [],
+  );
   return <mesh geometry={geo} material={mat} frustumCulled={false} renderOrder={-100} />;
 }
 

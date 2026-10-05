@@ -39,6 +39,7 @@ import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
 import { useOverviewCommands } from "./commands";
 import { HelpOverlay } from "./HelpOverlay";
 import { LeavePrompt } from "./LeavePrompt";
+import { SkyTarget, TimePanel } from "./SkyTime";
 import { MOBILE_QUERY, QUEST_KEY, TOUR_KEY, useFlag, useHotkeys, useMediaQuery } from "./hooks";
 import { MobileSheet, type SheetTab } from "./MobileSheet";
 import { QuestLog } from "./QuestLog";
@@ -118,6 +119,8 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   // sign out = drive off in the owner's car (click it): it backs out and leaves while the screen fades to the title screen
   const [leaving, setLeaving] = useState(false);
   const [askLeave, setAskLeave] = useState(false);
+  // the sun / moon opens TIME TRAVEL (as-of timeline + FY/calendar period)
+  const [timeOpen, setTimeOpen] = useState(false);
   const stay = useCallback(() => setAskLeave(false), []);
   const driveOff = useCallback(() => {
     setAskLeave(false);
@@ -463,6 +466,14 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       </button>
     ) : null;
 
+  const skyEl = (
+    <>
+      <SkyTarget active={timeOpen} onClick={() => setTimeOpen((v) => !v)} />
+      {data && hasUnits && (
+        <TimePanel open={timeOpen} onClose={() => setTimeOpen(false)} period={<PeriodControl data={data} period={period} size="sm" />} timeline={scrubber} />
+      )}
+    </>
+  );
   const leaveEl = (
     <>
       <LeavePrompt open={askLeave} onStay={stay} onLeave={driveOff} />
@@ -616,11 +627,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
               </div>
               <div className={s.topRight}>
                 {asOfChip}
-                {data && hasUnits && (
-                  <div data-help="Period for cash figures · FY or calendar">
-                    <PeriodControl data={data} period={period} size="sm" />
-                  </div>
-                )}
                 <div className={s.tools}>
                   <IconButton
                     size="sm"
@@ -700,9 +706,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
                     hotkeys={!tourOpen && !helpOpen}
                   />
                 </div>
-                <div className={s.scrub} data-help="Drag back in time · ▶ plays the years">
-                  {scrubber}
-                </div>
               </motion.div>
             )}
           </motion.div>
@@ -731,6 +734,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
 
       {overlay}
       {leaveEl}
+      {skyEl}
       {tourEl}
       {helpEl}
     </div>

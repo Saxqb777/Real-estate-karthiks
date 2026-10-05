@@ -1,0 +1,98 @@
+"use client";
+// The sun / moon in the painted sky is a world object too (owner): hover it for the time at the property (IST) and at
+// home (UAE); click it for TIME TRAVEL — the as-of timeline and the FY / calendar period switch, in one floating panel.
+import { X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { skyBody } from "@/components/estate/sky-body";
+import { useEscape } from "@/components/hud";
+import { useEpochSecond } from "@/components/shell/IstClock";
+import { IconButton } from "@/components/ui";
+import { HOME_ZONE, clockAt, formatTimeIST } from "@/lib/day-phase";
+import s from "./sky.module.css";
+
+/** Invisible round target that rides on the sun / moon, with a name-tag style clock on hover. */
+export function SkyTarget({ onClick, active }: { onClick: () => void; active: boolean }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [kind, setKind] = useState<"sun" | "moon">("sun");
+  const [hover, setHover] = useState(false);
+  const sec = useEpochSecond();
+  const now = sec ? new Date(sec * 1000) : null;
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const el = ref.current;
+      if (el) {
+        const show = skyBody.live && skyBody.vis > 0.25;
+        const d = Math.max(56, skyBody.r * 2.6);
+        el.style.display = show ? "block" : "none";
+        el.style.left = `${skyBody.x - d / 2}px`;
+        el.style.top = `${skyBody.y - d / 2}px`;
+        el.style.width = el.style.height = `${d}px`;
+        setKind((k) => (k === skyBody.kind ? k : skyBody.kind));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const home = now ? clockAt(now, HOME_ZONE.offsetMin) : null;
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={s.target}
+      data-active={active || undefined}
+      aria-label={`${kind === "sun" ? "Sun" : "Moon"} — time travel`}
+      onClick={onClick}
+      onPointerEnter={() => setHover(true)}
+      onPointerLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+    >
+      <AnimatePresence>
+        {(hover || active) && now && home && (
+          <motion.span key="tag" className={s.tag} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
+            <span>
+              <b className="num">{formatTimeIST(now)}</b> IST
+            </span>
+            <span className={s.dot} aria-hidden />
+            <span>
+              <b className="num">
+                {home.time} {home.ampm}
+              </b>{" "}
+              {HOME_ZONE.label}
+            </span>
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </button>
+  );
+}
+
+/** Floating TIME TRAVEL panel: period switch + the as-of timeline. */
+export function TimePanel({ open, onClose, period, timeline }: { open: boolean; onClose: () => void; period: ReactNode; timeline: ReactNode }) {
+  useEscape(open, onClose);
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.section
+          key="time"
+          className={s.panel}
+          aria-label="Time travel"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 12 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <header className={s.head}>
+            <h2 className={s.title}>Time travel</h2>
+            <div className={s.period}>{period}</div>
+            <IconButton size="sm" label="Close (Esc)" icon={<X />} onClick={onClose} />
+          </header>
+          <div className={s.timeline}>{timeline}</div>
+        </motion.section>
+      )}
+    </AnimatePresence>
+  );
+}
