@@ -4,7 +4,7 @@
 import { BarChart3, CalendarRange, Columns2, PieChart, ReceiptText, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
-import { Kbd, cx, isFocusTrapActive } from "@/components/ui";
+import { cx, isFocusTrapActive } from "@/components/ui";
 import type { DashboardData, ExpenseSlice } from "@/lib/dashboard-types";
 import { GrowthChart } from "./charts/GrowthChart";
 import { IncomeExpenseChart } from "./charts/IncomeExpenseChart";
@@ -179,7 +179,6 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
               title={`${d.label} (${i + 1})`}
             >
               {on && <motion.span layoutId={`${uid}-plate`} className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
-              <Kbd className={s.tabKey}>{i + 1}</Kbd>
               <span className={s.tabIcon}>{d.icon}</span>
               <span className={s.tabLabel}>{d.label}</span>
               <span className={s.tabShort}>{d.short}</span>

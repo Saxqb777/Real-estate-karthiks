@@ -259,7 +259,7 @@ export default function EstateScene(props: EstateSceneProps) {
         </div>
       )}
       {hud && webgl && (
-        <div className={s.hud} style={props.insets ? { right: props.insets.right + 10, bottom: props.insets.bottom + 20 } : undefined}>
+        <div className={s.hud} style={props.insets ? { right: props.insets.right + 14, bottom: props.insets.bottom + 20 } : undefined}>
           <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => setLifeState(!life)} title="Life: people, animals, birds">
             Life {life ? "on" : "off"}
           </button>
