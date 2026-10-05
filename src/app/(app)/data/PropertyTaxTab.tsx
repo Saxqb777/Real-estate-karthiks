@@ -121,7 +121,6 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
             <EmptyState
               compact={Boolean(all?.length)}
               title={all?.length ? (filter === "Due" ? "Nothing due — all property tax is paid" : "Nothing paid yet") : "No property tax recorded yet"}
-              description={all?.length ? undefined : "Add each year's tax per unit. Marking it Paid adds the expense for you, so it's never counted twice."}
               action={
                 all?.length ? null : (
                   <Button size="sm" variant="primary" icon={<Landmark />} onClick={create.start}>

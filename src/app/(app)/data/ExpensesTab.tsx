@@ -192,7 +192,6 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
             <EmptyState
               compact={Boolean(all.data?.count)}
               title={all.data?.count ? `No expenses in ${scope}` : "No expenses yet"}
-              description={all.data?.count ? undefined : "Repairs, bills and fees you pay for the property show up here, by unit or for the whole plot."}
               action={
                 all.data?.count && filtered ? (
                   <Button size="sm" variant="secondary" onClick={clear}>
@@ -273,7 +272,7 @@ function ExpenseDrawer({ sel, goto }: { sel: ReturnType<typeof useSelection>; go
             <DeleteButton
               path={`/api/expenses/${e.id}`}
               what="this expense"
-              blocked={linked ? "Created by Property Tax — change it there" : null}
+              blocked={linked ? "From property tax" : null}
               onDeleted={sel.close}
               confirmMessage={`${money(e.amount)} · ${e.category.name} on ${formatDate(e.expenseDate)}.`}
             />

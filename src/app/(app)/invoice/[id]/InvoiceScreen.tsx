@@ -66,7 +66,7 @@ export function InvoiceScreen({ id }: { id: string }) {
           <div className={s.missing}>
             <EmptyState
               title={q.error.status === 404 ? "This receipt doesn't exist" : "The receipt couldn't load"}
-              description={q.error.status === 404 ? "The payment may have been deleted. Receipt numbers are never reused." : q.error.message}
+              description={q.error.status === 404 ? undefined : q.error.message}
               action={
                 q.error.status === 404 ? (
                   <LinkButton href="/data#payments" size="sm" variant="primary">

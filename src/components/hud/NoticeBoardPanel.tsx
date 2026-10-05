@@ -9,7 +9,6 @@ import { daysBetween, formatDate } from "@/lib/dates";
 import type { ActionDTO, PriorityValue } from "@/lib/schemas/action";
 import { HudPanel } from "./HudPanel";
 import { useFormDrawer } from "./FormDrawer";
-import s from "./hud.module.css";
 import b from "./bits.module.css";
 
 export interface NoticeBoardPanelProps {
@@ -49,7 +48,6 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
         pinId="noticeboard"
         onClose={onClose}
         className={className}
-        hint="Tick to mark done · tap a to-do to edit it"
         actions={
           <Button variant="primary" size="sm" icon={<ListPlus />} onClick={() => forms.open({ kind: "action" })}>
             Add a to-do
@@ -63,7 +61,7 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
           {late > 0 ? <Badge tone="coral" marker size="sm">{late} late</Badge> : items.length > 0 ? <Badge tone="teal" marker size="sm">None late</Badge> : null}
         </div>
         {items.length === 0 ? (
-          <EmptyState compact title="Nothing to do" description="The property manager has nothing on his list. Add a to-do when something comes up." />
+          <EmptyState compact title="Nothing to do" />
         ) : (
           <ul className={b.todos}>
             {items.map((a) => (
@@ -76,7 +74,6 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
             ))}
           </ul>
         )}
-        <p className={s.note}>Done items leave the board — find them under Data → To-dos.</p>
       </HudPanel>
       {forms.element}
     </>

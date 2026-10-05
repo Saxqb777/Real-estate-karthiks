@@ -145,8 +145,8 @@ export function HudPanel({
       </motion.div>
 
       {actions && <div className={s.panelActions}>{actions}</div>}
-      {/* no instruction line by default (owner) — only an explicit footer (e.g. the ledger badge) */}
-      {hint != null && (
+      {/* no instruction lines (owner): only a non-text footer such as the ledger badge renders here */}
+      {hint != null && typeof hint !== "string" && (
         <div className={s.panelHint}>
           {hint}
         </div>

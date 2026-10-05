@@ -186,9 +186,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
     else if (wasIncomplete.current) {
       wasIncomplete.current = false;
       setQuestOpen(false);
-      toast.success("Setup complete", {
-        description: "Your estate is running — click a house any time to see how it's doing.",
-      });
+      toast.success("Setup complete");
     }
   }, [quests, questsLoaded]);
   const takenPositions = useMemo(

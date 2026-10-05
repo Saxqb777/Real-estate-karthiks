@@ -116,11 +116,6 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
           empty={
             <EmptyState
               title={lease ? `No rent recorded for ${lease.tenant.name} yet` : "No rent recorded yet"}
-              description={
-                leases.data?.items.length
-                  ? "Each payment gets a numbered receipt you can print or share."
-                  : "Sign a lease first — rent is always recorded against a lease."
-              }
               action={
                 leases.data?.items.length ? (
                   <Button size="sm" variant="primary" icon={<Coins />} onClick={create.start}>

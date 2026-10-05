@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { FigLine, ScopeChip } from "./Figure";
+import { FigLine } from "./Figure";
 import { useFormDrawer } from "./FormDrawer";
 import { positionLabel } from "./format";
 import { Electricity, UnitStatusPill } from "./UnitPanel";
@@ -42,7 +42,6 @@ export function PolePanel({ data, onClose, side = "right", drill: external, clas
         onClose={onClose}
         className={className}
         accent="sky"
-        hint="Copy the consumer number, then pay on the TNPDCL site"
         actions={
           <Button
             variant="secondary"
@@ -69,7 +68,6 @@ export function PolePanel({ data, onClose, side = "right", drill: external, clas
               {slice ? (
                 <FigLine
                   label={`${slice.name} paid`}
-                  sub="Bills you recorded as expenses"
                   swatch={slice.color}
                   value={slice.amount}
                   tone="expense"
@@ -81,9 +79,6 @@ export function PolePanel({ data, onClose, side = "right", drill: external, clas
             </section>
           );
         })}
-        <p className={s.note}>
-          Bill totals are <ScopeChip>{data.scopeLabels.allTime}</ScopeChip> — counted when you paid them. While a unit is let, the tenant usually pays the bill directly.
-        </p>
       </DrillPanel>
       {forms.element}
     </>

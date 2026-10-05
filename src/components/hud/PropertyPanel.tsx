@@ -63,7 +63,6 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
         <EmptyState
           compact
           title="No units yet"
-          description="Build your first unit in Config — the numbers start as soon as it exists."
           action={
             <LinkButton href="/config#units" variant="primary" size="sm" icon={<Building2 />}>
               Build a unit
@@ -95,7 +94,7 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
             </div>
             {k.securityDepositsHeld > 0 && (
               <button type="button" className={b.aside} onClick={() => open("depositsHeld")}>
-                Also holding <b className="num">{inr(k.securityDepositsHeld)}</b> in deposits — tenants&rsquo; money, not income
+                Deposits held <b className="num">{inr(k.securityDepositsHeld)}</b>
               </button>
             )}
           </section>
@@ -114,7 +113,7 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
             </div>
             <div className={s.lines}>
               <FigLine label="Invested" value={k.invested} onClick={() => open("invested")} />
-              <FigLine label="Gain" sub="On paper — only real if you sell" value={k.appreciation} tone="value" paper="est." onClick={() => open("gain")} />
+              <FigLine label="Gain" value={k.appreciation} tone="value" paper="est." onClick={() => open("gain")} />
               <FigLine
                 label="Growth per year"
                 sub={k.cagr === null ? (k.cagrNote ?? undefined) : `Over ${k.holdingYears.toFixed(1)} years held`}
@@ -131,7 +130,7 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
             <BucketHead bucket="occupancy" scope={<ScopeChip past={past}>{data.scopeLabels.allTime}</ScopeChip>} />
             <div className={s.hero}>
               <div className={cx(s.heroMain, b.grow)}>
-                <span className={s.heroLabel}>Occupancy — days let ÷ days owned</span>
+                <span className={s.heroLabel}>Occupancy</span>
                 <div className={b.occRow}>
                   <Fig value={k.occupancyPct} format="pct" size="hero" onClick={() => open("occupancy")} />
                   <span className={b.letCount}>
@@ -143,7 +142,7 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
             </div>
             <div className={s.lines}>
               <FigLine label="Vacant days" value={k.vacantDays} format="days" onClick={() => open("vacantDays")} />
-              <FigLine label="Rent lost (vacant)" sub="What empty days could have earned — not taken from cash" value={k.unrealizedLoss} tone="dim" onClick={() => open("rentLost")} />
+              <FigLine label="Rent lost (vacant)" value={k.unrealizedLoss} tone="dim" onClick={() => open("rentLost")} />
             </div>
           </section>
         </>

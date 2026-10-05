@@ -172,7 +172,16 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: OPENED PANEL = CENTRE GAME MENU (owner picked option 3 over floating-right / grow-in-place / bottom drawer):
   "Open" shows the panel as one wide window (≤1080px) in the middle over a darkened world (.centreShade, click = close
   unless pinned); sections flow in up to 3 columns ([data-centre-panel] in hud.module.css); camera no longer shifts for a
-  right inset; hover tags hidden while it's open. (No tabs yet — the mock's tabs were not built.)
+  right inset; hover tags hidden while it's open. (No tabs yet — the mock's tabs were not built.) Centre body = CSS GRID
+  (auto-fit ≥300px columns), NOT CSS columns (columns split sections → overlapping text in the EB window).
+- 5/10/2026: TAX OFFICE window = a report in 3 columns: Summary (paid in total, still to pay, years recorded, last paid,
+  average a year) · By unit (paid so far, latest year + status, years paid) · Year by year (total + bar + per-unit rows,
+  Mark paid). Totals via sumAmounts().
+- 5/10/2026: NOTES/INSTRUCTIONS SWEEP (owner, again): HudPanel renders no text hint (only non-text footers like the ledger
+  badge); panel notes removed (pole bill note, to-do "done items" note, tax/pole/to-do footers, FigLine explanatory subs,
+  "— best offer"/"days let ÷ days owned" label tails, deposits line now "Deposits held ₹…"); static EmptyState descriptions
+  removed (errors still show); FormNote renders only tone="warn"; reports hide .tableNote/.secNote/.lineNote/.note (not
+  coral warnings)/.hint; "Click an offer…" list hint, copy-toast and setup toast descriptions removed.
 - 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.

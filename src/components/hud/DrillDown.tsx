@@ -149,7 +149,7 @@ export function categoryColor(data: DashboardData, categoryId: string): string |
 
 function MetricView({ data, explainKey, push, onOpenUnit }: { data: DashboardData; explainKey: string; push: (v: DrillView) => void; onOpenUnit?: (id: string) => void }) {
   const e = data.explain[explainKey];
-  if (!e) return <EmptyState compact title="No breakdown for this figure yet" description="It will appear once there are records behind it." />;
+  if (!e) return <EmptyState compact title="No breakdown for this figure yet" />;
   const canOpen = (inp: ExplainInput) =>
     Boolean(inputDrill(data, explainKey, inp)) || (inp.kind === "unit" && Boolean(onOpenUnit && inp.unitId)) || inp.kind === "offer" || inp.kind === "setting";
   const onInput = (inp: ExplainInput) => {
@@ -373,7 +373,7 @@ function ExpenseView({ id }: { id: string }) {
       {x.propertyTaxId ? (
         <p className={s.locked}>
           <Lock aria-hidden />
-          Added automatically when property tax was marked paid — change it from the tax office (property tax).
+          From property tax
         </p>
       ) : (
         <Button variant="secondary" icon={<Pencil />} onClick={() => setEditing(true)}>

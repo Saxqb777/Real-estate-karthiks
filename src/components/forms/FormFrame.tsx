@@ -152,6 +152,8 @@ export function FormSection({ title, children }: { title: ReactNode; note?: Reac
 
 /** Calm marigold note inside a form ("Marking Paid also adds a ₹4,820 expense"). */
 export function FormNote({ children, tone = "info", icon }: { children: ReactNode; tone?: "info" | "warn"; icon?: ReactNode }) {
+  // no explanatory notes on screen (owner); warnings about what a save will change still show
+  if (tone !== "warn") return null;
   return (
     <div className={cx(s.note, tone === "warn" && s.noteWarn)}>
       {icon}

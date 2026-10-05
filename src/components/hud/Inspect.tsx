@@ -435,7 +435,7 @@ function useCardParts({
     case "unit":
     case "tenant":
     case "tolet": {
-      if (!u) return { eyebrow: "Plot slot", title: "No unit here yet", body: <p className={s.cardText}>Build a unit in Config and it appears in the world.</p>, actions: <LinkButton size="sm" href="/config#units" variant="primary">Build a unit</LinkButton> };
+      if (!u) return { eyebrow: "Plot slot", title: "No unit here yet", body: null, actions: <LinkButton size="sm" href="/config#units" variant="primary">Build a unit</LinkButton> };
       const lease = u.activeLease;
       const np = u.nextPayment;
       const pos = positionLabel(u.position);
@@ -661,7 +661,6 @@ function useCardParts({
               <dt>Depth</dt>
               <dd className="num">{data.plot.depthFt} ft</dd>
             </div>
-            {data.plot.usingDefaults && <p className={s.cardText}>Using the site-plan drawing — set exact sizes in Config.</p>}
           </dl>
         ),
         actions: (

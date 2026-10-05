@@ -26,7 +26,7 @@ export function OffersTab() {
   if (!items.length) {
     return (
       <Panel fill eyebrow="Paper value" title="Offers">
-        <EmptyState title="No units yet" description="Build a unit first (Config → Units). Then record any offers buyers make for it." />
+        <EmptyState title="No units yet" />
       </Panel>
     );
   }
@@ -105,7 +105,6 @@ function UnitOffers({ unit, info }: { unit: UnitListItem; info?: UnitBreakdown }
             compact
             art={<HandCoins width={44} height={44} aria-hidden />}
             title="No offers yet"
-            description="Record a price when a buyer names one. Nothing is paid — it's paper value."
           />
         ) : (
           <ul>
@@ -127,7 +126,6 @@ function UnitOffers({ unit, info }: { unit: UnitListItem; info?: UnitBreakdown }
                 </button>
               </li>
             ))}
-            <li className={s.listHint}>Click an offer to change or delete it</li>
           </ul>
         )}
       </div>

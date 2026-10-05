@@ -675,11 +675,11 @@ button.mini:hover {
 
 /* centre game menu: the wide window lays its sections out in columns instead of one long scroll */
 :global([data-centre-panel]) .panelBody:not(.panelBodyFlush) {
-  display: block;
-  columns: 3 300px;
-  column-gap: 28px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px 28px;
+  align-items: start;
 }
 :global([data-centre-panel]) .panelBody:not(.panelBodyFlush) > * {
-  break-inside: avoid;
-  margin-bottom: 18px;
+  min-width: 0;
 }

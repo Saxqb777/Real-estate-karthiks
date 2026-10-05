@@ -2,8 +2,9 @@
 // Tax office (village hut on the grass) → property tax per year and unit; "Mark paid" in one step (it then appears in
 // Expenses on the payment date — the API creates that expense, the HUD never adds it up itself).
 import { CircleCheck, Landmark, Plus } from "lucide-react";
-import { Badge, Button, EmptyState, Skeleton, StatusPill, cx } from "@/components/ui";
+import { Button, EmptyState, Skeleton, StatusPill, cx } from "@/components/ui";
 import { usePropertyTax } from "@/components/forms";
+import { sumAmounts } from "@/lib/calculations";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
 import type { PropertyTaxDTO } from "@/lib/schemas/property-tax";
@@ -27,6 +28,12 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
   const items = (tax.data?.items ?? []).filter((t) => unitIds.has(t.unitId));
   const years = [...new Set(items.map((t) => t.year))].sort((a, z) => z - a);
   const due = items.filter((t) => t.status === "Due");
+  const paidRows = items.filter((t) => t.status === "Paid");
+  const paidTotal = sumAmounts(paidRows);
+  const dueTotal = sumAmounts(due);
+  const lastPaid = [...paidRows].filter((t) => t.paymentDate).sort((a, z) => (z.paymentDate ?? "").localeCompare(a.paymentDate ?? ""))[0];
+  const units = data.units.filter((u) => u.isActive);
+  const maxYear = Math.max(0, ...years.map((y) => sumAmounts(items.filter((t) => t.year === y))));
 
   return (
     <>
@@ -38,7 +45,6 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
         onClose={onClose}
         className={className}
         accent={due.length ? "marigold" : "teal"}
-        hint="Marking a year paid adds it to Expenses on the date you paid"
         actions={
           <Button variant="secondary" size="sm" icon={<Plus />} onClick={() => forms.open({ kind: "propertyTax" })}>
             Add a year
@@ -52,41 +58,113 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
             ))}
           </div>
         ) : items.length === 0 ? (
-          <EmptyState compact art={<Landmark />} title="No property tax recorded" description="Add each year's tax per unit; mark it paid when you pay the panchayat / municipality." />
+          <EmptyState compact art={<Landmark />} title="No property tax recorded" />
         ) : (
           <>
-            {due.length > 0 ? (
-              <div className={b.boardHero}>
-                <span className={b.boardCount}>
-                  <span className="num">{due.length}</span> {due.length === 1 ? "bill" : "bills"} still to pay
-                </span>
-                <Badge tone="marigold" marker size="sm">
-                  {[...new Set(due.map((t) => t.year))].sort().join(", ")}
-                </Badge>
+            {/* 1 · the whole picture */}
+            <section className={b.taxCol}>
+              <h3 className={b.taxHead}>Summary</h3>
+              <span className={b.taxLabel}>Paid in total</span>
+              <Rupees value={paidTotal} className={b.taxHero} />
+              {due.length > 0 ? (
+                <div className={cx(b.taxStat, b.taxStatDue)}>
+                  <span>Still to pay</span>
+                  <b>
+                    <Rupees value={dueTotal} /> · {due.length} {due.length === 1 ? "bill" : "bills"}
+                  </b>
+                </div>
+              ) : (
+                <p className={s.calm}>
+                  <CircleCheck aria-hidden />
+                  <span className={s.calmStrong}>All property tax paid</span>
+                </p>
+              )}
+              <div className={b.taxStat}>
+                <span>Years recorded</span>
+                <b className="num">
+                  {years.length} · {years[years.length - 1]}–{years[0]}
+                </b>
               </div>
-            ) : (
-              <p className={s.calm}>
-                <CircleCheck aria-hidden />
-                <span className={s.calmStrong}>All property tax paid</span>
-              </p>
-            )}
-            <div className={b.taxYears}>
-              {years.map((y) => (
-                <section key={y} className={b.taxYear}>
-                  <div className={b.taxYearHead}>
-                    <span className="num">{y}</span>
+              <div className={b.taxStat}>
+                <span>Last paid</span>
+                <b className="num">{lastPaid?.paymentDate ? `${formatDate(lastPaid.paymentDate)} · ${lastPaid.unit.name}` : "—"}</b>
+              </div>
+              <div className={b.taxStat}>
+                <span>Average a year</span>
+                <b>
+                  <Rupees value={years.length ? Math.round(sumAmounts(items) / years.length) : 0} />
+                </b>
+              </div>
+            </section>
+
+            {/* 2 · per unit */}
+            <section className={b.taxCol}>
+              <h3 className={b.taxHead}>By unit</h3>
+              {units.map((u) => {
+                const rows = items.filter((t) => t.unitId === u.id).sort((a, z) => z.year - a.year);
+                const paid = rows.filter((t) => t.status === "Paid");
+                const latest = rows[0];
+                return (
+                  <div key={u.id} className={b.taxUnitCard}>
+                    <div className={b.taxUnitTop}>
+                      <span className={b.taxUnitName}>{u.name}</span>
+                      {latest ? <StatusPill status={latest.status === "Paid" ? "paid" : "due"} size="sm" /> : null}
+                    </div>
+                    <div className={b.taxStat}>
+                      <span>Paid so far</span>
+                      <b>
+                        <Rupees value={sumAmounts(paid)} />
+                      </b>
+                    </div>
+                    <div className={b.taxStat}>
+                      <span>Latest year</span>
+                      <b className="num">
+                        {latest ? (
+                          <>
+                            {latest.year} · <Rupees value={latest.amount} />
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </b>
+                    </div>
+                    <div className={b.taxStat}>
+                      <span>Years paid</span>
+                      <b className="num">
+                        {paid.length} of {rows.length}
+                      </b>
+                    </div>
                   </div>
-                  <ul>
-                    {items
-                      .filter((t) => t.year === y)
-                      .sort((a, z) => a.unit.name.localeCompare(z.unit.name))
-                      .map((t) => (
-                        <TaxRow key={t.id} t={t} onMarkPaid={() => forms.open({ kind: "markTaxPaid", title: `Mark ${t.year} paid · ${t.unit.name}`, props: { tax: t } })} />
-                      ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
+                );
+              })}
+            </section>
+
+            {/* 3 · year by year */}
+            <section className={b.taxCol}>
+              <h3 className={b.taxHead}>Year by year</h3>
+              <div className={b.taxYears}>
+                {years.map((y) => {
+                  const rows = items.filter((t) => t.year === y).sort((a, z) => a.unit.name.localeCompare(z.unit.name));
+                  const total = sumAmounts(rows);
+                  return (
+                    <div key={y} className={b.taxYear}>
+                      <div className={b.taxYearHead}>
+                        <span className="num">{y}</span>
+                        <Rupees value={total} className={b.taxYearTotal} />
+                      </div>
+                      <div className={b.taxBar}>
+                        <i style={{ width: `${maxYear ? Math.max(4, (total / maxYear) * 100) : 0}%` }} />
+                      </div>
+                      <ul>
+                        {rows.map((t) => (
+                          <TaxRow key={t.id} t={t} onMarkPaid={() => forms.open({ kind: "markTaxPaid", title: `Mark ${t.year} paid · ${t.unit.name}`, props: { tax: t } })} />
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           </>
         )}
       </HudPanel>

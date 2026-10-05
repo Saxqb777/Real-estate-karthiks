@@ -1929,3 +1929,12 @@ a.receipt:hover {
   opacity: 1;
   transform: none;
 }
+
+/* No explanatory notes or how-to lines on screen (owner, 5/10/2026) — the figures and tables speak for themselves. */
+.tableNote,
+.secNote,
+.lineNote,
+.note:not(.note-coral),
+.hint {
+  display: none !important;
+}

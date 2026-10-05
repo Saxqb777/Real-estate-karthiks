@@ -240,7 +240,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
           <BucketHead bucket="value" scope={<ScopeChip kind="asOf" past={past}>{data.scopeLabels.asOf}</ScopeChip>} />
           <div className={s.hero}>
             <div className={s.heroMain}>
-              <span className={s.heroLabel}>Worth now (est.){u.valuationSource === "offer" ? " — best offer" : " — growth estimate"}</span>
+              <span className={s.heroLabel}>Worth now (est.)</span>
               <Fig value={u.valuation} size="hero" paper={u.valuationSource === "offer" ? "offer" : "est."} onClick={() => open("worthNow")} />
             </div>
             <button type="button" className={b.lvl} onClick={() => open("multiplier")} title="Level = Worth now ÷ Invested">
@@ -298,7 +298,7 @@ export function Electricity({ unit, compact }: { unit: Pick<UnitBreakdown, "name
     try {
       await navigator.clipboard.writeText(no);
       setCopied(true);
-      toast.success(`Copied ${no}`, { description: "Paste it on the TNPDCL payment page." });
+      toast.success(`Copied ${no}`);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
       toast.info(no, { description: "Couldn't copy — note this consumer number." });
@@ -315,7 +315,7 @@ export function Electricity({ unit, compact }: { unit: Pick<UnitBreakdown, "name
             {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
           </button>
         ) : (
-          <span className={b.noPhone}>Not saved — add it in Config → Units</span>
+          <span className={b.noPhone}>Not saved</span>
         )}
       </div>
       {unit.electricityPayUrl && (

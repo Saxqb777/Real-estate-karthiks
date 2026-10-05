@@ -115,7 +115,6 @@ export function ReportsHub() {
     content = (
       <EmptyState
         title="Reports appear once you add a unit"
-        description="Add your townhouses in Config → Units. The annual statement, unit story and rent ledger then fill in on their own."
         action={
           <LinkButton href="/config#units" variant="primary" size="sm">
             Add a unit
@@ -127,7 +126,6 @@ export function ReportsHub() {
     content = (
       <EmptyState
         title="No leases yet"
-        description="A rent ledger follows one lease month by month. Sign a lease in Data → Leases first."
         action={
           <LinkButton href="/data#leases" variant="primary" size="sm">
             Go to leases

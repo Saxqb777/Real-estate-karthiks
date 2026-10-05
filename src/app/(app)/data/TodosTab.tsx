@@ -154,7 +154,6 @@ export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
             <EmptyState
               compact={status !== "pending"}
               title={status === "pending" ? "Nothing to do — all clear" : status === "done" ? "Nothing finished yet" : "No to-dos yet"}
-              description={status === "pending" ? "Repairs, renewals and paperwork you note down appear here, soonest first." : undefined}
               action={
                 <Button size="sm" variant="primary" icon={<ListTodo />} onClick={create.start}>
                   Add to-do

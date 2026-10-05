@@ -106,7 +106,7 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, side = "right"
             <span className={b.subHeadNote}>latest {data.recentPayments.length}</span>
           </div>
           {data.recentPayments.length === 0 ? (
-            <EmptyState compact title="No rent recorded yet" description="Record the first payment and its receipt appears here." />
+            <EmptyState compact title="No rent recorded yet" />
           ) : (
             <ul className={b.receipts}>
               {data.recentPayments.map((r) => (
