@@ -24,7 +24,6 @@ const tamil = Noto_Sans_Tamil({
 
 export const metadata: Metadata = {
   title: { default: "Pattukottai Estates", template: "%s · Pattukottai Estates" },
-  description: "Rent, expenses and value for two townhouses on one plot in Pattukottai, Tamil Nadu.",
   applicationName: "Pattukottai Estates",
   robots: { index: false, follow: false },
 };

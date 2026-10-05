@@ -4,7 +4,7 @@
 // prints / saves as a light A4 PDF. Figures come from the same APIs as the dashboard (calculations.ts) — nothing is
 // re-computed here except plain column totals (sumAmounts).
 import { ChevronLeft, ChevronRight, Printer, RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button, EmptyState, IconButton, LinkButton, Panel, Select, Skeleton, StatusPill, cx } from "@/components/ui";
 import { ChoiceGroup, currentYear, useLeases, usePropertyTax, useUnits, useYearMode, yearLabel, yearOf, type YearMode } from "@/components/forms";
 import { useBrandName } from "@/components/shell/HudBar";
@@ -157,7 +157,8 @@ export function ReportLibrary() {
       deposits: { big: k ? inr(k.securityDepositsHeld) : "…", sub: "held for tenants", tone: s.mari },
     };
     return (
-      <Panel fill padding="none" title="Reports" eyebrow={`${REPORTS.length} reports`} actions={yearControl} className={s.panel}>
+      <Panel fill padding="none" title="Reports" eyebrow={`${REPORTS.length} reports`} actions={yearControl} className={s.panel}
+        data-wrap-head>
         {dashQ.error && !d ? (
           <EmptyState
             title="Reports couldn't load"
@@ -219,6 +220,7 @@ export function ReportLibrary() {
         fill
         padding="none"
         className={s.panel}
+        data-wrap-head
         eyebrow={
           <button type="button" className={s.back} onClick={() => setOpen(null)}>
             <ChevronLeft aria-hidden /> Reports
@@ -302,7 +304,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
       />
       <div className={s.two}>
         <Section title="Month by month">
-          <table className={s.table}>
+          <TableBox>
             <thead>
               <tr>
                 <th>Month</th>
@@ -329,7 +331,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                 <td className={s.r}>{inr(t.net)}</td>
               </tr>
             </tfoot>
-          </table>
+          </TableBox>
         </Section>
         <div>
           <Section title="Where the money went">
@@ -350,7 +352,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
             )}
           </Section>
           <Section title="By unit">
-            <table className={s.table}>
+            <TableBox>
               <thead>
                 <tr>
                   <th>Unit</th>
@@ -369,7 +371,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </TableBox>
           </Section>
         </div>
       </div>
@@ -390,7 +392,7 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
           { label: "Deposits held", value: inr(d.kpis.securityDepositsHeld), tone: s.mari },
         ]}
       />
-      <table className={s.table}>
+      <TableBox>
         <thead>
           <tr>
             <th>Unit</th>
@@ -436,7 +438,7 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
             <td />
           </tr>
         </tfoot>
-      </table>
+      </TableBox>
     </>
   );
 }
@@ -461,7 +463,7 @@ function Dues({ d }: { d: DashboardData }) {
           const ar = u.nextPayment!.arrears;
           return (
             <Section key={u.id} title={`${u.name} · ${u.activeLease?.tenantName ?? ""}`}>
-              <table className={s.table}>
+              <TableBox>
                 <thead>
                   <tr>
                     <th>Month</th>
@@ -497,7 +499,7 @@ function Dues({ d }: { d: DashboardData }) {
                     <td className={cx(s.r, s.red)}>{inr(ar.totalWithFees)}</td>
                   </tr>
                 </tfoot>
-              </table>
+              </TableBox>
             </Section>
           );
         })
@@ -523,7 +525,7 @@ function Occupancy({ a }: { a: AnnualReport }) {
       />
       <div className={s.two}>
         <Section title="By unit">
-          <table className={s.table}>
+          <TableBox>
             <thead>
               <tr>
                 <th>Unit</th>
@@ -546,11 +548,11 @@ function Occupancy({ a }: { a: AnnualReport }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </TableBox>
         </Section>
         <Section title="Empty periods">
           {gaps.length ? (
-            <table className={s.table}>
+            <TableBox>
               <thead>
                 <tr>
                   <th>Unit</th>
@@ -569,7 +571,7 @@ function Occupancy({ a }: { a: AnnualReport }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </TableBox>
           ) : (
             <p className={s.allClear}>No empty days this year.</p>
           )}
@@ -611,7 +613,7 @@ function TenantStatement({ l }: { l: RentLedger }) {
           { label: "Balance", value: inr(l.totals.outstanding), tone: l.totals.outstanding > 0 ? s.red : undefined },
         ]}
       />
-      <table className={s.table}>
+      <TableBox>
         <thead>
           <tr>
             <th>Month</th>
@@ -636,7 +638,7 @@ function TenantStatement({ l }: { l: RentLedger }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </TableBox>
     </>
   );
 }
@@ -656,7 +658,7 @@ function Value({ d }: { d: DashboardData }) {
           { label: "Growth per year", value: k.cagr == null ? "—" : pct(k.cagr) },
         ]}
       />
-      <table className={s.table}>
+      <TableBox>
         <thead>
           <tr>
             <th>Unit</th>
@@ -698,7 +700,7 @@ function Value({ d }: { d: DashboardData }) {
             <td className={cx(s.r, s.teal)}>{inr(k.rentCollected)}</td>
           </tr>
         </tfoot>
-      </table>
+      </TableBox>
     </>
   );
 }
@@ -722,7 +724,7 @@ function Tax({ items }: { items: { id: string; year: number; amount: number; sta
       {items.length === 0 ? (
         <p className={s.none}>No property tax recorded</p>
       ) : (
-        <table className={s.table}>
+        <TableBox>
           <thead>
             <tr>
               <th>Year</th>
@@ -769,7 +771,7 @@ function Tax({ items }: { items: { id: string; year: number; amount: number; sta
               <td />
             </tr>
           </tfoot>
-        </table>
+        </TableBox>
       )}
     </>
   );
@@ -789,7 +791,7 @@ function Deposits({ d }: { d: DashboardData }) {
           { label: "Kept back", value: inr(dl.kept) },
         ]}
       />
-      <table className={s.table}>
+      <TableBox>
         <thead>
           <tr>
             <th>Tenant</th>
@@ -825,7 +827,42 @@ function Deposits({ d }: { d: DashboardData }) {
             <td className={cx(s.r, s.mari)}>{inr(dl.held + dl.awaitingRefund)}</td>
           </tr>
         </tfoot>
-      </table>
+      </TableBox>
     </>
+  );
+}
+
+/** A report table. On phones every row becomes a small card (column name left, value right): each cell gets its
+ *  column's header text as data-label, read from the table's own header row. */
+function TableBox({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLTableElement>(null);
+  useLayoutEffect(() => {
+    const table = ref.current;
+    if (!table) return;
+    const label = () => {
+      const heads: string[] = [];
+      table.querySelectorAll("thead tr:last-child th").forEach((th) => {
+        const span = (th as HTMLTableCellElement).colSpan || 1;
+        for (let i = 0; i < span; i++) heads.push(th.textContent?.trim() ?? "");
+      });
+      table.querySelectorAll("tbody tr, tfoot tr").forEach((tr) => {
+        let col = 0;
+        tr.querySelectorAll("td, th").forEach((cell) => {
+          cell.setAttribute("data-label", heads[col] ?? "");
+          col += (cell as HTMLTableCellElement).colSpan || 1;
+        });
+      });
+    };
+    label();
+    const mo = new MutationObserver(label);
+    mo.observe(table, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  });
+  return (
+    <div className={s.tableBox}>
+      <table ref={ref} className={s.table}>
+        {children}
+      </table>
+    </div>
   );
 }

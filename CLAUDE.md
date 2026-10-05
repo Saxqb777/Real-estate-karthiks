@@ -219,6 +219,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   Phones: overview fills the whole page (Screen .flush no longer gets the 12px phone padding — that was the top/bottom strip),
   bottom bar's patterned stripe removed, sun/moon time tag ALWAYS shown on touch screens ((hover: none)); the sky target +
   tag hide while a window / chart / menu is open.
+- 5/10/2026: REPORTS ON PHONES (owner; phone only, desktop + print unchanged): report panels carry data-wrap-head → header
+  controls wrap under the title (title 22px); library cards one column (grid-auto-rows max-content — they overlapped);
+  every report table (TableBox in ReportLibrary) becomes one small CARD PER ROW on phones (first cell = heading, other
+  cells "COLUMN … value", labels copied from the header row into data-label). Site meta DESCRIPTION removed (owner: link
+  previews must be plain — title only).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

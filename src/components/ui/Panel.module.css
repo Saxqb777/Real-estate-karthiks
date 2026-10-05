@@ -246,3 +246,22 @@
 :global([data-game-main]) .panel:not(.panel .panel) > .head .eyebrow {
   color: #c9922e;
 }
+
+/* phones: a panel marked data-wrap-head (reports) puts its header controls on their own row under the title */
+@media (max-width: 767px) {
+  [data-wrap-head] > .head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 10px;
+  }
+  [data-wrap-head] > .head .titles {
+    flex: 1 1 100%;
+  }
+  [data-wrap-head] > .head .title {
+    font-size: 22px;
+  }
+  [data-wrap-head] > .head .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
