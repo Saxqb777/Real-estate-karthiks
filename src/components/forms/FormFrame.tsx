@@ -138,12 +138,12 @@ export function FormActions({
 }
 
 /** Small uppercase sub-heading that groups fields ("On the plot", "Money"). */
-export function FormSection({ title, note, children }: { title: ReactNode; note?: ReactNode; children: ReactNode }) {
+/** `note` is accepted but not shown (owner: no instruction text anywhere). */
+export function FormSection({ title, children }: { title: ReactNode; note?: ReactNode; children: ReactNode }) {
   return (
     <section className={s.section}>
       <header className={s.sectionHead}>
         <h3 className={s.sectionTitle}>{title}</h3>
-        {note && <span className={s.sectionNote}>{note}</span>}
       </header>
       {children}
     </section>

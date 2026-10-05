@@ -36,11 +36,12 @@ export interface FieldProps {
 }
 
 /** Label + control + hint/error. Controls inside are wired up automatically for a11y. */
-export function Field({ label, hint, error, required, htmlFor, aside, span = 1, className, children }: FieldProps) {
+export function Field({ label, error, required, htmlFor, aside, span = 1, className, children }: FieldProps) {
   const autoId = useId();
   const id = htmlFor ?? `f${autoId.replace(/:/g, "")}`;
   const hasError = error !== undefined && error !== null && error !== false && error !== "";
-  const msgId = hasError ? `${id}-error` : hint ? `${id}-hint` : undefined;
+  // help text under a field is not shown (owner: no instruction text anywhere) — only errors
+  const msgId = hasError ? `${id}-error` : undefined;
   return (
     <div className={cx(styles.field, span === 2 && styles.span2, span === "full" && styles.spanFull, className)}>
       <div className={styles.labelRow}>
@@ -59,10 +60,6 @@ export function Field({ label, hint, error, required, htmlFor, aside, span = 1, 
         <p id={msgId} className={styles.error} role="alert">
           <TriangleAlert aria-hidden />
           <span>{error}</span>
-        </p>
-      ) : hint ? (
-        <p id={msgId} className={styles.hint}>
-          {hint}
         </p>
       ) : null}
     </div>

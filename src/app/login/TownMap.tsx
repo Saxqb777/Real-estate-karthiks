@@ -400,7 +400,6 @@ type Area = {
   x: number;
   y: number;
   en: string;
-  ta?: string;
   tier: Tier;
   big?: boolean;
 };
@@ -409,7 +408,6 @@ const AREAS: Area[] = [
     x: 803,
     y: 480,
     en: "Pattukkottai",
-    ta: "பட்டுக்கோட்டை",
     tier: "town",
     big: true,
   },
@@ -417,55 +415,48 @@ const AREAS: Area[] = [
     x: 768,
     y: 168,
     en: "VATTAKUDI-NORTH",
-    ta: "வட்டகுடி-நார்த்",
     tier: "town",
   },
   {
     x: 793,
     y: 290,
     en: "MANICKAM COLONY",
-    ta: "மாணிக்கம் காலனி",
     tier: "town",
   },
-  { x: 1053, y: 282, en: "MATTUSANTHAI", ta: "மாட்டு சந்தை", tier: "town" },
-  { x: 370, y: 335, en: "KOTTAI KOVIL", ta: "கோட்டை கோவில்", tier: "town" },
-  { x: 1313, y: 404, en: "VALAVANPURAM", ta: "வளவன்புரம்", tier: "all" },
+  { x: 1053, y: 282, en: "MATTUSANTHAI", tier: "town" },
+  { x: 370, y: 335, en: "KOTTAI KOVIL", tier: "town" },
+  { x: 1313, y: 404, en: "VALAVANPURAM", tier: "all" },
   {
     x: 663,
     y: 548,
     en: "NADIMUTHU NAGAR",
-    ta: "நாடிமுத்து நகர்",
     tier: "town",
   },
-  { x: 245, y: 700, en: "VOC NAGAR", ta: "VOC நகர்", tier: "town" },
+  { x: 245, y: 700, en: "VOC NAGAR", tier: "town" },
   {
     x: 1106,
     y: 742,
     en: "VISHWANATH NAGAR",
-    ta: "விஸ்வநாத் நகர்",
     tier: "town",
   },
   {
     x: 533,
     y: 812,
     en: "SRINIVASAN NAGAR",
-    ta: "ஸ்ரீநிவாசன் நகர்",
     tier: "town",
   },
-  { x: 745, y: 865, en: "MUTHALCHERRY", ta: "முதல்சேரி", tier: "town" },
-  { x: 793, y: 945, en: "RV NAGAR", ta: "RV நகர்", tier: "town" },
+  { x: 745, y: 865, en: "MUTHALCHERRY", tier: "town" },
+  { x: 793, y: 945, en: "RV NAGAR", tier: "town" },
   {
     x: 1183,
     y: 920,
     en: "VINAYAKAR KOVIL",
-    ta: "விநாயகர் கோவில்",
     tier: "town",
   },
   {
     x: 143,
     y: 825,
     en: "VIVEKANANDA NAGAR",
-    ta: "விவேகானந்தா நகர்",
     tier: "town",
   },
 ];
@@ -474,7 +465,6 @@ type Poi = {
   x: number;
   y: number;
   en: string;
-  ta?: string;
   kind: "water" | "green" | "bus" | "temple";
   side?: "l" | "r" | "b";
 };
@@ -484,7 +474,6 @@ const POIS: Poi[] = [
     x: 703,
     y: 640,
     en: "Bus stand",
-    ta: "பேருந்து நிலையம்",
     kind: "bus",
     side: "l",
   },
@@ -492,7 +481,6 @@ const POIS: Poi[] = [
     x: 622,
     y: 980,
     en: "Naadiamman Temple",
-    ta: "நாடியம்மன் கோவில்",
     kind: "temple",
     side: "l",
   },
@@ -500,7 +488,6 @@ const POIS: Poi[] = [
     x: 1892,
     y: 645,
     en: "Pudhu Eri",
-    ta: "புது ஏரி",
     kind: "green",
     side: "l",
   },
@@ -872,15 +859,6 @@ function TownMapImpl({
           <text className={a.big ? s.townName : s.areaName} textAnchor="middle">
             {a.en}
           </text>
-          {a.ta && (
-            <text
-              className={a.big ? s.townTa : s.areaTa}
-              textAnchor="middle"
-              dy={a.big ? 22 : 15}
-            >
-              {a.ta}
-            </text>
-          )}
         </g>
       ))}
       {SHIELDS.map((sh) => (
@@ -916,21 +894,10 @@ function TownMapImpl({
               textAnchor={
                 p.side === "l" ? "end" : p.side === "b" ? "middle" : "start"
               }
-              dy={p.ta ? -1 : 4}
+              dy={4}
             >
               {p.en}
             </text>
-            {p.ta && (
-              <text
-                className={s.poiTa}
-                textAnchor={
-                  p.side === "l" ? "end" : p.side === "b" ? "middle" : "start"
-                }
-                dy="13"
-              >
-                {p.ta}
-              </text>
-            )}
           </g>
         </g>
       ))}

@@ -29,7 +29,7 @@ function useFontStacks() {
 }
 
 export interface RunningText {
-  /** top-left on pages 2+ (e.g. "Pattukottai Estates · பட்டுக்கோட்டை") */
+  /** top-left on pages 2+ (e.g. "Pattukottai Estates") */
   topLeft?: string;
   /** top-right on pages 2+ (e.g. "Annual statement · FY 2025-26") */
   topRight?: string;
@@ -95,9 +95,6 @@ export function Letterhead({ brand, town, right }: { brand: string; town?: strin
       <div className={s.lhText}>
         <span className={s.lhName}>{brand}</span>
         <span className={s.lhTown}>
-          <span className="tamil" lang="ta">
-            பட்டுக்கோட்டை
-          </span>
           {town && <span className={s.lhTownEn}>{town}, Tamil Nadu</span>}
         </span>
       </div>

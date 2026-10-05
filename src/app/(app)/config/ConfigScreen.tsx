@@ -47,7 +47,6 @@ export function ConfigScreen() {
         label="Set-up sections"
         eyebrow="Set-up"
         title="Config"
-        tamil="அமைப்புகள்"
         items={items}
         value={active}
         onChange={setTab}

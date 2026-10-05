@@ -2,7 +2,7 @@
 // One-screen frame for Data and Config: a game-style tab rail on the left (a chip strip on phones) and one panel.
 // Number keys 1–9 switch tabs and N runs the active tab's "add" action (ignored while typing or in a dialog).
 import { useEffect, useRef, type ReactNode } from "react";
-import { Kbd, cx, isFocusTrapActive } from "@/components/ui";
+import { cx, isFocusTrapActive } from "@/components/ui";
 import s from "./RailScreen.module.css";
 
 export interface RailItem {
@@ -118,16 +118,6 @@ export function RailScreen({ eyebrow, title, tamil, items, value, onChange, onNe
             );
           })}
         </div>
-        <footer className={s.keys}>
-          <span>
-            <Kbd keys={["1"]} />–<Kbd keys={[String(Math.min(9, items.length))]} /> switch
-          </span>
-          {onNew && (
-            <span>
-              <Kbd keys={["N"]} /> new
-            </span>
-          )}
-        </footer>
       </nav>
       <div className={s.main} role="tabpanel" aria-label={items.find((it) => it.id === value)?.label}>
         {children}

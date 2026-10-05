@@ -78,7 +78,6 @@ export function DataScreen() {
         label="Ledger sections"
         eyebrow="Ledger"
         title="Data"
-        tamil="பதிவேடு"
         items={items}
         value={active}
         onChange={(id) => goto(id as DataTab)}

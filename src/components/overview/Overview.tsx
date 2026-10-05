@@ -14,7 +14,6 @@ import EstateSceneLazy, { type ObjectScreenFn, type SceneInsets, type SceneObjec
 import { Button, EmptyState, IconButton, Kbd, Screen, cx, toast, useIsClient } from "@/components/ui";
 import { QuickAddHost, quickAdd, usePropertyTax, useTenants, useYearMode } from "@/components/forms";
 import {
-  DOCK_TABS,
   Dock,
   HudPanelFor,
   InspectLayer,
@@ -54,8 +53,6 @@ export interface OverviewProps {
 
 /** World objects whose click opens their side panel straight away (the rest get an anchored inspect card). */
 const DIRECT: SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "taxstamp"];
-const WORLD_HINTS = new Set<string>(["unit", "mailbox", "noticeboard", "pole", "taxstamp", "tolet"]);
-const DOCK_IDS = new Set<string>(DOCK_TABS.map((t) => t.id));
 const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export function Overview({ layout = "immersive" }: OverviewProps) {
@@ -128,7 +125,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   }, []);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
-  const [tourFlag, setTourFlag] = useFlag(TOUR_KEY);
+  const [, setTourFlag] = useFlag(TOUR_KEY);
   const [questFlag, setQuestFlag] = useFlag(QUEST_KEY);
   const [locate, setLocate] = useState<ObjectScreenFn | null>(null);
   const [pinProperty] = usePinned("property");
@@ -143,7 +140,8 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   // ---------------------------------------------------------------- setup quests
   const quests = useMemo(() => (data ? buildQuests(data, tenants.data ? tenants.data.items.length : null) : null), [data, tenants.data]);
   const questsLoaded = Boolean(quests && tenants.data);
-  const showQuests = questsLoaded && live && !quests!.complete;
+  // no setup checklist / instructions on screen (owner)
+  const showQuests = false;
   const [questOpen, setQuestOpen] = useState(false);
   const questInit = useRef(false);
   useEffect(() => {
@@ -328,11 +326,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
   });
 
   // ---------------------------------------------------------------- first-run tour (desktop, once there is a house)
-  useEffect(() => {
-    if (tourFlag === "done" || mobile || !data || !hasUnits || !live) return;
-    const t = window.setTimeout(() => setTourOpen(true), 1600);
-    return () => window.clearTimeout(t);
-  }, [tourFlag, mobile, data, hasUnits, live]);
   const endTour = useCallback(() => {
     setTourOpen(false);
     setTourFlag("done");
@@ -376,9 +369,9 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     budget -= c;
     if (budget === 0) break;
   }
-  const showDots = !tourOpen && !hudHidden;
-  const hintObjects = showDots ? ([...dots].filter((k) => WORLD_HINTS.has(k)) as SceneObjectKind[]) : [];
-  const dockHints = showDots ? [...dots].filter((k) => DOCK_IDS.has(k)) : [];
+  // no "not opened yet" dots (owner: no instructions anywhere)
+  const hintObjects: SceneObjectKind[] = [];
+  const dockHints: string[] = [];
 
   // ---------------------------------------------------------------- world cues (letters in the mailbox, notes on the board, tax stamp)
   const cues = useMemo(() => {

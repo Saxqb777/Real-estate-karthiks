@@ -32,18 +32,12 @@ export function Receipt({ inv, print = false }: { inv: InvoiceData; print?: bool
           <div className={s.brandText}>
             <span className={s.brandName}>{inv.brand.brandName}</span>
             <span className={s.brandSub}>
-              <span className="tamil" lang="ta">
-                பட்டுக்கோட்டை
-              </span>
               {inv.brand.subtitle && <span>{inv.brand.subtitle}</span>}
             </span>
           </div>
         </div>
         <div className={s.title}>
           <span className={s.titleEn}>Rent receipt</span>
-          <span className={cx("tamil", s.titleTa)} lang="ta">
-            வாடகை ரசீது
-          </span>
         </div>
       </header>
 

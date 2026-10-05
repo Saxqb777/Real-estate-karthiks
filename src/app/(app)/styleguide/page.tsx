@@ -299,12 +299,6 @@ export default function StyleguidePage() {
                 </p>
               </div>
               <div className={styles.typeRow}>
-                <span className="eyebrow">Tamil</span>
-                <span className={styles.tamilSample} lang="ta">
-                  பட்டுக்கோட்டை
-                </span>
-              </div>
-              <div className={styles.typeRow}>
                 <span className="eyebrow">Frieze</span>
                 <div className={styles.bandSample} />
               </div>

@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <motion.main
             id="main"
             key={pathname}
-            className={styles.main}
+            className={pathname === "/" ? styles.main : `${styles.main} ${styles.mainPadded}`}
             tabIndex={-1}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

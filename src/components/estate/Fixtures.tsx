@@ -31,21 +31,9 @@ export interface WorldCues {
   tax?: "paid" | "due";
 }
 
+/** Tamil lettering is switched off everywhere (owner: no Tamil on the website). */
 function useTamilFont(): boolean {
-  const [ok, setOk] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    const fam = getComputedStyle(document.body).getPropertyValue("--font-tamil").trim();
-    if (!fam || !document.fonts?.load) return;
-    document.fonts
-      .load(`700 30px ${fam}`, "அறிவிப்பு")
-      .then((faces) => alive && setOk(faces.length > 0))
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return ok;
+  return false;
 }
 export { useTamilFont };
 

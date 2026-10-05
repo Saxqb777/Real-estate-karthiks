@@ -259,7 +259,7 @@ export function ReportsHub() {
       {loaded && (
         <PrintPortal
           running={{
-            topLeft: `${brand} · பட்டுக்கோட்டை`,
+            topLeft: brand,
             topRight: docName,
             bottomLeft: `Generated ${generated}${rec ? (rec.ledgerBalanced ? " · Ledger balanced ✓" : " · Totals don't add up — see Checks") : ""}`,
           }}

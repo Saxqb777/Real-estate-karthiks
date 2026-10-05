@@ -607,3 +607,69 @@
     display: none;
   }
 }
+
+/* ---------- floating tabs (the top bar is gone — owner) ---------- */
+.floatNav {
+  position: fixed;
+  z-index: var(--z-bar);
+  top: 12px;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(22, 17, 12, 0.88);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
+  backdrop-filter: blur(10px) saturate(115%);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.floatLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 120px;
+  height: 36px;
+  padding: 0 16px;
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-radius: 7px;
+  transition: color var(--dur-1) var(--ease-out);
+}
+.floatLink > * {
+  position: relative;
+}
+.floatLink:hover {
+  color: var(--text);
+}
+.floatLink[aria-current="page"] {
+  color: #2a1405;
+}
+.floatPlate {
+  position: absolute !important;
+  inset: 0;
+  background: linear-gradient(180deg, #ffd27a, #f0962e);
+  border-radius: 7px;
+}
+.floatIcon {
+  width: 16px;
+  height: 16px;
+}
+.mainPadded {
+  padding-top: 60px;
+}
+@media (max-width: 767px) {
+  .floatNav {
+    display: none;
+  }
+  .mainPadded {
+    padding-top: 0;
+  }
+}
