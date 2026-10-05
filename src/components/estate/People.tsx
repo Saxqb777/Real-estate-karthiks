@@ -533,7 +533,7 @@ export function BlobShadows({ list, max }: { list: RefObject<Map<string, { g: TH
   return <instancedMesh ref={ref} args={[G.plane(), mat, Math.max(1, max)]} frustumCulled={false} renderOrder={1} />;
 }
 
-// ───────────────────────────── property officer (the to-do list) ─────────────────────────────
+// ───────────────────────────── property manager (the to-do list) ─────────────────────────────
 
 /** White shirt, white trousers, black shoes, a maroon register in the left hand and a pen in the right. */
 function officerLimbs(): Limb[] {
@@ -554,8 +554,10 @@ const P_ARM_L = 3;
 const P_ARM_R = 4;
 
 /**
- * The property officer: walks a slow loop round the outside of the compound at all times, stopping at each corner to
+ * The property manager: walks a slow loop round the outside of the compound at all times, stopping at each corner to
  * write in his register. Clicking him opens the to-dos (the old notice board's job). His anchor moves with him.
+ * Pointer hover is re-tested a few times a second while he walks, so he lights up when he walks under a still cursor
+ * (R3F only raycasts on pointer events otherwise).
  */
 export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
   const { geo, rig } = useRig(officerLimbs, []);
@@ -580,9 +582,14 @@ export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; wo
   const WRITE = 4; // s at each corner
   const cycle = loop.total / SPEED + WRITE * loop.segs.length;
   const heading = useRef<number | null>(null);
-  useFrame(() => {
+  const lastPick = useRef(0);
+  useFrame((state) => {
     const g = root.current;
     if (!g) return;
+    if (state.clock.elapsedTime - lastPick.current > 0.12) {
+      lastPick.current = state.clock.elapsedTime;
+      state.events.update?.();
+    }
     const e = env.current;
     let t = (((e.t + cycle * 0.35) % cycle) + cycle) % cycle; // starts on the right side, away from the front walkers
     let x = 0;
@@ -636,7 +643,7 @@ export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; wo
     <Hotspot spot={{ key: "noticeboard", kind: "noticeboard", anchor }}>
       <group ref={root}>
         <RigMesh geo={geo} rig={rig} />
-        <mesh geometry={G.box()} position={[0, 3, 0]} scale={[2.6, 6.4, 2.6]} visible={false} />
+        <mesh geometry={G.box()} position={[0, 3.3, 0]} scale={[3.6, 7, 3.6]} visible={false} />
       </group>
     </Hotspot>
   );

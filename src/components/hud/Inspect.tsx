@@ -253,7 +253,7 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
 const TAG_NAME: Record<SceneObjectKind, string> = {
   unit: "House",
   mailbox: "Mailbox",
-  noticeboard: "Property officer",
+  noticeboard: "Property manager",
   pole: "EB pole",
   tolet: "TO-LET board",
   tenant: "Tenant",
@@ -551,7 +551,7 @@ function useCardParts({ obj, data, openForm, onExpand }: { obj: SceneObject | nu
     case "noticeboard": {
       const items = [...data.actions.pending].sort((a, z) => Number(z.isOverdue) - Number(a.isOverdue)).slice(0, 3);
       return {
-        eyebrow: "Property officer",
+        eyebrow: "Property manager",
         title: `${data.actions.pending.length} to do`,
         body: items.length ? (
           <ul className={s.cardList}>

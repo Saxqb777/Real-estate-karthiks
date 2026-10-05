@@ -54,7 +54,7 @@ export function Fixtures({ layout, world, env, cues, lampLight, crows }: { layou
     <group>
       <PoleAndMeter layout={layout} world={world} env={env} lampLight={lampLight} crows={crows} />
       <Mailbox layout={layout} world={world} mail={!!cues?.mail} />
-      {/* the to-dos live with the property officer who walks round the compound (People.tsx) */}
+      {/* the to-dos live with the property manager who walks round the compound (People.tsx) */}
       <PropertyOfficer layout={layout} world={world} env={env} />
       <TaxStamp layout={layout} world={world} env={env} />
       <ParkedCar layout={layout} world={world} />

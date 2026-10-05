@@ -46,7 +46,7 @@ const GO: { id: string; title: string; href: string; subtitle: string; keywords:
     keywords: ["spend", "bills", "repairs"],
     icon: "data",
   },
-  { id: "todos", title: "Data → To-dos", href: "/data#todos", subtitle: "The property officer's list", keywords: ["tasks", "actions"], icon: "data" },
+  { id: "todos", title: "Data → To-dos", href: "/data#todos", subtitle: "The property manager's list", keywords: ["tasks", "actions"], icon: "data" },
   {
     id: "reports",
     title: "Data → Reports",
