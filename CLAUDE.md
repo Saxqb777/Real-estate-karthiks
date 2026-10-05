@@ -251,6 +251,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   clear of the garden walker's loop and the manager's path). 10 s loop: looks the house over → leans in to the viewfinder
   → two shots, each a soft white FLASH sprite + a quick point light → checks the screen → turns the stand a little.
   Photographer() in People.tsx, mounted in Life.tsx (so LIFE OFF hides him). Not clickable.
+  6/10 follow-up (owner): NO leaning in and NO turning the stand — he stands at the camera and takes ONE picture every
+  15 s (right hand to the shutter, flash), nothing else.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

@@ -861,8 +861,7 @@ function tripodParts(): Part[] {
 /**
  * Owner, 6/10/2026: a photographer on the grass beside the hand pump, by 116/B7 (the front unit), clear of the garden
  * walker's loop and the property manager's path. Camera on a TRIPOD (reads better than a hand-held one at this cartoon
- * scale): he looks the house over, leans in to the viewfinder and takes a couple of shots — each one FLASHES (white burst
- * + a quick point light) — checks the screen, then turns the stand a little for the next angle.
+ * scale): he stands at the camera and takes one picture every 15 s — the shot FLASHES (white burst + a quick point light).
  */
 export function Photographer({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
   const { geo, rig } = useRig(photographerLimbs, []);
@@ -882,30 +881,20 @@ export function Photographer({ layout, world, env }: { layout: SiteLayout; world
     const Z = world.z(p.z);
     return { X, Z, yaw: Math.atan2(world.x(aim.x) - X, world.z(aim.z) - Z) };
   }, [layout, world]);
-  const CYCLE = 10; // s: look (2.2) → lean in (0.6) → two shots (3.2) → check the screen (2.0) → turn the stand (2.0)
-  const SHOTS = [3.6, 5.1];
-  const aimOf = (n: number) => spot.yaw + Math.sin(n * 1.7) * 0.25;
+  // owner, 6/10/2026: no leaning in, no turning the stand — he just stands at the camera and takes a picture every 15 s
+  const CYCLE = 15;
+  const SHOTS = [1.2];
   useFrame(() => {
     const g = root.current;
     if (!g) return;
     const e = env.current;
-    const n = Math.floor(e.t / CYCLE);
-    const t = e.t - n * CYCLE;
-    const turning = t > 8;
-    g.rotation.y = turning ? aimOf(n) + (aimOf(n + 1) - aimOf(n)) * smoothstep(8, 10, t) : aimOf(n);
-    const lean = t < 2.2 ? 0 : t < 2.8 ? smoothstep(2.2, 2.8, t) : t < 6.0 ? 1 : t < 6.6 ? 1 - smoothstep(6.0, 6.6, t) : 0;
-    posePerson(rig.u, turning ? "walk" : "idle", turning ? (t - 8) * 4 : 0, e.t, 4.1);
+    const t = e.t - Math.floor(e.t / CYCLE) * CYCLE;
+    g.rotation.y = spot.yaw;
+    posePerson(rig.u, "idle", 0, e.t, 4.1);
+    // right hand to the shutter button for the click, then back down
+    const press = t < 0.5 ? smoothstep(0, 0.5, t) : t < 1.8 ? 1 : t < 2.3 ? 1 - smoothstep(1.8, 2.3, t) : 0;
     const a = rig.u.uAng.value;
-    // eye to the viewfinder: bent forward, right hand on the shutter, left hand on the lens
-    rig.u.uLean.value = (rig.u.uLean.value as number) * (1 - lean) + 0.32 * lean;
-    a[P_ARM_R] = a[P_ARM_R] * (1 - lean) - 1.25 * lean;
-    a[P_ARM_L] = a[P_ARM_L] * (1 - lean) - 1.15 * lean;
-    // checking the shot on the screen: both hands up a little
-    if (t >= 6.6 && t < 8) {
-      const k = Math.min(smoothstep(6.6, 7.0, t), 1 - smoothstep(7.6, 8, t));
-      a[P_ARM_R] = -0.9 * k;
-      a[P_ARM_L] = -0.7 * k;
-    }
+    a[P_ARM_R] = a[P_ARM_R] * (1 - press) - 1.1 * press;
     let f = 0;
     for (const s of SHOTS) {
       const d = t - s;
