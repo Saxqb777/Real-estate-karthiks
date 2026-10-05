@@ -124,6 +124,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   (LeavePrompt.tsx, Stay / Drive off ▶, Enter/Y · Esc/N) → `estate:leave` event: hazards off, head/tail lamps on, car
   backs out swinging its nose, drives off the front of the island; screen fades ("Leaving the estate…") → logout() → /login
   title screen (~4.6 s). Still pending: Data/Config "← Back to estate" button + whether to remove the welcome tour.
+- 5/10/2026: HOVER on any world object = just its NAME TAG (WorldHint → .worldTag, unit name for houses), no detail box.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
