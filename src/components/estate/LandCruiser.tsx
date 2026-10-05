@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useMemo } from "react";
-import type { ThreeElements } from "@react-three/fiber";
+import { useFrame, type ThreeElements } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
@@ -218,7 +218,7 @@ function buildCarGeometries(): Partial<Record<MatKey, THREE.BufferGeometry>> {
     flank("glass", quad(s), CABIN_Z + 0.008);
   }
 
-  box("glass", [2.1, 0.03, 2.3], [-0.9, 6.28, 0]); // sunroof
+  box("glass", [1.9, 0.03, 4.0], [-0.9, 6.28, 0]); // sunroof: a wide rectangle across the roof
   box("red", [0.06, 0.08, 0.9], [-7.74, 6.0, 0]); // high stop light
 
   // Wipers
@@ -267,8 +267,8 @@ function buildCarGeometries(): Partial<Record<MatKey, THREE.BufferGeometry>> {
   box("trim", [0.04, 2.25, 0.04], [R, 2.85, 2.2]);
   box("trim", [0.04, 2.25, 0.04], [R, 2.85, -2.2]);
   box("trim", [0.04, 0.04, 4.4], [R, 3.97, 0]);
-  boxPair("red", [0.14, 1.15, 0.5], [R + 0.03, 3.05, 2.65]);
-  boxPair("lens", [0.12, 0.3, 0.5], [R + 0.03, 2.3, 2.65]);
+  boxPair("red", [0.14, 0.8, 0.5], [R + 0.03, 3.25, 2.65]);
+  boxPair("amber", [0.14, 0.42, 0.5], [R + 0.03, 2.6, 2.65]); // rear indicators
   box("chrome", [0.06, 0.15, 2.3], [R - 0.01, 2.9, 0]);
   put("chrome", new THREE.TorusGeometry(0.16, 0.03, 8, 24), [R - 0.02, 3.35, 0], [0, Math.PI / 2, 0]);
   rbox("trim", [0.7, 0.85, 6.5], 0.2, [TAIL_X + 0.1, 1.85, 0]); // bumper
@@ -325,6 +325,14 @@ export function LandCruiser(props: ThreeElements["group"]) {
     () => Object.fromEntries(Object.entries(MATERIALS).map(([k, p]) => [k, new THREE.MeshStandardMaterial(p)])) as Record<MatKey, THREE.MeshStandardMaterial>,
     [],
   );
+  // hazard lights: the four corner indicators (and the side repeaters) blink amber together, ~85 times a minute
+  useFrame(({ clock }) => {
+    const on = clock.elapsedTime % 0.7 < 0.38;
+    const a = mats.amber;
+    a.emissive.set(on ? "#ffb21e" : "#3a2205");
+    a.emissiveIntensity = on ? 2.6 : 0.3;
+    a.color.set(on ? "#ffd27a" : "#e08a1e");
+  });
   useEffect(
     () => () => {
       for (const g of Object.values(geos)) g?.dispose();
