@@ -405,7 +405,7 @@ export function TenantFigure({ slot, world, env, index, gateAt }: { slot: Buildi
     <Hotspot spot={{ key: spotKey("tenant", unitId), kind: "tenant", unitId, anchor }}>
       <group ref={root}>
         <RigMesh geo={geo} rig={rig} />
-        <mesh geometry={G.box()} position={[0, 3, 0]} scale={[2.6, 6.4, 2.6]} visible={false} />
+        <mesh geometry={G.box()} position={[0, 3, 0]} scale={[2.6, 6.4, 2.6]} visible={false} userData={{ pickFirst: true }} />
       </group>
     </Hotspot>
   );

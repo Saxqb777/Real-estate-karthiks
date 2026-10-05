@@ -231,6 +231,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   2.4 ft (estate/gate-state.ts gateNear), they walk in, climb the dog-leg stair (lower flight → landing → upper flight →
   platform), stroll on the terrace (pause looking out front), come back down, out of the gate and it shuts. Route =
   tenantRoute() in People.tsx (plan ft legs with speeds + pauses, ~14 s wait outside). Still clickable (moving hotspot).
+- 5/10/2026: tenant HOVER on the stairs / terrace fixed: Canvas events filter puts hits flagged userData.pickFirst (the
+  tenant's hit box) ahead of the house hit boxes. PRINTED REPORTS pass (all 8 + receipts checked as A4 PDFs): sections
+  stacked full width (no side-by-side), KPI boxes one even row, cells never wrap (headers may), compact rows (Income fits 1
+  page), scope reads "As of …" everywhere, rent-roll status = plain coloured words like the other reports, "1 day" not
+  "1 days", Print / PDF disabled until the report's figures are loaded (never prints a skeleton).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

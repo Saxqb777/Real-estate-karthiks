@@ -5,7 +5,7 @@
 // re-computed here except plain column totals (sumAmounts).
 import { ChevronLeft, ChevronRight, Printer, RotateCcw } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Button, EmptyState, IconButton, LinkButton, Panel, Select, Skeleton, StatusPill, cx } from "@/components/ui";
+import { Button, EmptyState, IconButton, LinkButton, Panel, Select, Skeleton, cx } from "@/components/ui";
 import { ChoiceGroup, currentYear, useLeases, usePropertyTax, useUnits, useYearMode, yearLabel, yearOf, type YearMode } from "@/components/forms";
 import { useBrandName } from "@/components/shell/HudBar";
 import { sumAmounts } from "@/lib/calculations";
@@ -194,8 +194,9 @@ export function ReportLibrary() {
   // ---- one report
   const meta = REPORTS.find((r) => r.id === open)!;
   const usesYear = open === "income" || open === "occupancy";
-  const scope = usesYear ? yLabel : open === "tenant" ? (leaseList.find((l) => l.id === leaseId)?.tenant.name ?? "") : `as of ${today}`;
+  const scope = usesYear ? yLabel : open === "tenant" ? (leaseList.find((l) => l.id === leaseId)?.tenant.name ?? "") : `As of ${today}`;
   const docName = `${meta.title} · ${scope}`;
+  const ready = Boolean(d) && (open === "income" || open === "occupancy" ? Boolean(a) : open === "tenant" ? Boolean(ledger.data && ledger.data.lease.id === leaseId) : true);
   const controls =
     open === "tenant" ? (
       <div className={s.controls}>
@@ -230,7 +231,7 @@ export function ReportLibrary() {
         actions={
           <div className={s.actions}>
             {controls}
-            <Button variant="primary" size="sm" icon={<Printer />} onClick={() => printDocument(`${brand} — ${docName} — ${today}`)}>
+            <Button variant="primary" size="sm" icon={<Printer />} disabled={!ready} onClick={() => printDocument(`${brand} — ${docName} — ${today}`)}>
               Print / PDF
             </Button>
           </div>
@@ -420,7 +421,10 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
                 <td>{l ? `${extra?.rentTiming === "arrears" ? "IN ARREARS" : "IN ADVANCE"} · day ${due}` : "—"}</td>
                 <td className={s.r}>{l ? inr(l.securityDeposit) : "—"}</td>
                 <td>
-                  <StatusPill status={u.status === "occupied" ? "occupied" : u.status === "incoming" ? "incoming" : "vacant"} size="sm" />
+                  {/* plain status words like every other report (no screen badge) */}
+                  <span className={cx(s.status, u.status === "occupied" ? s["st-paid"] : u.status === "incoming" ? s["st-advance"] : s["st-not-due"])}>
+                    {u.status === "occupied" ? "Occupied" : u.status === "incoming" ? "Incoming" : "Vacant"}
+                  </span>
                 </td>
               </tr>
             );
@@ -484,7 +488,9 @@ function Dues({ d }: { d: DashboardData }) {
                       <td className={cx(s.r, s.teal)}>{dash(m.paid)}</td>
                       <td className={cx(s.r, s.red)}>{inr(m.outstanding)}</td>
                       <td className={s.r}>{dash(m.lateFee)}</td>
-                      <td className={s.r}>{m.daysOverdue} days</td>
+                      <td className={s.r}>
+                        {m.daysOverdue} {m.daysOverdue === 1 ? "day" : "days"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

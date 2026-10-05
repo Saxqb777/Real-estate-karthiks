@@ -326,12 +326,17 @@
 }
 .print .table {
   font-size: 9pt;
+  line-height: 1.25;
 }
 .print .table th {
   border-bottom: 1px solid #c8b48c;
 }
 .print .table td {
   border-bottom: 1px solid #ece7df;
+}
+.print .table th,
+.print .table td {
+  padding: 1.9mm 2.6mm;
 }
 .print .table tbody tr:nth-child(even) td {
   background: #faf8f4;
@@ -349,6 +354,15 @@
 .print .st-part-paid {
   color: #b42318;
 }
+.print .st-not-due {
+  color: #6b6155;
+}
+.print .st-advance {
+  color: #1d5f8a;
+}
+.print .status {
+  font-size: 8pt;
+}
 .print .mari {
   color: #9a5b00;
 }
@@ -363,8 +377,30 @@
 .print .bar {
   background: #efe8da;
 }
+/* printed reports read top to bottom: every section full width, the figure boxes in one even row, no wrapped cells */
 .print .two {
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7mm;
+}
+.print .kpis {
+  display: flex;
+}
+.print .kpi {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.print .table td {
+  white-space: nowrap;
+}
+.print .table th {
+  white-space: normal;
+  vertical-align: bottom;
+}
+.print .section + .section {
+  margin-top: 6mm;
+}
+.print .section {
+  margin-bottom: 0;
 }
 .print .section,
 .print .table tr {

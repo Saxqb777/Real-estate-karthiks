@@ -5,7 +5,7 @@
 // SCENE CONTRACT v2 (types.ts): world objects report hover / click / right-click with their screen position,
 // the camera frames the plot inside the area the HUD leaves free, and `dimmed` softly dims the world.
 import { PerformanceMonitor } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, events as r3fEvents } from "@react-three/fiber";
 import { Selection } from "@react-three/postprocessing";
 import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
@@ -249,6 +249,14 @@ export default function EstateScene(props: EstateSceneProps) {
             camera={{ fov: FOV, near: 2, far: 6000, position: [-120, 140, 220] }}
             gl={{ antialias, powerPreference: "high-performance", stencil: false }}
             onPointerMissed={missed}
+            // small moving people (tenants on the terrace) win over the big house hit boxes around them
+            events={(store) => ({
+              ...r3fEvents(store),
+              filter: (items) => {
+                const first = items.filter((i) => i.object.userData.pickFirst);
+                return first.length ? [...first, ...items.filter((i) => !i.object.userData.pickFirst)] : items;
+              },
+            })}
             onCreated={({ gl }) => {
               gl.localClippingEnabled = true;
             }}
