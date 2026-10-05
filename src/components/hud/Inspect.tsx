@@ -310,7 +310,7 @@ export function InspectLayer({ data, inspect, locate, onLeave }: InspectLayerPro
   const { card } = inspect;
   return (
     <>
-      <WorldHint obj={card || inspect.radial ? null : inspect.hover} data={data} />
+      <WorldHint obj={card || inspect.radial || inspect.panel || inspect.propertyOpen ? null : inspect.hover} data={data} />
       <RadialMenu data={data} unitId={inspect.radial?.unitId ?? null} at={inspect.radial?.at ?? null} onClose={inspect.closeRadial} />
       <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} locate={locate} onLeave={onLeave} />
       {forms.element}

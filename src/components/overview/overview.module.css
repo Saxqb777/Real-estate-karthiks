@@ -526,3 +526,31 @@
     transform: translateX(250%);
   }
 }
+
+/* CENTRE GAME MENU (owner chose option 3): "Open" on any card shows its panel as one wide window in the middle of the
+   screen over a darkened world (like a game's inventory screen). Click the dark area / ✕ / Esc to go back. */
+.centreShade {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: rgba(8, 6, 4, 0.55);
+  pointer-events: auto;
+}
+.centre {
+  position: fixed;
+  z-index: 45;
+  left: 50%;
+  top: 84px;
+  bottom: 72px;
+  translate: -50% 0;
+  width: min(1080px, calc(100vw - 48px));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  pointer-events: none;
+}
+.centre > * {
+  pointer-events: auto;
+  width: 100% !important;
+  max-height: 100%;
+}

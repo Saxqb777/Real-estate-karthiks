@@ -403,9 +403,8 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const [rootEl, setRootEl] = useState<HTMLDivElement | null>(null);
   const [topEl, setTopEl] = useState<HTMLDivElement | null>(null);
   const [leftEl, setLeftEl] = useState<HTMLDivElement | null>(null);
-  const [rightEl, setRightEl] = useState<HTMLDivElement | null>(null);
   const [bottomEl, setBottomEl] = useState<HTMLDivElement | null>(null);
-  const insets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, right: rightEl, bottom: bottomEl });
+  const insets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, bottom: bottomEl });
 
   const selected = panel?.kind === "unit" ? panel.unitId : null;
   const dimmed = !mobile && !hudHidden && !tourOpen && (Boolean(tab) || Boolean(panel) || propertyOpen);
@@ -592,7 +591,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
             className={s.hud}
             data-left={leftOpen || undefined}
             data-quests={leftOpen || undefined}
-            data-right={rightOpen || undefined}
+            data-centre={rightOpen || undefined}
             data-dock={tab ? true : undefined}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -610,8 +609,20 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
             {/* ---- right: the clicked object's panel */}
             <AnimatePresence>
+              {/* CENTRE GAME MENU (owner, option 3): the opened panel sits in the middle over a darkened world */}
+              {rightOpen && data && (
+                <motion.div
+                  key="centre-shade"
+                  className={s.centreShade}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={onGround}
+                />
+              )}
               {propertyOpen && data ? (
-                <div key="property" ref={setRightEl} className={s.right}>
+                <div key="property" className={s.centre} data-centre-panel>
                   <PropertyPanel
                     data={data}
                     period={period}
@@ -627,7 +638,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
               ) : (
                 panel &&
                 data && (
-                  <div key={panel.kind === "unit" ? `unit:${panel.unitId}` : panel.kind} ref={setRightEl} className={s.right}>
+                  <div key={panel.kind === "unit" ? `unit:${panel.unitId}` : panel.kind} className={s.centre} data-centre-panel>
                     <HudPanelFor target={panel} data={data} period={period} onClose={closePanel} onOpenUnit={openUnit} />
                   </div>
                 )
