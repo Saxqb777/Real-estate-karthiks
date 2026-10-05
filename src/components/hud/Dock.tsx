@@ -1,7 +1,7 @@
 "use client";
 // Bottom tray: a slim tab bar (keys 1–6) that slides one chart up at a time; click the tab again or Esc to close.
 //   1 Income vs expenses · 2 Where money went · 3 Front vs back · 4 Occupancy · 5 Growth · 6 Payments
-import { BarChart3, CalendarRange, ChevronDown, ChevronUp, Columns2, PieChart, ReceiptText, TrendingUp } from "lucide-react";
+import { BarChart3, CalendarRange, Columns2, PieChart, ReceiptText, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { Kbd, cx, isFocusTrapActive } from "@/components/ui";
@@ -187,9 +187,6 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             </button>
           );
         })}
-        <button type="button" className={s.collapse} onClick={() => setTab(tab ? null : (DOCK_TABS[0].id as DockTab))} aria-label={tab ? "Hide charts (Esc)" : "Show charts"} title={tab ? "Hide charts (Esc)" : "Show charts"}>
-          {tab ? <ChevronDown aria-hidden /> : <ChevronUp aria-hidden />}
-        </button>
       </div>
       {forms.element}
     </section>
