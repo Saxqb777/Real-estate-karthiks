@@ -293,7 +293,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function IncomeReport({ a }: { a: AnnualReport }) {
   const t = a.totals;
-  const max = Math.max(1, ...a.expensesByCategory.map((c) => c.amount));
   return (
     <>
       <Kpis
@@ -336,21 +335,36 @@ function IncomeReport({ a }: { a: AnnualReport }) {
         </Section>
         <div>
           <Section title="Where the money went">
-            {a.expensesByCategory.length ? (
-              a.expensesByCategory.map((c) => (
-                <div key={c.categoryId} className={s.barRow}>
-                  <div className={s.barTop}>
-                    <span>{c.name}</span>
-                    <b>{inr(c.amount)}</b>
-                  </div>
-                  <div className={s.bar}>
-                    <i style={{ width: `${(c.amount / max) * 100}%` }} />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className={s.none}>No expenses this year</p>
-            )}
+            {/* a plain table like the others (owner: no bars, no notes) */}
+            <TableBox>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th className={s.r}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {a.expensesByCategory.length ? (
+                  a.expensesByCategory.map((c) => (
+                    <tr key={c.categoryId}>
+                      <td>{c.name}</td>
+                      <td className={cx(s.r, s.red)}>{inr(c.amount)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td>—</td>
+                    <td className={s.r}>—</td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td className={cx(s.r, s.red)}>{inr(t.expenses)}</td>
+                </tr>
+              </tfoot>
+            </TableBox>
           </Section>
           <Section title="By unit">
             <TableBox>

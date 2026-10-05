@@ -236,6 +236,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   stacked full width (no side-by-side), KPI boxes one even row, cells never wrap (headers may), compact rows (Income fits 1
   page), scope reads "As of …" everywhere, rent-roll status = plain coloured words like the other reports, "1 day" not
   "1 days", Print / PDF disabled until the report's figures are loaded (never prints a skeleton).
+- 5/10/2026: report TABLES ALIGNED (owner): side-by-side sections start on the same line (.two > .section + .section has no
+  top gap — it pushed "Empty periods" down); "Where the money went" is now a plain Category | Amount table with a Total row
+  (bars + "No expenses this year" note removed).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

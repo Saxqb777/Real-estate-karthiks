@@ -175,6 +175,10 @@
 .section + .section {
   margin-top: 22px;
 }
+/* side-by-side sections start on the same line (the gap above stacked sections must not push the right column down) */
+.two > .section + .section {
+  margin-top: 0;
+}
 .section {
   margin-bottom: 8px;
 }
