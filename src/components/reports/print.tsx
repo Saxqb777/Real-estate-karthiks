@@ -87,19 +87,20 @@ export function printDocument(title: string) {
   requestAnimationFrame(() => window.print());
 }
 
-/** First-page letterhead: brand mark, name, Tamil town, and what the document is. */
-export function Letterhead({ brand, town, right }: { brand: string; town?: string; right?: ReactNode }) {
+/** First-page header (owner's style C, no logo): a dark band with the name + place on the left and what the document is
+ *  (title, scope / reference) on the right. Prints its background (print-color-adjust: exact). */
+export function Letterhead({ brand, town, title, sub, right }: { brand: string; town?: string; title?: ReactNode; sub?: ReactNode; right?: ReactNode }) {
   return (
-    <div className={s.letterhead}>
-      <PrintMark className={s.lhMark} />
-      <div className={s.lhText}>
-        <span className={s.lhName}>{brand}</span>
-        <span className={s.lhTown}>
-          {town && <span className={s.lhTownEn}>{town}, Tamil Nadu</span>}
-        </span>
+    <div className={s.lhC}>
+      <div className={s.lhCLeft}>
+        <span className={s.lhCName}>{brand}</span>
+        {town && <span className={s.lhCSub}>{town}</span>}
       </div>
-      {right && <div className={s.lhRight}>{right}</div>}
-      <span className={s.lhBand} aria-hidden />
+      <div className={s.lhCRight}>
+        {title && <span className={s.lhCTitle}>{title}</span>}
+        {sub && <span className={s.lhCSub}>{sub}</span>}
+        {right && <span className={s.lhCSub}>{right}</span>}
+      </div>
     </div>
   );
 }

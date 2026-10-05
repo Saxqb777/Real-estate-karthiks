@@ -237,12 +237,8 @@ export function ReportLibrary() {
         <div className={s.body}>{body(open)}</div>
       </Panel>
       <PrintPortal running={{ topLeft: brand, topRight: docName, bottomLeft: `Generated ${today}` }}>
-        <Letterhead brand={brand} town="Pattukottai" right={<span>Generated {today}</span>} />
-        <div className={s.print}>
-          <h1 className={s.printTitle}>{meta.title}</h1>
-          <p className={s.printScope}>{scope}</p>
-          {body(open, true)}
-        </div>
+        <Letterhead brand={brand} town={`Generated ${today}`} title={meta.title} sub={scope} />
+        <div className={s.print}>{body(open, true)}</div>
       </PrintPortal>
     </>
   );

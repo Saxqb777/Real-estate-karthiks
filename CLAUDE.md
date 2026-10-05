@@ -196,6 +196,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   · Deposits held. Year + FY/Calendar control only on the year-based ones; others "As of today". Component
   src/components/reports/ReportLibrary.tsx (+ rlib.module.css); old ReportsHub/AnnualStatement/UnitStory kept but unused.
   Old ?report=ledger&lease= links open the tenant statement.
+- 5/10/2026: PRINTABLES = STYLE C (owner picked over Minimal / Classic slip): NO logo, NO round PAID stamp, NO dotted
+  border. Header = dark band (#1f1a15) with the name (+ place / generated date) left and the document title in gold +
+  reference / scope right (Letterhead in reports/print.tsx, print-color-adjust: exact). Receipt (invoice/[id]/Receipt.tsx,
+  .cr* classes): cream amount box with a 5px gold left edge (amount, words, RENT FOR month), list Received from / Property /
+  Paid by / Monthly rent, owner's signature line, revenue-stamp box only for cash > ₹5,000, deposit line at the foot.
+  Reports print: cream KPI boxes with gold left edge, gold-brown headings, light zebra tables.
 - 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.

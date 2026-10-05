@@ -299,25 +299,22 @@
   color: var(--sky);
 }
 
-/* ---- print (light A4) */
+/* ---- print (light A4, style C: cream number boxes with a gold edge, light striped tables) */
 .print {
   color: #1a1612;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-.printTitle {
-  margin-top: 6mm;
-  font-family: var(--ff-display);
-  font-size: 18pt;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.printScope {
-  margin-bottom: 5mm;
-  font-size: 9pt;
-  color: #6b6155;
+.print .kpis {
+  gap: 4mm;
+  margin-bottom: 6mm;
 }
 .print .kpi {
-  background: none;
-  border-color: #d8cdb8;
+  background: #f6f2ea;
+  border: 0;
+  border-left: 4px solid #c9922e;
+  border-radius: 0;
+  padding: 3.5mm 4mm;
 }
 .print .kpiLabel,
 .print .sectionTitle,
@@ -325,16 +322,22 @@
   color: #8a6320;
 }
 .print .kpiValue {
-  font-size: 16pt;
+  font-size: 17pt;
 }
 .print .table {
   font-size: 9pt;
 }
 .print .table th {
-  border-bottom-color: #c8b48c;
+  border-bottom: 1px solid #c8b48c;
 }
 .print .table td {
-  border-bottom-color: #ece5d8;
+  border-bottom: 1px solid #ece7df;
+}
+.print .table tbody tr:nth-child(even) td {
+  background: #faf8f4;
+}
+.print .table tfoot td {
+  border-top: 1px solid #c8b48c;
 }
 .print .teal,
 .print .st-paid,
@@ -362,4 +365,8 @@
 }
 .print .two {
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+.print .section,
+.print .table tr {
+  break-inside: avoid;
 }

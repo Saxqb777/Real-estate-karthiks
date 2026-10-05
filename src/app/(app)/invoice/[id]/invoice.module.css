@@ -523,3 +523,154 @@
     min-width: 170px;
   }
 }
+
+/* ---- rent receipt, printable style C (owner, 5/10/2026): dark band, cream amount box with a gold edge, no logo/stamp */
+.cr {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 760px;
+  background: #fff;
+  color: #1a1612;
+  font-family: var(--ff-body);
+  font-size: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.crPrint {
+  min-height: 0;
+  box-shadow: none;
+  font-size: 10.5pt;
+}
+.crBand {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 30px 44px;
+  background: #1f1a15;
+  color: #fff;
+}
+.crBand > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.crName {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.crTitle {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #e0a640;
+}
+.crSub {
+  font-size: 12.5px;
+  color: #b7ab98;
+}
+.crRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+.crIn {
+  flex: 1;
+  padding: 30px 44px 26px;
+}
+.crHero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  background: #f6f2ea;
+  border-left: 5px solid #c9922e;
+}
+.crHero > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.crLbl {
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #8a6320;
+}
+.crAmount {
+  font-family: var(--ff-display);
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+.crWords {
+  font-size: 13px;
+  color: #6b6155;
+}
+.crPeriod {
+  font-family: var(--ff-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.crList {
+  margin-top: 18px;
+}
+.crList > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ece7df;
+}
+.crList dt {
+  color: #7a7064;
+}
+.crList dd {
+  font-weight: 600;
+  text-align: right;
+}
+.crSign {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 18px;
+  margin-top: 56px;
+}
+.crStamp {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px dashed #b7ab98;
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: center;
+  color: #9a9083;
+}
+.crSignLine {
+  width: 220px;
+  padding-top: 6px;
+  border-top: 1px solid #1a1612;
+  text-align: center;
+  font-size: 12px;
+  color: #7a7064;
+}
+.crFoot {
+  padding: 14px 44px 24px;
+  font-size: 11.5px;
+  color: #9a9083;
+}

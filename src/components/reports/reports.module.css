@@ -1938,3 +1938,47 @@ a.receipt:hover {
 .hint {
   display: none !important;
 }
+
+/* ---- printables, style C (owner, 5/10/2026): dark name band, no logo ---- */
+.lhC {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8mm;
+  margin: 0 0 7mm;
+  padding: 7mm 9mm;
+  background: #1f1a15;
+  color: #fff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.lhCLeft,
+.lhCRight {
+  display: flex;
+  flex-direction: column;
+  gap: 1mm;
+}
+.lhCRight {
+  align-items: flex-end;
+  text-align: right;
+}
+.lhCName {
+  font-family: var(--ff-display);
+  font-size: 17pt;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.lhCTitle {
+  font-family: var(--ff-display);
+  font-size: 11pt;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #e0a640;
+}
+.lhCSub {
+  font-size: 8.5pt;
+  color: #b7ab98;
+}
