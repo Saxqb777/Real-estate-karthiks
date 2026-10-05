@@ -115,6 +115,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   boxes). Owner wants the overview to become JUST the 3D model (remove shell top bar + overview top strip + bottom dock/
   timeline), everything reachable from world objects — plan proposed (milestone → property+charts, sun/moon → time/period,
   officer register → Data, plot marker → Config); pending owner answers on logout placement + Data/Config "Back" button.
+- 5/10/2026: owner's WHITE LAND CRUISER 100 (src/components/estate/LandCruiser.tsx) — rebuilt from his model screenshots
+  (his original file could not be copied from his Mac): primitives merged per material, maroon/gold/grey decals, six-spoke
+  alloys, WIDE rectangular sunroof, HAZARD LIGHTS (all 4 corner indicators + side repeaters) blink amber ~85/min. Parked on
+  the front-left grass (ParkedCar in Fixtures.tsx), nose ENE (rotation π/8; world +X = east, −Z = north). The 3 cross-the-
+  front walkers now keep to z −4.6…−6 so they pass between the car and the front wall.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
