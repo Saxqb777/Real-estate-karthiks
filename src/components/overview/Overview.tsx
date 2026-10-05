@@ -421,7 +421,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
       plot={data?.plot ?? {}}
       units={sceneUnits}
       mode="hero"
-      showLabels
       selectedUnitId={selected}
       onSelectUnit={(id) => {
         if (!id) onGround();
