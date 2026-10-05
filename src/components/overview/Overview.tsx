@@ -263,11 +263,17 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   const onObjectClick = useCallback(
     (obj: SceneObject) => {
-      setHudHidden(false);
       setSkyCard(false);
+      // the car keeps its own exit (owner): click → "Leave Pattukkottai Estates?" straight away, no card
+      if (obj.kind === "car") {
+        closeCard();
+        setAskLeave(true);
+        return;
+      }
+      setHudHidden(false);
       inspect.onObjectClick(obj);
     },
-    [inspect],
+    [inspect, closeCard],
   );
 
   // hover hint after a short beat (the outline is instant) so sweeping the mouse across the world stays calm
