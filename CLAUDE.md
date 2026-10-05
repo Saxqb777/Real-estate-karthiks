@@ -45,7 +45,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 
 ## Owner decisions log (keep updated — cross-session memory)
 - Owner lives in the UAE (Gulf time, UTC+4, 1.5 h behind IST); the property is in Pattukottai. App clock + 3D day/night follow IST
-  (property time); quote ETAs/times to the owner in UAE time. Offered an optional secondary UAE clock — pending his answer.
+  (property time); quote ETAs/times to the owner in UAE time. Home-clock label in the app = "GST" (owner, 5/10/2026).
 - Login: username `estates`, random password in env `APP_PASSWORD` (owner has it). Next.js 15, Neon region Singapore.
 - Design = full game-like prototype now (not plain forms). See docs/DESIGN.md — it is the source of truth for UI, including:
   no-AI-look rules, living world (traffic, people, wind), Tamil day phases (src/lib/day-phase.ts), ONE-SCREEN rule (no long scroll),
