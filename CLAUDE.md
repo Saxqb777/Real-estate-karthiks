@@ -149,6 +149,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: NO INSTRUCTIONS anywhere (owner): first-run tour never auto-starts, setup quest log hidden, "not opened yet"
   hint dots off, Field `hint` text + FormSection `note` not rendered (errors still are), RailScreen key-hint footer gone.
   Kept (counts/labels, not instructions): rail item sublines ("1 current"), ₹ previews, switch labels, empty-state lines.
+- 5/10/2026: units are called by their NAMES (door numbers 116/B7 front, 116/B8 back) everywhere — positionLabel() returns
+  null so chips/panels/charts show the unit name, never "Front"/"Back" unit; dock tab 3 = "<back name> vs <front name>"
+  (live: "116/B8 vs 116/B7"). Plot "front/back width" and the unit Position picker in Config keep their geometry words.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
