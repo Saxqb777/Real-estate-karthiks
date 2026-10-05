@@ -64,10 +64,10 @@ interface PedSpec {
 // three passers-by on separate tracks across the front grass (nobody walks through anybody) and a lady strolling
 // through the banana garden (the school kid round the palms was removed — owner: a policeman guards the tax hut there)
 const PEDS: PedSpec[] = [
-  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", route: { kind: "cross", dist: 7, dir: 1 }, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
-  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", route: { kind: "cross", dist: 10, dir: -1 }, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
+  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", route: { kind: "cross", dist: 5.2, dir: 1 }, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
+  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", route: { kind: "cross", dist: 6.0, dir: -1 }, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
   { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, scale: 0.95, speed: 2.6, gait: "walk", route: { kind: "loop", area: "garden" }, offset: 22, wait: 0, stops: [{ at: 0.22, dur: 4, act: "look" }, { at: 0.62, dur: 3, act: "idle" }] },
-  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.8, gait: "walk", route: { kind: "cross", dist: 13, dir: 1 }, offset: 30, wait: 12, stops: [{ at: "center", dur: 3, act: "look" }] },
+  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.8, gait: "walk", route: { kind: "cross", dist: 4.6, dir: 1 }, offset: 30, wait: 12, stops: [{ at: "center", dur: 3, act: "look" }] },
 ];
 
 interface Landmarks {

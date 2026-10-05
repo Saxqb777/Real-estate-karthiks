@@ -12,6 +12,7 @@ import { gustAt, type Env } from "./env";
 import { Hotspot, type V3 } from "./Interact";
 import { ball, box, cone, rod, type Part } from "./bake";
 import { Baked, vcMaterial } from "./Baked";
+import { LandCruiser } from "./LandCruiser";
 import { G, std } from "./materials";
 import { WireCrows } from "./People";
 import { bambooLatticeTex, bambooMatTex, glowTex, kolamTex } from "./textures";
@@ -56,6 +57,7 @@ export function Fixtures({ layout, world, env, cues, lampLight, crows }: { layou
       {/* the to-dos live with the property officer who walks round the compound (People.tsx) */}
       <PropertyOfficer layout={layout} world={world} env={env} />
       <TaxStamp layout={layout} world={world} env={env} />
+      <ParkedCar layout={layout} world={world} />
       <PlotMarker layout={layout} world={world} env={env} />
     </group>
   );
@@ -487,4 +489,13 @@ function PoleAndMeter({ layout, world, env, lampLight, crows }: { layout: SiteLa
       {crows && <WireCrows points={crowSpots} env={env} />}
     </group>
   );
+}
+
+/** The owner's white Land Cruiser, parked on the open grass at the front-left of the island, nose to the ENE (owner).
+ *  The walkers crossing the front grass keep to the strip between it and the front wall. */
+function ParkedCar({ layout, world }: { layout: SiteLayout; world: World }) {
+  const FL = layout.plot.polygon[0];
+  const M = layout.site.meadow;
+  // ENE = 22.5° north of east; east = +X, north = −Z in the world, and the car's nose points +X
+  return <LandCruiser position={[world.x(FL.x - 5.5), 0, world.z(M.z0 + 6.2)]} rotation={[0, Math.PI / 8, 0]} />;
 }
