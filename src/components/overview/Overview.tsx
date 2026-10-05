@@ -7,7 +7,7 @@
 // Clicking the ground / Esc / ✕ closes panels (📌 keeps them); the camera reframes the plot into the free area
 // (insets) and the world dims while numbers are being read. Phones get the world on top + a bottom sheet.
 // Every figure comes from /api/dashboard (src/lib/calculations.ts) — nothing here does maths.
-import { CircleHelp, Eye, History, Maximize, RotateCcw, Swords } from "lucide-react";
+import { CircleHelp, Eye, History, RotateCcw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import EstateSceneLazy, { type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind } from "@/components/estate/EstateSceneLazy";
@@ -105,7 +105,6 @@ interface GameProps {
 function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps) {
   const mobile = useMediaQuery(MOBILE_QUERY);
   const narrow = useMediaQuery("(max-width: 1179px)");
-  const wide = useMediaQuery("(min-width: 1560px)");
   const [period, setPeriod] = usePeriod();
   const [yearMode, setYearMode] = useYearMode();
   const tax = usePropertyTax();
@@ -538,7 +537,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     );
 
   // ---------------------------------------------------------------- desktop / tablet
-  const maxChips = narrow ? 1 : wide ? 3 : 2;
   return (
     <div className={cx(s.game, framed && s.framed)} data-hud={hudHidden ? "hidden" : undefined}>
       <div
@@ -573,66 +571,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {/* ---- top strip */}
-            <motion.div
-              ref={setTopEl}
-              className={s.top}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.4,
-                delay: 0.15,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            >
-              <div className={s.topLeft}>
-                <div className={s.chipGroup} data-tour="chips">
-                  {showQuests && (
-                    <button
-                      type="button"
-                      className={cx(s.chipBtn, s.questBtn, questOpen && s.chipBtnOn)}
-                      onClick={toggleQuest}
-                      aria-pressed={questOpen}
-                      data-help="Setup steps left"
-                    >
-                      <Swords aria-hidden />
-                      <span>Setup</span>
-                      <b className="num">
-                        {quests!.done}/{quests!.total}
-                      </b>
-                    </button>
-                  )}
-                  {data && hasUnits && (
-                    <div className={s.chips} data-help="What needs you — click one">
-                      <StatusChips data={data} taxes={tax.data?.items} onSelect={onChip} max={maxChips} />
-                    </div>
-                  )}
-                  {!data && !error && <span className={s.loadingNote}>Loading your estate…</span>}
-                </div>
-              </div>
-              <div className={s.topRight}>
-                {asOfChip}
-                <div className={s.tools}>
-                  <IconButton
-                    size="sm"
-                    variant="secondary"
-                    label="Help & shortcuts (?)"
-                    icon={<CircleHelp />}
-                    onClick={() => setHelpOpen(true)}
-                    data-help="This help (?)"
-                  />
-                  <IconButton
-                    size="sm"
-                    variant="secondary"
-                    label="Hide the HUD (F)"
-                    icon={<Maximize />}
-                    onClick={() => setHudHidden(true)}
-                    data-help="Just the world (F)"
-                  />
-                </div>
-              </div>
-            </motion.div>
-
             {/* ---- left: quest log or property */}
             <AnimatePresence>
               {leftOpen && data && (
