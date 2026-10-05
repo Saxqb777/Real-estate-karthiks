@@ -154,6 +154,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   (live: "116/B8 vs 116/B7"). Plot "front/back width" and the unit Position picker in Config keep their geometry words.
 - 5/10/2026: panel footers carry no instruction ("Click a number for its breakdown", Esc hints, drill-down hint lines removed);
   figure hover tips show the exact amount only. Click-to-drill still works.
+- 5/10/2026: DATA/CONFIG = option C game look (owner): section buttons across the top (RailScreen), fixed blurred estate
+  backdrop (public/estate-backdrop.jpg), gold game panels via `[data-game-main]` in Panel.module.css, tenants + leases as
+  character cards (data/cards.tsx GameCard/CardGrid); payments/expenses stay tables. "← Back" question moot (floating nav).
+- 5/10/2026: SMOOTH ARRIVAL: login hands over with router.replace (soft nav) and preloads the 3D chunk; overview shows ONE
+  "Arriving at your estate…" cover (same as login hand-over) until data + 4 rendered frames (EstateScene `onFirstFrame`),
+  then fades 0.6 s; scene mounts only once data is in; no main fade on "/"; camera flights advance by capped dt (no jumps).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
