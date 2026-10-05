@@ -126,6 +126,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   title screen (~4.6 s). Still pending: Data/Config "← Back to estate" button + whether to remove the welcome tour.
 - 5/10/2026: HOVER on any world object = just its NAME TAG (WorldHint → .worldTag, unit name for houses), no detail box.
 - 5/10/2026: tax office hut (with the policeman, in its local frame) now faces SSW (group rotation −π/8; was SW −π/4).
+- 5/10/2026: SUN / MOON = time (owner): the sky backdrop publishes the brighter body's screen pos (estate/sky-body.ts);
+  SkyTarget (overview/SkyTime.tsx) rides on it — hover = tag "7:09 AM IST · 5:39 AM UAE", click = TIME TRAVEL panel with
+  the as-of timeline ONLY (period buttons All time/FY/month + FY/CAL REMOVED — owner: useless; figures default to current
+  FY; ⌘K can still switch). Sun/moon path kept high (y 0.76–0.88) so it's never hidden behind the island. Timeline left the
+  bottom bar; top shell bar lost its IST/UAE clock and its sign-out button (car does that; ⌘K "Sign out" remains).
+  Desktop only so far — phones still use their bottom sheet for the timeline.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
