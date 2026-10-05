@@ -49,8 +49,9 @@ export interface OverviewProps {
   layout?: "immersive" | "framed";
 }
 
-/** Pop-up system (owner, option D): EVERY world object goes hover tag → gold card → "Open" → the right-hand panel. */
-const DIRECT: SceneObjectKind[] = [];
+/** Owner, 5/10/2026: hover = name tag only; a click opens the object's window STRAIGHT AWAY — no gold card, phone + desktop.
+ *  (The car keeps its leave prompt; the sun / moon opens time travel.) */
+const DIRECT: SceneObjectKind[] = ["unit", "tenant", "tolet", "mailbox", "noticeboard", "pole", "taxstamp", "plot"];
 const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export function Overview({ layout = "immersive" }: OverviewProps) {
@@ -448,6 +449,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       {/* sun / moon click opens TIME TRAVEL straight away (owner, 5/10/2026: no card for it) */}
       <SkyTarget
         active={timeOpen}
+        hidden={rightOpen || Boolean(tab && mobile) || (mobile && menuOpen)}
         onClick={() => {
           closeCard();
           setTimeOpen((v) => !v);

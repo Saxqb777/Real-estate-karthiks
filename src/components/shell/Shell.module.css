@@ -541,16 +541,6 @@
     border-top: 1px solid var(--line-strong);
     box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.45);
   }
-  .tabbar::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -5px;
-    height: 4px;
-    background: var(--chettinad) 0 0 / 12px 4px repeat-x;
-    opacity: 0.85;
-  }
   .tab {
     position: relative;
     display: flex;

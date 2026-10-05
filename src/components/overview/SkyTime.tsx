@@ -9,13 +9,19 @@ import { useEscape } from "@/components/hud";
 import { useEpochSecond } from "@/components/shell/IstClock";
 import { Button, IconButton, InspectCard } from "@/components/ui";
 import { HOME_ZONE, clockAt, formatTimeIST } from "@/lib/day-phase";
+import { useMediaQuery } from "./hooks";
 import s from "./sky.module.css";
 
 /** Invisible round target that rides on the sun / moon, with a name-tag style clock on hover. */
-export function SkyTarget({ onClick, active }: { onClick: () => void; active: boolean }) {
+export function SkyTarget({ onClick, active, hidden = false }: { onClick: () => void; active: boolean; hidden?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null);
+  // hidden while a window / chart / menu covers the world (the tag would sit on top of it)
+  const hiddenRef = useRef(hidden);
+  hiddenRef.current = hidden;
   const [kind, setKind] = useState<"sun" | "moon">("sun");
   const [hover, setHover] = useState(false);
+  // phones / tablets have no hover: the time tag stays shown next to the sun / moon (owner, 5/10/2026)
+  const touch = useMediaQuery("(hover: none)");
   const sec = useEpochSecond();
   const now = sec ? new Date(sec * 1000) : null;
   useEffect(() => {
@@ -23,7 +29,7 @@ export function SkyTarget({ onClick, active }: { onClick: () => void; active: bo
     const tick = () => {
       const el = ref.current;
       if (el) {
-        const show = skyBody.live && skyBody.vis > 0.25;
+        const show = !hiddenRef.current && skyBody.live && skyBody.vis > 0.25;
         const d = Math.max(56, skyBody.r * 2.6);
         el.style.display = show ? "block" : "none";
         el.style.left = `${skyBody.x - d / 2}px`;
@@ -49,7 +55,7 @@ export function SkyTarget({ onClick, active }: { onClick: () => void; active: bo
       onPointerLeave={() => setHover(false)}
     >
       <AnimatePresence>
-        {hover && now && home && (
+        {(hover || touch) && now && home && (
           <motion.span key="tag" className={s.tag} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
             <span>
               <b className="num">{formatTimeIST(now)}</b> IST

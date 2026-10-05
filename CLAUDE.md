@@ -214,6 +214,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   ☰ (shell/chart-menu.ts store, MobileTabBar) → gold "CHARTS" list of names only (overview/ChartMenu.tsx) → the chart opens
   as a sheet with an ✕ (Dock `sheet` mode). World taps = same gold card → Open → centre window as desktop; sun/moon → time
   travel. ☰ on Data/Config goes to the overview and opens the menu.
+- 5/10/2026: NO GOLD CARD any more (owner, phone + desktop): hover = name tag only, CLICK opens the object's window straight
+  away (Overview DIRECT = every kind except the car → leave prompt; sun/moon → time travel). Supersedes the option-D card step.
+  Phones: overview fills the whole page (Screen .flush no longer gets the 12px phone padding — that was the top/bottom strip),
+  bottom bar's patterned stripe removed, sun/moon time tag ALWAYS shown on touch screens ((hover: none)); the sky target +
+  tag hide while a window / chart / menu is open.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
