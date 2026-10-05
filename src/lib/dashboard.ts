@@ -101,6 +101,8 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       startDate: l.startDate,
       endDate: l.endDate,
       monthlyRent: num(l.monthlyRent),
+      rentTiming: l.rentTiming === "arrears" ? "arrears" : "advance",
+      rentDueDay: l.rentDueDay,
       securityDeposit: num(l.securityDeposit),
       depositRefundedAmount: numOrNull(l.depositRefundedAmount),
       depositRefundDate: l.depositRefundDate,

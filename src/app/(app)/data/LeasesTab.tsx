@@ -38,6 +38,13 @@ import { CardGrid, GameCard, initials } from "./cards";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
+const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
+/** "After the month · 10th of the next month" / "In advance · 1st of the month" */
+function rentTimingLabel(timing: string, day: number | null): string {
+  const on = day ? ordinal(day) : "usual due day";
+  return timing === "arrears" ? `After the month · ${on} of the next month` : `In advance · ${on} of the month`;
+}
+
 type Filter = "current" | "incoming" | "past" | "all";
 
 export function PhasePill({ phase, size = "sm" }: { phase: LeasePhase; size?: "sm" | "md" }) {
@@ -218,6 +225,7 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
           { label: "First day", value: formatDate(l.startDate), num: true },
           { label: "Last day of tenancy", value: l.endDate ? formatDate(l.endDate) : <span className="faint">open — still living there</span>, num: Boolean(l.endDate) },
           { label: "Monthly rent", value: formatINR(l.monthlyRent), num: true },
+          { label: "Rent paid", value: rentTimingLabel(l.rentTiming, l.rentDueDay) },
           {
             label: "Security deposit",
             value: l.securityDeposit ? formatINR(l.securityDeposit) : <span className="faint">none</span>,

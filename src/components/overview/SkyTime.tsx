@@ -1,13 +1,13 @@
 "use client";
 // The sun / moon in the painted sky is a world object too (owner): hover it for the time at the property (IST) and at
 // home (UAE); click it for TIME TRAVEL — the as-of timeline in one floating panel.
-import { X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { skyBody } from "@/components/estate/sky-body";
 import { useEscape } from "@/components/hud";
 import { useEpochSecond } from "@/components/shell/IstClock";
-import { IconButton } from "@/components/ui";
+import { Button, IconButton, InspectCard } from "@/components/ui";
 import { HOME_ZONE, clockAt, formatTimeIST } from "@/lib/day-phase";
 import s from "./sky.module.css";
 
@@ -67,6 +67,46 @@ export function SkyTarget({ onClick, active }: { onClick: () => void; active: bo
         )}
       </AnimatePresence>
     </button>
+  );
+}
+
+/** The sun / moon's card (same gold card as every world object): the time at the property and at home, "Open" → time travel. */
+export function SkyCard({ open, onClose, onOpen }: { open: boolean; onClose: () => void; onOpen: () => void }) {
+  const sec = useEpochSecond();
+  const now = sec ? new Date(sec * 1000) : null;
+  const home = now ? clockAt(now, HOME_ZONE.offsetMin) : null;
+  // pinned where the sun / moon was when clicked (it barely moves while the card is up)
+  const anchor = useMemo(() => (open && skyBody.live ? { x: skyBody.x, y: skyBody.y } : null), [open]);
+  return (
+    <InspectCard
+      open={open}
+      anchor={anchor}
+      onClose={onClose}
+      onExpand={onOpen}
+      eyebrow={skyBody.kind === "sun" ? "Sun" : "Moon"}
+      title="Time"
+      width={260}
+      actions={
+        <Button size="sm" variant="primary" iconRight={<ChevronRight />} onClick={onOpen} style={{ marginLeft: "auto" }}>
+          Open
+        </Button>
+      }
+    >
+      {now && home && (
+        <div className={s.cardRows}>
+          <div>
+            <span>Pattukkottai</span>
+            <b className="num">{formatTimeIST(now)} IST</b>
+          </div>
+          <div>
+            <span>Home</span>
+            <b className="num">
+              {home.time} {home.ampm} {HOME_ZONE.label}
+            </b>
+          </div>
+        </div>
+      )}
+    </InspectCard>
   );
 }
 

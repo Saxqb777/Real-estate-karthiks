@@ -8,7 +8,7 @@ import "./messages";
 import type { LeaseState } from "@/lib/dashboard-types";
 import { addDays, formatDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
-import { zBool, zDate, zDateOrNull, zMoney, zPositiveMoney, zText } from "@/lib/validation";
+import { zBool, zDate, zDateOrNull, zInt, zMoney, zPositiveMoney, zText } from "@/lib/validation";
 import type { PaymentStats } from "./payment";
 import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
@@ -127,12 +127,18 @@ export function compareLeases(a: LeaseSpan, b: LeaseSpan, today: Date = todayIST
 
 // ---- Schemas ------------------------------------------------------------------------------------
 
+export const RENT_TIMINGS = ["advance", "arrears"] as const;
+
 const leaseFields = {
   unitId: zRef("Choose a unit"),
   tenantId: zRef("Choose a tenant"),
   startDate: zRequired(zDate),
   endDate: zEndDate,
   monthlyRent: zRequired(zPositiveMoney),
+  /** "advance" = a month's rent is due in that month; "arrears" = in the following month (after living it) */
+  rentTiming: z.enum(RENT_TIMINGS, { message: "must be in advance or after the month" }),
+  /** day of the month rent is due for this lease; empty = the Settings default */
+  rentDueDay: z.preprocess((v) => (v === "" || v === undefined ? null : v), zInt(1, 31).nullable()),
   securityDeposit: zMoney,
   depositRefundedAmount: zMoneyOrNull,
   depositRefundDate: zRefundDate,
@@ -150,6 +156,7 @@ export const leaseCreateSchema = z
     ...leaseFields,
     securityDeposit: zMoney.default(0),
     reminderEnabled: zBool.optional(),
+    rentTiming: z.enum(RENT_TIMINGS, { message: "must be in advance or after the month" }).default("advance"),
   })
   .superRefine(addRuleIssues);
 

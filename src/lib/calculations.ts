@@ -136,6 +136,8 @@ export interface OfferInput {
   notes?: string | null;
 }
 
+export type RentTiming = "advance" | "arrears";
+
 export interface LeaseInput {
   id: string;
   unitId: string;
@@ -146,6 +148,10 @@ export interface LeaseInput {
   /** LAST DAY of tenancy (inclusive); null = open-ended */
   endDate: Date | null;
   monthlyRent: number;
+  /** "advance" (default): a month's rent falls due in that month; "arrears": in the following month, after living it */
+  rentTiming?: RentTiming;
+  /** day of the month rent falls due for this lease; null/undefined = Settings.rentDueDay */
+  rentDueDay?: number | null;
   securityDeposit: number;
   depositRefundedAmount?: number | null;
   depositRefundDate?: Date | null;
@@ -515,13 +521,28 @@ export function occupancyFor(purchaseDate: Date, asOf: Date, leases: LeaseSpan[]
 // ───────────────────────────── rent schedule, arrears, next payment ─────────────────────────────
 
 type RentSettings = Pick<SettingsInput, "rentDueDay" | "lateFeeEnabled" | "lateFeeAmount" | "lateFeeGraceDays">;
-type RentLease = Pick<LeaseInput, "id" | "startDate" | "endDate" | "monthlyRent">;
+type RentLease = Pick<LeaseInput, "id" | "startDate" | "endDate" | "monthlyRent" | "rentTiming" | "rentDueDay">;
 type RentPayment = Pick<PaymentInput, "amount" | "paymentDate" | "periodMonth" | "periodYear">;
 
 /** Due date (date-only) of a rent period: due day clamped to the month length. */
 export function dueDateFor(periodYear: number, periodMonth: number, rentDueDay: number): Date {
   const day = Math.min(Math.max(1, Math.trunc(rentDueDay) || 1), daysInMonth(periodYear, periodMonth));
   return dateOnly(periodYear, periodMonth, day);
+}
+
+/**
+ * Day number on which a lease's rent for (year, month) falls due. Day of month = the lease's own rentDueDay, else
+ * Settings.rentDueDay (clamped to the month length). "advance": in that month, never before the lease start;
+ * "arrears": in the following month (rent for October paid in November, after living it).
+ */
+export function rentDueDayNum(lease: Pick<LeaseInput, "startDate" | "rentTiming" | "rentDueDay">, year: number, month: number, settings: Pick<SettingsInput, "rentDueDay">): number {
+  const day = lease.rentDueDay ?? settings.rentDueDay;
+  if (lease.rentTiming === "arrears") {
+    const ny = month === 12 ? year + 1 : year;
+    const nm = month === 12 ? 1 : month + 1;
+    return dayNum(dueDateFor(ny, nm, day));
+  }
+  return Math.max(dayNum(dueDateFor(year, month, day)), dayNum(lease.startDate));
 }
 
 /** First and last rent month (month index) of a lease; last = month of the last day, null while open. */
@@ -559,7 +580,7 @@ function lateFeeFor(settings: RentSettings, daysPastDue: number, outstanding: nu
 function rentMonth(lease: RentLease, mi: number, paidByMonth: Map<number, number>, settings: RentSettings, a: number): RentMonth {
   const year = miYear(mi);
   const month = miMonth(mi);
-  const dueDay = Math.max(dayNum(dueDateFor(year, month, settings.rentDueDay)), dayNum(lease.startDate));
+  const dueDay = rentDueDayNum(lease, year, month, settings);
   const due = round2(lease.monthlyRent);
   const paid = round2(paidByMonth.get(mi) ?? 0);
   const outstanding = round2(due - paid);
@@ -1240,7 +1261,7 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
       };
     }),
     notes: [
-      `A month's rent falls due on day ${ctx.settings.rentDueDay} (or the lease start); it counts here from the next day.`,
+      `A month's rent falls due on the lease's own due day (default day ${ctx.settings.rentDueDay}) — in that month for rent paid in advance, in the next month for rent paid after the month; it counts here from the next day.`,
       "Each month of a lease expects one full month's rent (no part-month proration).",
       ...(sched.dueLater > 0 ? [`${fINR(sched.dueLater)} for this period isn't due yet and isn't counted.`] : []),
     ],
@@ -1551,7 +1572,7 @@ function overdueSteps(ctx: Ctx, rows: { unitName: string | null; tenantName: str
 function overdueNotes(ctx: Ctx): string[] {
   const s = ctx.settings;
   const notes = [
-    `Rent is due on day ${s.rentDueDay} of each month (or the lease start day); a month is overdue from the next day.`,
+    `Rent is due on each lease's due day (default day ${s.rentDueDay}) — in the same month when paid in advance, in the following month when paid after the month (e.g. October's rent on 10 November); a month is overdue from the next day.`,
     "Every month from the lease start is checked: unpaid and part-paid months both count.",
   ];
   notes.push(

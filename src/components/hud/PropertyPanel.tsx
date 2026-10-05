@@ -20,7 +20,7 @@ export interface PropertyPanelProps {
   /** a unit was clicked inside a breakdown */
   onOpenUnit?: (unitId: string) => void;
   /** "left" over the world (default) or "inline" (mobile sheet, gallery) */
-  side?: "left" | "inline";
+  side?: "left" | "right" | "inline";
   /** control the drill-down from outside (optional) */
   drill?: DrillStack;
   className?: string;

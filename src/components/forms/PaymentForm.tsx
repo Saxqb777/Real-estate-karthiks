@@ -1,7 +1,7 @@
 "use client";
-import { Banknote, Building, CircleEllipsis, Smartphone } from "lucide-react";
+import { Banknote, Building, Smartphone } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { DateInput, Field, FormGrid, Input, NumberInput, Select, toast } from "@/components/ui";
+import { DateInput, Field, FormGrid, NumberInput, Select, toast } from "@/components/ui";
 import { api } from "@/lib/client";
 import type { NextPayment } from "@/lib/dashboard-types";
 import { MONTH_NAMES, formatDate, periodLabel, toInputDate, todayIST } from "@/lib/dates";
@@ -234,12 +234,8 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
               { value: "cash", label: "Cash", icon: <Banknote aria-hidden /> },
               { value: "upi", label: "UPI", icon: <Smartphone aria-hidden /> },
               { value: "bank", label: "Bank", icon: <Building aria-hidden /> },
-              { value: "other", label: "Other", icon: <CircleEllipsis aria-hidden /> },
             ]}
           />
-        </Field>
-        <Field label="Note" aside="optional" span="full" error={form.error("notes")}>
-          <Input {...form.text("notes")} autoComplete="off" placeholder="e.g. UPI ref 4821 · paid by his brother" />
         </Field>
       </FormGrid>
     </FormBody>

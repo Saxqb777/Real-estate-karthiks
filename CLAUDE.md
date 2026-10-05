@@ -164,6 +164,15 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   pass 2: 3D quality tier is fixed for the session (PerformanceMonitor used to drop high→mid during the slow first frames →
   rebuilt the world, palms/grass popped); now it only nudges render resolution (dpr ±0.25, starts after 5 s; caps high 1.5,
   mid 1.25). No live backdrop blur on HUD over the canvas (float nav, dock, Life button) or the Data/Config game panels.
+- 5/10/2026: POP-UPS = option D (owner): EVERY world object (house, manager, mailbox, pole, tax hut, TO-LET, plot marker,
+  car, sun/moon) goes hover TAG → the same GOLD CARD at the object (✕, key facts, actions, "Open ›" last) → "Open" →
+  ONE panel on the RIGHT (property panel moved from the left; only one right panel at a time). Card + panel share the gold
+  frame (2px #c9922e, radius 10, glow, uppercase titles). Car card "Drive off ›" → leave prompt; sun card (IST/GST) "Open"
+  → time travel. DIRECT list empty; no "Enter to expand" hint.
+- 5/10/2026: RENT TIMING per lease (owner): Lease.rentTiming "advance" (October's rent due in October) | "arrears"
+  (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
+  day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.
+  Lease form: "Rent is paid" + "Due on day"; lease details show "Rent paid". Payment form: "Other" method + Note removed.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

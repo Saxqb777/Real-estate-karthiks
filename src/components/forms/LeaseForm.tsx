@@ -26,6 +26,8 @@ type Values = {
   startDate: string;
   endDate: string;
   monthlyRent: number | null;
+  rentTiming: "advance" | "arrears";
+  rentDueDay: number | null;
   securityDeposit: number | null;
   reminderEnabled: boolean;
   depositRefundedAmount: number | null;
@@ -87,6 +89,8 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       startDate: toInputDate(lease?.startDate) || defaults?.startDate || toInputDate(todayIST()),
       endDate: toInputDate(lease?.endDate),
       monthlyRent: lease?.monthlyRent ?? defaults?.monthlyRent ?? prev?.monthlyRent ?? null,
+      rentTiming: lease?.rentTiming === "arrears" ? "arrears" : "advance",
+      rentDueDay: lease?.rentDueDay ?? null,
       securityDeposit: lease?.securityDeposit ?? defaults?.securityDeposit ?? prev?.securityDeposit ?? null,
       reminderEnabled: lease?.reminderEnabled ?? true,
       depositRefundedAmount: lease?.depositRefundedAmount ?? null,
@@ -102,6 +106,8 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         startDate: v.startDate,
         endDate: v.endDate || null,
         monthlyRent: v.monthlyRent,
+        rentTiming: v.rentTiming,
+        rentDueDay: v.rentDueDay,
         securityDeposit: v.securityDeposit ?? 0,
         reminderEnabled: v.reminderEnabled,
       };
@@ -173,6 +179,19 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
           hint={unitPrev && v.monthlyRent === unitPrev.monthlyRent ? `Same as ${unitPrev.tenant.name}'s rent` : dueDay ? `Due on the ${ordinal(dueDay)} of each month` : undefined}
         >
           <NumberInput {...form.number("monthlyRent")} currency placeholder="18,000" />
+        </Field>
+        <Field label="Rent is paid" error={form.error("rentTiming")}>
+          <Select
+            value={v.rentTiming}
+            onChange={(e) => form.set("rentTiming", e.target.value === "arrears" ? "arrears" : "advance")}
+            options={[
+              { value: "advance", label: "In advance — October's rent in October" },
+              { value: "arrears", label: "After the month — October's rent in November" },
+            ]}
+          />
+        </Field>
+        <Field label="Due on day" error={form.error("rentDueDay")}>
+          <NumberInput {...form.number("rentDueDay")} decimals={0} min={1} max={31} placeholder={dueDay ? String(dueDay) : "5"} hideHint />
         </Field>
         <Field label="Security deposit" error={form.error("securityDeposit")} hint="Held for the tenant — not income">
           <NumberInput {...form.number("securityDeposit")} currency placeholder="0" />

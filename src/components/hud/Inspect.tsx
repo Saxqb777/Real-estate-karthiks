@@ -9,7 +9,7 @@
 //   <EstateSceneLazy onObjectHover={inspect.onObjectHover} onObjectClick={inspect.onObjectClick} … />
 //   <InspectLayer data={data} inspect={inspect} />
 //   {inspect.panel && <HudPanelFor target={inspect.panel} data={data} period={period} onClose={inspect.closePanel} />}
-import { ArrowUpRight, ExternalLink, FileSignature, ListPlus, Phone, ReceiptIndianRupee, Ruler } from "lucide-react";
+import { ChevronRight, ExternalLink, FileSignature, ListPlus, Phone, ReceiptIndianRupee, Ruler } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -96,10 +96,13 @@ export function useInspect({ direct = [], initialPanel = null }: UseInspectOptio
   const openPanel = useCallback(
     (t: PanelTarget) => {
       setCard(null);
+      // one panel at a time, always on the right (owner: pop-ups behave the same for every object)
       if (t.kind === "property") {
+        setPanel(null);
         setPropertyOpenState(true);
         markExplored("property");
       } else {
+        setPropertyOpenState(false);
         setPanel(t);
         markExplored(t.kind);
       }
@@ -297,17 +300,19 @@ export interface InspectLayerProps {
    * object while the camera glides. Without it the card stays where the object was clicked.
    */
   locate?: (kind: SceneObjectKind, unitId?: string) => { x: number; y: number } | null;
+  /** the car's card "Drive off" (sign out prompt) */
+  onLeave?: () => void;
 }
 
 /** Hover hint + the anchored inspect card + the radial wheel. Forms open in a drawer from here. */
-export function InspectLayer({ data, inspect, locate }: InspectLayerProps) {
+export function InspectLayer({ data, inspect, locate, onLeave }: InspectLayerProps) {
   const forms = useFormDrawer();
   const { card } = inspect;
   return (
     <>
       <WorldHint obj={card || inspect.radial ? null : inspect.hover} data={data} />
       <RadialMenu data={data} unitId={inspect.radial?.unitId ?? null} at={inspect.radial?.at ?? null} onClose={inspect.closeRadial} />
-      <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} locate={locate} />
+      <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} locate={locate} onLeave={onLeave} />
       {forms.element}
     </>
   );
@@ -320,6 +325,7 @@ function ObjectCard({
   onExpand,
   openForm,
   locate,
+  onLeave,
 }: {
   obj: SceneObject | null;
   data: DashboardData;
@@ -327,11 +333,12 @@ function ObjectCard({
   onExpand: () => void;
   openForm: ReturnType<typeof useFormDrawer>["open"];
   locate?: InspectLayerProps["locate"];
+  onLeave?: () => void;
 }) {
   // keep the last object so the card can animate out with its content
   const [last, setLast] = useState<SceneObject | null>(obj);
   if (obj && obj !== last) setLast(obj);
-  const parts = useCardParts({ obj: last, data, openForm, onExpand });
+  const parts = useCardParts({ obj: last, data, openForm, onExpand, onLeave });
   const live = useLivePosition(obj, locate);
   const anchor = obj ? (live ?? obj.screen ?? (typeof window !== "undefined" ? { x: window.innerWidth / 2, y: window.innerHeight / 2 } : null)) : null;
   return (
@@ -347,7 +354,6 @@ function ObjectCard({
       width={326}
     >
       {parts?.body}
-      {parts && <p className={s.cardHint}>Enter to expand · Esc to close</p>}
     </InspectCard>
   );
 }
@@ -387,22 +393,34 @@ interface CardParts {
   actions: ReactNode;
 }
 
-function useCardParts({ obj, data, openForm, onExpand }: { obj: SceneObject | null; data: DashboardData; openForm: ReturnType<typeof useFormDrawer>["open"]; onExpand: () => void }): CardParts | null {
+function useCardParts({
+  obj,
+  data,
+  openForm,
+  onExpand,
+  onLeave,
+}: {
+  obj: SceneObject | null;
+  data: DashboardData;
+  openForm: ReturnType<typeof useFormDrawer>["open"];
+  onExpand: () => void;
+  onLeave?: () => void;
+}): CardParts | null {
   const tax = usePropertyTax();
   if (!obj) return null;
   const u = obj.unitId ? data.units.find((x) => x.id === obj.unitId) : undefined;
   const details = (
-    <Button size="sm" variant="ghost" iconRight={<ArrowUpRight />} onClick={onExpand}>
-      Details
+    <Button size="sm" variant="primary" iconRight={<ChevronRight />} onClick={onExpand} className={s.cardOpen}>
+      Open
     </Button>
   );
   const recordRent = (leaseId?: string) => (
-    <Button size="sm" variant="primary" icon={<ReceiptIndianRupee />} onClick={() => openForm({ kind: "payment", props: leaseId ? { defaults: { leaseId } } : undefined })}>
+    <Button size="sm" variant="secondary" icon={<ReceiptIndianRupee />} onClick={() => openForm({ kind: "payment", props: leaseId ? { defaults: { leaseId } } : undefined })}>
       Record rent
     </Button>
   );
   const newLease = (unitId: string, name: string) => (
-    <Button size="sm" variant="primary" icon={<FileSignature />} onClick={() => openForm({ kind: "lease", title: `New lease · ${name}`, props: { defaults: { unitId } } })}>
+    <Button size="sm" variant="secondary" icon={<FileSignature />} onClick={() => openForm({ kind: "lease", title: `New lease · ${name}`, props: { defaults: { unitId } } })}>
       New lease
     </Button>
   );
@@ -566,7 +584,7 @@ function useCardParts({ obj, data, openForm, onExpand }: { obj: SceneObject | nu
         ),
         actions: (
           <>
-            <Button size="sm" variant="primary" icon={<ListPlus />} onClick={() => openForm({ kind: "action" })}>
+            <Button size="sm" variant="secondary" icon={<ListPlus />} onClick={() => openForm({ kind: "action" })}>
               Add a to-do
             </Button>
             {details}
@@ -656,6 +674,15 @@ function useCardParts({ obj, data, openForm, onExpand }: { obj: SceneObject | nu
         ),
       };
     case "car":
-      return null;
+      return {
+        eyebrow: "Your car",
+        title: "Land Cruiser",
+        body: <p className={s.cardText}>Parked by the front gate.</p>,
+        actions: (
+          <Button size="sm" variant="primary" iconRight={<ChevronRight />} onClick={onLeave} className={s.cardOpen}>
+            Drive off
+          </Button>
+        ),
+      };
   }
 }

@@ -1010,3 +1010,8 @@
     flex: none;
   }
 }
+
+/* option D card: "Open" is the card's main step, always last and pushed right */
+.cardOpen {
+  margin-left: auto;
+}

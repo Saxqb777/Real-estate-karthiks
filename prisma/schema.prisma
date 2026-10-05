@@ -133,6 +133,11 @@ model Lease {
   /// null = active lease
   endDate               DateTime? @map("end_date") @db.Date
   monthlyRent           Decimal   @map("monthly_rent") @db.Decimal(14, 2)
+  /// "advance" = a month's rent is due IN that month (e.g. October's on 1 October);
+  /// "arrears" = due in the FOLLOWING month, after living it (e.g. October's on 10 November)
+  rentTiming            String    @default("advance") @map("rent_timing")
+  /// day of the month the rent is due; null = Settings.rentDueDay
+  rentDueDay            Int?      @map("rent_due_day")
   securityDeposit       Decimal   @default(0) @map("security_deposit") @db.Decimal(14, 2)
   depositRefundedAmount Decimal?  @map("deposit_refunded_amount") @db.Decimal(14, 2)
   depositRefundDate     DateTime? @map("deposit_refund_date") @db.Date

@@ -645,3 +645,30 @@ button.mini:hover {
 .noteValue {
   color: #f0dcc0;
 }
+
+/* POP-UP SYSTEM (owner chose option D): every world object goes tag → card → panel, and the card (ui/InspectCard)
+   and this side panel share ONE gold game frame — 2px gold border, rounded, soft glow, uppercase display titles. */
+.panel {
+  background: rgba(22, 17, 12, 0.95);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 2px solid #c9922e;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(201, 146, 46, 0.22),
+    0 18px 40px rgba(0, 0, 0, 0.5);
+}
+.panel::before {
+  display: none;
+}
+.panelHead {
+  border-bottom-color: rgba(201, 146, 46, 0.35);
+}
+.panelTitle {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.panelEyebrow {
+  color: #c9922e;
+}

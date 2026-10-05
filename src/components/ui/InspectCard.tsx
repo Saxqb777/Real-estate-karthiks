@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -149,7 +149,6 @@ export function InspectCard({
                 </div>
               </div>
               <div className={styles.tools}>
-                {onExpand && <IconButton label="Open details (Enter)" icon={<Maximize2 />} size="sm" onClick={onExpand} />}
                 <IconButton label="Close (Esc)" icon={<X />} size="sm" onClick={onClose} />
               </div>
             </div>

@@ -37,7 +37,7 @@ import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
 import { useOverviewCommands } from "./commands";
 import { HelpOverlay } from "./HelpOverlay";
 import { LeavePrompt } from "./LeavePrompt";
-import { SkyTarget, TimePanel } from "./SkyTime";
+import { SkyCard, SkyTarget, TimePanel } from "./SkyTime";
 import { MOBILE_QUERY, QUEST_KEY, TOUR_KEY, useFlag, useHotkeys, useMediaQuery } from "./hooks";
 import { MobileSheet, type SheetTab } from "./MobileSheet";
 import { QuestLog } from "./QuestLog";
@@ -51,8 +51,8 @@ export interface OverviewProps {
   layout?: "immersive" | "framed";
 }
 
-/** World objects whose click opens their side panel straight away (the rest get an anchored inspect card). */
-const DIRECT: SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "taxstamp"];
+/** Pop-up system (owner, option D): EVERY world object goes hover tag → gold card → "Open" → the right-hand panel. */
+const DIRECT: SceneObjectKind[] = [];
 const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export function Overview({ layout = "immersive" }: OverviewProps) {
@@ -145,6 +145,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const [askLeave, setAskLeave] = useState(false);
   // the sun / moon opens TIME TRAVEL (as-of timeline + FY/calendar period)
   const [timeOpen, setTimeOpen] = useState(false);
+  const [skyCard, setSkyCard] = useState(false);
   const stay = useCallback(() => setAskLeave(false), []);
   const driveOff = useCallback(() => {
     setAskLeave(false);
@@ -196,12 +197,12 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   );
 
   // ---------------------------------------------------------------- panels
-  const leftOpen = propertyOpen || (questOpen && showQuests);
+  const leftOpen = questOpen && showQuests && !propertyOpen;
+  const rightOpen = Boolean(panel) || propertyOpen;
   const openProperty = useCallback(() => {
     setQuestOpen(false);
     openPanel({ kind: "property" });
-    if (narrow) closePanel();
-  }, [openPanel, closePanel, narrow]);
+  }, [openPanel]);
   const toggleProperty = useCallback(() => {
     if (propertyOpen) {
       setPropertyOpen(false);
@@ -262,30 +263,11 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   const onObjectClick = useCallback(
     (obj: SceneObject) => {
-      if (obj.kind === "car") {
-        setAskLeave(true);
-        return;
-      }
       setHudHidden(false);
-      if (obj.kind === "tolet" && obj.unitId && data) {
-        markExplored("tolet");
-        const u = data.units.find((x) => x.id === obj.unitId);
-        openUnit(obj.unitId);
-        if (u && data.isLive && !u.activeLease && u.status !== "incoming")
-          forms.open({
-            kind: "lease",
-            title: `New lease · ${u.name}`,
-            props: { defaults: { unitId: u.id } },
-          });
-        return;
-      }
-      if (narrow && DIRECT.includes(obj.kind)) {
-        if (!pinProperty) setPropertyOpen(false);
-        setQuestOpen(false);
-      }
+      setSkyCard(false);
       inspect.onObjectClick(obj);
     },
-    [data, markExplored, openUnit, forms, inspect, narrow, pinProperty, setPropertyOpen],
+    [inspect],
   );
 
   // hover hint after a short beat (the outline is instant) so sweeping the mouse across the world stays calm
@@ -488,7 +470,21 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   const skyEl = (
     <>
-      <SkyTarget active={timeOpen} onClick={() => setTimeOpen((v) => !v)} />
+      <SkyTarget
+        active={timeOpen || skyCard}
+        onClick={() => {
+          closeCard();
+          setSkyCard((v) => !v);
+        }}
+      />
+      <SkyCard
+        open={skyCard}
+        onClose={() => setSkyCard(false)}
+        onOpen={() => {
+          setSkyCard(false);
+          setTimeOpen(true);
+        }}
+      />
       {data && hasUnits && (
         <TimePanel open={timeOpen} onClose={() => setTimeOpen(false)} timeline={scrubber} />
       )}
@@ -526,7 +522,15 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   );
   const overlay = data ? (
     <>
-      <InspectLayer data={data} inspect={inspect} locate={locate ?? undefined} />
+      <InspectLayer
+        data={data}
+        inspect={inspect}
+        locate={locate ?? undefined}
+        onLeave={() => {
+          closeCard();
+          setAskLeave(true);
+        }}
+      />
       {forms.element}
     </>
   ) : null;
@@ -587,8 +591,8 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
             key="hud"
             className={s.hud}
             data-left={leftOpen || undefined}
-            data-quests={leftOpen && !propertyOpen ? true : undefined}
-            data-right={panel ? true : undefined}
+            data-quests={leftOpen || undefined}
+            data-right={rightOpen || undefined}
             data-dock={tab ? true : undefined}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -598,31 +602,35 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
             {/* ---- left: quest log or property */}
             <AnimatePresence>
               {leftOpen && data && (
-                <div key={propertyOpen ? "property" : "quests"} ref={setLeftEl} className={s.left}>
-                  {propertyOpen ? (
-                    <PropertyPanel
-                      data={data}
-                      period={period}
-                      drill={propDrill}
-                      onClose={() => {
-                        setPropertyOpen(false);
-                        propDrill.reset();
-                      }}
-                      onOpenUnit={openUnit}
-                    />
-                  ) : (
-                    <QuestLog state={quests!} takenPositions={takenPositions} onClose={toggleQuest} />
-                  )}
+                <div key="quests" ref={setLeftEl} className={s.left}>
+                  <QuestLog state={quests!} takenPositions={takenPositions} onClose={toggleQuest} />
                 </div>
               )}
             </AnimatePresence>
 
             {/* ---- right: the clicked object's panel */}
             <AnimatePresence>
-              {panel && data && (
-                <div key={panel.kind === "unit" ? `unit:${panel.unitId}` : panel.kind} ref={setRightEl} className={s.right}>
-                  <HudPanelFor target={panel} data={data} period={period} onClose={closePanel} onOpenUnit={openUnit} />
+              {propertyOpen && data ? (
+                <div key="property" ref={setRightEl} className={s.right}>
+                  <PropertyPanel
+                    data={data}
+                    period={period}
+                    drill={propDrill}
+                    side="right"
+                    onClose={() => {
+                      setPropertyOpen(false);
+                      propDrill.reset();
+                    }}
+                    onOpenUnit={openUnit}
+                  />
                 </div>
+              ) : (
+                panel &&
+                data && (
+                  <div key={panel.kind === "unit" ? `unit:${panel.unitId}` : panel.kind} ref={setRightEl} className={s.right}>
+                    <HudPanelFor target={panel} data={data} period={period} onClose={closePanel} onOpenUnit={openUnit} />
+                  </div>
+                )
               )}
             </AnimatePresence>
 

@@ -132,3 +132,32 @@
   padding: 10px 14px 12px;
   border-top: 1px solid var(--line);
 }
+
+/* POP-UP SYSTEM (option D): same gold game frame as the HUD side panel (hud.module.css .panel). */
+.card {
+  background: rgba(22, 17, 12, 0.95);
+  border: 2px solid #c9922e;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(201, 146, 46, 0.22),
+    0 18px 40px rgba(0, 0, 0, 0.5);
+}
+.card::before {
+  display: none;
+}
+.head,
+.actions {
+  border-color: rgba(201, 146, 46, 0.35);
+}
+.title {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.eyebrow {
+  color: #c9922e;
+}
+.leader {
+  stroke: #c9922e;
+  stroke-width: 2;
+}

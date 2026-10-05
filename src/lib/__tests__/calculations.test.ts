@@ -335,6 +335,29 @@ describe("Rent schedule: next payment, arrears, due day clamping, late fees", ()
     }));
   const lease = (start: string, end: string | null = null, rent = 25_000) => ({ id: "L1", startDate: D(start), endDate: end ? D(end) : null, monthlyRent: rent });
 
+  it("rent paid AFTER the month (owner's 116/B7): October's rent is due on 10 November; per-lease due day", () => {
+    const l = { ...lease("2026-09-01"), rentTiming: "arrears" as const, rentDueDay: 10 };
+    // 5/10: September is due 10/10 → nothing overdue yet; next = Sep 2026 due 10/10/2026
+    let n = nextPaymentFor(l, [], settings, D("2026-10-05"));
+    expect(n).toMatchObject({ periodMonth: 9, periodYear: 2026, dueDate: ISO("2026-10-10"), isOverdue: false });
+    expect(n?.arrears.months).toEqual([]);
+    // 11/10: September overdue (1 day); October not due until 10/11
+    n = nextPaymentFor(l, [], settings, D("2026-10-11"));
+    expect(n?.arrears.months.map((m) => m.label)).toEqual(["Sep 2026"]);
+    // September paid on 10/10 → next = October, due 10/11/2026
+    n = nextPaymentFor(l, paid([9, 2026, 25_000, "2026-10-10"]), settings, D("2026-10-20"));
+    expect(n).toMatchObject({ periodMonth: 10, dueDate: ISO("2026-11-10"), isOverdue: false });
+    // December rolls into January
+    n = nextPaymentFor(l, paid([9, 2026], [10, 2026], [11, 2026]), settings, D("2026-12-15"));
+    expect(n).toMatchObject({ periodMonth: 12, dueDate: ISO("2027-01-10") });
+  });
+
+  it("rent paid IN ADVANCE on the 1st (owner's previous 116/B8 tenant): October's rent is due 1 October", () => {
+    const l = { ...lease("2026-01-01"), rentTiming: "advance" as const, rentDueDay: 1 };
+    const n = nextPaymentFor(l, paid([1, 2026], [2, 2026], [3, 2026], [4, 2026], [5, 2026], [6, 2026], [7, 2026], [8, 2026], [9, 2026]), settings, D("2026-10-02"));
+    expect(n).toMatchObject({ periodMonth: 10, dueDate: ISO("2026-10-01"), isOverdue: true, daysOverdue: 1 });
+  });
+
   it("clamps the due day to the month length", () => {
     expect(daysInMonth(2026, 2)).toBe(28);
     expect(daysInMonth(2024, 2)).toBe(29);
