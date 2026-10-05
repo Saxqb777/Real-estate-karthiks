@@ -1,6 +1,6 @@
 "use client";
 // The sun / moon in the painted sky is a world object too (owner): hover it for the time at the property (IST) and at
-// home (UAE); click it for TIME TRAVEL — the as-of timeline and the FY / calendar period switch, in one floating panel.
+// home (UAE); click it for TIME TRAVEL — the as-of timeline in one floating panel.
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -70,8 +70,8 @@ export function SkyTarget({ onClick, active }: { onClick: () => void; active: bo
   );
 }
 
-/** Floating TIME TRAVEL panel: period switch + the as-of timeline. */
-export function TimePanel({ open, onClose, period, timeline }: { open: boolean; onClose: () => void; period: ReactNode; timeline: ReactNode }) {
+/** Floating TIME TRAVEL panel: the as-of timeline. */
+export function TimePanel({ open, onClose, timeline }: { open: boolean; onClose: () => void; timeline: ReactNode }) {
   useEscape(open, onClose);
   return (
     <AnimatePresence>
@@ -87,7 +87,7 @@ export function TimePanel({ open, onClose, period, timeline }: { open: boolean; 
         >
           <header className={s.head}>
             <h2 className={s.title}>Time travel</h2>
-            <div className={s.period}>{period}</div>
+            <span className={s.flex} />
             <IconButton size="sm" label="Close (Esc)" icon={<X />} onClick={onClose} />
           </header>
           <div className={s.timeline}>{timeline}</div>

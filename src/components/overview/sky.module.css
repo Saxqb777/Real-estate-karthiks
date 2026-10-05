@@ -82,10 +82,8 @@
   text-transform: uppercase;
   color: #ffcf87;
 }
-.period {
+.flex {
   flex: 1;
-  display: flex;
-  justify-content: flex-end;
 }
 .timeline {
   min-width: 0;

@@ -1,15 +1,14 @@
 "use client";
 
-import { Command, LogOut, Search } from "lucide-react";
+import { Command, Search } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { IconButton, Kbd, useCommandPalette } from "@/components/ui";
-import { logout, useApi } from "@/lib/client";
+import { useApi } from "@/lib/client";
 import { BrandMark } from "./BrandMark";
 import { dayPhaseAt, hourInIST } from "@/lib/day-phase";
-import { IstClock, useEpochSecond } from "./IstClock";
+import { useEpochSecond } from "./IstClock";
 import { isActive, NAV } from "./nav";
 import styles from "./Shell.module.css";
 
@@ -25,12 +24,11 @@ function LiveMark() {
   return <BrandMark className={styles.mark} lit={phase === "evening" || phase === "night" || phase === "dawn"} />;
 }
 
-/** Top HUD bar: brand, nav with sliding marker, IST clock, ⌘K, sign out. */
+/** Top HUD bar: brand, nav with sliding marker, ⌘K. (Time = the sun/moon in the 3D sky; sign out = drive off in the car.) */
 export function HudBar() {
   const pathname = usePathname();
   const palette = useCommandPalette();
   const brand = useBrandName();
-  const [leaving, setLeaving] = useState(false);
   return (
     <header className={styles.bar} data-print-hide>
       <div className={styles.barInner}>
@@ -63,7 +61,6 @@ export function HudBar() {
         </nav>
 
         <div className={styles.barRight}>
-          <IstClock />
           <button type="button" className={styles.cmdk} onClick={palette.toggle} aria-label="Open command palette" aria-keyshortcuts="Control+K Meta+K">
             <Search aria-hidden />
             <span className={styles.cmdkText}>Jump to…</span>
@@ -75,16 +72,6 @@ export function HudBar() {
             icon={<Command />}
             variant="secondary"
             onClick={palette.toggle}
-          />
-          <IconButton
-            label="Sign out"
-            icon={<LogOut />}
-            variant="secondary"
-            loading={leaving}
-            onClick={() => {
-              setLeaving(true);
-              void logout();
-            }}
           />
         </div>
       </div>

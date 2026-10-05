@@ -18,7 +18,6 @@ import {
   Dock,
   HudPanelFor,
   InspectLayer,
-  PeriodControl,
   PropertyPanel,
   StatusChips,
   useDrillStack,
@@ -470,7 +469,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout }: GameProps)
     <>
       <SkyTarget active={timeOpen} onClick={() => setTimeOpen((v) => !v)} />
       {data && hasUnits && (
-        <TimePanel open={timeOpen} onClose={() => setTimeOpen(false)} period={<PeriodControl data={data} period={period} size="sm" />} timeline={scrubber} />
+        <TimePanel open={timeOpen} onClose={() => setTimeOpen(false)} timeline={scrubber} />
       )}
     </>
   );
