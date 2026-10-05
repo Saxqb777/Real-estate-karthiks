@@ -64,8 +64,10 @@ export const scopeLabel = (data: Pick<DashboardData, "scopeLabels">, period: Per
 
 export const PERIOD_NOUN: Record<PeriodKind, string> = { allTime: "since you started", year: "this year", month: "this month" };
 
-/** "Front" / "Back" (the owner thinks in positions as much as names). */
-export const positionLabel = (p: "front" | "back" | null | undefined) => (p === "front" ? "Front" : p === "back" ? "Back" : null);
+/** Owner: units are called by their door numbers everywhere (116/B7, 116/B8), never "Front" / "Back" — so no position
+ *  label is shown; every caller falls back to the unit's name. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const positionLabel = (_p: "front" | "back" | null | undefined): string | null => null;
 
 /** "Unit A · Front" */
 export const unitTitle = (u: Pick<UnitBreakdown, "name" | "position">) => {

@@ -94,11 +94,11 @@ describe("status chips — overdue > due soon > tax / to-dos > vacancy", () => {
       { unitId: "zzz", year: 2026, status: "Due" }, // a unit not on the board is ignored
     ]);
     expect(chips.map((c) => c.id)).toEqual(["overdue:a", "due:c", "tax", "todo-late", "vacant:b", "todos"]);
-    expect(chips[0]).toMatchObject({ tone: "coral", text: "Front unit · 3 months late", detail: "₹29,000", target: { kind: "unit", unitId: "a" } });
+    expect(chips[0]).toMatchObject({ tone: "coral", text: "Unit A · 3 months late", detail: "₹29,000", target: { kind: "unit", unitId: "a" } });
     expect(chips[1].text).toBe("Rent due 5 Oct — Unit C");
     expect(chips[2]).toMatchObject({ text: "Property tax 2026 due", detail: "2 bills", target: { kind: "tax" } });
     expect(chips[3].text).toBe("To-do late: Fix tap");
-    expect(chips[4].text).toBe("Back unit vacant 520 days");
+    expect(chips[4].text).toBe("Unit B vacant 520 days");
     expect(chips[5].text).toBe("1 to-do on the board");
   });
   it("leaves out tax when none is due", () => {

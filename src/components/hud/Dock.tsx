@@ -1,6 +1,6 @@
 "use client";
 // Bottom tray: a slim tab bar (keys 1–6) that slides one chart up at a time; click the tab again or Esc to close.
-//   1 Income vs expenses · 2 Where money went · 3 Front vs back · 4 Occupancy · 5 Growth · 6 Payments
+//   1 Income vs expenses · 2 Where money went · 3 <unit> vs <unit> · 4 Occupancy · 5 Growth · 6 Payments
 import { BarChart3, CalendarRange, Columns2, PieChart, ReceiptText, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
@@ -22,7 +22,7 @@ import s from "./dock.module.css";
 export const DOCK_TABS: { id: DockTab; label: string; short: string; icon: ReactNode }[] = [
   { id: "income", label: "Income vs expenses", short: "Income", icon: <BarChart3 aria-hidden /> },
   { id: "spending", label: "Where money went", short: "Spending", icon: <PieChart aria-hidden /> },
-  { id: "units", label: "Front vs back", short: "Units", icon: <Columns2 aria-hidden /> },
+  { id: "units", label: "Units", short: "Units", icon: <Columns2 aria-hidden /> },
   { id: "occupancy", label: "Occupancy", short: "Occupancy", icon: <CalendarRange aria-hidden /> },
   { id: "growth", label: "Growth", short: "Growth", icon: <TrendingUp aria-hidden /> },
   { id: "payments", label: "Payments", short: "Payments", icon: <ReceiptText aria-hidden /> },
@@ -136,6 +136,10 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
     }
   };
 
+  // the units tab is named after the units themselves (owner): "116/B8 vs 116/B7" (back first, as he reads it)
+  const named = [...data.units].sort((a, b) => (a.position === "back" ? -1 : b.position === "back" ? 1 : 0)).map((u) => u.name);
+  const unitsLabel = named.length >= 2 ? named.join(" vs ") : named[0] ?? "Units";
+  const labelOf = (d: (typeof DOCK_TABS)[number]) => (d.id === "units" ? unitsLabel : d.label);
   const active = DOCK_TABS.find((d) => d.id === tab);
 
   return (
@@ -152,7 +156,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
           >
             <div className={s.trayInner}>
               <header className={s.trayHead}>
-                <span className={s.trayTitle}>{active?.label}</span>
+                <span className={s.trayTitle}>{active ? labelOf(active) : null}</span>
                 {scope[tab]}
                 <span className={s.trayRule} aria-hidden />
                 {(tab === "units" || tab === "income") && <LedgerBadge checks={data.checks} onClick={onDrill ? () => onDrill({ kind: "checks" }) : undefined} />}
@@ -176,11 +180,11 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
               aria-expanded={on}
               className={cx(s.tab, on && s.tabOn)}
               onClick={() => toggle(d.id)}
-              title={`${d.label} (${i + 1})`}
+              title={`${labelOf(d)} (${i + 1})`}
             >
               {on && <motion.span layoutId={`${uid}-plate`} className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
               <span className={s.tabIcon}>{d.icon}</span>
-              <span className={s.tabLabel}>{d.label}</span>
+              <span className={s.tabLabel}>{labelOf(d)}</span>
               <span className={s.tabShort}>{d.short}</span>
               {hintSet.has(d.id) && !on && <span className={s.hintDot} aria-label="not opened yet" />}
             </button>
