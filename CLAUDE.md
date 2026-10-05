@@ -120,6 +120,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   alloys, WIDE rectangular sunroof, HAZARD LIGHTS (all 4 corner indicators + side repeaters) blink amber ~85/min. Parked on
   the front-left grass (ParkedCar in Fixtures.tsx), nose ENE (rotation π/8; world +X = east, −Z = north). The 3 cross-the-
   front walkers now keep to z −4.6…−6 so they pass between the car and the front wall.
+- 5/10/2026: SIGN OUT = the CAR (owner): click it (kind "car", tag "Car") → game-style prompt "LEAVE PATTUKKOTTAI ESTATES?"
+  (LeavePrompt.tsx, Stay / Drive off ▶, Enter/Y · Esc/N) → `estate:leave` event: hazards off, head/tail lamps on, car
+  backs out swinging its nose, drives off the front of the island; screen fades ("Leaving the estate…") → logout() → /login
+  title screen (~4.6 s). Still pending: Data/Config "← Back to estate" button + whether to remove the welcome tour.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
