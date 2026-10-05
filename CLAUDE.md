@@ -239,6 +239,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 5/10/2026: report TABLES ALIGNED (owner): side-by-side sections start on the same line (.two > .section + .section has no
   top gap — it pushed "Empty periods" down); "Where the money went" is now a plain Category | Amount table with a Total row
   (bars + "No expenses this year" note removed).
+- 5/10/2026: HEALTH CHECK + fixes (owner: "fix everything"): tsc/eslint/335 tests/prod build/done-check 52/52/auth/crawl all
+  clean; Vercel 0 runtime errors. Fixed: phone ☰ menu now titled MENU with PROPERTY first (the plot marker is off-screen on
+  phones); sun/moon time tag shifts to stay on screen (--tag-shift in SkyTarget); login locks an address out for 15 min
+  after 5 wrong tries (429, in-memory per instance); tenant hover tag = the tenant's NAME; npm audit → 0 via package.json
+  overrides (postcss ^8.5.29, deepmerge-ts ^8.0.2); old unused report screens deleted (ReportsHub, AnnualStatement,
+  UnitStory, RentLedgerReport, reports/charts, parts, selection). REPORTS have NO Print / PDF any more (owner) — header =
+  title + year / lease / "As of" control only; rent receipts (/invoice) keep their Print button.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

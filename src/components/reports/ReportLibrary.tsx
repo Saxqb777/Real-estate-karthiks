@@ -3,17 +3,15 @@
 // The home shows a card per report with its key number; a card opens that report (‹ Reports goes back). Every report
 // prints / saves as a light A4 PDF. Figures come from the same APIs as the dashboard (calculations.ts) — nothing is
 // re-computed here except plain column totals (sumAmounts).
-import { ChevronLeft, ChevronRight, Printer, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button, EmptyState, IconButton, LinkButton, Panel, Select, Skeleton, cx } from "@/components/ui";
 import { ChoiceGroup, currentYear, useLeases, usePropertyTax, useUnits, useYearMode, yearLabel, yearOf, type YearMode } from "@/components/forms";
-import { useBrandName } from "@/components/shell/HudBar";
 import { sumAmounts } from "@/lib/calculations";
 import { useApi } from "@/lib/client";
 import type { AnnualReport, DashboardData, RentLedger } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
 import { formatINR, formatINRCompact } from "@/lib/format";
-import { Letterhead, PrintPortal, printDocument } from "./print";
 import s from "./rlib.module.css";
 
 type ReportId = "income" | "rentroll" | "dues" | "occupancy" | "tenant" | "value" | "tax" | "deposits";
@@ -53,7 +51,6 @@ export function ReportLibrary() {
     if (i.leaseId) setLeasePick(i.leaseId);
   }, []);
   const [yearMode, setYearMode] = useYearMode();
-  const brand = useBrandName();
   const units = useUnits();
   const leases = useLeases();
   const tax = usePropertyTax();
@@ -117,8 +114,8 @@ export function ReportLibrary() {
     </div>
   );
 
-  // ---- one report's body (screen and print share it)
-  const body = (id: ReportId, print = false): ReactNode => {
+  // ---- one report's body
+  const body = (id: ReportId): ReactNode => {
     if (!d) return <Loading />;
     switch (id) {
       case "income":
@@ -134,7 +131,7 @@ export function ReportLibrary() {
       case "value":
         return <Value d={d} />;
       case "tax":
-        return <Tax items={taxItems} print={print} />;
+        return <Tax items={taxItems} />;
       case "deposits":
         return <Deposits d={d} />;
     }
@@ -194,9 +191,6 @@ export function ReportLibrary() {
   // ---- one report
   const meta = REPORTS.find((r) => r.id === open)!;
   const usesYear = open === "income" || open === "occupancy";
-  const scope = usesYear ? yLabel : open === "tenant" ? (leaseList.find((l) => l.id === leaseId)?.tenant.name ?? "") : `As of ${today}`;
-  const docName = `${meta.title} · ${scope}`;
-  const ready = Boolean(d) && (open === "income" || open === "occupancy" ? Boolean(a) : open === "tenant" ? Boolean(ledger.data && ledger.data.lease.id === leaseId) : true);
   const controls =
     open === "tenant" ? (
       <div className={s.controls}>
@@ -231,18 +225,11 @@ export function ReportLibrary() {
         actions={
           <div className={s.actions}>
             {controls}
-            <Button variant="primary" size="sm" icon={<Printer />} disabled={!ready} onClick={() => printDocument(`${brand} — ${docName} — ${today}`)}>
-              Print / PDF
-            </Button>
           </div>
         }
       >
         <div className={s.body}>{body(open)}</div>
       </Panel>
-      <PrintPortal running={{ topLeft: brand, topRight: docName, bottomLeft: `Generated ${today}` }}>
-        <Letterhead brand={brand} town={`Generated ${today}`} title={meta.title} sub={scope} />
-        <div className={s.print}>{body(open, true)}</div>
-      </PrintPortal>
     </>
   );
 }
@@ -727,7 +714,7 @@ function Value({ d }: { d: DashboardData }) {
 
 // ---------------------------------------------------------------- 7 · property tax
 
-function Tax({ items }: { items: { id: string; year: number; amount: number; status: string; paymentDate: string | null; unit: { name: string } }[]; print?: boolean }) {
+function Tax({ items }: { items: { id: string; year: number; amount: number; status: string; paymentDate: string | null; unit: { name: string } }[] }) {
   const years = [...new Set(items.map((t) => t.year))].sort((a, z) => z - a);
   const unitNames = [...new Set(items.map((t) => t.unit.name))].sort();
   const paid = items.filter((t) => t.status === "Paid");

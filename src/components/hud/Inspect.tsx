@@ -267,8 +267,9 @@ const TAG_NAME: Record<SceneObjectKind, string> = {
 export function WorldHint({ obj, data }: { obj: SceneObject | null; data: DashboardData }) {
   const isClient = useIsClient();
   if (!isClient) return null;
-  const u = obj?.kind === "unit" && obj.unitId ? data.units.find((x) => x.id === obj.unitId) : undefined;
-  const name = obj ? (u?.name ?? TAG_NAME[obj.kind]) : "";
+  const u = (obj?.kind === "unit" || obj?.kind === "tenant") && obj.unitId ? data.units.find((x) => x.id === obj.unitId) : undefined;
+  // houses show the unit name, tenants the tenant's own name (health check, 5/10/2026)
+  const name = obj ? ((obj.kind === "tenant" ? u?.activeLease?.tenantName : u?.name) ?? TAG_NAME[obj.kind]) : "";
   return createPortal(
     <AnimatePresence>
       {obj?.screen && (

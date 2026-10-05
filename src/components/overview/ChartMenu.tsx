@@ -2,12 +2,12 @@
 // Phones: the ☰ charts menu (owner, 5/10/2026, option B) — a game pause-menu list of the chart names only.
 // Picking one opens that chart as a sheet with an ✕ (Dock sheet mode).
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LandPlot } from "lucide-react";
 import { DOCK_TABS, dockTabLabel, type DockTab } from "@/components/hud";
 import type { DashboardData } from "@/lib/dashboard-types";
 import s from "./overview.module.css";
 
-export function ChartMenu({ open, data, onPick, onClose }: { open: boolean; data: DashboardData; onPick: (t: DockTab) => void; onClose: () => void }) {
+export function ChartMenu({ open, data, onPick, onProperty, onClose }: { open: boolean; data: DashboardData; onPick: (t: DockTab) => void; onProperty: () => void; onClose: () => void }) {
   return (
     <AnimatePresence>
       {open && (
@@ -24,13 +24,21 @@ export function ChartMenu({ open, data, onPick, onClose }: { open: boolean; data
           <motion.nav
             key="menu"
             className={s.menu}
-            aria-label="Charts"
+            aria-label="Menu"
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
-            <h2 className={s.menuTitle}>Charts</h2>
+            <h2 className={s.menuTitle}>Menu</h2>
+            {/* the plot marker sits off-screen on phones — the property window is reachable from here too */}
+            <button type="button" className={s.menuRow} onClick={onProperty}>
+              <span className={s.menuIcon}>
+                <LandPlot aria-hidden />
+              </span>
+              <span className={s.menuLabel}>Property</span>
+              <ChevronRight aria-hidden className={s.menuChev} />
+            </button>
             {DOCK_TABS.map((d) => (
               <button key={d.id} type="button" className={s.menuRow} onClick={() => onPick(d.id)}>
                 <span className={s.menuIcon}>{d.icon}</span>

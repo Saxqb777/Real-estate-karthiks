@@ -35,6 +35,14 @@ export function SkyTarget({ onClick, active, hidden = false }: { onClick: () => 
         el.style.left = `${skyBody.x - d / 2}px`;
         el.style.top = `${skyBody.y - d / 2}px`;
         el.style.width = el.style.height = `${d}px`;
+        // keep the time tag fully on screen when the body is near an edge (phones)
+        const tag = el.firstElementChild as HTMLElement | null;
+        if (tag) {
+          const half = tag.offsetWidth / 2;
+          const room = 8;
+          const shift = Math.max(room - (skyBody.x - half), Math.min(0, window.innerWidth - room - (skyBody.x + half)));
+          el.style.setProperty("--tag-shift", `${Math.round(shift)}px`);
+        }
         setKind((k) => (k === skyBody.kind ? k : skyBody.kind));
       }
       raf = requestAnimationFrame(tick);

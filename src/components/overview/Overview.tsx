@@ -646,6 +646,11 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
             open={menuOpen}
             data={data}
             onClose={() => chartMenu.set(false)}
+            onProperty={() => {
+              chartMenu.set(false);
+              closeCard();
+              openProperty();
+            }}
             onPick={(t) => {
               chartMenu.set(false);
               closeCard();
