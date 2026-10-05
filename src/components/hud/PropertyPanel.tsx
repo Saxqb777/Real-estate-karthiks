@@ -56,7 +56,6 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
       hint={
         <>
           <LedgerBadge checks={data.checks} onClick={() => drill.push({ kind: "checks" })} />
-          <span>Click a number for its breakdown</span>
         </>
       }
     >

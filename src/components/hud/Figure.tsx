@@ -88,7 +88,8 @@ export function Fig({
       {paper && !isMissing && <PaperTag kind={paper} />}
     </span>
   );
-  const tip = isMissing ? missing : [exact, onClick ? hint : null].filter(Boolean).join(" · ") || null;
+  // the hover tip shows the exact figure only — no "click for…" instruction (owner)
+  const tip = isMissing ? missing : exact || null;
   const inner = onClick ? (
     <button type="button" className={s.figBtn} onClick={onClick} aria-label={`${exact ?? (isMissing ? "—" : text(value!))} — ${hint}`}>
       {body}
@@ -145,11 +146,9 @@ export function FigLine({ label, sub, swatch, size = "sm", chevron, onClick, hin
   );
   if (!onClick) return <div className={cx(s.line, className)}>{content}</div>;
   return (
-    <Tooltip content={hint} delay={450} describe={false} className={s.lineTipWrap}>
-      <button type="button" className={cx(s.line, s.lineBtn, className)} onClick={onClick}>
-        {content}
-      </button>
-    </Tooltip>
+    <button type="button" className={cx(s.line, s.lineBtn, className)} onClick={onClick} aria-label={typeof label === "string" ? `${label} — ${hint}` : undefined}>
+      {content}
+    </button>
   );
 }
 
@@ -162,7 +161,7 @@ export function FigCell({ label, onClick, hint = "Click for breakdown", ...fig }
     </>
   );
   return onClick ? (
-    <button type="button" className={s.mini} onClick={onClick} title={hint}>
+    <button type="button" className={s.mini} onClick={onClick} aria-label={typeof label === "string" ? `${label} — ${hint}` : undefined}>
       {inner}
     </button>
   ) : (

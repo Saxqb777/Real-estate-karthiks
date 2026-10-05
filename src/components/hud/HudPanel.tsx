@@ -5,7 +5,7 @@
 import { ChevronLeft, ChevronRight, Pin, PinOff, X } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
-import { IconButton, Kbd, cx } from "@/components/ui";
+import { IconButton, cx } from "@/components/ui";
 import { useEscape, usePinned } from "./store";
 import s from "./hud.module.css";
 
@@ -145,18 +145,10 @@ export function HudPanel({
       </motion.div>
 
       {actions && <div className={s.panelActions}>{actions}</div>}
-      {hint !== null && (
+      {/* no instruction line by default (owner) — only an explicit footer (e.g. the ledger badge) */}
+      {hint != null && (
         <div className={s.panelHint}>
-          {hint ?? (
-            <>
-              <span>Click a number for its breakdown</span>
-              {onClose && !(canPin && pinned) && (
-                <span className={s.hintKey}>
-                  <Kbd>Esc</Kbd> {drilled ? "back" : "close"}
-                </span>
-              )}
-            </>
-          )}
+          {hint}
         </div>
       )}
     </motion.aside>
