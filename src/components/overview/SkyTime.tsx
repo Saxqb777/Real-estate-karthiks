@@ -45,7 +45,7 @@ export function SkyTarget({ onClick, active }: { onClick: () => void; active: bo
       data-active={active || undefined}
       aria-label={`${kind === "sun" ? "Sun" : "Moon"} — time travel`}
       onClick={onClick}
-      onPointerEnter={() => setHover(true)}
+      onPointerEnter={(e) => setHover(e.pointerType === "mouse")}
       onPointerLeave={() => setHover(false)}
     >
       <AnimatePresence>

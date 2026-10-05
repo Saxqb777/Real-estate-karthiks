@@ -1,10 +1,10 @@
 "use client";
 // Bottom tray: a slim tab bar (keys 1–6) that slides one chart up at a time; click the tab again or Esc to close.
 //   1 Income vs expenses · 2 Where money went · 3 <unit> vs <unit> · 4 Occupancy · 5 Growth · 6 Payments
-import { BarChart3, CalendarRange, Columns2, PieChart, ReceiptText, TrendingUp } from "lucide-react";
+import { BarChart3, CalendarRange, Columns2, PieChart, ReceiptText, TrendingUp, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
-import { cx, isFocusTrapActive } from "@/components/ui";
+import { IconButton, cx, isFocusTrapActive } from "@/components/ui";
 import type { DashboardData, ExpenseSlice } from "@/lib/dashboard-types";
 import { GrowthChart } from "./charts/GrowthChart";
 import { IncomeExpenseChart } from "./charts/IncomeExpenseChart";
@@ -42,10 +42,19 @@ export interface DockProps {
   hints?: Iterable<string>;
   /** keys 1–6 toggle tabs (default true) */
   hotkeys?: boolean;
+  /** phones: no tab bar — the open chart shows as a sheet with an ✕ (picked from the ☰ menu) */
+  sheet?: boolean;
   className?: string;
 }
 
-export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, className }: DockProps) {
+/** The units tab is named after the units themselves (owner): "116/B8 vs 116/B7" (back first, as he reads it). */
+export function dockTabLabel(data: DashboardData, id: DockTab): string {
+  if (id !== "units") return DOCK_TABS.find((d) => d.id === id)?.label ?? id;
+  const named = [...data.units].sort((a, b) => (a.position === "back" ? -1 : b.position === "back" ? 1 : 0)).map((u) => u.name);
+  return named.length >= 2 ? named.join(" vs ") : (named[0] ?? "Units");
+}
+
+export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, className }: DockProps) {
   const uid = useId();
   const [inner, setInner] = useState<DockTab | null>(defaultTab);
   const tab = controlled === undefined ? inner : controlled;
@@ -136,14 +145,11 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
     }
   };
 
-  // the units tab is named after the units themselves (owner): "116/B8 vs 116/B7" (back first, as he reads it)
-  const named = [...data.units].sort((a, b) => (a.position === "back" ? -1 : b.position === "back" ? 1 : 0)).map((u) => u.name);
-  const unitsLabel = named.length >= 2 ? named.join(" vs ") : named[0] ?? "Units";
-  const labelOf = (d: (typeof DOCK_TABS)[number]) => (d.id === "units" ? unitsLabel : d.label);
+  const labelOf = (d: (typeof DOCK_TABS)[number]) => dockTabLabel(data, d.id);
   const active = DOCK_TABS.find((d) => d.id === tab);
 
   return (
-    <section className={cx(s.dock, tab && s.dockOpen, className)} aria-label="Charts">
+    <section className={cx(s.dock, tab && s.dockOpen, sheet && s.sheet, className)} aria-label="Charts">
       <AnimatePresence initial={false}>
         {tab && (
           <motion.div
@@ -157,6 +163,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             <div className={s.trayInner}>
               <header className={s.trayHead}>
                 <span className={s.trayTitle}>{active ? labelOf(active) : null}</span>
+                {sheet && <IconButton size="sm" label="Close" icon={<X />} onClick={() => setTab(null)} />}
                 {scope[tab]}
                 <span className={s.trayRule} aria-hidden />
                 {(tab === "units" || tab === "income") && <LedgerBadge checks={data.checks} onClick={onDrill ? () => onDrill({ kind: "checks" }) : undefined} />}
@@ -168,29 +175,31 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
           </motion.div>
         )}
       </AnimatePresence>
-      <div className={s.bar} role="tablist" aria-label="Charts">
-        {DOCK_TABS.map((d, i) => {
-          const on = d.id === tab;
-          return (
-            <button
-              key={d.id}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              aria-expanded={on}
-              className={cx(s.tab, on && s.tabOn)}
-              onClick={() => toggle(d.id)}
-              title={`${labelOf(d)} (${i + 1})`}
-            >
-              {on && <motion.span layoutId={`${uid}-plate`} className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
-              <span className={s.tabIcon}>{d.icon}</span>
-              <span className={s.tabLabel}>{labelOf(d)}</span>
-              <span className={s.tabShort}>{d.short}</span>
-              {hintSet.has(d.id) && !on && <span className={s.hintDot} aria-label="not opened yet" />}
-            </button>
-          );
-        })}
-      </div>
+      {!sheet && (
+        <div className={s.bar} role="tablist" aria-label="Charts">
+          {DOCK_TABS.map((d, i) => {
+            const on = d.id === tab;
+            return (
+              <button
+                key={d.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                aria-expanded={on}
+                className={cx(s.tab, on && s.tabOn)}
+                onClick={() => toggle(d.id)}
+                title={`${labelOf(d)} (${i + 1})`}
+              >
+                {on && <motion.span layoutId={`${uid}-plate`} className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
+                <span className={s.tabIcon}>{d.icon}</span>
+                <span className={s.tabLabel}>{labelOf(d)}</span>
+                <span className={s.tabShort}>{d.short}</span>
+                {hintSet.has(d.id) && !on && <span className={s.hintDot} aria-label="not opened yet" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {forms.element}
     </section>
   );

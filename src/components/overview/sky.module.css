@@ -9,10 +9,16 @@
   background: transparent;
   cursor: pointer;
 }
-.target:hover,
 .target:focus-visible {
   box-shadow: 0 0 0 2px rgba(255, 207, 135, 0.55), 0 0 26px rgba(255, 181, 71, 0.45);
   outline: none;
+}
+/* touch screens keep :hover after a tap — the ring is for a real mouse hover only */
+@media (hover: hover) {
+  .target:hover {
+    box-shadow: 0 0 0 2px rgba(255, 207, 135, 0.55), 0 0 26px rgba(255, 181, 71, 0.45);
+    outline: none;
+  }
 }
 .tag {
   position: absolute;

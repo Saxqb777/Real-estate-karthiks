@@ -534,7 +534,7 @@
     flex: none;
     z-index: var(--z-bar);
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 68px repeat(3, 1fr);
     height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
     background: linear-gradient(180deg, #1b1814, #12100e);
@@ -578,6 +578,14 @@
   }
   .tab:focus-visible {
     outline-offset: -4px;
+  }
+  /* ☰ charts menu (owner, option B) */
+  .tab[data-menu] {
+    border-right: 1px solid var(--line);
+  }
+  .tab[data-open] {
+    color: var(--marigold);
+    background: rgba(255, 181, 71, 0.08);
   }
   .tabMarker {
     position: absolute;

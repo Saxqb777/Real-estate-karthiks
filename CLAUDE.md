@@ -209,6 +209,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   (October's rent due in NOVEMBER, after living it) + Lease.rentDueDay (null = Settings default). 116/B7 tenant = arrears,
   day 10; previous 116/B8 tenant = advance, day 1. calculations.ts rentDueDayNum(); migration 20261005120000.
   Lease form: "Rent billing" (IN ADVANCE | IN ARREARS) + "Due on day"; lease details "Rent billing: IN ADVANCE | IN ARREARS" (nothing extra — owner). Payment form: "Other" method + Note removed.
+- 5/10/2026: PHONES (owner, option B): overview = ONLY the 3D world + the bottom bar (☰ MENU · OVERVIEW · DATA · CONFIG).
+  Old phone sheet (Portfolio/This month/Charts/Units/To-do), status chips, ? button and timeline bar REMOVED (MobileSheet deleted).
+  ☰ (shell/chart-menu.ts store, MobileTabBar) → gold "CHARTS" list of names only (overview/ChartMenu.tsx) → the chart opens
+  as a sheet with an ✕ (Dock `sheet` mode). World taps = same gold card → Open → centre window as desktop; sun/moon → time
+  travel. ☰ on Data/Config goes to the overview and opens the menu.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

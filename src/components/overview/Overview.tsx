@@ -5,41 +5,39 @@
 //   right      — the panel of whatever was clicked in the world (house, mailbox, notice board, pole, tax stamp)
 //   bottom     — dock (charts, keys 1–6) + time scrubber (as-of date)
 // Clicking the ground / Esc / ✕ closes panels (📌 keeps them); the camera reframes the plot into the free area
-// (insets) and the world dims while numbers are being read. Phones get the world on top + a bottom sheet.
+// (insets) and the world dims while numbers are being read. Phones: only the world + the bottom bar (☰ → charts menu → chart sheet).
 // Every figure comes from /api/dashboard (src/lib/calculations.ts) — nothing here does maths.
-import { CircleHelp, Eye, History, RotateCcw } from "lucide-react";
+import { Eye } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import EstateSceneLazy, { type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind } from "@/components/estate/EstateSceneLazy";
-import { Button, EmptyState, IconButton, Kbd, Screen, cx, toast, useIsClient } from "@/components/ui";
+import { Button, EmptyState, Kbd, Screen, cx, toast, useIsClient } from "@/components/ui";
 import { QuickAddHost, quickAdd, usePropertyTax, useTenants, useYearMode } from "@/components/forms";
 import {
   Dock,
   HudPanelFor,
   InspectLayer,
   PropertyPanel,
-  StatusChips,
   useDrillStack,
   useFormDrawer,
   useHudDashboard,
   useInspect,
   usePeriod,
   usePinned,
-  type ChipTarget,
   type DockTab,
   type DrillView,
   type PanelTarget,
 } from "@/components/hud";
+import { chartMenu, useChartMenu } from "@/components/shell/chart-menu";
 import { logout } from "@/lib/client";
 import type { DashboardData } from "@/lib/dashboard-types";
-import { formatDate } from "@/lib/dates";
 import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
 import { useOverviewCommands } from "./commands";
 import { HelpOverlay } from "./HelpOverlay";
 import { LeavePrompt } from "./LeavePrompt";
 import { SkyTarget, TimePanel } from "./SkyTime";
 import { MOBILE_QUERY, QUEST_KEY, TOUR_KEY, useFlag, useHotkeys, useMediaQuery } from "./hooks";
-import { MobileSheet, type SheetTab } from "./MobileSheet";
+import { ChartMenu } from "./ChartMenu";
 import { QuestLog } from "./QuestLog";
 import { buildQuests } from "./quests";
 import { TimeScrubber } from "./TimeScrubber";
@@ -139,6 +137,12 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const forms = useFormDrawer();
   const propDrill = useDrillStack();
   const [tab, setTab] = useState<DockTab | null>(null);
+  // phones: ☰ in the bottom bar → charts menu (names only) → the picked chart as a sheet with an ✕ (owner, option B)
+  const menuOpen = useChartMenu();
+  useEffect(() => {
+    if (menuOpen) setTab(null);
+  }, [menuOpen]);
+  useEffect(() => () => chartMenu.set(false), []);
   const [hudHidden, setHudHidden] = useState(false);
   // sign out = drive off in the owner's car (click it): it backs out and leaves while the screen fades to the title screen
   const [leaving, setLeaving] = useState(false);
@@ -272,13 +276,9 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   );
   useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
-  const onChip = (t: ChipTarget) => {
-    if (t.kind === "dock") setTab(t.tab);
-    else if (t.kind === "property") openProperty();
-    else openRight(t);
-  };
   const onDrill = (v: DrillView) => {
     setQuestOpen(false);
+    if (mobile) setTab(null);
     openPanel({ kind: "property" });
     propDrill.reset();
     propDrill.push(v);
@@ -390,7 +390,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   // ---------------------------------------------------------------- insets: the camera frames the plot inside the free area
   const [rootEl, setRootEl] = useState<HTMLDivElement | null>(null);
-  const [topEl, setTopEl] = useState<HTMLDivElement | null>(null);
+  const [topEl] = useState<HTMLDivElement | null>(null);
   const [leftEl, setLeftEl] = useState<HTMLDivElement | null>(null);
   const [bottomEl, setBottomEl] = useState<HTMLDivElement | null>(null);
   const insets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, bottom: bottomEl });
@@ -441,19 +441,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
         compact={mobile}
         onUse={() => markExplored("scrubber")}
       />
-    ) : null;
-
-  const asOfChip =
-    data && !data.isLive ? (
-      <button type="button" className={s.asOf} onClick={backToToday} title="Back to today">
-        <History aria-hidden />
-        <span className={s.asOfText}>
-          As of <b className="num">{formatDate(data.asOf)}</b>
-        </span>
-        <span className={s.asOfLive}>
-          <RotateCcw aria-hidden /> Today
-        </span>
-      </button>
     ) : null;
 
   const skyEl = (
@@ -515,35 +502,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       {forms.element}
     </>
   ) : null;
-
-  // ---------------------------------------------------------------- phones
-  if (mobile)
-    return (
-      <MobileGame
-        data={data}
-        error={error}
-        retry={retry}
-        scene={scene}
-        scrubber={scrubber}
-        asOfChip={asOfChip}
-        setRootEl={setRootEl}
-        setTopEl={setTopEl}
-        setBottomEl={setBottomEl}
-        period={period}
-        taxes={tax.data?.items}
-        inspect={inspect}
-        onChip={onChip}
-        openUnit={openUnit}
-        quests={showQuests && questFlag !== "hidden" ? quests : null}
-        takenPositions={takenPositions}
-        onHideQuests={() => setQuestFlag("hidden")}
-        help={<IconButton size="sm" label="Help" icon={<CircleHelp />} variant="secondary" className={s.mHelp} onClick={() => setHelpOpen(true)} />}
-      >
-        {overlay}
-      {leaveEl}
-        {helpEl}
-      </MobileGame>
-    );
 
   // ---------------------------------------------------------------- desktop / tablet
   return (
@@ -628,7 +586,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
             </AnimatePresence>
 
             {/* ---- bottom: dock + time (nothing to chart before the first unit) */}
-            {data && hasUnits && (
+            {data && hasUnits && !mobile && (
               <motion.div
                 ref={setBottomEl}
                 className={s.bottom}
@@ -680,6 +638,34 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
         </div>
       )}
 
+      {mobile && data && hasUnits && (
+        <>
+          <ChartMenu
+            open={menuOpen}
+            data={data}
+            onClose={() => chartMenu.set(false)}
+            onPick={(t) => {
+              chartMenu.set(false);
+              closeCard();
+              onTabChange(t);
+            }}
+          />
+          <AnimatePresence>
+            {tab && (
+              <motion.div
+                key="chart-sheet"
+                className={s.mChart}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <Dock sheet data={data} period={period} tab={tab} onTabChange={onTabChange} onDrill={onDrill} onOpenUnit={openUnit} hotkeys={false} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
       {overlay}
       {leaveEl}
       {skyEl}
@@ -726,135 +712,4 @@ function useInsets(root: HTMLElement | null, els: InsetEls): SceneInsets {
     };
   }, [root, top, left, right, bottom]);
   return insets;
-}
-
-// ---------------------------------------------------------------- phones: world on top + bottom sheet
-
-interface MobileGameProps {
-  data: DashboardData | undefined;
-  error?: string;
-  retry: () => void;
-  scene: React.ReactNode;
-  scrubber: React.ReactNode;
-  asOfChip: React.ReactNode;
-  setRootEl: (el: HTMLDivElement | null) => void;
-  setTopEl: (el: HTMLDivElement | null) => void;
-  setBottomEl: (el: HTMLDivElement | null) => void;
-  period: ReturnType<typeof usePeriod>[0];
-  taxes: Parameters<typeof StatusChips>[0]["taxes"];
-  inspect: ReturnType<typeof useInspect>;
-  onChip: (t: ChipTarget) => void;
-  openUnit: (id: string) => void;
-  quests: ReturnType<typeof buildQuests> | null;
-  takenPositions: ("front" | "back")[];
-  onHideQuests: () => void;
-  help: React.ReactNode;
-  children: React.ReactNode;
-}
-
-function MobileGame({
-  data,
-  error,
-  retry,
-  scene,
-  scrubber,
-  asOfChip,
-  setRootEl,
-  setTopEl,
-  setBottomEl,
-  period,
-  taxes,
-  inspect,
-  onChip,
-  openUnit,
-  quests,
-  takenPositions,
-  onHideQuests,
-  help,
-  children,
-}: MobileGameProps) {
-  const { panel, closePanel, propertyOpen, setPropertyOpen } = inspect;
-  const [tab, setTab] = useState<SheetTab>("portfolio");
-  const [unitSel, setUnitSel] = useState<string | null>(null);
-  // a world tap → the matching sheet tab
-  useEffect(() => {
-    if (!panel) return;
-    if (panel.kind === "unit") {
-      setTab("units");
-      setUnitSel(panel.unitId);
-      closePanel();
-    } else if (panel.kind === "mailbox") {
-      setTab("month");
-      closePanel();
-    } else if (panel.kind === "noticeboard") {
-      setTab("todo");
-      closePanel();
-    }
-  }, [panel, closePanel]);
-  useEffect(() => {
-    if (propertyOpen) {
-      setTab("portfolio");
-      setPropertyOpen(false);
-    }
-  }, [propertyOpen, setPropertyOpen]);
-
-  return (
-    <div className={s.mobile} data-sheet={tab}>
-      <div className={s.mWorld}>
-        <div ref={setRootEl} className={s.mScene}>
-          {scene}
-        </div>
-        <div ref={setTopEl} className={s.mTop}>
-          {data && data.units.length > 0 && <StatusChips data={data} taxes={taxes} onSelect={onChip} max={2} className={s.mChips} />}
-          {asOfChip}
-          <span className={s.flex} />
-          {help}
-        </div>
-        {scrubber && (
-          <div ref={setBottomEl} className={s.mScrub}>
-            {scrubber}
-          </div>
-        )}
-      </div>
-      {data ? (
-        <MobileSheet
-          data={data}
-          tab={tab}
-          onTab={(t) => {
-            setTab(t);
-            closePanel();
-          }}
-          period={period}
-          detail={panel && (panel.kind === "pole" || panel.kind === "tax") ? panel : null}
-          onCloseDetail={closePanel}
-          unitId={unitSel}
-          onUnit={(id) => {
-            setUnitSel(id);
-            if (id) openUnit(id);
-          }}
-          quests={quests}
-          takenPositions={takenPositions}
-          onHideQuests={onHideQuests}
-        />
-      ) : (
-        <div className={s.mSheetLoading}>
-          {error ? (
-            <EmptyState
-              compact
-              title="Couldn't load your figures"
-              description={error}
-              action={
-                <Button variant="primary" size="sm" onClick={() => void retry()}>
-                  Try again
-                </Button>
-              }
-            />
-          ) : (
-            <span className={s.loadingNote}>Loading your estate…</span>
-          )}
-        </div>
-      )}
-      {children}
-    </div>
-  );
 }
