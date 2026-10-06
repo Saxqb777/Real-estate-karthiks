@@ -6,6 +6,9 @@
   padding: 18px;
   overflow-y: auto;
   min-height: 0;
+  /* rows always fit their card (a fixed-height scroll box otherwise squeezes them and the text spills over the next) */
+  grid-auto-rows: max-content;
+  align-content: start;
 }
 .card {
   position: relative;

@@ -257,6 +257,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   hud/PhotosPanel: "PHOTOGRAPHER · INTERIOR" + front unit name, 4 interior photos of 116/B7 (owner's, public/interiors/
   b7-1…4.jpg, 1200px) in a grid (4 cols desktop, 2 on phones) — just the panel of all photos, NO enlarge view (owner). The photos are
   PRIVATE: middleware matcher includes /interiors/:path* (401 without the login cookie).
+- 6/10/2026: DATA cards on PHONES fixed (owner: Leases broken): card grid rows = max-content + align-content start (the
+  fixed-height scroll box squeezed the cards → text spilled over the next card); phone toolbar controls start at the left
+  and the main button (+ Sign lease / Add tenant / Record rent …) takes its own full-width row.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

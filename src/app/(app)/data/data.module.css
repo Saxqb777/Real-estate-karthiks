@@ -504,3 +504,17 @@ button.miniRow:hover {
   align-items: flex-end;
   gap: 5px;
 }
+
+/* phones: header controls start at the left; the main button (e.g. + Sign lease) takes its own full-width row */
+@media (max-width: 767px) {
+  .toolbarActions {
+    justify-content: flex-start;
+  }
+  .toolbarActions > :last-child {
+    margin-left: 0;
+  }
+  .toolbarActions > :last-child:is(button, a) {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
