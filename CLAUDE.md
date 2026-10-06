@@ -254,8 +254,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   6/10 follow-up (owner): NO leaning in and NO turning the stand — he stands at the camera; every 15 s he takes TWO
   pictures (right hand to the shutter, two flashes), nothing else.
   6/10: photographer CLICKABLE (new SceneObjectKind "photographer", tag "Photographer", DIRECT) → PanelTarget "photos" →
-  hud/PhotosPanel: "PHOTOGRAPHER · INSIDE" + front unit name, 4 interior photos of 116/B7 (owner's, public/interiors/
-  b7-1…4.jpg, 1200px) in a grid (2 cols on phones) → click = large view with ‹ › / arrow keys, ✕/Esc back. The photos are
+  hud/PhotosPanel: "PHOTOGRAPHER · INTERIOR" + front unit name, 4 interior photos of 116/B7 (owner's, public/interiors/
+  b7-1…4.jpg, 1200px) in a grid (4 cols desktop, 2 on phones) — just the panel of all photos, NO enlarge view (owner). The photos are
   PRIVATE: middleware matcher includes /interiors/:path* (401 without the login cookie).
 
 ## UI conventions (built in round 1)

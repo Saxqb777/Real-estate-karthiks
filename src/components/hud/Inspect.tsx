@@ -255,7 +255,7 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
     case "car":
       return { title: "Land Cruiser", lines: ["Get in and drive off"], tone: "neutral", action: "Click to leave the estate (sign out)" };
     case "photographer":
-      return { title: "Photographer", lines: ["Photos inside the house"], tone: "neutral", action: "Click to see the photos" };
+      return { title: "Photographer", lines: ["Interior photos"], tone: "neutral", action: "Click to see the photos" };
   }
 }
 
@@ -691,6 +691,6 @@ function useCardParts({
         ),
       };
     case "photographer":
-      return { eyebrow: "Photographer", title: "Photos inside", body: null, actions: details };
+      return { eyebrow: "Photographer", title: "Interior photos", body: null, actions: details };
   }
 }

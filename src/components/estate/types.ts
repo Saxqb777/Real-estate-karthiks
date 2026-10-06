@@ -42,5 +42,5 @@ export const SCENE_OBJECT_INFO: Record<SceneObjectKind, { name: string; opens: s
   taxstamp: { name: "Tax office", opens: "Property tax" },
   plot: { name: "Plot marker", opens: "Plot dimensions" },
   car: { name: "Car", opens: "Leave the estate (sign out)" },
-  photographer: { name: "Photographer", opens: "Photos inside 116/B7" },
+  photographer: { name: "Photographer", opens: "Interior photos of 116/B7" },
 };
