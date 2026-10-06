@@ -28,6 +28,7 @@ import { RadialMenu } from "./RadialMenu";
 import { useEscape, useExplored } from "./store";
 import { TaxPanel } from "./TaxPanel";
 import type { PanelTarget, PeriodKind, SceneObject, SceneObjectKind } from "./types";
+import { PhotosPanel } from "./PhotosPanel";
 import { RentStatePill, UnitPanel, UnitStatusPill } from "./UnitPanel";
 import s from "./bits.module.css";
 
@@ -51,6 +52,8 @@ export function panelFor(obj: SceneObject): PanelTarget {
     case "plot":
     case "car":
       return { kind: "property" };
+    case "photographer":
+      return { kind: "photos" };
   }
 }
 
@@ -188,6 +191,8 @@ export function HudPanelFor({ target, data, period, onClose, onOpenUnit, side, c
       return <PolePanel data={data} onClose={onClose} side={right} className={className} />;
     case "tax":
       return <TaxPanel data={data} onClose={onClose} side={right} className={className} />;
+    case "photos":
+      return <PhotosPanel data={data} onClose={onClose} side={right} className={className} />;
   }
 }
 
@@ -249,6 +254,8 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
       return { title: `Plot · ${data.plot.areaSqft.toLocaleString("en-IN")} sqft`, lines: [`${data.plot.frontWidthFt}′ front · ${data.plot.depthFt}′ deep`], tone: "neutral", action: "Click for the plot" };
     case "car":
       return { title: "Land Cruiser", lines: ["Get in and drive off"], tone: "neutral", action: "Click to leave the estate (sign out)" };
+    case "photographer":
+      return { title: "Photographer", lines: ["Photos inside the house"], tone: "neutral", action: "Click to see the photos" };
   }
 }
 
@@ -263,6 +270,7 @@ const TAG_NAME: Record<SceneObjectKind, string> = {
   taxstamp: "Tax office",
   plot: "Plot marker",
   car: "Car",
+  photographer: "Photographer",
 };
 export function WorldHint({ obj, data }: { obj: SceneObject | null; data: DashboardData }) {
   const isClient = useIsClient();
@@ -682,5 +690,7 @@ function useCardParts({
           </Button>
         ),
       };
+    case "photographer":
+      return { eyebrow: "Photographer", title: "Photos inside", body: null, actions: details };
   }
 }

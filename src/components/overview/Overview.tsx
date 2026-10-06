@@ -51,7 +51,7 @@ export interface OverviewProps {
 
 /** Owner, 5/10/2026: hover = name tag only; a click opens the object's window STRAIGHT AWAY — no gold card, phone + desktop.
  *  (The car keeps its leave prompt; the sun / moon opens time travel.) */
-const DIRECT: SceneObjectKind[] = ["unit", "tenant", "tolet", "mailbox", "noticeboard", "pole", "taxstamp", "plot"];
+const DIRECT: SceneObjectKind[] = ["unit", "tenant", "tolet", "mailbox", "noticeboard", "pole", "taxstamp", "plot", "photographer"];
 const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export function Overview({ layout = "immersive" }: OverviewProps) {

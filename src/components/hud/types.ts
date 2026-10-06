@@ -2,7 +2,7 @@
 // from DashboardData (src/lib/dashboard-types.ts), produced by src/lib/calculations.ts.
 
 /** 3D SCENE CONTRACT v2 — mirrored here so the HUD doesn't depend on the scene module being loaded. */
-export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot" | "car";
+export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot" | "car" | "photographer";
 
 export interface SceneObject {
   kind: SceneObjectKind;
@@ -21,7 +21,9 @@ export type PanelTarget =
   | { kind: "mailbox" }
   | { kind: "noticeboard" }
   | { kind: "pole" }
-  | { kind: "tax" };
+  | { kind: "tax" }
+  /** the photographer by 116/B7: interior photos of the front unit */
+  | { kind: "photos" };
 
 export type PanelKind = PanelTarget["kind"];
 
