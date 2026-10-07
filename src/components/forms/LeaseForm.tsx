@@ -206,7 +206,6 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
                   <BellRing aria-hidden /> Rent reminders
                 </span>
               }
-              description={v.reminderEnabled ? "This lease shows up when rent is due" : "No reminders for this lease"}
             />
           </div>
         </Field>

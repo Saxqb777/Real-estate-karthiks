@@ -45,11 +45,9 @@ export function useExpenses(q: { year?: number | null; yearMode?: string; unitId
 
 type UnitLike = { id: string; name: string; position?: "front" | "back" | null; isActive?: boolean };
 
-const POS = { front: "Front", back: "Back" } as const;
-
-/** "Unit A · Front" (position helps when names are similar). */
+/** Units are called by their names only (owner 5/10: never "Front"/"Back"). */
 export function unitLabel(u: UnitLike): string {
-  return u.position ? `${u.name} · ${POS[u.position]}` : u.name;
+  return u.name;
 }
 
 /** Units for a picker: active ones first; inactive ones only when asked (e.g. editing an old record). */

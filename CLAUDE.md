@@ -281,6 +281,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 7/10/2026: COMPARE TAB (dock "116/B8 vs 116/B7", UnitsCompare.tsx) made uniform (owner): unit columns in the SAME
   order as the title (back first), every ₹ exact (no ₹ L compact in Property value), net cash green/red by sign, no dotted
   "paper" underlines (the est. tag on the header stays), "Property expenses = … + whole plot" note removed.
+- 7/10/2026: FORM UNIFORMITY (owner, phone + desktop): every Field = fixed 20px label row (asides like "optional" /
+  "New tenant" no longer push the box down) + box + error only. NOTHING under boxes: NumberInput/DateInput hideHint now
+  defaults to TRUE (no ₹ preview, no ft-in preview, no date line). DateInput draws the date in D/M/YYYY + weekday INSIDE the
+  box over the native field (native text follows the browser locale, e.g. 10/07/2026; it shows only while focused). A switch
+  in a field sits in a 38px row (lines up with boxes). Unit pickers show the NAME only (unitLabel). Removed label notes
+  (on the street / rear wall / front to back / across the plot / entered / estimate / hex), switch descriptions, and the
+  Config unit cards' "· on the street / behind the courtyard"; unit cards equal height.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

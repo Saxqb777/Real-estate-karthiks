@@ -189,3 +189,46 @@
   field-sizing: content;
   max-height: 320px;
 }
+
+/* date: the value is drawn in D/M/YYYY over the native field (whose own text follows the browser locale); while the
+   field is focused the native text shows so typing works, and the face hides */
+.dateControl {
+  position: relative;
+}
+.dateFace {
+  position: absolute;
+  left: 13px; /* .input padding 12px + control border */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  pointer-events: none;
+  font-family: var(--ff-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.compact .dateFace {
+  font-size: 14px;
+}
+.dateFaceEmpty {
+  color: var(--text-faint);
+}
+.dateDay {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+}
+.dateControl .date {
+  color: transparent;
+}
+.dateControl:focus-within .date {
+  color: var(--text);
+}
+.dateControl:focus-within .dateFace {
+  visibility: hidden;
+}

@@ -4,12 +4,14 @@
   gap: 6px;
   min-width: 0;
 }
+/* every label row is the SAME height (owner 7/10: boxes in a row must line up even when one label has an
+   "optional" note or a "New tenant" button beside it) */
 .labelRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--s-2);
-  min-height: 16px;
+  height: 20px;
 }
 .label {
   font-family: var(--ff-display);
@@ -25,8 +27,21 @@
   margin-left: 3px;
 }
 .aside {
+  display: inline-flex;
+  align-items: center;
+  max-height: 20px;
   font-size: var(--fs-xs);
+  line-height: 1;
   color: var(--text-faint);
+}
+.aside :is(button, a) {
+  font-size: var(--fs-xs);
+  line-height: 1;
+  padding-block: 0;
+}
+.aside svg {
+  width: 14px;
+  height: 14px;
 }
 .hint {
   font-size: var(--fs-xs);
@@ -83,4 +98,12 @@
   .grid .span2 {
     grid-column: auto;
   }
+}
+
+/* a switch inside a field sits in a row as tall as an input box, so it lines up with the boxes beside it */
+.field > :is([data-field], button):has([role="switch"]),
+.field > [role="switch"] {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
 }

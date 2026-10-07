@@ -70,7 +70,7 @@ export function CategoryForm({ category, onSaved, onCancel, frame = inlineFrame,
         <Field label="Colour" hint="Used for this category in every chart, table and legend">
           <Swatches name="color" value={v.color} onChange={(c) => form.set("color", c)} />
         </Field>
-        <Field label="Custom colour" aside="hex" error={form.error("color")}>
+        <Field label="Custom colour" error={form.error("color")}>
           <Input name="color" value={v.color} onChange={(e) => form.set("color", e.target.value)} autoComplete="off" placeholder="#4F9DFF" maxLength={7} />
         </Field>
       </FormGrid>

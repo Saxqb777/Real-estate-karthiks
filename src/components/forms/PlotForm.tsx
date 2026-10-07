@@ -74,18 +74,17 @@ export function PlotForm({ plot, onSaved, onCancel, frame = inlineFrame, submitL
         }
       >
         <FormGrid cols={2}>
-          <Field label="Front width" aside="on the street" error={form.error("frontWidthFt")}>
+          <Field label="Front width" error={form.error("frontWidthFt")}>
             <NumberInput {...form.number("frontWidthFt")} suffix="ft" placeholder={String(SITE_PLAN_DEFAULTS.frontWidthFt)} formatHint={ftHint} data-autofocus />
           </Field>
-          <Field label="Back width" aside="rear wall" error={form.error("backWidthFt")}>
+          <Field label="Back width" error={form.error("backWidthFt")}>
             <NumberInput {...form.number("backWidthFt")} suffix="ft" placeholder={String(SITE_PLAN_DEFAULTS.backWidthFt)} formatHint={ftHint} />
           </Field>
-          <Field label="Depth" aside="front to back" error={form.error("depthFt")}>
+          <Field label="Depth" error={form.error("depthFt")}>
             <NumberInput {...form.number("depthFt")} suffix="ft" placeholder={String(SITE_PLAN_DEFAULTS.depthFt)} formatHint={ftHint} />
           </Field>
           <Field
             label="Area"
-            aside={v.areaSqft === null ? "auto" : "entered"}
             error={form.error("areaSqft")}
             hint={
               v.areaSqft === null

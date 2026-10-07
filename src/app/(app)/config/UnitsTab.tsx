@@ -13,9 +13,9 @@ import s from "./config.module.css";
 
 type Selection = { mode: "edit"; id: string } | { mode: "new"; slot: SlotName | ""; n: number };
 
-const SLOTS: { slot: SlotName; label: string; where: string }[] = [
-  { slot: "front", label: "Front", where: "on the street" },
-  { slot: "back", label: "Back", where: "behind the courtyard" },
+const SLOTS: { slot: SlotName; label: string }[] = [
+  { slot: "front", label: "Front" },
+  { slot: "back", label: "Back" },
 ];
 
 const FIELD_LABEL: Record<string, string> = {
@@ -98,16 +98,14 @@ export function UnitsTab() {
     <div className={s.split} data-wide-form>
       <div className={s.leftCol}>
         <div className={s.slots}>
-          {SLOTS.map(({ slot, label, where }) => {
+          {SLOTS.map(({ slot, label }) => {
             const u = bySlot[slot];
             const on = sel?.mode === "edit" ? u?.id === sel.id : sel?.slot === slot;
             return u ? (
-              <SlotCard key={slot} slot={label} where={where} unit={u} info={breakdown.get(u.id)} selected={on} onClick={() => void choose({ mode: "edit", id: u.id })} />
+              <SlotCard key={slot} slot={label} unit={u} info={breakdown.get(u.id)} selected={on} onClick={() => void choose({ mode: "edit", id: u.id })} />
             ) : (
               <button key={slot} type="button" className={cx(s.slot, s.slotEmpty)} aria-pressed={on} onClick={() => build(slot)}>
-                <span className={s.slotLabel}>
-                  {label} <span className="faint">· {where}</span>
-                </span>
+                <span className={s.slotLabel}>{label}</span>
                 <span className={s.buildCta}>
                   <Plus aria-hidden /> Build unit
                 </span>
@@ -208,14 +206,12 @@ export function UnitsTab() {
 
 function SlotCard({
   slot,
-  where,
   unit,
   info,
   selected,
   onClick,
 }: {
   slot: string;
-  where: string;
   unit: UnitListItem;
   info?: UnitBreakdown;
   selected: boolean;
@@ -224,9 +220,7 @@ function SlotCard({
   const status = info ? (info.rentState === "overdue" ? "overdue" : info.status === "occupied" ? "occupied" : info.status === "inactive" ? "inactive" : "vacant") : null;
   return (
     <button type="button" className={s.slot} aria-pressed={selected} onClick={onClick}>
-      <span className={s.slotLabel}>
-        {slot} <span className="faint">· {where}</span>
-      </span>
+      <span className={s.slotLabel}>{slot}</span>
       <span className={s.slotName}>
         {unit.name}
         {status && <StatusPill status={status} size="sm" />}

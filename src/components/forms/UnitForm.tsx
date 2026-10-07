@@ -134,10 +134,10 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
           <Field label="Built-up area" required error={form.error("builtUpSqft")} hint="All floors together">
             <NumberInput {...form.number("builtUpSqft")} suffix="sqft" decimals={2} placeholder="1,120" hideHint />
           </Field>
-          <Field label="Footprint width" aside="across the plot" error={form.error("footprintWidthFt")} hint={v.footprintWidthFt ? undefined : `Empty = site plan (${SITE_DEFAULTS.footprintWidthFt} ft)`}>
+          <Field label="Footprint width" error={form.error("footprintWidthFt")} hint={v.footprintWidthFt ? undefined : `Empty = site plan (${SITE_DEFAULTS.footprintWidthFt} ft)`}>
             <NumberInput {...form.number("footprintWidthFt")} suffix="ft" placeholder={String(SITE_DEFAULTS.footprintWidthFt)} formatHint={ftHint} />
           </Field>
-          <Field label="Footprint depth" aside="front to back" error={form.error("footprintDepthFt")} hint={v.footprintDepthFt ? undefined : `Empty = site plan (${SITE_DEFAULTS.footprintDepthFt} ft)`}>
+          <Field label="Footprint depth" error={form.error("footprintDepthFt")} hint={v.footprintDepthFt ? undefined : `Empty = site plan (${SITE_DEFAULTS.footprintDepthFt} ft)`}>
             <NumberInput {...form.number("footprintDepthFt")} suffix="ft" placeholder={String(SITE_DEFAULTS.footprintDepthFt)} formatHint={ftHint} />
           </Field>
         </FormGrid>
@@ -153,7 +153,6 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
           </Field>
           <Field
             label="Growth per year"
-            aside="estimate"
             span="full"
             error={form.error("annualAppreciationRate")}
             hint="Used for “Worth now (est.)” while the unit has no offer"
@@ -182,7 +181,6 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
                 checked={v.isActive}
                 onChange={(c) => form.set("isActive", c)}
                 label={v.isActive ? "Active" : "Inactive"}
-                description={v.isActive ? "Counted in value, rent and occupancy" : "Kept for history; left out of portfolio totals"}
               />
             </div>
           </Field>

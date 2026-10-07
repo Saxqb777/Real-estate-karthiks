@@ -148,8 +148,12 @@
 .slots {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: stretch; /* both unit cards the same height (owner 7/10) */
   gap: 10px;
   flex: none;
+}
+.slots > .slot {
+  height: 100%;
 }
 .slot {
   position: relative;

@@ -87,7 +87,7 @@ export function NumberInput({
   max,
   allowNegative = false,
   formatHint,
-  hideHint = false,
+  hideHint = true, // owner 7/10: nothing under the boxes (uniform rows) — opt in with hideHint={false}
   compact,
   className,
   id,
@@ -209,7 +209,7 @@ function relativeDay(d: Date): string {
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Native date picker, styled; shows the Indian D/M/YYYY reading + relative day below. */
-export function DateInput({ value, onValueChange, onChange, hideHint, compact, className, id, disabled, required, ...rest }: DateInputProps) {
+export function DateInput({ value, onValueChange, onChange, hideHint = true, compact, className, id, disabled, required, ...rest }: DateInputProps) {
   const field = useField();
   const baseId = id ?? field?.id;
   const hintId = baseId ? `${baseId}-live` : undefined;
@@ -217,7 +217,18 @@ export function DateInput({ value, onValueChange, onChange, hideHint, compact, c
   const d = value ? parseDateInput(value) : null;
   return (
     <div className={className}>
-      <div className={cx(styles.control, compact && styles.compact)} data-invalid={invalid} data-disabled={disabled}>
+      <div className={cx(styles.control, styles.dateControl, compact && styles.compact)} data-invalid={invalid} data-disabled={disabled}>
+        {/* the date in the owner's D/M/YYYY inside the box (the native field follows the browser locale, e.g. 10/07/2026) */}
+        <span className={cx(styles.dateFace, !d && styles.dateFaceEmpty)} aria-hidden>
+          {d ? (
+            <>
+              {formatDate(d)}
+              <span className={styles.dateDay}>{WEEKDAYS[d.getUTCDay()].slice(0, 3)}</span>
+            </>
+          ) : (
+            "D/M/YYYY"
+          )}
+        </span>
         <input
           className={cx(styles.input, styles.date)}
           type="date"
