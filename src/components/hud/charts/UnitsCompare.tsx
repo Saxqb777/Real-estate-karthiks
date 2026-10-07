@@ -35,7 +35,8 @@ interface Row {
 }
 
 export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: UnitsCompareProps) {
-  const units = data.units.filter((u) => u.isActive);
+  // same order as the tab title ("116/B8 vs 116/B7": back first — dockTabLabel)
+  const units = data.units.filter((u) => u.isActive).sort((a, b) => (a.position === "back" ? -1 : b.position === "back" ? 1 : 0));
   const k = data.kpis;
   const p = data.periods[period];
   if (units.length === 0) return <div className={s.empty}>Build a unit to compare front and back.</div>;
@@ -54,9 +55,9 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
       bucket: "value",
       scope: data.scopeLabels.asOf,
       rows: [
-        { label: "Invested", format: "inr", unit: (u) => u.purchasePrice, total: k.invested, totalKey: "invested", compact: true },
-        { label: "Worth now (est.)", format: "inr", unit: (u) => u.valuation, total: k.bestOfferTotal, key: "worthNow", paper: true, compact: true },
-        { label: "Gain", format: "inr", unit: (u) => u.appreciation, total: k.appreciation, key: "gain", paper: true, compact: true },
+        { label: "Invested", format: "inr", unit: (u) => u.purchasePrice, total: k.invested, totalKey: "invested" },
+        { label: "Worth now (est.)", format: "inr", unit: (u) => u.valuation, total: k.bestOfferTotal, key: "worthNow", paper: true },
+        { label: "Gain", format: "inr", unit: (u) => u.appreciation, total: k.appreciation, key: "gain", paper: true },
         { label: "Level (×)", format: "multiplier", unit: (u) => u.capitalMultiplier, total: k.capitalMultiplier, key: "multiplier" },
       ],
     },
@@ -70,9 +71,6 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
       ],
     },
   ];
-
-  // whole-plot share of the scope's expenses, straight from the explanation's own step (never re-added here)
-  const wholePlot = data.explain[explainKey("expenses", period)]?.steps.find((st) => /^whole plot/i.test(st.label))?.value ?? null;
 
   const cellKey = (r: Row, u: UnitBreakdown | null) => {
     if (u) return r.key ? explainKey(r.key, r.scoped ? period : null, u.id) : null;
@@ -88,10 +86,9 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
         className={cx(
           "num",
           s.cmpNum,
-          r.tone === "income" && !zero && s.tIncome,
+          (r.tone === "income" || (r.tone === "signed" && !neg)) && !zero && s.tIncome,
           (r.tone === "expense" || (r.tone === "signed" && neg)) && !zero && s.tExpense,
           r.tone === "dim" && s.tDimNum,
-          r.paper && s.paperNum,
           strong && s.cmpStrong,
         )}
       >
@@ -154,11 +151,6 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
               ))}
             </tbody>
           </table>
-          {g.bucket === "cash" && wholePlot !== null && wholePlot > 0 && (
-            <p className={s.cmpNote}>
-              Property expenses = {units.map((u) => positionLabel(u.position) ?? u.name).join(" + ")} + whole plot <span className="num">{fmt(wholePlot, "inr")}</span>
-            </p>
-          )}
         </section>
       ))}
     </div>

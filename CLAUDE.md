@@ -278,6 +278,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   Payments / Expenses / Property tax / lease drawer payments; paid tax = red (Data, tax office window, report); net cash =
   green if > 0, red if < 0 (reports netTone, charts); spending donut + expense drill rows red. Deposits stay gold, property
   value + rent rates neutral (not cash in/out).
+- 7/10/2026: COMPARE TAB (dock "116/B8 vs 116/B7", UnitsCompare.tsx) made uniform (owner): unit columns in the SAME
+  order as the title (back first), every ₹ exact (no ₹ L compact in Property value), net cash green/red by sign, no dotted
+  "paper" underlines (the est. tag on the header stays), "Property expenses = … + whole plot" note removed.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
