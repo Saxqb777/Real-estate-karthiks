@@ -5,7 +5,7 @@ import type { DashboardData } from "@/lib/dashboard-types";
 import { HudPanel } from "./HudPanel";
 import s from "./photos.module.css";
 
-const PHOTOS = ["/interiors/b7-1.jpg", "/interiors/b7-2.jpg", "/interiors/b7-3.jpg", "/interiors/b7-4.jpg"];
+const PHOTOS = ["/interiors/b7-1.jpg", "/interiors/b7-3.jpg", "/interiors/b7-4.jpg"];
 
 export function PhotosPanel({ data, onClose, side = "right", className }: { data: DashboardData; onClose?: () => void; side?: "left" | "right" | "inline"; className?: string }) {
   const front = data.units.find((u) => u.position === "front");
