@@ -3,7 +3,7 @@ import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
-import { leaseDetailInclude, leaseMoveOutSchema, leaseRuleIssues, leaseStatus } from "@/lib/schemas/lease";
+import { leaseDetailInclude, leaseMoveOutSchema, leaseRent, leaseRuleIssues, leaseStatus } from "@/lib/schemas/lease";
 import { paymentsOutsideLease, periodLabel, summarizePayments } from "@/lib/schemas/payment";
 
 /**
@@ -69,5 +69,5 @@ export const POST = handler(async (req, ctx) => {
     });
   });
 
-  return json({ ...lease, ...leaseStatus(lease), ...summarizePayments(lease.payments) });
+  return json({ ...lease, ...leaseRent(lease), ...leaseStatus(lease), ...summarizePayments(lease.payments) });
 });

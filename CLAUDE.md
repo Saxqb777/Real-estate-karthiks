@@ -261,6 +261,18 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   fixed-height scroll box squeezed the cards → text spilled over the next card); phone toolbar controls start at the left
   and the main button (+ Sign lease / Add tenant / Record rent …) takes its own full-width row.
 
+- 7/10/2026: INTERIOR PHOTOS stay the owner's REAL photos (3 after b7-2 was removed) — owner rejected stylised versions
+  (ImageMagick cartoon filters and 3D-rebuilt rooms); don't re-propose.
+- 7/10/2026: RENT CHANGES (owner: tenant's rent rises from October): table lease_rent_change (lease_id, effective_from =
+  1st of a month, monthly_rent; unique per lease+month; migration 20261007090000). Lease.monthlyRent stays the STARTING
+  rent. calculations.rentForMonth / rentForMonthIndex / rentOn: each rent month expects the latest change on/before it,
+  so months paid at the old rent stay fully paid. API lease responses: monthlyRent = rent in effect TODAY, startingRent,
+  rentChanges (leaseRent() in schemas/lease.ts); payment detail + receipt show the rent for THEIR month. UI: Data →
+  Leases → lease drawer → "Rent changes" (starting rent, each change with ✕, inline "From <month> · ₹ · + RENT CHANGE");
+  the lease form edits the STARTING rent (label "Starting rent" once a change exists); payment form "Full rent" = the
+  chosen month's rent. POST/DELETE /api/leases/[id]/rent-changes[/changeId]; a change can't start in the lease's
+  first month or after its last month; same month again = replaces.
+
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
   AnimatedNumber, StatTile, SegmentedBar, LevelBadge, Modal/Drawer/ConfirmDialog, toast, InspectCard, CommandProvider…);

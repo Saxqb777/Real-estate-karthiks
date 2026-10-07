@@ -28,6 +28,7 @@ import {
   recon,
   reconciliation,
   rentMonthsRange,
+  rentOn,
   resolveOptions,
   round0,
   round2,
@@ -357,7 +358,7 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
       start: iso(l.startDate),
       end: l.endDate ? iso(l.endDate) : null,
       state: leaseStateOn(l, today),
-      monthlyRent: round2(l.monthlyRent),
+      monthlyRent: round2(rentOn(l, today)),
       months: months.length,
       rentExpected: expected,
       rentCollected: sumAmounts(paymentsByLease.get(l.id) ?? []),
@@ -417,6 +418,10 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
     } else {
       story.push({ date: iso(l.startDate), kind: "lease-start", text: `${l.tenantName} moves in at ${fINR(l.monthlyRent)} a month`, amount: round2(l.monthlyRent) });
     }
+    for (const c of l.rentChanges ?? []) {
+      if (dayNum(c.effectiveFrom) > t) continue;
+      story.push({ date: iso(c.effectiveFrom), kind: "rent-change", text: `${l.tenantName}'s rent became ${fINR(c.monthlyRent)} a month`, amount: round2(c.monthlyRent) });
+    }
     if (l.endDate && dayNum(l.endDate) <= t) {
       story.push({ date: iso(l.endDate), kind: "lease-end", text: `${l.tenantName}'s last day of tenancy`, amount: null });
     }
@@ -443,7 +448,7 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
       amount: round2(x.amount),
     });
   }
-  const KIND_ORDER = { purchase: 0, "lease-end": 1, vacant: 2, "lease-start": 3, offer: 4, expense: 5 } as const;
+  const KIND_ORDER = { purchase: 0, "lease-end": 1, vacant: 2, "lease-start": 3, "rent-change": 4, offer: 5, expense: 6 } as const;
   story.sort((x, y) => x.date.localeCompare(y.date) || KIND_ORDER[x.kind] - KIND_ORDER[y.kind]);
 
   const rentCollected = sumAmounts(payments);
@@ -578,7 +583,7 @@ export function buildRentLedger(input: DashboardInput, leaseId: string, o: Opts)
       start: iso(l.startDate),
       end: l.endDate ? iso(l.endDate) : null,
       state: leaseStateOn(l, today),
-      monthlyRent: round2(l.monthlyRent),
+      monthlyRent: round2(rentOn(l, today)),
       tenant: { id: l.tenantId, name: l.tenantName, phone: l.tenantPhone },
       unit: { id: l.unitId, name: unitName },
     },

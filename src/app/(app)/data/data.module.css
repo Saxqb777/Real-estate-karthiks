@@ -518,3 +518,24 @@ button.miniRow:hover {
     justify-content: center;
   }
 }
+
+/* lease drawer: add a rent change (month · new rent · button) */
+.rentChangeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.iconSpacer {
+  display: inline-block;
+  width: 28px;
+}
+@media (max-width: 767px) {
+  .rentChangeRow {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .rentChangeRow > :last-child {
+    grid-column: 1 / -1;
+  }
+}

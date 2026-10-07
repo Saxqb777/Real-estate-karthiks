@@ -5,6 +5,7 @@
 import type { Lease, Payment, Prisma, Tenant, Unit } from "@prisma/client";
 import { z } from "zod";
 import "./messages";
+import { rentOn } from "@/lib/calculations";
 import type { LeaseState } from "@/lib/dashboard-types";
 import { addDays, formatDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -183,10 +184,40 @@ export const leaseListQuerySchema = z.object({
   tenantId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
 });
 
+/** POST /api/leases/[id]/rent-changes — the new rent and the first month it applies to ("2026-10"). */
+export const rentChangeCreateSchema = z.object({
+  monthlyRent: zRequired(zPositiveMoney),
+  fromMonth: z.string({ message: "Choose the month the new rent starts" }).trim().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Choose the month the new rent starts"),
+});
+export type RentChangeCreateInput = z.input<typeof rentChangeCreateSchema>;
+
+/** Rent changes oldest first (Prisma include). */
+export const rentChangesInclude = { orderBy: { effectiveFrom: "asc" } } satisfies Prisma.Lease$rentChangesArgs;
+
+type Money = number | { toNumber(): number };
+const money = (m: Money) => (typeof m === "number" ? m : m.toNumber());
+
+/** A lease's rent on `today` (after any rent change), its starting rent and its rent changes — for API responses. */
+export function leaseRent(
+  l: { monthlyRent: Money; rentChanges?: { id: string; effectiveFrom: Date; monthlyRent: Money }[] },
+  today: Date = todayIST(),
+): { monthlyRent: number; startingRent: number; rentChanges: RentChangeDTO[] } {
+  const changes = (l.rentChanges ?? [])
+    .map((c) => ({ id: c.id, effectiveFrom: c.effectiveFrom, monthlyRent: money(c.monthlyRent) }))
+    .sort((a, b) => a.effectiveFrom.getTime() - b.effectiveFrom.getTime());
+  const startingRent = money(l.monthlyRent);
+  return {
+    monthlyRent: rentOn({ monthlyRent: startingRent, rentChanges: changes }, today),
+    startingRent,
+    rentChanges: changes.map((c) => ({ ...c, effectiveFrom: c.effectiveFrom.toISOString() })),
+  };
+}
+
 /** Prisma include for lease detail responses (GET / PUT / move-out): full unit + tenant, payments newest period first. */
 export const leaseDetailInclude = {
   unit: true,
   tenant: true,
+  rentChanges: rentChangesInclude,
   payments: { orderBy: [{ periodYear: "desc" }, { periodMonth: "desc" }, { paymentDate: "desc" }] },
 } satisfies Prisma.LeaseInclude;
 
@@ -196,7 +227,15 @@ export type LeaseMoveOutInput = z.input<typeof leaseMoveOutSchema>;
 
 // ---- Response types (JSON as returned by the API) ------------------------------------------------
 
-export type LeaseDTO = Serialized<Lease>;
+/** One rent change: from effectiveFrom's month (ISO, the 1st) the lease expects monthlyRent. */
+export interface RentChangeDTO {
+  id: string;
+  effectiveFrom: string;
+  monthlyRent: number;
+}
+
+/** monthlyRent = the rent in effect today; startingRent = the rent the lease began with (what the lease form edits). */
+export type LeaseDTO = Serialized<Lease> & { startingRent?: number; rentChanges?: RentChangeDTO[] };
 /** Derived fields on every lease response. paymentsTotal uses sumAmounts(). isActive = state !== "ended". */
 export type LeaseStats = PaymentStats & { isActive: boolean; state: LeaseState };
 

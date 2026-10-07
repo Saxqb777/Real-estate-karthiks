@@ -2,6 +2,7 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { amountInWords } from "@/lib/amount-words";
+import { rentForMonth } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
 import { periodLabel, type InvoiceData } from "@/lib/schemas/payment";
 
@@ -39,7 +40,7 @@ export async function buildInvoice(paymentId: string): Promise<InvoiceData | nul
   const [payment, settings, plot] = await Promise.all([
     prisma.payment.findUnique({
       where: { id: paymentId },
-      include: { lease: { include: { unit: true, tenant: true } } },
+      include: { lease: { include: { unit: true, tenant: true, rentChanges: { select: { effectiveFrom: true, monthlyRent: true } } } } },
     }),
     prisma.settings.findUnique({ where: { id: 1 } }),
     prisma.plot.findUnique({ where: { id: 1 } }),
@@ -75,7 +76,12 @@ export async function buildInvoice(paymentId: string): Promise<InvoiceData | nul
       id: lease.id,
       startDate: lease.startDate.toISOString(),
       endDate: lease.endDate?.toISOString() ?? null,
-      monthlyRent: lease.monthlyRent.toNumber(),
+      // the rent for the month this receipt is for (after any rent change)
+      monthlyRent: rentForMonth(
+        { monthlyRent: lease.monthlyRent.toNumber(), rentChanges: lease.rentChanges.map((c) => ({ effectiveFrom: c.effectiveFrom, monthlyRent: c.monthlyRent.toNumber() })) },
+        period.year,
+        period.month,
+      ),
       securityDeposit: lease.securityDeposit.toNumber(),
     },
   };

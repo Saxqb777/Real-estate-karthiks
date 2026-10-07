@@ -2,6 +2,7 @@
 import { Banknote, Building, Smartphone } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { DateInput, Field, FormGrid, NumberInput, Select, toast } from "@/components/ui";
+import { rentForMonth } from "@/lib/calculations";
 import { api } from "@/lib/client";
 import type { NextPayment } from "@/lib/dashboard-types";
 import { MONTH_NAMES, formatDate, periodLabel, toInputDate, todayIST } from "@/lib/dates";
@@ -43,6 +44,13 @@ function rentStillOwed(next: NextPayment): number {
   return next.arrears.months.find((m) => m.year === next.periodYear && m.month === next.periodMonth)?.outstanding ?? next.amountDue;
 }
 
+/** The lease's rent for a period (after any rent change); the current rent while no period is chosen. */
+function rentFor(lease: LeaseListItem, p: { month: number | null; year: number | null }): number {
+  if (!p.month || !p.year) return lease.monthlyRent;
+  const changes = (lease.rentChanges ?? []).map((c) => ({ effectiveFrom: new Date(c.effectiveFrom), monthlyRent: c.monthlyRent }));
+  return rentForMonth({ monthlyRent: lease.startingRent ?? lease.monthlyRent, rentChanges: changes }, p.year, p.month);
+}
+
 /** The oldest month with rent still to pay (from the dashboard's own rent schedule), else the month after the last payment. */
 function suggestion(lease: LeaseListItem | undefined, next: NextPayment | undefined): { period: Period; amount: number } | null {
   if (!lease) return null;
@@ -50,7 +58,7 @@ function suggestion(lease: LeaseListItem | undefined, next: NextPayment | undefi
   const { first, last } = leasePeriodBounds(lease);
   let p = lease.lastPaidPeriod ? nextPeriod(lease.lastPaidPeriod) : first;
   if (last && periodIndex(p) > periodIndex(last)) p = last;
-  return { period: p, amount: lease.monthlyRent };
+  return { period: p, amount: rentFor(lease, p) };
 }
 
 /** Record rent received. Defaults: the oldest unpaid month, what is still owed for it, paid today. */
@@ -127,6 +135,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
   const lease = leaseById.get(v.leaseId);
   const next = nextByLease.get(v.leaseId);
   const isSuggested = next && v.periodMonth === next.periodMonth && v.periodYear === next.periodYear;
+  const periodRent = lease ? rentFor(lease, { month: v.periodMonth, year: v.periodYear }) : 0;
 
   const groups = useMemo(() => {
     const items = leases.data?.items ?? [];
@@ -205,10 +214,10 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
           <NumberInput {...form.number("amount")} currency placeholder="18,000" data-autofocus />
           {lease && (
             <div className={s.quick}>
-              <button type="button" className={s.quickChip} data-on={v.amount === lease.monthlyRent || undefined} onClick={() => form.set("amount", lease.monthlyRent)}>
-                Full rent {formatINR(lease.monthlyRent)}
+              <button type="button" className={s.quickChip} data-on={v.amount === periodRent || undefined} onClick={() => form.set("amount", periodRent)}>
+                Full rent {formatINR(periodRent)}
               </button>
-              {isSuggested && next && rentStillOwed(next) !== lease.monthlyRent && (
+              {isSuggested && next && rentStillOwed(next) !== periodRent && (
                 <button type="button" className={s.quickChip} data-on={v.amount === rentStillOwed(next) || undefined} onClick={() => form.set("amount", rentStillOwed(next))}>
                   Still owed {formatINR(rentStillOwed(next))}
                 </button>

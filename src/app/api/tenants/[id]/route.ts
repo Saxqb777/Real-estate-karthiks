@@ -2,7 +2,7 @@ import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
 import { sumAmounts } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
 import { formatDate } from "@/lib/dates";
-import { compareLeases } from "@/lib/schemas/lease";
+import { compareLeases, leaseRent, rentChangesInclude } from "@/lib/schemas/lease";
 import { summarizePayments } from "@/lib/schemas/payment";
 import { tenantUpdateSchema } from "@/lib/schemas/tenant";
 
@@ -15,6 +15,7 @@ async function loadDetail(id: string) {
         include: {
           unit: { select: { id: true, name: true, position: true } },
           payments: { select: { amount: true, periodMonth: true, periodYear: true } },
+          rentChanges: rentChangesInclude,
         },
       },
     },
@@ -22,7 +23,7 @@ async function loadDetail(id: string) {
   if (!tenant) throw notFound("Tenant");
 
   const leases = tenant.leases
-    .map(({ payments, ...l }) => ({ ...l, isActive: l.endDate === null, ...summarizePayments(payments) }))
+    .map(({ payments, ...l }) => ({ ...l, ...leaseRent(l), isActive: l.endDate === null, ...summarizePayments(payments) }))
     .sort(compareLeases);
   const active = leases.find((l) => l.isActive);
   return {

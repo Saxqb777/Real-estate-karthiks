@@ -88,7 +88,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       tenantId: lease?.tenantId ?? defaults?.tenantId ?? "",
       startDate: toInputDate(lease?.startDate) || defaults?.startDate || toInputDate(todayIST()),
       endDate: toInputDate(lease?.endDate),
-      monthlyRent: lease?.monthlyRent ?? defaults?.monthlyRent ?? prev?.monthlyRent ?? null,
+      monthlyRent: lease?.startingRent ?? lease?.monthlyRent ?? defaults?.monthlyRent ?? prev?.monthlyRent ?? null,
       rentTiming: lease?.rentTiming === "arrears" ? "arrears" : "advance",
       rentDueDay: lease?.rentDueDay ?? null,
       securityDeposit: lease?.securityDeposit ?? defaults?.securityDeposit ?? prev?.securityDeposit ?? null,
@@ -173,7 +173,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
           <DateInput {...form.date("endDate")} />
         </Field>
         <Field
-          label="Monthly rent"
+          label={lease?.rentChanges?.length ? "Starting rent" : "Monthly rent"}
           required
           error={form.error("monthlyRent")}
           hint={unitPrev && v.monthlyRent === unitPrev.monthlyRent ? `Same as ${unitPrev.tenant.name}'s rent` : dueDay ? `Due on the ${ordinal(dueDay)} of each month` : undefined}

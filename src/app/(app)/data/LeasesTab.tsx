@@ -35,6 +35,7 @@ import {
   useSelection,
 } from "./shared";
 import { CardGrid, GameCard, initials } from "./cards";
+import { RentChanges } from "./RentChanges";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
@@ -234,6 +235,7 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
           l.moveOutNotes ? { label: "Move-out notes", value: l.moveOutNotes } : null,
         ]}
       />
+      <RentChanges lease={l} />
       <DetailSection title="Payments" aside={<span className="faint">{l.payments.length ? "newest first" : null}</span>}>
         {l.payments.length ? (
           <ul className={s.miniList}>

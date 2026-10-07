@@ -27,7 +27,9 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       prisma.plot.findUnique({ where: { id: 1 } }),
       prisma.unit.findMany(),
       prisma.offer.findMany({ select: { id: true, unitId: true, amount: true, offerDate: true, notes: true } }),
-      prisma.lease.findMany({ include: { tenant: { select: { name: true, phone: true } } } }),
+      prisma.lease.findMany({
+        include: { tenant: { select: { name: true, phone: true } }, rentChanges: { select: { effectiveFrom: true, monthlyRent: true } } },
+      }),
       prisma.payment.findMany({
         select: {
           id: true,
@@ -101,6 +103,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       startDate: l.startDate,
       endDate: l.endDate,
       monthlyRent: num(l.monthlyRent),
+      rentChanges: l.rentChanges.map((c) => ({ effectiveFrom: c.effectiveFrom, monthlyRent: num(c.monthlyRent) })),
       rentTiming: l.rentTiming === "arrears" ? "arrears" : "advance",
       rentDueDay: l.rentDueDay,
       securityDeposit: num(l.securityDeposit),

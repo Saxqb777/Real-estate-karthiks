@@ -148,11 +148,27 @@ model Lease {
 
   unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  payments Payment[]
+  payments    Payment[]
+  rentChanges LeaseRentChange[]
 
   @@index([unitId])
   @@index([tenantId])
   @@map("lease")
+}
+
+/// A rent revision on a lease: from `effectiveFrom` (1st of a month) every month expects `monthlyRent`.
+/// Lease.monthlyRent stays the STARTING rent.
+model LeaseRentChange {
+  id            String   @id @default(cuid())
+  leaseId       String   @map("lease_id")
+  effectiveFrom DateTime @map("effective_from") @db.Date
+  monthlyRent   Decimal  @map("monthly_rent") @db.Decimal(14, 2)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  lease Lease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+
+  @@unique([leaseId, effectiveFrom])
+  @@map("lease_rent_change")
 }
 
 model Payment {

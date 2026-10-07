@@ -3,7 +3,7 @@ import { handler, json, parseBody, parseQuery } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { todayIST } from "@/lib/dates";
-import { compareLeases, leaseConflictMessage, leaseCreateSchema, leaseListQuerySchema, leaseStatus } from "@/lib/schemas/lease";
+import { compareLeases, leaseConflictMessage, leaseCreateSchema, leaseListQuerySchema, leaseRent, leaseStatus, rentChangesInclude } from "@/lib/schemas/lease";
 import { summarizePayments } from "@/lib/schemas/payment";
 
 /**
@@ -24,10 +24,11 @@ export const GET = handler(async (req) => {
       unit: { select: { id: true, name: true, position: true } },
       tenant: { select: { id: true, name: true, phone: true } },
       payments: { select: { amount: true, periodMonth: true, periodYear: true } },
+      rentChanges: rentChangesInclude,
     },
   });
   const items = leases
-    .map(({ payments, ...l }) => ({ ...l, ...leaseStatus(l, today), ...summarizePayments(payments) }))
+    .map(({ payments, ...l }) => ({ ...l, ...leaseRent(l, today), ...leaseStatus(l, today), ...summarizePayments(payments) }))
     .sort((a, b) => compareLeases(a, b, today));
   return json({ items });
 });
@@ -60,5 +61,5 @@ export const POST = handler(async (req) => {
       },
     });
   });
-  return json({ ...lease, ...leaseStatus(lease), ...summarizePayments([]) }, 201);
+  return json({ ...lease, ...leaseRent(lease), ...leaseStatus(lease), ...summarizePayments([]) }, 201);
 });

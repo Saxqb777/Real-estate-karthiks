@@ -1,5 +1,6 @@
 import { handler, json, parseBody } from "@/lib/api";
 import { prisma } from "@/lib/db";
+import { leaseRent, rentChangesInclude } from "@/lib/schemas/lease";
 import { tenantCreateSchema } from "@/lib/schemas/tenant";
 
 /** Tenants A–Z with lease count and their current (active) lease, if any. */
@@ -11,7 +12,7 @@ export const GET = handler(async () => {
       leases: {
         where: { endDate: null },
         orderBy: { startDate: "desc" },
-        select: { id: true, startDate: true, monthlyRent: true, unit: { select: { id: true, name: true } } },
+        select: { id: true, startDate: true, monthlyRent: true, rentChanges: rentChangesInclude, unit: { select: { id: true, name: true } } },
       },
     },
   });
@@ -26,7 +27,7 @@ export const GET = handler(async () => {
             unitId: active.unit.id,
             unitName: active.unit.name,
             startDate: active.startDate,
-            monthlyRent: active.monthlyRent,
+            monthlyRent: leaseRent(active).monthlyRent, // after any rent change
           }
         : null,
     };

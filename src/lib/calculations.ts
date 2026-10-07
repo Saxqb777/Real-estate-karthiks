@@ -21,7 +21,8 @@
 //  • Rent Collected = Σ ALL payments dated ≤ A (every lease, every unit). Expenses = Σ ALL expenses dated ≤ A
 //    (includes the Expense rows auto-created for Paid property tax). Net cash = Rent collected − Expenses.
 //    Total Return = Gain (active units) + Rent collected.
-//  • Rent schedule: every month from the lease's start month to its last rent month expects one full monthlyRent
+//  • Rent schedule: every month from the lease's start month to its last rent month expects one full month's rent —
+//    the starting monthlyRent, or the latest rent change starting on/before that month (rentForMonth)
 //    (no part-month proration). Due on Settings.rentDueDay clamped to the month length, never before the lease
 //    start. "Paid" for a month = Σ payments recorded for that period and dated ≤ A.
 //    A month is overdue from the day after its due date (dueDate < A).
@@ -147,7 +148,10 @@ export interface LeaseInput {
   startDate: Date;
   /** LAST DAY of tenancy (inclusive); null = open-ended */
   endDate: Date | null;
+  /** STARTING rent; later revisions are in rentChanges */
   monthlyRent: number;
+  /** rent revisions: from effectiveFrom's month on, each month expects that monthlyRent (see rentForMonth) */
+  rentChanges?: RentChangeInput[];
   /** "advance" (default): a month's rent falls due in that month; "arrears": in the following month, after living it */
   rentTiming?: RentTiming;
   /** day of the month rent falls due for this lease; null/undefined = Settings.rentDueDay */
@@ -155,6 +159,12 @@ export interface LeaseInput {
   securityDeposit: number;
   depositRefundedAmount?: number | null;
   depositRefundDate?: Date | null;
+}
+
+export interface RentChangeInput {
+  /** 1st of the month the new rent starts (date-only) */
+  effectiveFrom: Date;
+  monthlyRent: number;
 }
 
 export interface PaymentInput {
@@ -269,6 +279,28 @@ const monthIndexOfDay = (day: number) => {
   return monthIndex(d.getUTCFullYear(), d.getUTCMonth() + 1);
 };
 const miYear = (mi: number) => Math.floor(mi / 12);
+
+type RentRevisable = Pick<LeaseInput, "monthlyRent" | "rentChanges">;
+
+/** Rent a lease expects for month index `mi`: the latest rent change starting on/before that month, else the starting rent. */
+export function rentForMonthIndex(lease: RentRevisable, mi: number): number {
+  let rent = lease.monthlyRent;
+  let from = -Infinity;
+  for (const c of lease.rentChanges ?? []) {
+    const ci = monthIndex(c.effectiveFrom.getUTCFullYear(), c.effectiveFrom.getUTCMonth() + 1);
+    if (ci <= mi && ci > from) {
+      from = ci;
+      rent = c.monthlyRent;
+    }
+  }
+  return rent;
+}
+
+/** Rent for a period (month 1-12). */
+export const rentForMonth = (lease: RentRevisable, year: number, month: number) => rentForMonthIndex(lease, monthIndex(year, month));
+
+/** The rent in effect on a date (the rent of that date's month). */
+export const rentOn = (lease: RentRevisable, date: Date) => rentForMonthIndex(lease, monthIndexOfDay(dayNum(date)));
 const miMonth = (mi: number) => (mi % 12) + 1;
 const monthStartDay = (mi: number) => dayNum(dateOnly(miYear(mi), miMonth(mi), 1));
 const monthEndDay = (mi: number) => monthStartDay(mi + 1) - 1;
@@ -417,7 +449,7 @@ export function valueUnit(u: UnitInput, offers: OfferInput[], asOf: Date): UnitV
 
 // ───────────────────────────── leases: state, occupancy / vacancy ─────────────────────────────
 
-type LeaseSpan = Pick<LeaseInput, "startDate" | "endDate" | "monthlyRent">;
+type LeaseSpan = Pick<LeaseInput, "startDate" | "endDate" | "monthlyRent" | "rentChanges">;
 
 /** incoming / current / ended on A (endDate is the last day, inclusive). */
 export function leaseStateOn(lease: Pick<LeaseInput, "startDate" | "endDate">, asOf: Date): LeaseState {
@@ -492,7 +524,8 @@ export function occupancyFor(purchaseDate: Date, asOf: Date, leases: LeaseSpan[]
       basis = sorted.find((l) => dayNum(l.startDate) >= e) ?? sorted[0]; // gap precedes the first lease → the next lease
       source = "next-lease";
     }
-    const rentBasis = basis ? basis.monthlyRent : 0;
+    // previous lease → its rent in the gap's first month (after any rent change); next lease → its starting rent
+    const rentBasis = basis ? (source === "previous-lease" ? rentForMonthIndex(basis, monthIndexOfDay(s)) : basis.monthlyRent) : 0;
     const days = e - s;
     return {
       start: isoDay(s),
@@ -521,7 +554,7 @@ export function occupancyFor(purchaseDate: Date, asOf: Date, leases: LeaseSpan[]
 // ───────────────────────────── rent schedule, arrears, next payment ─────────────────────────────
 
 type RentSettings = Pick<SettingsInput, "rentDueDay" | "lateFeeEnabled" | "lateFeeAmount" | "lateFeeGraceDays">;
-type RentLease = Pick<LeaseInput, "id" | "startDate" | "endDate" | "monthlyRent" | "rentTiming" | "rentDueDay">;
+type RentLease = Pick<LeaseInput, "id" | "startDate" | "endDate" | "monthlyRent" | "rentChanges" | "rentTiming" | "rentDueDay">;
 type RentPayment = Pick<PaymentInput, "amount" | "paymentDate" | "periodMonth" | "periodYear">;
 
 /** Due date (date-only) of a rent period: due day clamped to the month length. */
@@ -563,7 +596,7 @@ export interface RentMonth {
   key: string;
   label: string;
   dueDay: number; // day number of the due date
-  due: number; // monthly rent
+  due: number; // rent for this month (after any rent change)
   paid: number; // received for this month, dated ≤ A
   outstanding: number; // due − paid (negative when overpaid)
   isOverdue: boolean; // dueDate < A
@@ -581,7 +614,7 @@ function rentMonth(lease: RentLease, mi: number, paidByMonth: Map<number, number
   const year = miYear(mi);
   const month = miMonth(mi);
   const dueDay = rentDueDayNum(lease, year, month, settings);
-  const due = round2(lease.monthlyRent);
+  const due = round2(rentForMonthIndex(lease, mi));
   const paid = round2(paidByMonth.get(mi) ?? 0);
   const outstanding = round2(due - paid);
   const daysOverdue = Math.max(0, a - dueDay);
@@ -1468,7 +1501,7 @@ function unitOccupancyExplains(ctx: Ctx, u: UnitInput, occ: OccupancyResult, lea
     kind: "lease" as const,
     id: l.id,
     label: leaseLabel(l, u.name),
-    value: round2(l.monthlyRent),
+    value: round2(rentOn(l, ctx.asOf)),
     date: iso(l.startDate),
     unitId: u.id,
   }));
@@ -1629,7 +1662,7 @@ const leaseSummary = (l: LeaseInput, asOf: Date): LeaseSummary => ({
   tenantPhone: l.tenantPhone,
   startDate: iso(l.startDate),
   endDate: l.endDate ? iso(l.endDate) : null,
-  monthlyRent: round2(l.monthlyRent),
+  monthlyRent: round2(rentOn(l, asOf)),
   securityDeposit: round2(l.securityDeposit),
   state: leaseStateOn(l, asOf),
 });
@@ -1765,7 +1798,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
         steps: od.steps,
         inputs: current
           ? [
-              { kind: "lease", id: current.id, label: leaseLabel(current, u.name), value: round2(current.monthlyRent), date: iso(current.startDate), unitId: u.id },
+              { kind: "lease", id: current.id, label: leaseLabel(current, u.name), value: round2(rentOn(current, ctx.asOf)), date: iso(current.startDate), unitId: u.id },
               ...(paymentsByLease.get(current.id) ?? [])
                 .filter((pm) => nextPayment?.arrears.months.some((m) => m.year === pm.periodYear && m.month === pm.periodMonth))
                 .map((pm) => ({
@@ -1787,13 +1820,13 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
         title: "Monthly rent",
         bucket: "cash",
         scope: ctx.asOfScope,
-        value: current ? round2(current.monthlyRent) : 0,
+        value: current ? round2(rentOn(current, ctx.asOf)) : 0,
         format: "inr",
         plain: current ? `The rent in ${current.tenantName}'s lease.` : `${u.name} has no current tenant.`,
         formula: "Monthly rent of the current lease",
-        steps: [step("Monthly rent", current ? fINR(current.monthlyRent) : "no current lease", current ? round2(current.monthlyRent) : 0)],
+        steps: [step("Monthly rent", current ? fINR(rentOn(current, ctx.asOf)) : "no current lease", current ? round2(rentOn(current, ctx.asOf)) : 0)],
         inputs: current
-          ? [{ kind: "lease", id: current.id, label: leaseLabel(current, u.name), value: round2(current.monthlyRent), date: iso(current.startDate), unitId: u.id }]
+          ? [{ kind: "lease", id: current.id, label: leaseLabel(current, u.name), value: round2(rentOn(current, ctx.asOf)), date: iso(current.startDate), unitId: u.id }]
           : [],
         notes: incoming ? [`${incoming.tenantName} moves in on ${formatDate(incoming.startDate)} at ${fINR(incoming.monthlyRent)} a month.`] : [],
       }),
@@ -2173,7 +2206,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
         ),
         step("Occupancy", `${formatIndianNumber(daysOccupied)} ÷ ${formatIndianNumber(daysOwned)} = ${fPct(occupancyPct)}`, occupancyPct, "pct"),
       ],
-      inputs: activeRows.flatMap((r) => (leasesByUnit.get(r.u.id) ?? []).map((l) => ({ kind: "lease" as const, id: l.id, label: leaseLabel(l, r.u.name), value: round2(l.monthlyRent), date: iso(l.startDate), unitId: r.u.id }))),
+      inputs: activeRows.flatMap((r) => (leasesByUnit.get(r.u.id) ?? []).map((l) => ({ kind: "lease" as const, id: l.id, label: leaseLabel(l, r.u.name), value: round2(rentOn(l, ctx.asOf)), date: iso(l.startDate), unitId: r.u.id }))),
       notes: ["A lease counts from its start day through its last day of tenancy.", ...inactiveNote],
     }),
   );
@@ -2216,7 +2249,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
           ]
         : [step("Rent lost", fINR(0), 0)],
       inputs: activeRows.flatMap((r) =>
-        (leasesByUnit.get(r.u.id) ?? []).map((l) => ({ kind: "lease" as const, id: l.id, label: leaseLabel(l, r.u.name), value: round2(l.monthlyRent), date: iso(l.startDate), unitId: r.u.id })),
+        (leasesByUnit.get(r.u.id) ?? []).map((l) => ({ kind: "lease" as const, id: l.id, label: leaseLabel(l, r.u.name), value: round2(rentOn(l, ctx.asOf)), date: iso(l.startDate), unitId: r.u.id })),
       ),
       notes: [...rentLostNotes(allGaps.map((g) => g.p)), ...inactiveNote],
     }),
@@ -2225,7 +2258,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
   // ── leases on active units: rent roll, deposits, arrears ──
   const currentRows = activeRows.filter((r) => r.current);
   const rollX = sumSteps(
-    currentRows.map((r) => ({ label: `${r.u.name} — ${r.current!.tenantName}`, value: round2(r.current!.monthlyRent) })),
+    currentRows.map((r) => ({ label: `${r.u.name} — ${r.current!.tenantName}`, value: round2(rentOn(r.current!, ctx.asOf)) })),
     "Monthly rent roll",
   );
   const monthlyRentRoll = rollX.total;
@@ -2240,7 +2273,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
       plain: currentRows.length ? "The rent your current tenants pay each month, added up." : "No unit has a current tenant.",
       formula: "Σ monthly rent of current leases",
       steps: rollX.steps,
-      inputs: currentRows.map((r) => ({ kind: "lease" as const, id: r.current!.id, label: leaseLabel(r.current!, r.u.name), value: round2(r.current!.monthlyRent), date: iso(r.current!.startDate), unitId: r.u.id })),
+      inputs: currentRows.map((r) => ({ kind: "lease" as const, id: r.current!.id, label: leaseLabel(r.current!, r.u.name), value: round2(rentOn(r.current!, ctx.asOf)), date: iso(r.current!.startDate), unitId: r.u.id })),
       notes: ["Only leases that cover this date count — not ended or not-yet-started ones.", ...inactiveNote],
     }),
   );
@@ -2505,7 +2538,7 @@ export function buildTimeline(input: DashboardInput, today: Date, mode: YearMode
         tenantName: l.tenantName,
         start: iso(l.startDate),
         end: l.endDate ? iso(l.endDate) : null,
-        monthlyRent: round2(l.monthlyRent),
+        monthlyRent: round2(rentOn(l, today)),
         state: leaseStateOn(l, today),
       })),
       vacant: occupancyFor(u.purchaseDate, today, leases).vacantPeriods,

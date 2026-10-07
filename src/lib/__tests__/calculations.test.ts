@@ -18,6 +18,8 @@ import {
   monthlyByYear,
   nextPaymentFor,
   occupancyFor,
+  rentForMonth,
+  rentOn,
   pickBestOffer,
   plotGeometry,
   rentStateFor,
@@ -484,6 +486,40 @@ describe("Rent schedule: next payment, arrears, due day clamping, late fees", ()
     const all = paid([1, 2026, 10_000], [2, 2026, 10_000], [3, 2026, 10_000]);
     expect(nextPaymentFor(L, all, settings, D("2026-06-01"))).toBeNull();
     expect(arrearsFrom(leaseRentMonths(L, all.slice(0, 2), settings, D("2026-06-01"))).total).toBe(10_000);
+  });
+});
+
+describe("rent changes", () => {
+  const settings = { rentDueDay: 10, lateFeeEnabled: false, lateFeeAmount: 0, lateFeeGraceDays: 0 };
+  const lease = (start: string, end: string | null, rent: number) => ({ id: "L1", startDate: D(start), endDate: end ? D(end) : null, monthlyRent: rent });
+  const paid = (...periods: [number, number, number][]) =>
+    periods.map(([month, year, amount]) => ({ amount, paymentDate: D(`${year}-${String(month).padStart(2, "0")}-05`), periodMonth: month, periodYear: year }));
+  const L = { ...lease("2026-01-01", null, 10_000), rentChanges: [{ effectiveFrom: D("2026-10-01"), monthlyRent: 12_000 }] };
+
+  it("months before the change keep the old rent; from the change month on, the new rent", () => {
+    expect(rentForMonth(L, 2026, 9)).toBe(10_000);
+    expect(rentForMonth(L, 2026, 10)).toBe(12_000);
+    expect(rentForMonth(L, 2027, 3)).toBe(12_000);
+    expect(rentOn(L, D("2026-09-30"))).toBe(10_000);
+    expect(rentOn(L, D("2026-10-01"))).toBe(12_000);
+  });
+
+  it("the latest change on/before a month wins, whatever order they are stored in", () => {
+    const L2 = { ...L, rentChanges: [{ effectiveFrom: D("2027-04-01"), monthlyRent: 13_000 }, ...L.rentChanges] };
+    expect(rentForMonth(L2, 2027, 3)).toBe(12_000);
+    expect(rentForMonth(L2, 2027, 4)).toBe(13_000);
+  });
+
+  it("old months paid at the old rent are not part-paid; the new rent is expected from its month", () => {
+    const P = paid(...Array.from({ length: 9 }, (_, i) => [i + 1, 2026, 10_000] as [number, number, number]));
+    const months = leaseRentMonths(L, P, settings, D("2026-11-20"));
+    expect(months.find((m) => m.label === "Sep 2026")?.outstanding).toBe(0);
+    expect(months.find((m) => m.label === "Oct 2026")?.due).toBe(12_000);
+    expect(arrearsFrom(months).total).toBe(24_000); // Oct + Nov at the new rent
+  });
+
+  it("a lease without changes is unchanged", () => {
+    expect(rentForMonth(lease("2026-01-01", null, 10_000), 2030, 1)).toBe(10_000);
   });
 });
 

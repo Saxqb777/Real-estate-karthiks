@@ -608,7 +608,7 @@ export interface UnitReport {
   /** estimate at purchase, at each year start, and today; best offer known on that date */
   valueGrowth: { date: string; label: string; estimate: number; bestOfferToDate: number | null }[];
   /** the purchase → today story, oldest first */
-  story: { date: string; kind: "purchase" | "lease-start" | "lease-end" | "vacant" | "offer" | "expense"; text: string; amount: number | null }[];
+  story: { date: string; kind: "purchase" | "lease-start" | "rent-change" | "lease-end" | "vacant" | "offer" | "expense"; text: string; amount: number | null }[];
   totals: { rentCollected: number; expenses: number; netCash: number; rentLost: number; vacantDays: number };
   reconciliation: Reconciliation;
 }

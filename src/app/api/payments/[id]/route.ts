@@ -1,4 +1,5 @@
 import { handler, json, notFound, param } from "@/lib/api";
+import { rentForMonth } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
 
 export const GET = handler(async (_req, ctx) => {
@@ -12,6 +13,7 @@ export const GET = handler(async (_req, ctx) => {
           startDate: true,
           endDate: true,
           monthlyRent: true,
+          rentChanges: { select: { effectiveFrom: true, monthlyRent: true } },
           unit: { select: { id: true, name: true } },
           tenant: { select: { id: true, name: true, phone: true } },
         },
@@ -19,7 +21,14 @@ export const GET = handler(async (_req, ctx) => {
     },
   });
   if (!payment) throw notFound("Payment");
-  return json(payment);
+  const { rentChanges, ...lease } = payment.lease;
+  // the lease's rent for the month this payment is for (after any rent change)
+  const monthlyRent = rentForMonth(
+    { monthlyRent: lease.monthlyRent.toNumber(), rentChanges: rentChanges.map((c) => ({ effectiveFrom: c.effectiveFrom, monthlyRent: c.monthlyRent.toNumber() })) },
+    payment.periodYear,
+    payment.periodMonth,
+  );
+  return json({ ...payment, lease: { ...lease, monthlyRent } });
 });
 
 export const DELETE = handler(async (_req, ctx) => {
