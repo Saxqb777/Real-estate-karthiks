@@ -376,7 +376,7 @@ button.miniRow:hover {
 .arrears {
   padding: 10px 14px;
   background: var(--coral-a12);
-  border: 1px solid rgba(255, 93, 115, 0.35);
+  border: 1px solid rgba(240, 82, 82, 0.35);
   border-left: 3px solid var(--coral);
   border-radius: var(--radius-xs);
 }

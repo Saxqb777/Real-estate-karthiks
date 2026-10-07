@@ -91,13 +91,13 @@
 
 /* ── tone tokens for status ── */
 .toneTeal {
-  --tone: var(--teal, #2dd4bf);
+  --tone: var(--teal, #4ade80);
 }
 .toneMarigold {
   --tone: var(--marigold, #ffb547);
 }
 .toneCoral {
-  --tone: var(--coral, #ff5d73);
+  --tone: var(--coral, #f05252);
 }
 .toneSky {
   --tone: var(--sky, #60a5fa);

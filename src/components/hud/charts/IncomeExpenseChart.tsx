@@ -152,9 +152,9 @@ export function IncomeExpenseChart({ years, year: controlled, onYearChange, onDr
           {ys.months.map((m) => (
             <tr key={m.key}>
               <td>{m.longLabel}</td>
-              <td>{inr(m.income)}</td>
-              <td>{inr(m.expenses)}</td>
-              <td>{inr(m.net)}</td>
+              <td className={s.tIncome}>{inr(m.income)}</td>
+              <td className={s.tExpense}>{inr(m.expenses)}</td>
+              <td className={m.net < 0 ? s.tExpense : m.net > 0 ? s.tIncome : undefined}>{inr(m.net)}</td>
             </tr>
           ))}
         </tbody>

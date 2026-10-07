@@ -26,8 +26,8 @@ export const PAL = {
   bush: "#4a7d3c",
   marigold: "#ffb547",
   saffron: "#ff8a3d",
-  teal: "#2dd4bf",
-  coral: "#ff5d73",
+  teal: "#4ade80", // income / paid (green)
+  coral: "#f05252", // expense / overdue (red)
   sky: "#60a5fa",
   skin: "#8a5536",
   skinDark: "#5f3a26",

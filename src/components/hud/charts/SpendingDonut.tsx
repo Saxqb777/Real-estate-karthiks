@@ -67,7 +67,7 @@ export function SpendingDonut({ slices, total, scopeLabel, onCategory, className
         </svg>
         <div className={s.donutCenter}>
           <span className={s.donutLabel}>{hs ? hs.name : "Expenses"}</span>
-          <span className={cx(s.donutValue, "num")}>{inr(hs ? hs.amount : total)}</span>
+          <span className={cx(s.donutValue, "num", s.tExpense)}>{inr(hs ? hs.amount : total)}</span>
           <span className={s.donutSub}>{hs ? formatPercent(hs.share, 1) : scopeLabel}</span>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function SpendingDonut({ slices, total, scopeLabel, onCategory, className
                 <span style={{ width: `${Math.max(2, sl.share * 100)}%`, background: sl.color }} />
               </span>
               <span className={cx(s.catPct, "num")}>{formatPercent(sl.share, 1)}</span>
-              <span className={cx(s.catAmt, "num")}>{inr(sl.amount)}</span>
+              <span className={cx(s.catAmt, "num", s.tExpense)}>{inr(sl.amount)}</span>
             </button>
           </li>
         ))}

@@ -172,7 +172,7 @@
 .mark::after {
   content: "";
   position: absolute;
-  background: #ff5d73;
+  background: #f05252;
 }
 .mark::before {
   left: -9px;
@@ -193,7 +193,7 @@
   padding: 1px 5px;
   font: 600 10px/1.4 ui-monospace, monospace;
   color: #fff;
-  background: rgba(255, 93, 115, 0.85);
+  background: rgba(240, 82, 82, 0.85);
   border-radius: 3px;
   white-space: nowrap;
 }

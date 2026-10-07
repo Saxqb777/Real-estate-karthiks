@@ -215,7 +215,7 @@
   font-size: 11px;
   font-weight: 800;
   color: var(--teal);
-  border: 1px solid rgba(45, 212, 191, 0.4);
+  border: 1px solid rgba(74, 222, 128, 0.4);
   border-radius: 3px;
   transform: translateY(2px);
 }
@@ -230,7 +230,7 @@
 }
 .checkBad .checkMark {
   color: var(--coral);
-  border-color: rgba(255, 93, 115, 0.5);
+  border-color: rgba(240, 82, 82, 0.5);
 }
 .checkBad .checkLabel,
 .checkBad .checkVal {

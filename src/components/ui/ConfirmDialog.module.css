@@ -11,7 +11,7 @@
   height: 34px;
   color: var(--coral);
   background: var(--coral-a12);
-  border: 1px solid rgba(255, 93, 115, 0.4);
+  border: 1px solid rgba(240, 82, 82, 0.4);
   border-radius: var(--radius-xs);
 }
 .mark svg {

@@ -239,7 +239,7 @@ function CategoryView({ data, view, push }: { data: DashboardData; view: Extract
                     {x.propertyTaxId && " · from property tax"}
                   </span>
                 </span>
-                <Rupees value={x.amount} className={s.rowAmt} />
+                <Rupees value={x.amount} tone="expense" className={s.rowAmt} />
                 <Pencil className={s.rowIcon} aria-hidden />
               </button>
             </li>
@@ -252,7 +252,7 @@ function CategoryView({ data, view, push }: { data: DashboardData; view: Extract
         </span>
         {total !== null && (
           <span className={s.footTotal}>
-            Total <b className="num">{inr(total)}</b>
+            Total <b className="num neg">{inr(total)}</b>
           </span>
         )}
       </footer>
@@ -317,7 +317,7 @@ function LeaseView({ data, leaseId, push }: { data: DashboardData; leaseId: stri
         </span>
         {data.isLive && res.data && (
           <span className={s.footTotal}>
-            Total <b className="num">{inr(res.data.total)}</b>
+            Total <b className="num pos">{inr(res.data.total)}</b>
           </span>
         )}
       </footer>

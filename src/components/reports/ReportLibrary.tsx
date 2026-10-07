@@ -144,13 +144,13 @@ export function ReportLibrary() {
     const taxDue = taxItems.filter((t) => t.status === "Due");
     const curLease = d?.units.find((u) => u.activeLease)?.activeLease;
     const headline: Record<ReportId, { big: string; sub: string; tone?: string }> = {
-      income: { big: a ? inr(a.totals.net) : "…", sub: `net cash · ${yLabel}`, tone: s.teal },
+      income: { big: a ? inr(a.totals.net) : "…", sub: `net cash · ${yLabel}`, tone: a ? netTone(a.totals.net) : undefined },
       rentroll: { big: k ? `${k.unitsOccupied} of ${k.unitsActive}` : "…", sub: k ? `units let · ${inr(k.monthlyRentRoll)}/mo` : "", tone: "" },
       dues: { big: k ? inr(k.overdueAmount) : "…", sub: k ? (k.overdueAmount ? `owed · ${k.overdueMonths} ${k.overdueMonths === 1 ? "month" : "months"}` : "nothing owed") : "", tone: k?.overdueAmount ? s.red : s.teal },
       occupancy: { big: a ? pct(avgOcc(a)) : "…", sub: a ? `occupied · ${sumOf(a.occupancy.map((o) => o.vacantDays))} days empty · ${yLabel}` : "", tone: "" },
       tenant: { big: curLease ? curLease.tenantName.split(" ")[0] : "—", sub: curLease ? `since ${formatDate(curLease.startDate)}` : "no current tenant", tone: "" },
       value: { big: k ? formatINRCompact(k.bestOfferTotal) : "…", sub: k ? `worth now · gain ${formatINRCompact(k.appreciation)}` : "", tone: s.teal },
-      tax: { big: inr(taxPaid), sub: taxDue.length ? `paid · ${taxDue.length} still due` : "paid · nothing due", tone: taxDue.length ? s.mari : "" },
+      tax: { big: inr(taxPaid), sub: taxDue.length ? `paid · ${taxDue.length} still due` : "paid · nothing due", tone: s.red },
       deposits: { big: k ? inr(k.securityDepositsHeld) : "…", sub: "held for tenants", tone: s.mari },
     };
     return (
@@ -278,6 +278,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 // ---------------------------------------------------------------- 1 · income & expenses
 
+/** Net money: green when more came in than went out, red when less (owner 7/10: income green, expenses red). */
+const netTone = (n: number) => (n > 0 ? s.teal : n < 0 ? s.red : undefined);
+
 function IncomeReport({ a }: { a: AnnualReport }) {
   const t = a.totals;
   return (
@@ -286,7 +289,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
         items={[
           { label: "Rent collected", value: inr(t.rentCollected), tone: s.teal },
           { label: "Expenses", value: inr(t.expenses), tone: s.red },
-          { label: "Net cash", value: inr(t.net) },
+          { label: "Net cash", value: inr(t.net), tone: netTone(t.net) },
         ]}
       />
       <div className={s.two}>
@@ -306,7 +309,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                   <td>{m.label}</td>
                   <td className={cx(s.r, s.teal)}>{dash(m.rentCollected)}</td>
                   <td className={cx(s.r, s.red)}>{dash(m.expenses)}</td>
-                  <td className={s.r}>{m.rentCollected || m.expenses ? inr(m.net) : "—"}</td>
+                  <td className={cx(s.r, netTone(m.net))}>{m.rentCollected || m.expenses ? inr(m.net) : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -315,7 +318,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                 <td>Total</td>
                 <td className={cx(s.r, s.teal)}>{inr(t.rentCollected)}</td>
                 <td className={cx(s.r, s.red)}>{inr(t.expenses)}</td>
-                <td className={s.r}>{inr(t.net)}</td>
+                <td className={cx(s.r, netTone(t.net))}>{inr(t.net)}</td>
               </tr>
             </tfoot>
           </TableBox>
@@ -369,7 +372,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                     <td>{u.unitName}</td>
                     <td className={cx(s.r, s.teal)}>{dash(u.rentCollected)}</td>
                     <td className={cx(s.r, s.red)}>{dash(u.expenses)}</td>
-                    <td className={s.r}>{inr(u.net)}</td>
+                    <td className={cx(s.r, netTone(u.net))}>{inr(u.net)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -723,7 +726,7 @@ function Tax({ items }: { items: { id: string; year: number; amount: number; sta
     <>
       <Kpis
         items={[
-          { label: "Paid in total", value: inr(sumAmounts(paid)) },
+          { label: "Paid in total", value: inr(sumAmounts(paid)), tone: s.red },
           { label: "Still to pay", value: inr(sumAmounts(due)), tone: due.length ? s.mari : undefined },
           { label: "Years recorded", value: String(years.length) },
         ]}
@@ -755,7 +758,7 @@ function Tax({ items }: { items: { id: string; year: number; amount: number; sta
                   {unitNames.map((n) => {
                     const t = rows.find((x) => x.unit.name === n);
                     return (
-                      <td key={n} className={cx(s.r, t && t.status !== "Paid" ? s.mari : undefined)}>
+                      <td key={n} className={cx(s.r, t && (t.status !== "Paid" ? s.mari : s.red))}>
                         {t ? inr(t.amount) : "—"}
                       </td>
                     );

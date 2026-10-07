@@ -65,7 +65,7 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
             <section className={b.taxCol}>
               <h3 className={b.taxHead}>Summary</h3>
               <span className={b.taxLabel}>Paid in total</span>
-              <Rupees value={paidTotal} className={b.taxHero} />
+              <Rupees value={paidTotal} tone="expense" className={b.taxHero} />
               {due.length > 0 ? (
                 <div className={cx(b.taxStat, b.taxStatDue)}>
                   <span>Still to pay</span>
@@ -113,7 +113,7 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
                     <div className={b.taxStat}>
                       <span>Paid so far</span>
                       <b>
-                        <Rupees value={sumAmounts(paid)} />
+                        <Rupees value={sumAmounts(paid)} tone="expense" />
                       </b>
                     </div>
                     <div className={b.taxStat}>
@@ -178,7 +178,7 @@ function TaxRow({ t, onMarkPaid }: { t: PropertyTaxDTO; onMarkPaid: () => void }
   return (
     <li className={cx(b.taxRow, !paid && b.taxDue)}>
       <span className={b.taxUnit}>{t.unit.name}</span>
-      <Rupees value={t.amount} className={b.taxAmt} />
+      <Rupees value={t.amount} tone={paid ? "expense" : "neutral"} className={b.taxAmt} />
       {paid ? (
         <span className={b.taxPaid}>
           <StatusPill status="paid" size="sm" />

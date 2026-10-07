@@ -105,7 +105,7 @@
 /* danger — coral outline that fills on hover */
 .danger {
   background: var(--coral-a12);
-  border-color: rgba(255, 93, 115, 0.45);
+  border-color: rgba(240, 82, 82, 0.45);
   color: #ff8a9b;
 }
 .danger:hover:not(:disabled) {

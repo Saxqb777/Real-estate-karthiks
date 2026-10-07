@@ -100,14 +100,14 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
           cell: (e) => <Stack2 top={category(e)} bottom={`${formatDate(e.expenseDate)} · ${e.unit?.name ?? "Whole plot"}${e.description ? ` · ${e.description}` : ""}`} />,
           footer: footerLabel,
         },
-        { key: "amount", header: "Amount", numeric: true, cell: (e) => money(e.amount), footer: footerTotal },
+        { key: "amount", header: "Amount", numeric: true, cell: (e) => <span className="neg">{money(e.amount)}</span>, footer: footerTotal },
       ]
     : [
         { key: "date", header: "Paid on", sortValue: (e) => e.expenseDate, cell: (e) => <span className="num">{formatDate(e.expenseDate)}</span>, footer: footerLabel },
         { key: "category", header: "Category", sortValue: (e) => e.category.name, cell: category },
         { key: "unit", header: "For", sortValue: (e) => e.unit?.name ?? "", cell: (e) => e.unit?.name ?? <span className="dim">Whole plot</span> },
         { key: "desc", header: "What for", wrap: true, cell: what },
-        { key: "amount", header: "Amount", numeric: true, sortValue: (e) => e.amount, cell: (e) => money(e.amount), footer: footerTotal },
+        { key: "amount", header: "Amount", numeric: true, sortValue: (e) => e.amount, cell: (e) => <span className="neg">{money(e.amount)}</span>, footer: footerTotal },
       ];
 
   const clear = () => {

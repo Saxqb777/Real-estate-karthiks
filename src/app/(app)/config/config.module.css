@@ -97,7 +97,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--teal);
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
   animation: live 2.4s ease-in-out infinite;
 }
 @keyframes live {

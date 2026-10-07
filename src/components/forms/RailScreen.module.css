@@ -125,7 +125,7 @@
 .item[aria-selected="true"] .countAlert {
   color: #ff97a6;
   background: rgba(40, 14, 16, 0.94);
-  border-color: rgba(255, 93, 115, 0.55);
+  border-color: rgba(240, 82, 82, 0.55);
 }
 
 /* phones: the buttons scroll sideways in one row */

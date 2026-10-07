@@ -74,7 +74,7 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
           numeric: true,
           cell: (t) => (
             <span className={s.taxAmt}>
-              <span className="num">{money(t.amount)}</span>
+              <span className="num neg">{money(t.amount)}</span>
               {t.status === "Due" ? action(t) : <StatusPill status="paid" size="sm" />}
             </span>
           ),
@@ -83,7 +83,7 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
     : [
         { key: "year", header: "Tax year", sortValue: (t) => t.year, cell: (t) => <span className={`${s.strong} num`}>{t.year}</span>, footer },
         { key: "unit", header: "Unit", sortValue: (t) => t.unit.name, cell: (t) => t.unit.name },
-        { key: "amount", header: "Amount", numeric: true, sortValue: (t) => t.amount, cell: (t) => money(t.amount) },
+        { key: "amount", header: "Amount", numeric: true, sortValue: (t) => t.amount, cell: (t) => <span className="neg">{money(t.amount)}</span> },
         { key: "status", header: "Status", sortValue: (t) => t.status, cell: (t) => <StatusPill status={t.status === "Paid" ? "paid" : "due"} size="sm" /> },
         { key: "paid", header: "Paid on", sortValue: (t) => t.paymentDate ?? "", cell: (t) => (t.paymentDate ? <span className="num">{formatDate(t.paymentDate)}</span> : <span className="faint">—</span>) },
         { key: "action", header: "", align: "right", cell: action },

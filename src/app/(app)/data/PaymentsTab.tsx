@@ -50,7 +50,7 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
           cell: (p) => <Stack2 top={`${shortPeriod(p)} · ${p.lease.tenant.name}`} bottom={`${p.lease.unit.name} · ${formatDate(p.paymentDate)} · ${METHOD_LABEL[p.method]}`} />,
           footer: footerLabel,
         },
-        { key: "amount", header: "Amount", numeric: true, cell: (p) => money(p.amount), footer: footerTotal },
+        { key: "amount", header: "Amount", numeric: true, cell: (p) => <span className="pos">{money(p.amount)}</span>, footer: footerTotal },
       ]
     : [
         { key: "date", header: "Received", sortValue: (p) => p.paymentDate, cell: (p) => <span className="num">{formatDate(p.paymentDate)}</span>, footer: footerLabel },
@@ -67,7 +67,7 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
           ),
         },
         { key: "receipt", header: "Receipt", cell: receipt },
-        { key: "amount", header: "Amount", numeric: true, sortValue: (p) => p.amount, cell: (p) => money(p.amount), footer: footerTotal },
+        { key: "amount", header: "Amount", numeric: true, sortValue: (p) => p.amount, cell: (p) => <span className="pos">{money(p.amount)}</span>, footer: footerTotal },
       ];
 
   return (

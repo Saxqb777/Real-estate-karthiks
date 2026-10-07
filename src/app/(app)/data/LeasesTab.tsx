@@ -244,7 +244,7 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
                 <div className={s.miniRow} data-static>
                   <Stack2 top={periodLabel({ month: p.periodMonth, year: p.periodYear })} bottom={`Received ${formatDate(p.paymentDate)} · ${p.invoiceNumber}`} />
                   <span className={s.miniRight}>
-                    <span className="num">{formatINR(p.amount, p.amount % 1 !== 0)}</span>
+                    <span className="num pos">{formatINR(p.amount, p.amount % 1 !== 0)}</span>
                     <a className={s.iconLink} href={`/invoice/${p.id}`} target="_blank" rel="noopener" aria-label={`Receipt ${p.invoiceNumber}`} title="Open receipt">
                       <ReceiptText aria-hidden />
                     </a>

@@ -272,6 +272,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   the lease form edits the STARTING rent (label "Starting rent" once a change exists); payment form "Full rent" = the
   chosen month's rent. POST/DELETE /api/leases/[id]/rent-changes[/changeId]; a change can't start in the lease's
   first month or after its last month; same month again = replaces.
+- 7/10/2026: MONEY COLOURS (owner): income / money in = GREEN, expenses / money out = RED, everywhere. Done at the
+  tokens: --teal is now green #4ade80 and --coral red #f05252 (names kept; also paid/occupied = green, overdue = red,
+  3D rent rings via PAL.teal/coral); print reports green #15803d / red #b42318. Row amounts coloured (.pos/.neg) in Data
+  Payments / Expenses / Property tax / lease drawer payments; paid tax = red (Data, tax office window, report); net cash =
+  green if > 0, red if < 0 (reports netTone, charts); spending donut + expense drill rows red. Deposits stay gold, property
+  value + rent rates neutral (not cash in/out).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
