@@ -1,6 +1,7 @@
 "use client";
-// Dock tab 1 — Income vs expenses: monthly rent collected (teal) and expenses (coral) as paired columns, net cash as a
-// line, one FY / calendar year at a time (data.monthlyByYear, grouped by the API — the UI never regroups).
+// Dock tab 1 — Income vs expenses: rent collected (green) and expenses (red) as paired columns, net cash as a line —
+// one FY / calendar year month by month (data.monthlyByYear), or ALL TIME year by year (owner 8/10) with the totals
+// from data.periods.allTime and the running net from data.cumulativeNetByYear (grouped by the API — the UI never regroups).
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { cx } from "@/components/ui";
@@ -11,60 +12,107 @@ import s from "./charts.module.css";
 
 export interface IncomeExpenseChartProps {
   years: YearSeries[];
-  /** selected year key (default: the year containing the as-of date) */
-  year?: number;
-  onYearChange?: (year: number) => void;
-  /** click a total of the CURRENT year → its explanation ("year:netCash"; other years have no explanation) */
-  onDrill?: (key: "rentCollected" | "expenses" | "netCash", year: YearSeries) => void;
+  /** all-time totals (data.periods.allTime) + running net per year (data.cumulativeNetByYear) → the ALL TIME view */
+  allTime?: { rentCollected: number; expenses: number; net: number };
+  cumulative?: { year: number; cumulative: number }[];
+  /** selected year key or "all" (default: the year containing the as-of date) */
+  year?: number | "all";
+  onYearChange?: (year: number | "all") => void;
+  /** click a total of the CURRENT year or of ALL TIME → its explanation (other years have no explanation) */
+  onDrill?: (key: "rentCollected" | "expenses" | "netCash", scope: YearSeries | "all") => void;
   className?: string;
 }
+
+/** One column pair on the chart: a month (one year) or a year (all time). */
+interface Point {
+  key: string;
+  label: string;
+  longLabel: string;
+  income: number;
+  expenses: number;
+  net: number;
+  cumulative: number;
+  isFuture: boolean;
+}
+
+/** "FY 2025-26" → "FY 25-26" so eight years fit under the columns. */
+const shortYear = (label: string) => label.replace(/^FY (\d{2})(\d{2})-/, "FY $2-");
 
 const C = { income: "var(--teal)", expense: "var(--coral)", net: "var(--plaster)" };
 const M = { l: 50, r: 10, t: 12, b: 22 };
 
-export function IncomeExpenseChart({ years, year: controlled, onYearChange, onDrill, className }: IncomeExpenseChartProps) {
+export function IncomeExpenseChart({ years, allTime, cumulative, year: controlled, onYearChange, onDrill, className }: IncomeExpenseChartProps) {
   const current = years.find((y) => y.isCurrent) ?? years[years.length - 1];
-  const [inner, setInner] = useState<number | undefined>(undefined);
-  const key = controlled ?? inner ?? current?.year;
+  const [inner, setInner] = useState<number | "all" | undefined>(undefined);
+  const picked = controlled ?? inner ?? current?.year;
+  const all = picked === "all" && Boolean(allTime);
+  const [shown, setShown] = useState<number | undefined>(undefined); // the year the stepper shows while ALL TIME is on
+  const key = picked === "all" ? (shown ?? current?.year) : picked;
   const idx = Math.max(0, years.findIndex((y) => y.year === key));
   const ys = years[idx];
+  const pick = (v: number | "all") => {
+    if (v !== "all") setShown(v);
+    setInner(v);
+    onYearChange?.(v);
+  };
   const setYear = (i: number) => {
     const y = years[i];
-    if (!y) return;
-    setInner(y.year);
-    onYearChange?.(y.year);
+    if (y) pick(y.year);
   };
   const [box, size] = useSize<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
 
   if (!ys) return <div className={s.empty}>No money recorded yet — the months fill in as rent and expenses are added.</div>;
 
+  const runningNet = new Map((cumulative ?? []).map((c) => [c.year, c.cumulative]));
+  const points: Point[] = all
+    ? years.map((y) => ({
+        key: String(y.year),
+        label: shortYear(y.label),
+        longLabel: y.label,
+        income: y.income,
+        expenses: y.expenses,
+        net: y.net,
+        cumulative: runningNet.get(y.year) ?? y.net,
+        isFuture: false,
+      }))
+    : ys.months;
+  const head = all ? { label: "All time", income: allTime!.rentCollected, expenses: allTime!.expenses, net: allTime!.net } : { label: ys.label, income: ys.income, expenses: ys.expenses, net: ys.net };
+
   const W = Math.max(size.w, 200);
   const H = Math.max(size.h, 120);
   const pw = W - M.l - M.r;
   const ph = H - M.t - M.b;
-  const vals = ys.months.flatMap((m) => (m.isFuture ? [0] : [m.income, m.expenses, m.net]));
+  const vals = points.flatMap((m) => (m.isFuture ? [0] : [m.income, m.expenses, m.net]));
   const ticks = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals), 4);
   const lo = ticks[0];
   const hi = ticks[ticks.length - 1];
   const y = (v: number) => M.t + ph - ((v - lo) / (hi - lo || 1)) * ph;
-  const band = pw / 12;
+  const band = pw / Math.max(1, points.length);
   const bw = Math.max(4, Math.min(20, (band - 14) / 2));
   const cx0 = (i: number) => M.l + band * i + band / 2;
-  const past = ys.months.map((m, i) => ({ m, i })).filter((p) => !p.m.isFuture);
+  const past = points.map((m, i) => ({ m, i })).filter((p) => !p.m.isFuture);
   const linePts = past.map(({ m, i }) => `${cx0(i)},${y(m.net)}`).join(" ");
-  const hm = hover !== null ? ys.months[hover] : null;
-  const drill = onDrill && ys.isCurrent ? onDrill : undefined;
+  const hm = hover !== null ? points[hover] : null;
+  const scope: YearSeries | "all" = all ? "all" : ys;
+  const drill = onDrill && (all || ys.isCurrent) ? (k: "rentCollected" | "expenses" | "netCash") => onDrill(k, scope) : undefined;
   const allZero = past.every(({ m }) => m.income === 0 && m.expenses === 0);
 
   return (
     <div className={cx(s.chart, className)}>
       <div className={s.chartBar}>
         <div className={s.stepper}>
+          {allTime && (
+            <button type="button" className={cx(s.stepperAll, all && s.stepperOn)} aria-pressed={all} onClick={() => pick("all")}>
+              All time
+            </button>
+          )}
           <button type="button" onClick={() => setYear(idx - 1)} disabled={idx === 0} aria-label="Previous year">
             <ChevronLeft aria-hidden />
           </button>
-          <span className={s.stepperLabel}>{ys.label}</span>
+          <button type="button" className={cx(s.stepperLabel, !all && s.stepperOn)} aria-pressed={!all} onClick={() => pick(ys.year)}>
+            {ys.label}
+          </button>
           <button type="button" onClick={() => setYear(idx + 1)} disabled={idx === years.length - 1} aria-label="Next year">
             <ChevronRight aria-hidden />
           </button>
@@ -75,14 +123,14 @@ export function IncomeExpenseChart({ years, year: controlled, onYearChange, onDr
           <LegendKey color={C.net} label="Net cash" line />
         </div>
         <div className={s.totals}>
-          <Total label="Rent collected" value={ys.income} tone="income" onClick={drill ? () => drill("rentCollected", ys) : undefined} />
-          <Total label="Expenses" value={ys.expenses} tone="expense" onClick={drill ? () => drill("expenses", ys) : undefined} />
-          <Total label="Net cash" value={ys.net} tone={ys.net < 0 ? "expense" : undefined} strong onClick={drill ? () => drill("netCash", ys) : undefined} />
+          <Total label="Rent collected" value={head.income} tone="income" onClick={drill ? () => drill("rentCollected") : undefined} />
+          <Total label="Expenses" value={head.expenses} tone="expense" onClick={drill ? () => drill("expenses") : undefined} />
+          <Total label="Net cash" value={head.net} tone={head.net < 0 ? "expense" : head.net > 0 ? "income" : undefined} strong onClick={drill ? () => drill("netCash") : undefined} />
         </div>
       </div>
       <div ref={box} className={s.plot} onMouseLeave={() => setHover(null)}>
         {size.w > 0 && (
-          <svg width={W} height={H} role="img" aria-label={`Rent collected and expenses by month, ${ys.label}`}>
+          <svg width={W} height={H} role="img" aria-label={all ? "Rent collected and expenses by year, all time" : `Rent collected and expenses by month, ${ys.label}`}>
             {ticks.map((t) => (
               <g key={t}>
                 <line x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} className={t === 0 ? s.zero : s.grid} />
@@ -91,7 +139,7 @@ export function IncomeExpenseChart({ years, year: controlled, onYearChange, onDr
                 </text>
               </g>
             ))}
-            {ys.months.map((m, i) => (
+            {points.map((m, i) => (
               <g key={m.key}>
                 {hover === i && <rect x={M.l + band * i + 2} y={M.t} width={band - 4} height={ph} className={s.hoverBand} />}
                 {!m.isFuture && (
@@ -122,7 +170,7 @@ export function IncomeExpenseChart({ years, year: controlled, onYearChange, onDr
             ))}
           </svg>
         )}
-        {allZero && <div className={s.plotNote}>No rent or expenses in {ys.label}</div>}
+        {allZero && <div className={s.plotNote}>{all ? "No rent or expenses yet" : `No rent or expenses in ${ys.label}`}</div>}
         {hm && hover !== null && !hm.isFuture && (
           <ChartTip
             x={cx0(hover)}
@@ -134,22 +182,22 @@ export function IncomeExpenseChart({ years, year: controlled, onYearChange, onDr
               { label: "Expenses", value: inr(hm.expenses), color: C.expense },
               { label: "Net cash", value: inr(hm.net), strong: true },
             ]}
-            foot={`Running net in ${ys.label}: ${inr(hm.cumulative)}`}
+            foot={all ? `Running net since the start: ${inr(hm.cumulative)}` : `Running net in ${ys.label}: ${inr(hm.cumulative)}`}
           />
         )}
       </div>
       <table className="sr-only">
-        <caption>Monthly cash, {ys.label}</caption>
+        <caption>{all ? "Cash by year, all time" : `Monthly cash, ${ys.label}`}</caption>
         <thead>
           <tr>
-            <th>Month</th>
+            <th>{all ? "Year" : "Month"}</th>
             <th>Rent collected</th>
             <th>Expenses</th>
             <th>Net cash</th>
           </tr>
         </thead>
         <tbody>
-          {ys.months.map((m) => (
+          {points.map((m) => (
             <tr key={m.key}>
               <td>{m.longLabel}</td>
               <td className={s.tIncome}>{inr(m.income)}</td>

@@ -1,13 +1,16 @@
 // Printable reports (Data → Reports): pure builders over the same DashboardInput and the same calculations.ts
 // functions as the dashboard, so every report total reconciles with the HUD.
 //  • Annual statement: one FY / calendar year, computed AS OF the year's last day (or today for the running year) —
-//    exactly the dashboard's periods.year when the dashboard is looked at on that date.
+//    exactly the dashboard's periods.year when the dashboard is looked at on that date. year "all" = ALL TIME: from the
+//    first record (purchase / lease / payment / expense) to today, one row per year instead of per month — exactly the
+//    dashboard's periods.allTime (owner 8/10: every report and record has an All time view).
 //  • Unit report: purchase → today story of one unit.
 //  • Rent ledger: one lease, month by month (expected vs paid vs outstanding, running balance) + deposit.
 import { z } from "zod";
 import {
   BIG_EXPENSE_MIN,
   allRentMonths,
+  allTimeScope,
   appreciatedValue,
   arrearsFrom,
   buildDashboard,
@@ -107,15 +110,22 @@ export const dashboardQuerySchema = z.object({
   yearMode: zYearMode,
 });
 
-/** GET /api/reports/annual?year=<start year>&yearMode= (year defaults to the current FY / calendar year). */
+/** GET /api/reports/annual?year=<start year>|all&yearMode= (year defaults to the current FY / calendar year). */
 export const annualReportQuerySchema = z.object({
   year: z.preprocess(
-    blankToUndefined,
-    z.coerce
-      .number({ message: "must be a year like 2025" })
-      .int("must be a whole year like 2025")
-      .min(2000, "must be 2000 or later")
-      .max(2100, "must be 2100 or earlier")
+    (v) => {
+      const b = blankToUndefined(typeof v === "string" ? v.trim() : v);
+      return typeof b === "string" && b.toLowerCase() === "all" ? "all" : b;
+    },
+    z
+      .union([
+        z.literal("all"),
+        z.coerce
+          .number({ message: "must be a year like 2025, or all" })
+          .int("must be a whole year like 2025")
+          .min(2000, "must be 2000 or later")
+          .max(2100, "must be 2100 or earlier"),
+      ], { error: "must be a year like 2025, or all" })
       .optional(),
   ),
   yearMode: zYearMode,
@@ -147,11 +157,26 @@ const unitNameIn = (input: DashboardInput) => {
 
 // ───────────────────────────── annual statement ─────────────────────────────
 
-/** Annual statement for the year `year` (FY start year or calendar year; default: the year containing today). */
-export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: number }): AnnualReport {
+/** The first day anything happened (a purchase, lease, payment or expense); today when there's nothing yet. */
+function firstRecordDay(input: DashboardInput, today: Date): number {
+  const days = [
+    ...input.units.map((u) => dayNum(u.purchaseDate)),
+    ...input.leases.map((l) => dayNum(l.startDate)),
+    ...input.payments.map((p) => dayNum(p.paymentDate)),
+    ...input.expenses.map((x) => dayNum(x.expenseDate)),
+  ];
+  return Math.min(dayNum(today), ...days);
+}
+
+/**
+ * Statement for the year `year` (FY start year or calendar year; default: the year containing today), or for ALL TIME
+ * when year = "all" (first record → today; `years` holds one row per FY / calendar year and `months` is empty).
+ */
+export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: number | "all" }): AnnualReport {
   const { now, today, mode } = resolveOptions(o);
-  const key = o.year ?? yearKeyOf(today, mode);
-  const { start, end } = yearBounds(key, mode);
+  const allTime = o.year === "all";
+  const key = typeof o.year === "number" ? o.year : yearKeyOf(today, mode);
+  const { start, end } = allTime ? { start: fromDay(firstRecordDay(input, today)), end: today } : yearBounds(key, mode);
   const s = dayNum(start);
   const e = dayNum(end);
   const t = dayNum(today);
@@ -159,13 +184,32 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
   const asOf = fromDay(through);
   const ctx = makeCtx(input, asOf, mode);
   const unitName = unitNameIn(input);
-  const scope = yearScope(key, mode, asOf);
+  const scope = allTime ? allTimeScope(asOf) : yearScope(key, mode, asOf);
   const data = cashDataAt(input, asOf);
   const totals = scopedCash(ctx, scope, data).summary;
 
-  // Cash flow by month (all 12; months after `through` are zero).
+  // All time: cash flow by year, from the first record's year to the running one (oldest first).
+  const years: AnnualReport["years"] = [];
+  if (allTime) {
+    for (let k = yearKeyOf(start, mode), last = yearKeyOf(asOf, mode); k <= last; k++) {
+      const ys = scopedCash(ctx, yearScope(k, mode, asOf), data).summary;
+      years.push({
+        year: k,
+        key: String(k),
+        label: yearLabel(k, mode),
+        rentCollected: ys.rentCollected,
+        rentExpected: ys.rentExpected,
+        rentReceivedForYear: ys.rentReceivedForScope,
+        expenses: ys.expenses,
+        net: ys.net,
+        isPartial: through < dayNum(yearBounds(k, mode).end),
+      });
+    }
+  }
+
+  // One year: cash flow by month (all 12; months after `through` are zero).
   const first = monthIndex(start.getUTCFullYear(), start.getUTCMonth() + 1);
-  const months = Array.from({ length: 12 }, (_, i) => {
+  const months = allTime ? [] : Array.from({ length: 12 }, (_, i) => {
     const mi = first + i;
     const y = Math.floor(mi / 12);
     const m = (mi % 12) + 1;
@@ -288,10 +332,12 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
     };
   });
 
+  const rows = allTime ? years : months;
+  const per = allTime ? "yearly" : "monthly";
   const rec = reconciliation([
-    recon("monthsRent", "Σ monthly rent = rent collected", totals.rentCollected, sum2(months.map((m) => m.rentCollected))),
-    recon("monthsExpenses", "Σ monthly expenses = expenses", totals.expenses, sum2(months.map((m) => m.expenses))),
-    recon("monthsDue", "Σ monthly rent due = rent that fell due", totals.rentExpected, sum2(months.map((m) => m.rentExpected))),
+    recon(`${allTime ? "years" : "months"}Rent`, `Σ ${per} rent = rent collected`, totals.rentCollected, sum2(rows.map((m) => m.rentCollected))),
+    recon(`${allTime ? "years" : "months"}Expenses`, `Σ ${per} expenses = expenses`, totals.expenses, sum2(rows.map((m) => m.expenses))),
+    recon(`${allTime ? "years" : "months"}Due`, `Σ ${per} rent due = rent that fell due`, totals.rentExpected, sum2(rows.map((m) => m.rentExpected))),
     recon("unitsRent", "Σ unit rent = rent collected", totals.rentCollected, sum2(unitRows.map((u) => u.rentCollected))),
     recon("unitsExpenses", "Unit expenses + whole-plot expenses = expenses", totals.expenses, sum2(unitRows.map((u) => u.expenses))),
     recon("categories", "Σ expense categories = expenses", totals.expenses, sum2(expensesByCategory.map((c) => c.amount))),
@@ -309,14 +355,16 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
     generatedAt: now.toISOString(),
     today: today.toISOString(),
     yearMode: mode,
+    kind: allTime ? "allTime" : "year",
     year: key,
-    label: yearLabel(key, mode),
+    label: allTime ? "All time" : yearLabel(key, mode),
     start: start.toISOString(),
     end: end.toISOString(),
     through: isoDay(Math.max(through, s)),
-    isPartial: through < e,
+    isPartial: !allTime && through < e,
     totals,
     months,
+    years,
     units: unitRows,
     expensesByCategory,
     expenses,

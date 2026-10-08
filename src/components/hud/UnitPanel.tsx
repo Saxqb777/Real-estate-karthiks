@@ -9,6 +9,7 @@ import type { DashboardData, UnitBreakdown } from "@/lib/dashboard-types";
 import { daysBetween, formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
 import { BucketHead, Fig, FigCell, FigCells, ScopeChip } from "./Figure";
+import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
 import { explainKey, firstName, inr, monthList, positionLabel, telHref } from "./format";
 import type { PeriodKind } from "./types";
@@ -196,7 +197,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
 
         {/* ---------------- RENT + this unit's cash */}
         <section className={s.section}>
-          <BucketHead bucket="cash" label="Rent & cash" scope={<ScopeChip past={past}>{p.label}</ScopeChip>} />
+          <BucketHead bucket="cash" label="Rent & cash" scope={<PeriodSwitch data={data} period={period} />} />
           {arrears && arrears.months.length > 0 ? (
             <div className={cx(b.rentState, b.rentOverdue)}>
               <div className={s.heroMain}>

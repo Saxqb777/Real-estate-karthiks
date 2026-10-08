@@ -6,6 +6,7 @@ import { EmptyState, LevelBadge, LinkButton, SegmentedBar, cx } from "@/componen
 import type { DashboardData } from "@/lib/dashboard-types";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
 import { Fig, FigLine, BucketHead, ScopeChip } from "./Figure";
+import { PeriodSwitch } from "./PeriodSwitch";
 import { explainKey, inr } from "./format";
 import { LedgerBadge } from "./LedgerBadge";
 import type { PeriodKind } from "./types";
@@ -73,7 +74,7 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
         <>
           {/* ---------------- CASH FLOW */}
           <section className={s.section}>
-            <BucketHead bucket="cash" scope={<ScopeChip past={past}>{p.label}</ScopeChip>} />
+            <BucketHead bucket="cash" scope={<PeriodSwitch data={data} period={period} />} />
             <div className={s.hero}>
               <div className={s.heroMain}>
                 <span className={s.heroLabel}>Net cash</span>

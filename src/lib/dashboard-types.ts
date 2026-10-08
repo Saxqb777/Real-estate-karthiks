@@ -497,8 +497,10 @@ export interface AnnualReport {
   generatedAt: string;
   today: string;
   yearMode: YearMode;
-  year: number; // key: FY start year or calendar year
-  label: string; // "FY 2025-26"
+  /** "year" = one FY / calendar year; "allTime" = first record → today (year=all) */
+  kind: "year" | "allTime";
+  year: number; // key: FY start year or calendar year (all time: the running year)
+  label: string; // "FY 2025-26" · "All time"
   start: string;
   end: string; // last day of the year
   /** last day counted = min(end, today); the year is partial when through < end */
@@ -506,6 +508,7 @@ export interface AnnualReport {
   isPartial: boolean;
   /** identical to the dashboard's periods.year when the dashboard's as-of date is in this year */
   totals: PeriodSummary;
+  /** one year: all 12 months (after `through` = 0); all time: [] */
   months: {
     year: number;
     month: number;
@@ -516,6 +519,18 @@ export interface AnnualReport {
     rentReceivedForMonth: number;
     expenses: number;
     net: number;
+  }[];
+  /** all time only (else []): cash flow per FY / calendar year, oldest first; the running year isPartial */
+  years: {
+    year: number;
+    key: string;
+    label: string; // "FY 2025-26"
+    rentCollected: number;
+    rentExpected: number;
+    rentReceivedForYear: number;
+    expenses: number;
+    net: number;
+    isPartial: boolean;
   }[];
   /** cash flow by unit (units owned in the year) + a "Whole plot" row (unitId null, expenses only) */
   units: {

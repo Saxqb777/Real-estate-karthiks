@@ -288,6 +288,14 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   in a field sits in a 38px row (lines up with boxes). Unit pickers show the NAME only (unitLabel). Removed label notes
   (on the street / rear wall / front to back / across the plot / entered / estimate / hex), switch descriptions, and the
   Config unit cards' "· on the street / behind the courtyard"; unit cards equal height.
+- 8/10/2026: ALL TIME everywhere money is shown (owner): reports Income & expenses + Occupancy & vacancy have "All time"
+  in the year picker (GET /api/reports/annual?year=all → AnnualReport kind "allTime": first record → today, `years` rows
+  per FY / calendar year instead of `months`; totals = dashboard periods.allTime; tested). Dock "Income vs expenses" has an
+  ALL TIME segment before the year stepper (one bar pair per year; totals periods.allTime; running net
+  cumulativeNetByYear). PeriodSwitch (hud/PeriodSwitch.tsx: ALL TIME · FY · MONTH, the global usePeriod store) replaces the
+  scope chip on cash sections (Property, Mailbox, House windows) and the dock "Where money went" / compare tabs.
+  Data → Payments got the Expenses-style toolbar (Year incl. All time + FY/Calendar + lease; /api/payments?year=&yearMode=
+  by the day received); Payments AND Expenses now OPEN on All time. Phone report KPIs = one full-width row each.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

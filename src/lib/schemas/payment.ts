@@ -30,8 +30,11 @@ export const paymentCreateSchema = z.object({
   notes: zText(1000),
 });
 
+/** GET /api/payments?leaseId=&year=&yearMode=fy|calendar — year filters by the day the rent was RECEIVED (cash). */
 export const paymentListQuerySchema = z.object({
   leaseId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+  year: z.preprocess(blankToUndefined, zInt(2000, 2100).optional()),
+  yearMode: z.preprocess(blankToUndefined, z.enum(["fy", "calendar"], { message: "must be fy or calendar" }).default("fy")),
 });
 
 export type PaymentCreateInput = z.input<typeof paymentCreateSchema>;

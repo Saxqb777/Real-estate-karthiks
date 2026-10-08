@@ -45,7 +45,8 @@ const money = (n: number) => formatINR(n, n % 1 !== 0);
 
 export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
   const [mode, setMode] = useYearMode();
-  const [year, setYear] = useState<number | "all">(() => currentYear(mode));
+  // records start on All time (owner 8/10) — the year picker narrows them
+  const [year, setYear] = useState<number | "all">("all");
   const [unitId, setUnitId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const narrow = useNarrow();

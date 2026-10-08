@@ -3,6 +3,7 @@ import { fieldError } from "@/app/api/_lib/errors";
 import { sumAmounts } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
 import { createPaymentWithInvoice } from "@/lib/invoice";
+import { yearRange } from "@/lib/schemas/expense";
 import { paymentCreateSchema, paymentListQuerySchema, paymentPeriodError } from "@/lib/schemas/payment";
 
 const paymentInclude = {
@@ -15,11 +16,12 @@ const paymentInclude = {
   },
 } as const;
 
-/** Payments, newest first (optionally for one lease), with count and total. */
+/** Payments, newest first (optionally for one lease and/or one FY / calendar year by the day received), with count and total. */
 export const GET = handler(async (req) => {
-  const { leaseId } = parseQuery(req, paymentListQuerySchema);
+  const { leaseId, year, yearMode } = parseQuery(req, paymentListQuerySchema);
+  const range = year !== undefined ? yearRange(year, yearMode) : null;
   const items = await prisma.payment.findMany({
-    where: { leaseId },
+    where: { leaseId, ...(range && { paymentDate: { gte: range.from, lt: range.to } }) },
     orderBy: [{ paymentDate: "desc" }, { invoiceSeq: "desc" }],
     include: paymentInclude,
   });

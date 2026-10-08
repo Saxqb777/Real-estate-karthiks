@@ -5,7 +5,8 @@ import { Button, EmptyState, cx } from "@/components/ui";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { BucketHead, Fig, FigCell, FigCells, Rupees, ScopeChip } from "./Figure";
+import { BucketHead, Fig, FigCell, FigCells, Rupees } from "./Figure";
+import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
 import { explainKey, firstName, inr } from "./format";
 import type { PeriodKind } from "./types";
@@ -52,7 +53,7 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, side = "right"
         }
       >
         <section className={s.section}>
-          <BucketHead bucket="cash" scope={<ScopeChip past={!data.isLive}>{p.label}</ScopeChip>} />
+          <BucketHead bucket="cash" scope={<PeriodSwitch data={data} period={period} />} />
           <div className={s.hero}>
             <div className={s.heroMain}>
               <span className={s.heroLabel}>Rent collected</span>

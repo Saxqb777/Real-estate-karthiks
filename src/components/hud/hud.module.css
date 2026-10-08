@@ -220,6 +220,44 @@
   color: var(--marigold);
 }
 
+/* period switch (PeriodSwitch): the scope chip of cash figures, made choosable — ALL TIME · FY · MONTH (owner 8/10) */
+.pswitch {
+  display: inline-flex;
+  align-items: stretch;
+  flex: none;
+  height: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: rgba(243, 233, 216, 0.03);
+  overflow: hidden;
+}
+.pswitchBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px 0;
+  font-family: var(--ff-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+.pswitchBtn + .pswitchBtn {
+  border-left: 1px solid var(--line);
+}
+.pswitchBtn:hover {
+  color: var(--text);
+}
+.pswitchBtn[aria-checked="true"] {
+  color: var(--marigold);
+  background: var(--marigold-a08);
+}
+.pswitchPast .pswitchBtn[aria-checked="true"] {
+  color: #ffc978;
+}
+
 .bucketHead {
   --b: var(--teal);
   display: flex;

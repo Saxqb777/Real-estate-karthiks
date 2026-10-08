@@ -56,13 +56,14 @@ export function ReportLibrary() {
   const tax = usePropertyTax();
   const dashQ = useApi<DashboardData>(`/api/dashboard?yearMode=${yearMode}`, { keepPrevious: true });
 
-  // ---- the year (income & occupancy)
+  // ---- the year (income & occupancy): one FY / calendar year, or ALL TIME (owner 8/10)
   const unitList = useMemo(() => units.data?.items ?? [], [units.data]);
   const lastYear = currentYear(yearMode);
   const firstYear = unitList.length ? Math.min(...unitList.map((u) => yearOf(u.purchaseDate, yearMode))) : lastYear;
-  const [yearPick, setYearPick] = useState<number | null>(null);
-  const year = Math.min(lastYear, Math.max(firstYear, yearPick ?? lastYear));
-  const annual = useApi<AnnualReport>(unitList.length ? `/api/reports/annual?year=${year}&yearMode=${yearMode}` : null, { keepPrevious: true });
+  const [yearPick, setYearPick] = useState<number | "all" | null>(null);
+  const allTime = yearPick === "all";
+  const year = Math.min(lastYear, Math.max(firstYear, typeof yearPick === "number" ? yearPick : lastYear));
+  const annual = useApi<AnnualReport>(unitList.length ? `/api/reports/annual?year=${allTime ? "all" : year}&yearMode=${yearMode}` : null, { keepPrevious: true });
 
   // ---- the lease (tenant statement)
   const leaseList = useMemo(() => [...(leases.data?.items ?? [])].sort((a, z) => z.startDate.localeCompare(a.startDate)), [leases.data]);
@@ -70,9 +71,12 @@ export function ReportLibrary() {
   const ledger = useApi<RentLedger>(open === "tenant" && leaseId ? `/api/reports/rent-ledger/${encodeURIComponent(leaseId)}` : null, { keepPrevious: true });
 
   const d = dashQ.data;
-  const a = annual.data && annual.data.year === year && annual.data.yearMode === yearMode ? annual.data : null;
+  const a =
+    annual.data && annual.data.yearMode === yearMode && (allTime ? annual.data.kind === "allTime" : annual.data.kind === "year" && annual.data.year === year)
+      ? annual.data
+      : null;
   const taxItems = tax.data?.items ?? [];
-  const yLabel = yearLabel(year, yearMode);
+  const yLabel = allTime ? "All time" : yearLabel(year, yearMode);
   const today = d ? formatDate(d.today) : "";
 
   if (units.data && unitList.length === 0)
@@ -91,15 +95,16 @@ export function ReportLibrary() {
 
   const yearControl = (
     <div className={s.controls}>
-      <IconButton size="sm" variant="ghost" label="Previous year" icon={<ChevronLeft />} disabled={year <= firstYear} onClick={() => setYearPick(year - 1)} />
-      <Select compact aria-label="Year" value={String(year)} onChange={(e) => setYearPick(Number(e.target.value))} className={s.year}>
+      <IconButton size="sm" variant="ghost" label="Previous year" icon={<ChevronLeft />} disabled={allTime || year <= firstYear} onClick={() => setYearPick(year - 1)} />
+      <Select compact aria-label="Year" value={allTime ? "all" : String(year)} onChange={(e) => setYearPick(e.target.value === "all" ? "all" : Number(e.target.value))} className={s.year}>
+        <option value="all">All time</option>
         {Array.from({ length: lastYear - firstYear + 1 }, (_, i) => lastYear - i).map((y) => (
           <option key={y} value={y}>
             {yearLabel(y, yearMode)}
           </option>
         ))}
       </Select>
-      <IconButton size="sm" variant="ghost" label="Next year" icon={<ChevronRight />} disabled={year >= lastYear} onClick={() => setYearPick(year + 1)} />
+      <IconButton size="sm" variant="ghost" label="Next year" icon={<ChevronRight />} disabled={allTime || year >= lastYear} onClick={() => setYearPick(year + 1)} />
       <ChoiceGroup<YearMode>
         name="yearMode"
         size="sm"
@@ -283,6 +288,9 @@ const netTone = (n: number) => (n > 0 ? s.teal : n < 0 ? s.red : undefined);
 
 function IncomeReport({ a }: { a: AnnualReport }) {
   const t = a.totals;
+  const all = a.kind === "allTime";
+  // all time: one row per FY / calendar year, oldest first; one year: its 12 months in order
+  const rows = all ? a.years : a.months;
   return (
     <>
       <Kpis
@@ -293,18 +301,18 @@ function IncomeReport({ a }: { a: AnnualReport }) {
         ]}
       />
       <div className={s.two}>
-        <Section title="Month by month">
+        <Section title={all ? "Year by year" : "Month by month"}>
           <TableBox>
             <thead>
               <tr>
-                <th>Month</th>
+                <th>{all ? "Year" : "Month"}</th>
                 <th className={s.r}>Rent in</th>
                 <th className={s.r}>Expenses</th>
                 <th className={s.r}>Net</th>
               </tr>
             </thead>
             <tbody>
-              {a.months.map((m) => (
+              {rows.map((m) => (
                 <tr key={m.key}>
                   <td>{m.label}</td>
                   <td className={cx(s.r, s.teal)}>{dash(m.rentCollected)}</td>

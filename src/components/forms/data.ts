@@ -19,8 +19,17 @@ import type { SelectOption } from "@/components/ui";
 export const useUnits = () => useApi<{ items: UnitListItem[] }>("/api/units");
 export const useTenants = () => useApi<{ items: TenantListItem[] }>("/api/tenants");
 export const useLeases = () => useApi<{ items: LeaseListItem[] }>("/api/leases");
-export const usePayments = (leaseId?: string | null) =>
-  useApi<PaymentListResponse>(leaseId ? `/api/payments?leaseId=${encodeURIComponent(leaseId)}` : "/api/payments", { keepPrevious: true });
+/** Rent payments, optionally for one lease and/or one FY / calendar year (by the day received); no year = all time. */
+export function usePayments(leaseId?: string | null, q: { year?: number | null; yearMode?: string } = {}) {
+  const p = new URLSearchParams();
+  if (leaseId) p.set("leaseId", leaseId);
+  if (q.year != null) {
+    p.set("year", String(q.year));
+    p.set("yearMode", q.yearMode ?? "fy");
+  }
+  const s = p.toString();
+  return useApi<PaymentListResponse>(`/api/payments${s ? `?${s}` : ""}`, { keepPrevious: true });
+}
 export const useCategories = () => useApi<{ items: ExpenseCategoryDTO[] }>("/api/expense-categories");
 export const usePropertyTax = () => useApi<{ items: PropertyTaxDTO[] }>("/api/property-tax");
 export const useActions = (status: "pending" | "done" | "all" = "pending") =>

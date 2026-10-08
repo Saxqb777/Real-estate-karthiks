@@ -13,6 +13,7 @@ import { PaymentsList } from "./charts/PaymentsList";
 import { SpendingDonut } from "./charts/SpendingDonut";
 import { UnitsCompare } from "./charts/UnitsCompare";
 import { ScopeChip } from "./Figure";
+import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
 import { LedgerBadge } from "./LedgerBadge";
 import { isTyping, useEscape } from "./store";
@@ -95,8 +96,8 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
 
   const scope: Record<DockTab, ReactNode> = {
     income: <ScopeChip>{data.yearMode === "fy" ? "Financial years" : "Calendar years"}</ScopeChip>,
-    spending: <ScopeChip past={!data.isLive}>{p.label}</ScopeChip>,
-    units: <ScopeChip past={!data.isLive}>{p.label} cash</ScopeChip>,
+    spending: <PeriodSwitch data={data} period={period} />,
+    units: <PeriodSwitch data={data} period={period} />,
     occupancy: <ScopeChip>Purchase → today</ScopeChip>,
     growth: <ScopeChip>{data.scopeLabels.allTime}</ScopeChip>,
     payments: <ScopeChip>Latest {data.recentPayments.length}</ScopeChip>,
@@ -108,7 +109,9 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         return (
           <IncomeExpenseChart
             years={data.monthlyByYear}
-            onDrill={drillKey ? (k) => drillKey(`year:${k}`) : undefined}
+            allTime={data.periods.allTime}
+            cumulative={data.cumulativeNetByYear}
+            onDrill={drillKey ? (k, scope) => drillKey(scope === "all" ? k : `year:${k}`) : undefined}
           />
         );
       case "spending":

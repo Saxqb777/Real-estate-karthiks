@@ -16,6 +16,7 @@ const D = (s: string) => new Date(`${s}T00:00:00.000Z`);
 const ISO = (s: string) => `${s}T00:00:00.000Z`;
 const TODAY = D("2026-10-02");
 const NOW = new Date("2026-10-02T04:30:00.000Z");
+const round2 = (n: number) => Math.round(n * 100) / 100;
 const sum = (xs: number[]) => Math.round(xs.reduce((s, x) => s + x, 0) * 100) / 100;
 
 const settings: SettingsInput = {
@@ -256,6 +257,59 @@ describe("annual statement", () => {
     expect(r.totals).toMatchObject({ rentCollected: 0, expenses: 0, net: 0, collectionPct: null });
     expect(r.units).toEqual([{ unitId: null, unitName: "Whole plot", rentCollected: 0, rentExpected: 0, collectionPct: null, expenses: 0, net: 0 }]);
     expect(r.reconciliation.ledgerBalanced).toBe(true);
+  });
+});
+
+describe("all-time statement (year = all)", () => {
+  const r = buildAnnualReport(fixture(), { ...opts(), year: "all" });
+  const d = dash();
+
+  it("covers the first record → today and its totals ARE the dashboard's all-time figures", () => {
+    expect(r).toMatchObject({ kind: "allTime", label: "All time", start: ISO("2019-06-15"), through: ISO("2026-10-02"), isPartial: false });
+    expect(r.totals).toEqual(d.periods.allTime);
+    expect(r.months).toEqual([]);
+  });
+
+  it("one row per FY, oldest first, adding up to the totals; each row = that year's own statement", () => {
+    expect(r.years.map((y) => y.label)).toEqual(["FY 2019-20", "FY 2020-21", "FY 2021-22", "FY 2022-23", "FY 2023-24", "FY 2024-25", "FY 2025-26", "FY 2026-27"]);
+    expect(r.years.map((y) => y.isPartial)).toEqual([false, false, false, false, false, false, false, true]);
+    expect(sum(r.years.map((y) => y.rentCollected))).toBe(r.totals.rentCollected);
+    expect(sum(r.years.map((y) => y.expenses))).toBe(r.totals.expenses);
+    for (const y of r.years) {
+      const one = buildAnnualReport(fixture(), { ...opts(), year: y.year }).totals;
+      expect([y.rentCollected, y.expenses, y.net], y.label).toEqual([one.rentCollected, one.expenses, one.net]);
+    }
+    expect(r.reconciliation.ledgerBalanced, JSON.stringify(r.reconciliation.items.filter((i) => !i.ok))).toBe(true);
+  });
+
+  it("calendar years too", () => {
+    const c = buildAnnualReport(fixture(), { ...opts("calendar"), year: "all" });
+    expect(c.years[0].label).toBe("2019");
+    expect(c.years[c.years.length - 1].label).toBe("2026");
+    expect(c.totals).toEqual(dash(TODAY, "calendar").periods.allTime);
+  });
+
+  it("units, categories and deposits over the whole time", () => {
+    expect(sum(r.units.map((u) => u.rentCollected))).toBe(d.kpis.rentCollected);
+    expect(sum(r.expensesByCategory.map((c) => c.amount))).toBe(d.kpis.totalExpenses);
+    // nothing was held before the first record; everything received − refunded − kept is held now
+    expect(r.deposits.opening).toBe(0);
+    expect(r.deposits.closing).toBe(round2(r.deposits.received - r.deposits.refunded - r.deposits.kept));
+  });
+
+  it("occupancy over the whole ownership = the dashboard's unit figures", () => {
+    for (const o of r.occupancy) {
+      const card = d.units.find((u) => u.id === o.unitId)!;
+      expect([o.vacantDays, o.rentLost], o.unitName).toEqual([card.vacantDays, card.unrealizedLoss]);
+    }
+  });
+
+  it("nothing recorded yet → an empty but valid statement", () => {
+    const empty = { ...fixture(), units: [], leases: [], payments: [], expenses: [] };
+    const e = buildAnnualReport(empty, { ...opts(), year: "all" });
+    expect(e.totals).toMatchObject({ rentCollected: 0, expenses: 0, net: 0 });
+    expect(e.years.map((y) => y.label)).toEqual(["FY 2026-27"]);
+    expect(e.reconciliation.ledgerBalanced).toBe(true);
   });
 });
 
