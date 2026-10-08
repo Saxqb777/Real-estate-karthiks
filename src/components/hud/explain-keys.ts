@@ -40,6 +40,9 @@ const RELATED: Record<string, string[]> = {
   perSqftBought: ["perSqftOffered", "invested"],
 };
 
+/** Cash figures that have a "vs last year" explanation in the year and the month (`[unit:<id>:]yoy:<period>:<base>`). */
+const YOY = new Set(["rentCollected", "expenses", "netCash"]);
+
 /** Related explanations for a key, in the same scope and unit. */
 export function relatedExplains(data: DashboardData, key: string): Explain[] {
   const { unitId, period, base } = parseExplainKey(key);
@@ -49,6 +52,10 @@ export function relatedExplains(data: DashboardData, key: string): Explain[] {
     const scoped = (p: PeriodKind) => `${unitId ? `unit:${unitId}:` : ""}${p === "year" ? "year:" : p === "month" ? "month:" : ""}${k}`;
     const e = data.explain[scoped(period)] ?? data.explain[scoped("allTime")];
     if (e && e.key !== key) out.push(e);
+  }
+  if (YOY.has(base) && period !== "allTime") {
+    const e = data.explain[`${unitId ? `unit:${unitId}:` : ""}yoy:${period}:${base}`];
+    if (e) out.push(e);
   }
   return out;
 }

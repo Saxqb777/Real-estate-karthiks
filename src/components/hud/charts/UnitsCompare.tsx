@@ -40,6 +40,9 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
   const k = data.kpis;
   const p = data.periods[period];
   if (units.length === 0) return <div className={s.empty}>Build a unit to compare front and back.</div>;
+  // rental yield, last 12 months (owner 8/10): rent ÷ worth now; net = after expenses
+  const yieldOf = (u: UnitBreakdown) => data.yields.units.find((r) => r.unitId === u.id) ?? null;
+  const py = data.yields.property;
 
   const groups: { bucket: Bucket; scope: string; rows: Row[] }[] = [
     {
@@ -59,6 +62,8 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
         { label: "Worth now (est.)", format: "inr", unit: (u) => u.valuation, total: k.bestOfferTotal, key: "worthNow", paper: true },
         { label: "Gain", format: "inr", unit: (u) => u.appreciation, total: k.appreciation, key: "gain", paper: true },
         { label: "Level (×)", format: "multiplier", unit: (u) => u.capitalMultiplier, total: k.capitalMultiplier, key: "multiplier" },
+        { label: "Gross yield", format: "pct", unit: (u) => yieldOf(u)?.grossOnValue ?? null, total: py.grossOnValue, key: "yield:grossValue" },
+        { label: "Net yield", format: "pct", unit: (u) => yieldOf(u)?.netOnValue ?? null, total: py.netOnValue, key: "yield:netValue" },
       ],
     },
     {

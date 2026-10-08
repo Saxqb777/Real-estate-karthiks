@@ -7,15 +7,17 @@ import {
   Dot,
   ExpenseForm,
   Facts,
+  PeriodPicker,
   currentYear,
   drawerFrame,
+  periodText,
   unitLabel,
   useCategories,
   useExpenses,
   useUnits,
   useYearMode,
-  yearLabel,
   yearOf,
+  type PeriodPick,
 } from "@/components/forms";
 import { useApi } from "@/lib/client";
 import { formatDate } from "@/lib/dates";
@@ -45,8 +47,10 @@ const money = (n: number) => formatINR(n, n % 1 !== 0);
 
 export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
   const [mode, setMode] = useYearMode();
-  // records start on All time (owner 8/10) — the year picker narrows them
-  const [year, setYear] = useState<number | "all">("all");
+  // records start on All time (owner 8/10) — a year or custom dates narrow them
+  const [period, setPeriod] = useState<PeriodPick>({ kind: "all" });
+  const year = period.kind === "year" ? period.year : null;
+  const range = period.kind === "range" ? period : null;
   const [unitId, setUnitId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const narrow = useNarrow();
@@ -55,21 +59,21 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
   useNewSignal(newSignal, create.start);
 
   const all = useExpenses({});
-  const list = useExpenses({ year: year === "all" ? null : year, yearMode: mode, unitId: unitId || null, categoryId: categoryId || null });
+  const list = useExpenses({ year, yearMode: mode, from: range?.from, to: range?.to, unitId: unitId || null, categoryId: categoryId || null });
   const units = useUnits();
   const cats = useCategories();
 
   const years = useMemo(() => {
     const set = new Set<number>([currentYear(mode)]);
     for (const e of all.data?.items ?? []) set.add(yearOf(e.expenseDate, mode));
-    if (year !== "all") set.add(year);
+    if (year !== null) set.add(year);
     return [...set].sort((a, b) => b - a);
   }, [all.data, mode, year]);
 
   const unitName = unitId === WHOLE_PLOT ? "Whole plot" : units.data?.items.find((u) => u.id === unitId)?.name;
   const catName = cats.data?.items.find((c) => c.id === categoryId)?.name;
-  const scope = [year === "all" ? "All time" : yearLabel(year, mode), unitName, catName].filter(Boolean).join(" · ");
-  const filtered = year !== "all" || Boolean(unitId) || Boolean(categoryId);
+  const scope = [periodText(period, mode), unitName, catName].filter(Boolean).join(" · ");
+  const filtered = period.kind !== "all" || Boolean(unitId) || Boolean(categoryId);
 
   const data = list.data;
   const rows = data?.items;
@@ -112,7 +116,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
       ];
 
   const clear = () => {
-    setYear("all");
+    setPeriod({ kind: "all" });
     setUnitId("");
     setCategoryId("");
   };
@@ -129,14 +133,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
         }
         toolbar={
           <>
-            <Select compact aria-label="Year" value={String(year)} onChange={(e) => setYear(e.target.value === "all" ? "all" : Number(e.target.value))} className={s.filterSelect}>
-              <option value="all">All time</option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {yearLabel(y, mode)}
-                </option>
-              ))}
-            </Select>
+            <PeriodPicker value={period} onChange={setPeriod} years={years} mode={mode} className={s.filterPeriod} />
             <ChoiceGroup
               name="yearMode"
               aria-label="Year type"

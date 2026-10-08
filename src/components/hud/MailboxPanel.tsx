@@ -5,10 +5,10 @@ import { Button, EmptyState, cx } from "@/components/ui";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { BucketHead, Fig, FigCell, FigCells, Rupees } from "./Figure";
+import { BucketHead, Fig, FigCell, FigCells, FigLine, Rupees, vsLastYear } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
-import { explainKey, firstName, inr } from "./format";
+import { explainKey, firstName, inr, yoyKey } from "./format";
 import type { PeriodKind } from "./types";
 import s from "./hud.module.css";
 import b from "./bits.module.css";
@@ -57,13 +57,19 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, side = "right"
           <div className={s.hero}>
             <div className={s.heroMain}>
               <span className={s.heroLabel}>Rent collected</span>
-              <Fig value={p.rentCollected} size="hero" tone="income" onClick={() => open(explainKey("rentCollected", period))} />
+              <div className={b.heroFig}>
+                <Fig value={p.rentCollected} size="hero" tone="income" onClick={() => open(explainKey("rentCollected", period))} />
+                {period !== "allTime" && vsLastYear(data.comparisons[period], "rentCollected", () => open(yoyKey("rentCollected", period)))}
+              </div>
             </div>
           </div>
           <FigCells cols={2}>
             <FigCell label="Overdue now" value={k.overdueAmount} tone={k.overdueAmount > 0 ? "expense" : "neutral"} compact={false} onClick={() => open("overdue")} />
             <FigCell label="Rent each month" value={k.monthlyRentRoll} compact={false} onClick={() => open("rentRoll")} />
           </FigCells>
+          <div className={s.lines}>
+            <FigLine label="Rent expected · next 12 months" value={data.forecast.rent} tone="income" paper="est." onClick={() => open("forecast:rent")} />
+          </div>
         </section>
 
         <section className={s.section}>

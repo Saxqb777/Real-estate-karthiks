@@ -39,6 +39,7 @@ export interface LeaseRuleInput {
   securityDeposit: number;
   depositRefundedAmount?: number | null;
   depositRefundDate?: DateLike | null;
+  agreementEndDate?: DateLike | null;
 }
 
 /** Field-level problems with a lease's own values (dates order, deposit refund). */
@@ -54,6 +55,12 @@ export function leaseRuleIssues(l: LeaseRuleInput): { field: string; message: st
     issues.push({
       field: "depositRefundedAmount",
       message: `Refunded deposit (${inr(l.depositRefundedAmount)}) can't be more than the security deposit (${inr(l.securityDeposit)})`,
+    });
+  }
+  if (l.agreementEndDate && ms(l.agreementEndDate) < ms(l.startDate)) {
+    issues.push({
+      field: "agreementEndDate",
+      message: `Agreement end ${formatDate(l.agreementEndDate)} can't be before the start date ${formatDate(l.startDate)}`,
     });
   }
   if (l.depositRefundDate && ms(l.depositRefundDate) < ms(l.startDate)) {
@@ -144,6 +151,8 @@ const leaseFields = {
   depositRefundedAmount: zMoneyOrNull,
   depositRefundDate: zRefundDate,
   reminderEnabled: zBool,
+  /** the current rental agreement's end (can be in the future — e.g. an 11-month agreement); empty = not recorded */
+  agreementEndDate: zDateOrNull,
   moveOutNotes: zText(2000),
 };
 

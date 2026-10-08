@@ -3,7 +3,7 @@ import type { Expense, Prisma } from "@prisma/client";
 import { z } from "zod";
 import "./messages";
 import { dateOnly, todayIST } from "@/lib/dates";
-import { zDate, zId, zIdOrNull, zInt, zPositiveMoney, zText } from "@/lib/validation";
+import { checkDateRange, zDate, zDateParam, zId, zIdOrNull, zInt, zPositiveMoney, zText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
 
@@ -39,16 +39,23 @@ export function yearRange(year: number, mode: YearMode = "calendar"): { from: Da
   return { from: dateOnly(year, m, 1), to: dateOnly(year + 1, m, 1) };
 }
 
-/** GET /api/expenses?year=&yearMode=calendar|fy&unitId=(id|plot)&categoryId= (yearMode defaults to calendar). */
-export const expenseListQuerySchema = z.object({
-  year: z.preprocess(blankToUndefined, zInt(2000, 2100).optional()),
-  yearMode: z.preprocess(
-    blankToUndefined,
-    z.enum(YEAR_MODES, { message: "must be calendar or fy" }).default("calendar"),
-  ),
-  unitId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
-  categoryId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
-});
+/**
+ * GET /api/expenses?year=&yearMode=calendar|fy&from=&to=&unitId=(id|plot)&categoryId= (yearMode defaults to calendar;
+ * custom dates from/to, inclusive, win over year).
+ */
+export const expenseListQuerySchema = z
+  .object({
+    year: z.preprocess(blankToUndefined, zInt(2000, 2100).optional()),
+    yearMode: z.preprocess(
+      blankToUndefined,
+      z.enum(YEAR_MODES, { message: "must be calendar or fy" }).default("calendar"),
+    ),
+    from: zDateParam,
+    to: zDateParam,
+    unitId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+    categoryId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+  })
+  .superRefine(checkDateRange);
 
 export type ExpenseCreate = z.output<typeof expenseCreateSchema>;
 export type ExpenseUpdate = z.output<typeof expenseUpdateSchema>;

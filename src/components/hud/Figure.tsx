@@ -8,8 +8,8 @@
 //   <PaperTag>   "est." / "offer" tag for paper values.
 import { CalendarDays, ChevronRight, CalendarRange, IndianRupee, Landmark } from "lucide-react";
 import type { ReactNode } from "react";
-import { AnimatedNumber, Tooltip, cx } from "@/components/ui";
-import type { ExplainFormat } from "@/lib/dashboard-types";
+import { AnimatedNumber, Delta, Tooltip, cx } from "@/components/ui";
+import type { CashComparison, ExplainFormat } from "@/lib/dashboard-types";
 import { BUCKETS, fmt, inr, isCompacted, type Bucket } from "./format";
 import s from "./hud.module.css";
 
@@ -124,11 +124,13 @@ export interface FigLineProps extends Omit<FigProps, "size" | "className"> {
   size?: "md" | "sm";
   /** Show a chevron (rows that lead somewhere). */
   chevron?: boolean;
+  /** ▲ / ▼ vs last year chip before the figure (see vsLastYear) — it keeps its own click */
+  delta?: ReactNode;
   className?: string;
 }
 
 /** Ledger line: label on the left, figure right-aligned; the whole row is the click target. */
-export function FigLine({ label, sub, swatch, size = "sm", chevron, onClick, hint = "Click for breakdown", className, ...fig }: FigLineProps) {
+export function FigLine({ label, sub, swatch, size = "sm", chevron, onClick, hint = "Click for breakdown", delta, className, ...fig }: FigLineProps) {
   const content = (
     <>
       <span className={s.lineLabel}>
@@ -139,25 +141,38 @@ export function FigLine({ label, sub, swatch, size = "sm", chevron, onClick, hin
         </span>
       </span>
       <span className={s.lineValue}>
+        {delta && <span className={s.lineDelta}>{delta}</span>}
         <Fig {...fig} size={size} hint={hint} />
         {(chevron ?? Boolean(onClick)) && <ChevronRight className={s.lineChevron} aria-hidden />}
       </span>
     </>
   );
   if (!onClick) return <div className={cx(s.line, className)}>{content}</div>;
+  const aria = typeof label === "string" ? `${label} — ${hint}` : undefined;
+  // with a chip: the row is one big button underneath, so the chip can be its own button (no nested buttons)
+  if (delta)
+    return (
+      <div className={cx(s.line, s.lineBtn, s.lineStretch, className)}>
+        <button type="button" className={s.lineHit} onClick={onClick} aria-label={aria} />
+        {content}
+      </div>
+    );
   return (
-    <button type="button" className={cx(s.line, s.lineBtn, className)} onClick={onClick} aria-label={typeof label === "string" ? `${label} — ${hint}` : undefined}>
+    <button type="button" className={cx(s.line, s.lineBtn, className)} onClick={onClick} aria-label={aria}>
       {content}
     </button>
   );
 }
 
 /** Compact cell (label over figure) for a row of 2–3 supporting figures. Wrap cells in <FigCells>. */
-export function FigCell({ label, onClick, hint = "Click for breakdown", ...fig }: Omit<FigProps, "size" | "className"> & { label: ReactNode }) {
+export function FigCell({ label, onClick, hint = "Click for breakdown", delta, ...fig }: Omit<FigProps, "size" | "className"> & { label: ReactNode; delta?: ReactNode }) {
   const inner = (
     <>
       <span className={s.miniLabel}>{label}</span>
-      <Fig {...fig} size="sm" compact={fig.compact ?? true} />
+      <span className={s.miniValue}>
+        <Fig {...fig} size="sm" compact={fig.compact ?? true} />
+        {delta}
+      </span>
     </>
   );
   return onClick ? (
@@ -167,6 +182,17 @@ export function FigCell({ label, onClick, hint = "Click for breakdown", ...fig }
   ) : (
     <div className={s.mini}>{inner}</div>
   );
+}
+
+/**
+ * ▲ / ▼ % vs the same days a year earlier for a cash figure (owner 8/10/2026). Only for a year or a month — all time
+ * has nothing before it. Green = good for the owner (rent / net up, expenses down). Hover = last year's figure.
+ * onClick → its "show the maths" (leave it out inside a clickable cell — no nested buttons).
+ */
+export function vsLastYear(cmp: CashComparison | null | undefined, field: "rentCollected" | "expenses" | "net", onClick?: () => void): ReactNode {
+  if (!cmp || cmp[field].change === null) return null;
+  const c = cmp[field];
+  return <Delta change={c.change} better={field === "expenses" ? "down" : "up"} title={`${cmp.label}: ${inr(c.before)}`} onClick={onClick} />;
 }
 
 export function FigCells({ children, cols = 3 }: { children: ReactNode; cols?: 2 | 3 }) {

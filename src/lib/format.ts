@@ -32,5 +32,7 @@ export function formatIndianNumber(n: number | null | undefined, maxFractionDigi
 
 export function formatPercent(n: number | null | undefined, digits = 1): string {
   if (n === null || n === undefined || !isFinite(n)) return "—";
-  return `${(n * 100).toFixed(digits)}%`;
+  const s = (n * 100).toFixed(digits);
+  // a tiny negative that rounds to zero reads "0.0%", never "-0.0%"
+  return `${/^-0(\.0+)?$/.test(s) ? s.slice(1) : s}%`;
 }

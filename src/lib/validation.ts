@@ -41,6 +41,18 @@ export const zDate = z
     return d;
   });
 
+/** Optional date query parameter: "" / null → undefined. */
+export const zDateParam = z.preprocess((v) => (v === "" || v === null ? undefined : v), zDate.optional());
+
+/** Custom dates (from / to query params): both or neither, and from ≤ to. Use in a .superRefine(). */
+export function checkDateRange(q: { from?: Date; to?: Date }, ctx: z.RefinementCtx) {
+  if ((q.from === undefined) !== (q.to === undefined)) {
+    ctx.addIssue({ code: "custom", path: [q.from === undefined ? "from" : "to"], message: "choose both dates" });
+  } else if (q.from && q.to && q.from.getTime() > q.to.getTime()) {
+    ctx.addIssue({ code: "custom", path: ["to"], message: "must be on or after the From date" });
+  }
+}
+
 /** Optional/nullable date: "", null or undefined → null. */
 export const zDateOrNull = z.preprocess((v) => (v === "" || v === undefined ? null : v), zDate.nullable());
 

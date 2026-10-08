@@ -7,16 +7,18 @@ import {
   Facts,
   METHOD_LABEL,
   PaymentForm,
+  PeriodPicker,
   currentYear,
   drawerFrame,
   leaseLabel,
   leasePhase,
   leaseSpan,
+  periodText,
   useLeases,
   usePayments,
   useYearMode,
-  yearLabel,
   yearOf,
+  type PeriodPick,
 } from "@/components/forms";
 import { useApi } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
@@ -30,10 +32,12 @@ const money = (n: number) => formatINR(n, n % 1 !== 0);
 
 export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
   const [leaseId, setLeaseId] = useState("");
-  // year by the day the rent was received (cash), like Expenses; records start on All time (owner 8/10)
+  // year / custom dates by the day the rent was received (cash), like Expenses; records start on All time (owner 8/10)
   const [mode, setMode] = useYearMode();
-  const [year, setYear] = useState<number | "all">("all");
-  const payments = usePayments(leaseId || null, { year: year === "all" ? null : year, yearMode: mode });
+  const [period, setPeriod] = useState<PeriodPick>({ kind: "all" });
+  const year = period.kind === "year" ? period.year : null;
+  const range = period.kind === "range" ? period : null;
+  const payments = usePayments(leaseId || null, { year, yearMode: mode, from: range?.from, to: range?.to });
   const all = usePayments();
   const leases = useLeases();
   const narrow = useNarrow();
@@ -45,10 +49,10 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
   const years = useMemo(() => {
     const set = new Set<number>([currentYear(mode)]);
     for (const p of all.data?.items ?? []) set.add(yearOf(p.paymentDate, mode));
-    if (year !== "all") set.add(year);
+    if (year !== null) set.add(year);
     return [...set].sort((a, b) => b - a);
   }, [all.data, mode, year]);
-  const scope = [year === "all" ? "All time" : yearLabel(year, mode), lease?.tenant.name].filter(Boolean).join(" · ");
+  const scope = [periodText(period, mode), lease?.tenant.name].filter(Boolean).join(" · ");
   const data = payments.data;
   const rows = data?.items;
 
@@ -107,14 +111,7 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
         }
         toolbar={
           <>
-            <Select compact aria-label="Year" value={String(year)} onChange={(e) => setYear(e.target.value === "all" ? "all" : Number(e.target.value))} className={s.filterSelect}>
-              <option value="all">All time</option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {yearLabel(y, mode)}
-                </option>
-              ))}
-            </Select>
+            <PeriodPicker value={period} onChange={setPeriod} years={years} mode={mode} className={s.filterPeriod} />
             <ChoiceGroup
               name="paymentsYearMode"
               aria-label="Year type"
@@ -162,7 +159,11 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
           empty={
             <EmptyState
               title={
-                year !== "all" ? `No rent received in ${yearLabel(year, mode)}${lease ? ` from ${lease.tenant.name}` : ""}` : lease ? `No rent recorded for ${lease.tenant.name} yet` : "No rent recorded yet"
+                period.kind !== "all"
+                  ? `No rent received${period.kind === "year" ? " in" : ""} ${periodText(period, mode)}${lease ? ` from ${lease.tenant.name}` : ""}`
+                  : lease
+                    ? `No rent recorded for ${lease.tenant.name} yet`
+                    : "No rent recorded yet"
               }
               action={
                 leases.data?.items.length ? (

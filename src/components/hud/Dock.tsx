@@ -111,6 +111,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             years={data.monthlyByYear}
             allTime={data.periods.allTime}
             cumulative={data.cumulativeNetByYear}
+            lastYear={data.comparisons.year}
             onDrill={drillKey ? (k, scope) => drillKey(scope === "all" ? k : `year:${k}`) : undefined}
           />
         );

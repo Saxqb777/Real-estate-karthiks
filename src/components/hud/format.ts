@@ -59,6 +59,10 @@ export function explainKey(key: string, period: PeriodKind | null, unitId?: stri
   return unitId ? `unit:${unitId}:${scoped}` : scoped;
 }
 
+/** "Compared with last year" explanation key (a cash figure in the year or the month; all time has none). */
+export const yoyKey = (field: "rentCollected" | "expenses" | "netCash", period: "year" | "month", unitId?: string | null) =>
+  `${unitId ? `unit:${unitId}:` : ""}yoy:${period}:${field}`;
+
 /** Scope chip text for a period kind ("All time" / "FY 2026-27" / "Oct 2026"). */
 export const scopeLabel = (data: Pick<DashboardData, "scopeLabels">, period: PeriodKind) => data.scopeLabels[period];
 

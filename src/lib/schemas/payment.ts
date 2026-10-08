@@ -4,7 +4,7 @@ import { z } from "zod";
 import "./messages";
 import { sumAmounts } from "@/lib/calculations";
 import { formatDate, periodLabel, todayIST } from "@/lib/dates";
-import { zDate, zInt, zPositiveMoney, zText } from "@/lib/validation";
+import { checkDateRange, zDate, zDateParam, zInt, zPositiveMoney, zText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
 
@@ -30,12 +30,19 @@ export const paymentCreateSchema = z.object({
   notes: zText(1000),
 });
 
-/** GET /api/payments?leaseId=&year=&yearMode=fy|calendar — year filters by the day the rent was RECEIVED (cash). */
-export const paymentListQuerySchema = z.object({
-  leaseId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
-  year: z.preprocess(blankToUndefined, zInt(2000, 2100).optional()),
-  yearMode: z.preprocess(blankToUndefined, z.enum(["fy", "calendar"], { message: "must be fy or calendar" }).default("fy")),
-});
+/**
+ * GET /api/payments?leaseId=&year=&yearMode=fy|calendar&from=&to= — year or custom dates (from/to, inclusive; they win
+ * over year) filter by the day the rent was RECEIVED (cash).
+ */
+export const paymentListQuerySchema = z
+  .object({
+    leaseId: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+    year: z.preprocess(blankToUndefined, zInt(2000, 2100).optional()),
+    yearMode: z.preprocess(blankToUndefined, z.enum(["fy", "calendar"], { message: "must be fy or calendar" }).default("fy")),
+    from: zDateParam,
+    to: zDateParam,
+  })
+  .superRefine(checkDateRange);
 
 export type PaymentCreateInput = z.input<typeof paymentCreateSchema>;
 

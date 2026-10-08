@@ -170,6 +170,33 @@
   gap: 2px;
   flex: none;
 }
+.lineDelta {
+  display: inline-flex;
+  margin-right: 8px;
+}
+/* a clickable line with its own ▲/▼ chip: an invisible full-row button underneath, the chip above it */
+.lineStretch {
+  position: relative;
+}
+.lineHit {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: pointer;
+}
+.lineStretch > :not(.lineHit) {
+  position: relative;
+  pointer-events: none;
+}
+.lineStretch .lineDelta {
+  pointer-events: auto;
+}
+.lineStretch:has(.lineHit:focus-visible) {
+  box-shadow: 0 0 0 2px var(--marigold);
+}
 .lineChevron {
   width: 14px;
   height: 14px;
@@ -664,6 +691,14 @@ button.mini {
 }
 button.mini:hover {
   background: #221d18;
+}
+/* figure, then its ▲ / ▼ chip on the line under it (same place in every cell) */
+.miniValue {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
 }
 .miniLabel {
   font-size: 11.5px;

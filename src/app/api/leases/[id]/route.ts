@@ -45,6 +45,7 @@ export const PUT = handler(async (req, ctx) => {
       depositRefundedAmount:
         body.depositRefundedAmount !== undefined ? body.depositRefundedAmount : (existing.depositRefundedAmount?.toNumber() ?? null),
       depositRefundDate: body.depositRefundDate !== undefined ? body.depositRefundDate : existing.depositRefundDate,
+      agreementEndDate: body.agreementEndDate !== undefined ? body.agreementEndDate : existing.agreementEndDate,
     };
     const issues = leaseRuleIssues(merged);
     if (issues.length) {

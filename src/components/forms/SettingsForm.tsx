@@ -18,6 +18,7 @@ type Values = {
   lateFeeEnabled: boolean;
   lateFeeAmount: number | null;
   lateFeeGraceDays: number | null;
+  renewalReminderDays: number | null;
 };
 
 export interface SettingsFormProps extends BaseFormProps<SettingsDTO> {
@@ -39,6 +40,7 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
       lateFeeEnabled: settings.lateFeeEnabled,
       lateFeeAmount: settings.lateFeeAmount,
       lateFeeGraceDays: settings.lateFeeGraceDays,
+      renewalReminderDays: settings.renewalReminderDays,
     },
     schema: settingsSchema,
     toBody: (v) => ({ ...v, lateFeeAmount: v.lateFeeAmount ?? 0 }),
@@ -83,6 +85,14 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
               </Field>
             </>
           )}
+        </FormGrid>
+      </FormSection>
+
+      <FormSection title="Agreements">
+        <FormGrid cols={3}>
+          <Field label="Renewal reminder" required error={form.error("renewalReminderDays")}>
+            <NumberInput {...form.number("renewalReminderDays")} decimals={0} min={1} max={180} suffix="days before" hideHint />
+          </Field>
         </FormGrid>
       </FormSection>
 

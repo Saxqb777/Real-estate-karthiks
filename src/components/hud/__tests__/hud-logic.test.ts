@@ -54,6 +54,14 @@ describe("explain keys", () => {
     // unit gain → its own worth now; invested has no unit key, so the portfolio one is used
     expect(relatedExplains(data, "unit:u1:gain").map((e) => e.key)).toEqual(["unit:u1:worthNow"]);
   });
+  it("links a year / month cash figure to its 'vs last year' explanation (none for all time)", () => {
+    const ex = (key: string): Explain => ({ key, title: key, bucket: "cash", scope: "", value: 1, format: "pct", plain: "", formula: "", steps: [], inputs: [], inputsNote: null, notes: [] });
+    const keys = ["year:rentCollected", "yoy:year:rentCollected", "unit:u1:month:expenses", "unit:u1:yoy:month:expenses", "rentCollected", "collection"];
+    const data = { explain: Object.fromEntries(keys.map((k) => [k, ex(k)])) } as unknown as DashboardData;
+    expect(relatedExplains(data, "year:rentCollected").map((e) => e.key)).toEqual(["collection", "yoy:year:rentCollected"]);
+    expect(relatedExplains(data, "unit:u1:month:expenses").map((e) => e.key)).toEqual(["unit:u1:yoy:month:expenses"]);
+    expect(relatedExplains(data, "rentCollected").map((e) => e.key)).toEqual(["collection"]);
+  });
 });
 
 describe("status chips — overdue > due soon > tax / to-dos > vacancy", () => {

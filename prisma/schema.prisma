@@ -37,17 +37,19 @@ enum Priority {
 
 /// Single row (id = 1)
 model Settings {
-  id               Int      @id @default(1)
-  brandName        String   @default("Pattukottai Estates") @map("brand_name")
-  subtitle         String?
-  ownerEmail       String?  @map("owner_email")
-  currency         String   @default("INR")
-  dateFormat       String   @default("D/M/YYYY") @map("date_format")
-  rentDueDay       Int      @default(1) @map("rent_due_day")
-  lateFeeEnabled   Boolean  @default(false) @map("late_fee_enabled")
-  lateFeeAmount    Decimal  @default(0) @map("late_fee_amount") @db.Decimal(14, 2)
-  lateFeeGraceDays Int      @default(0) @map("late_fee_grace_days")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                  Int      @id @default(1)
+  brandName           String   @default("Pattukottai Estates") @map("brand_name")
+  subtitle            String?
+  ownerEmail          String?  @map("owner_email")
+  currency            String   @default("INR")
+  dateFormat          String   @default("D/M/YYYY") @map("date_format")
+  rentDueDay          Int      @default(1) @map("rent_due_day")
+  lateFeeEnabled      Boolean  @default(false) @map("late_fee_enabled")
+  lateFeeAmount       Decimal  @default(0) @map("late_fee_amount") @db.Decimal(14, 2)
+  lateFeeGraceDays    Int      @default(0) @map("late_fee_grace_days")
+  /// remind this many days before a rental agreement ends
+  renewalReminderDays Int      @default(30) @map("renewal_reminder_days")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@map("settings")
 }
@@ -88,11 +90,11 @@ model Unit {
   createdAt                 DateTime  @default(now()) @map("created_at")
   updatedAt                 DateTime  @updatedAt @map("updated_at")
 
-  offers       Offer[]
-  leases       Lease[]
-  expenses     Expense[]
-  propertyTax  PropertyTax[]
-  actionItems  ActionItem[]
+  offers      Offer[]
+  leases      Lease[]
+  expenses    Expense[]
+  propertyTax PropertyTax[]
+  actionItems ActionItem[]
 
   @@map("unit")
 }
@@ -142,12 +144,14 @@ model Lease {
   depositRefundedAmount Decimal?  @map("deposit_refunded_amount") @db.Decimal(14, 2)
   depositRefundDate     DateTime? @map("deposit_refund_date") @db.Date
   reminderEnabled       Boolean   @default(false) @map("reminder_enabled")
+  /// the current rental agreement's end (e.g. an 11-month agreement); null = not recorded
+  agreementEndDate      DateTime? @map("agreement_end_date") @db.Date
   moveOutNotes          String?   @map("move_out_notes")
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  unit        Unit              @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   payments    Payment[]
   rentChanges LeaseRentChange[]
 

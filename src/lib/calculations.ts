@@ -56,6 +56,8 @@
 import type {
   Arrears,
   ArrearsMonth,
+  CashChange,
+  CashComparison,
   DashboardData,
   DepositRow,
   DepositsLedger,
@@ -65,6 +67,7 @@ import type {
   ExplainFormat,
   ExplainInput,
   ExplainStep,
+  Forecast,
   Kpis,
   LeaseState,
   LeaseSummary,
@@ -74,6 +77,7 @@ import type {
   PlotGeometry,
   Reconciliation,
   ReconciliationItem,
+  RenewalReminder,
   RentState,
   Timeline,
   TimelineMarker,
@@ -82,9 +86,11 @@ import type {
   VacantPeriod,
   YearMode,
   YearSeries,
+  YieldRow,
+  Yields,
 } from "./dashboard-types";
 import { MONTHS_SHORT, MS_PER_DAY, dateOnly, formatDate, todayIST } from "./dates";
-import { formatINR, formatIndianNumber } from "./format";
+import { formatINR, formatIndianNumber, formatPercent } from "./format";
 
 export type { YearMode } from "./dashboard-types";
 
@@ -98,6 +104,8 @@ export interface SettingsInput {
   lateFeeEnabled: boolean;
   lateFeeAmount: number;
   lateFeeGraceDays: number;
+  /** remind this many days before a rental agreement ends (default 30) */
+  renewalReminderDays?: number;
 }
 
 export interface PlotInput {
@@ -159,6 +167,8 @@ export interface LeaseInput {
   securityDeposit: number;
   depositRefundedAmount?: number | null;
   depositRefundDate?: Date | null;
+  /** the rental agreement's end (e.g. an 11-month agreement); null = not recorded */
+  agreementEndDate?: Date | null;
 }
 
 export interface RentChangeInput {
@@ -208,6 +218,15 @@ export interface ActionInput {
   doneAt?: Date | null;
 }
 
+/** A property tax bill (one unit, one tax year). */
+export interface PropertyTaxInput {
+  id: string;
+  unitId: string;
+  year: number;
+  amount: number;
+  status: "Due" | "Paid";
+}
+
 export interface DashboardInput {
   settings: SettingsInput;
   plot: PlotInput;
@@ -218,6 +237,8 @@ export interface DashboardInput {
   expenses: ExpenseInput[];
   categories: CategoryInput[];
   actions: ActionInput[];
+  /** property tax bills (for the forecast's "tax still due"); optional so older callers keep working */
+  propertyTax?: PropertyTaxInput[];
 }
 
 // ───────────────────────────── rounding + small helpers ─────────────────────────────
@@ -334,7 +355,7 @@ export function yearBounds(key: number, mode: YearMode): { start: Date; end: Dat
 // ───────────────────────────── formatting for explanations ─────────────────────────────
 
 const fINR = (n: number) => formatINR(n, !Number.isInteger(round2(n)));
-const fPct = (f: number | null) => (f === null ? "—" : `${(f * 100).toFixed(1)}%`);
+const fPct = (f: number | null) => (f === null ? "—" : formatPercent(f));
 const fMult = (x: number | null) => (x === null ? "—" : `×${x.toFixed(2)}`);
 const fYears = (y: number) => `${y.toFixed(2)} yr`;
 const fDays = (n: number) => `${formatIndianNumber(n)} day${n === 1 ? "" : "s"}`;
@@ -954,6 +975,71 @@ export function monthScopeFor(year: number, month: number, asOf: Date): CashScop
     firstMonth: mi,
     lastMonth: mi,
   };
+}
+
+/** The same calendar day one year earlier (29 Feb → 28 Feb). */
+export function yearEarlier(d: Date): Date {
+  const y = d.getUTCFullYear() - 1;
+  const m = d.getUTCMonth() + 1;
+  return dateOnly(y, m, Math.min(d.getUTCDate(), daysInMonth(y, m)));
+}
+
+const dayKey = (n: number) => isoDay(n).slice(0, 10);
+
+/**
+ * Custom dates (owner 8/10/2026): `from` → `to`, both inclusive, counted up to A. Cash = by date inside the range;
+ * rent due = every month the range touches (the same whole-month rule as the month and year scopes).
+ */
+export function rangeScope(from: Date, to: Date, asOf: Date): CashScope {
+  const s = dayNum(from);
+  const t = dayNum(to);
+  const e = Math.min(t, dayNum(asOf));
+  return {
+    kind: "range",
+    key: `${dayKey(s)}..${dayKey(t)}`,
+    label: `${formatDate(fromDayNum(s))} – ${formatDate(fromDayNum(t))}`,
+    startDay: s,
+    endDay: e,
+    firstMonth: monthIndexOfDay(s),
+    lastMonth: monthIndexOfDay(Math.max(s, e)),
+  };
+}
+
+/** `part` (a month or year row of a statement) kept inside `outer` (the statement's own dates), so rows add up to it. */
+export function clipScope(outer: CashScope, part: CashScope): CashScope {
+  const lo = (a: number | null, b: number | null) => (a === null ? b : b === null ? a : Math.max(a, b));
+  return {
+    ...part,
+    startDay: lo(outer.startDay, part.startDay),
+    endDay: Math.min(outer.endDay, part.endDay),
+    firstMonth: lo(outer.firstMonth, part.firstMonth),
+    lastMonth: Math.min(outer.lastMonth, part.lastMonth),
+  };
+}
+
+/**
+ * The span to compare with ("compared with last year"): a year → the year before up to the same day; a month → the
+ * same month last year up to the same day; custom dates → the same dates a year earlier. All time → null.
+ */
+export function lastYearScope(scope: CashScope, mode: YearMode, asOf: Date): { scope: CashScope; label: string } | null {
+  const before = yearEarlier(asOf);
+  const upTo = (sc: CashScope, naturalEnd: number) => (sc.endDay < naturalEnd ? `${sc.label} to ${formatDate(fromDayNum(sc.endDay))}` : sc.label);
+  if (scope.kind === "year") {
+    const sc = yearScope(Number(scope.key) - 1, mode, before);
+    return { scope: sc, label: upTo(sc, monthEndDay((sc.firstMonth ?? 0) + 11)) };
+  }
+  if (scope.kind === "month" && scope.firstMonth !== null) {
+    const mi = scope.firstMonth - 12;
+    const sc = monthScopeFor(miYear(mi), miMonth(mi), before);
+    return { scope: sc, label: upTo(sc, monthEndDay(mi)) };
+  }
+  if (scope.kind === "range" && scope.startDay !== null) {
+    const [, to] = scope.key.split("..");
+    const toDay = to ? dayNum(new Date(`${to}T00:00:00.000Z`)) : scope.endDay;
+    const sc = rangeScope(yearEarlier(fromDayNum(scope.startDay)), yearEarlier(fromDayNum(toDay)), before);
+    return { scope: sc, label: sc.label };
+  }
+  return null;
 }
 
 const inDayScope = (s: CashScope, day: number) => (s.startDay === null || day >= s.startDay) && day <= s.endDay;
@@ -1665,6 +1751,7 @@ const leaseSummary = (l: LeaseInput, asOf: Date): LeaseSummary => ({
   monthlyRent: round2(rentOn(l, asOf)),
   securityDeposit: round2(l.securityDeposit),
   state: leaseStateOn(l, asOf),
+  agreementEndDate: l.agreementEndDate ? iso(l.agreementEndDate) : null,
 });
 
 /** Normalised options (shared with the report builders). */
@@ -1694,6 +1781,142 @@ export function allRentMonths(input: DashboardInput, asOf: Date, leases: LeaseIn
   const paymentsByLease = groupBy(input.payments, (p) => p.leaseId);
   return leases.flatMap((l) => leaseRentMonths(l, paymentsByLease.get(l.id) ?? [], input.settings, asOf));
 }
+
+// ───────────────────────────── compared with last year (owner 8/10/2026) ─────────────────────────────
+
+/** One figure now vs before: change = (now − before) ÷ |before| (null when before is ₹0). */
+export const changeOf = (now: number, before: number): CashChange => ({
+  now: round2(now),
+  before: round2(before),
+  change: round2(before) === 0 ? null : round6((now - before) / Math.abs(before)),
+});
+
+/** Rent collected / expenses / net cash in `now` vs `before` — cash by date, the same rule as scopedCash. */
+export function compareCash(data: Pick<CashData, "payments" | "expenses">, now: CashScope, before: CashScope, label: string): CashComparison {
+  const rent = (sc: CashScope) => sumAmounts(data.payments.filter((p) => inDayScope(sc, dayNum(p.paymentDate))));
+  const spent = (sc: CashScope) => sumAmounts(data.expenses.filter((e) => inDayScope(sc, dayNum(e.expenseDate))));
+  const [rn, rb, en, eb] = [rent(now), rent(before), spent(now), spent(before)];
+  return {
+    label,
+    start: before.startDay === null ? null : isoDay(before.startDay),
+    end: isoDay(Math.max(before.endDay, before.startDay ?? before.endDay)),
+    rentCollected: changeOf(rn, rb),
+    expenses: changeOf(en, eb),
+    net: changeOf(round2(rn - en), round2(rb - eb)),
+  };
+}
+
+/** "Rent collected vs last year" explanations: key `<prefix>yoy:<year|month>:<rentCollected|expenses|netCash>`. */
+function comparisonExplains(prefix: string, scope: CashScope, cmp: CashComparison, who: string): Explain[] {
+  const rows: [keyof Pick<CashComparison, "rentCollected" | "expenses" | "net">, string, string, string][] = [
+    ["rentCollected", "rentCollected", "Rent collected", "rent collected"],
+    ["expenses", "expenses", "Expenses", "money spent"],
+    ["net", "netCash", "Net cash", "net cash (rent − expenses)"],
+  ];
+  return rows.map(([field, key, title, noun]) => {
+    const c = cmp[field];
+    const diff = round2(c.now - c.before);
+    return explainOf({
+      key: `${prefix}yoy:${scope.kind}:${key}`,
+      title: `${title} vs last year`,
+      bucket: "cash",
+      scope: scope.label,
+      value: c.change,
+      format: "pct",
+      plain:
+        c.change === null
+          ? `Nothing to compare with: ${who}${noun} was ₹0 in ${cmp.label}.`
+          : `${who ? `${who}${noun}` : noun.charAt(0).toUpperCase() + noun.slice(1)} in ${scope.label}, compared with the same days a year earlier (${cmp.label}).`,
+      formula: "(this period − the same period last year) ÷ the same period last year",
+      steps: [
+        step(scope.label, fINR(c.now), c.now),
+        step(cmp.label, fINR(c.before), c.before),
+        step("Difference", `${fINR(c.now)} − ${fINR(c.before)} = ${fINR(diff)}`, diff),
+        step("Change", c.change === null ? "nothing last year to compare with" : `${fINR(diff)} ÷ ${fINR(Math.abs(c.before))} = ${fPct(c.change)}`, c.change, "pct"),
+      ],
+      notes: ["Last year is counted up to the same day, so a part of a year is compared with the same part of the year before."],
+    });
+  });
+}
+
+// ───────────────────────────── rental yield (owner 8/10/2026) ─────────────────────────────
+
+const share = (x: number, base: number) => (base > 0 ? round6(x / base) : null);
+
+function yieldRow(unitId: string | null, name: string, rent: number, expenses: number, price: number, value: number, fullYear: boolean): YieldRow {
+  const net = round2(rent - expenses);
+  return {
+    unitId,
+    name,
+    rent: round2(rent),
+    expenses: round2(expenses),
+    net,
+    price: round2(price),
+    value: round2(value),
+    grossOnPrice: share(rent, price),
+    netOnPrice: share(net, price),
+    grossOnValue: share(rent, value),
+    netOnValue: share(net, value),
+    fullYear,
+  };
+}
+
+/** Yield explanations: key `<prefix>yield:<gross|net><Price|Value>`. */
+function yieldExplains(prefix: string, r: YieldRow, scopeLabel: string, isUnit: boolean): Explain[] {
+  const out: Explain[] = [];
+  for (const basis of ["Price", "Value"] as const) {
+    const base = basis === "Price" ? r.price : r.value;
+    const baseLabel = basis === "Price" ? "Price paid" : "Worth now (est.)";
+    for (const kind of ["gross", "net"] as const) {
+      const top = kind === "gross" ? r.rent : r.net;
+      const v = kind === "gross" ? (basis === "Price" ? r.grossOnPrice : r.grossOnValue) : basis === "Price" ? r.netOnPrice : r.netOnValue;
+      const notes = ["Rent is the cash actually received in the last 12 months, so empty months lower the yield."];
+      if (basis === "Value") notes.push("Worth now is an estimate — the best offer, else your growth rate.");
+      if (!r.fullYear) notes.push("Owned for less than 12 months, so this covers only the months owned.");
+      if (kind === "net" && isUnit) notes.push("Only expenses tagged to this unit — whole-plot costs are in the property's yield.");
+      out.push(
+        explainOf({
+          key: `${prefix}yield:${kind}${basis}`,
+          title: `${kind === "gross" ? "Gross" : "Net"} yield (on ${basis === "Price" ? "price paid" : "today's value"})`,
+          bucket: basis === "Price" ? "cash" : "value",
+          scope: scopeLabel,
+          value: v,
+          format: "pct",
+          plain:
+            kind === "gross"
+              ? `How much of ${basis === "Price" ? "what you paid" : "what it's worth today"} came back as rent in a year.`
+              : `What was left after expenses, as a share of ${basis === "Price" ? "what you paid" : "what it's worth today"}.`,
+          formula: kind === "gross" ? `Rent in the last 12 months ÷ ${baseLabel.toLowerCase()}` : `(Rent − expenses in the last 12 months) ÷ ${baseLabel.toLowerCase()}`,
+          steps: [
+            step("Rent received", fINR(r.rent), r.rent),
+            ...(kind === "net"
+              ? [step("Expenses", fINR(r.expenses), r.expenses), step("Rent − expenses", `${fINR(r.rent)} − ${fINR(r.expenses)} = ${fINR(r.net)}`, r.net)]
+              : []),
+            step(baseLabel, fINR(base), base),
+            step(`${kind === "gross" ? "Gross" : "Net"} yield`, v === null ? "no price recorded" : `${fINR(top)} ÷ ${fINR(base)} = ${fPct(v)}`, v, "pct"),
+          ],
+          notes,
+        }),
+      );
+    }
+  }
+  return out;
+}
+
+// ───────────────────────────── next 12 months (owner 8/10/2026) ─────────────────────────────
+
+const isPropertyTaxCategory = (name: string | undefined) => /property\s*tax/i.test(name ?? "");
+
+/** Expenses that count as "usual running costs": not property tax, not a one-off (≥ BIG_EXPENSE_MIN). */
+function usualCosts(expenses: ExpenseInput[], categories: CategoryInput[]): ExpenseInput[] {
+  const name = new Map(categories.map((c) => [c.id, c.name]));
+  return expenses.filter((e) => !isPropertyTaxCategory(name.get(e.categoryId)) && e.amount < BIG_EXPENSE_MIN);
+}
+
+// ───────────────────────────── renewals (owner 8/10/2026) ─────────────────────────────
+
+/** Days between A and a rental agreement's end (negative = ended). */
+export const agreementDaysLeft = (agreementEnd: Date, asOf: Date) => dayNum(agreementEnd) - dayNum(asOf);
 
 /**
  * Build the full GET /api/dashboard payload from plain inputs (see RULES at the top).
@@ -1733,6 +1956,8 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
     year: yearScope(yearKeyOf(asOf, mode), mode, asOf),
     month: monthScope(asOf),
   };
+  // compared with last year: the same span one year earlier (exists for both the year and the month)
+  const lastYear = { year: lastYearScope(scopes.year, mode, asOf)!, month: lastYearScope(scopes.month, mode, asOf)! };
   const explain: Record<string, Explain> = {};
   const put = (x: Explain) => (explain[x.key] = x);
 
@@ -1755,6 +1980,11 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
     const yr = scopedCash(ctx, scopes.year, cashData, u);
     const mo = scopedCash(ctx, scopes.month, cashData, u);
     for (const x of [...all.explains, ...yr.explains, ...mo.explains]) put(x);
+    const uCmp = {
+      year: compareCash(cashData, scopes.year, lastYear.year.scope, lastYear.year.label),
+      month: compareCash(cashData, scopes.month, lastYear.month.scope, lastYear.month.label),
+    };
+    for (const x of [...comparisonExplains(`unit:${u.id}:`, scopes.year, uCmp.year, `${u.name}'s `), ...comparisonExplains(`unit:${u.id}:`, scopes.month, uCmp.month, `${u.name}'s `)]) put(x);
     for (const x of unitValueExplains(ctx, u, v, uOffers)) put(x);
     for (const x of unitOccupancyExplains(ctx, u, occ, uLeases)) put(x);
 
@@ -1869,6 +2099,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
       expenses: uExpTotal,
       netCash: all.summary.net,
       periods: { allTime: all.summary, year: yr.summary, month: mo.summary },
+      comparisons: uCmp,
       occupancyPct: ratio(occ.daysOccupied, occ.daysOwned),
       daysOwned: occ.daysOwned,
       daysOccupied: occ.daysOccupied,
@@ -2107,6 +2338,11 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
   const pYear = scopedCash(ctx, scopes.year, cashData);
   const pMonth = scopedCash(ctx, scopes.month, cashData);
   for (const x of [...pAll.explains, ...pYear.explains, ...pMonth.explains]) put(x);
+  const comparisons = {
+    year: compareCash(cashData, scopes.year, lastYear.year.scope, lastYear.year.label),
+    month: compareCash(cashData, scopes.month, lastYear.month.scope, lastYear.month.label),
+  };
+  for (const x of [...comparisonExplains("", scopes.year, comparisons.year, ""), ...comparisonExplains("", scopes.month, comparisons.month, "")]) put(x);
   const rentCollected = pAll.summary.rentCollected;
   const totalExpenses = pAll.summary.expenses;
   const wholePlotExpenses = sumAmounts(expenses.filter((e) => e.unitId === null));
@@ -2371,6 +2607,178 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
     pendingActions: pendingActions.length,
   };
 
+  // ── rental yield: the last 12 months (active units + the property) ──
+  const yStart = dayNum(yearEarlier(asOf)) + 1;
+  const inLast12 = (d: Date) => dayNum(d) >= yStart && dayNum(d) <= A;
+  const last12Label = "Last 12 months";
+  const yieldUnits: YieldRow[] = activeRows.map(({ u, breakdown: b }) => {
+    const rent = sumAmounts((leasesByUnit.get(u.id) ?? []).flatMap((l) => paymentsByLease.get(l.id) ?? []).filter((p) => inLast12(p.paymentDate)));
+    const spent = sumAmounts((expensesByUnit.get(u.id) ?? []).filter((e) => inLast12(e.expenseDate)));
+    return yieldRow(u.id, u.name, rent, spent, b.purchasePrice, b.valuation, dayNum(u.purchaseDate) < yStart);
+  });
+  const wholePlotLast12 = sumAmounts(expenses.filter((e) => e.unitId === null && inLast12(e.expenseDate)));
+  const yieldProperty = yieldRow(
+    null,
+    settings.brandName,
+    sum2(yieldUnits.map((r) => r.rent)),
+    round2(sum2(yieldUnits.map((r) => r.expenses)) + wholePlotLast12),
+    kpis.invested,
+    kpis.bestOfferTotal,
+    yieldUnits.length > 0 && yieldUnits.every((r) => r.fullYear),
+  );
+  for (const r of yieldUnits) for (const x of yieldExplains(`unit:${r.unitId}:`, r, last12Label, true)) put(x);
+  for (const x of yieldExplains("", yieldProperty, last12Label, false)) put(x);
+  const yields: Yields = { label: last12Label, start: isoDay(yStart), end: isoDay(A), units: yieldUnits, property: yieldProperty };
+
+  // ── the next 12 months: rent falling due − property tax due − usual costs (est.) ──
+  const m0 = monthIndexOfDay(A);
+  const fEnd = monthEndDay(m0 + 11);
+  const fMonths = Array.from({ length: 12 }, (_, i) => ({ key: miKey(m0 + i), label: miLabel(m0 + i), rent: 0, tax: 0, costs: 0, net: 0 }));
+  const fUnits = activeRows.map(({ u, current }) => {
+    const live = (leasesByUnit.get(u.id) ?? []).filter((l) => leaseStateOn(l, asOf) !== "ended");
+    let rent = 0;
+    let count = 0;
+    for (const l of live) {
+      const { first, last } = leaseMonthBounds(l);
+      const paid = paidByMonthOf(paymentsByLease.get(l.id) ?? [], A);
+      for (let mi = Math.max(first, m0 - 1); mi <= Math.min(last ?? Infinity, m0 + 11); mi++) {
+        const m = rentMonth(l, mi, paid, settings, A);
+        if (m.dueDay <= A || m.dueDay > fEnd || m.outstanding <= 0) continue;
+        fMonths[monthIndexOfDay(m.dueDay) - m0].rent += m.outstanding;
+        rent += m.outstanding;
+        count++;
+      }
+    }
+    const next = current ?? [...live].sort((x, y) => x.startDate.getTime() - y.startDate.getTime())[0] ?? null;
+    return {
+      unitId: u.id,
+      unitName: u.name,
+      tenantName: next?.tenantName ?? null,
+      rentNow: next ? round2(rentOn(next, current ? asOf : next.startDate)) : null,
+      rent: round2(rent),
+      months: count,
+    };
+  });
+  const activeIds = new Set(act.map((u) => u.id));
+  const taxBills = (input.propertyTax ?? [])
+    .filter((t) => t.status === "Due" && activeIds.has(t.unitId))
+    .sort((x, y) => x.year - y.year || unitName(x.unitId).localeCompare(unitName(y.unitId)))
+    .map((t) => ({ id: t.id, unitId: t.unitId, unitName: unitName(t.unitId), year: t.year, amount: round2(t.amount) }));
+  const fTax = sumAmounts(taxBills);
+  const costRows = usualCosts(expenses.filter((e) => inLast12(e.expenseDate)), input.categories);
+  const costs12 = sumAmounts(costRows);
+  const costsMonthly = round2(costs12 / 12);
+  fMonths.forEach((m, i) => {
+    m.rent = round2(m.rent);
+    m.tax = i === 0 ? fTax : 0;
+    m.costs = i < 11 ? costsMonthly : round2(costs12 - costsMonthly * 11);
+    m.net = round2(m.rent - m.tax - m.costs);
+  });
+  const fRent = sum2(fMonths.map((m) => m.rent));
+  const forecast: Forecast = {
+    label: `${miLabel(m0)} – ${miLabel(m0 + 11)}`,
+    start: isoDay(A + 1),
+    end: isoDay(fEnd),
+    months: fMonths,
+    rent: fRent,
+    tax: fTax,
+    costs: costs12,
+    net: round2(fRent - fTax - costs12),
+    costsMonthly,
+    oneOffMin: BIG_EXPENSE_MIN,
+    units: fUnits,
+    taxBills,
+  };
+  const fRentX = sumSteps(
+    fUnits.map((f) => ({ label: `${f.unitName} — ${f.tenantName ?? "empty"} (${plural(f.months, "month")})`, value: f.rent })),
+    "Rent expected",
+  );
+  put(
+    explainOf({
+      key: "forecast:rent",
+      title: "Rent expected",
+      bucket: "cash",
+      scope: forecast.label,
+      value: fRent,
+      format: "inr",
+      plain: "The rent that will fall due in the next 12 months from your current (and incoming) tenants.",
+      formula: "Each month's rent (with any rent change you entered) that falls due in the window, minus anything paid ahead",
+      steps: fRentX.steps,
+      notes: [
+        "Assumes today's tenants stay and pay when due.",
+        "Rent paid after the month (in arrears) is counted in the month it falls due.",
+        ...(fUnits.some((f) => f.tenantName === null) ? ["An empty unit earns nothing here."] : []),
+      ],
+    }),
+  );
+  const fTaxX = sumSteps(taxBills.map((t) => ({ label: `${t.unitName} — tax ${t.year}`, value: t.amount })), "Property tax due");
+  put(
+    explainOf({
+      key: "forecast:tax",
+      title: "Property tax due",
+      bucket: "cash",
+      scope: forecast.label,
+      value: fTax,
+      format: "inr",
+      plain: taxBills.length ? "Property tax bills recorded as still to pay." : "No property tax bill is waiting to be paid.",
+      formula: "Add up every property tax bill marked Due",
+      steps: fTaxX.steps,
+    }),
+  );
+  put(
+    explainOf({
+      key: "forecast:costs",
+      title: "Usual costs (est.)",
+      bucket: "cash",
+      scope: forecast.label,
+      value: costs12,
+      format: "inr",
+      plain: "Running costs for the next 12 months, if they are like the last 12 months.",
+      formula: `Expenses of the last 12 months, without property tax and one-offs of ${fINR(BIG_EXPENSE_MIN)} or more`,
+      steps: [
+        step("Usual costs, last 12 months", fINR(costs12), costs12),
+        step("A month", `${fINR(costs12)} ÷ 12 = ${fINR(costsMonthly)}`, costsMonthly),
+        step("Next 12 months (est.)", `the same as the last 12 months = ${fINR(costs12)}`, costs12),
+      ],
+      notes: ["An estimate — property tax is counted separately, big one-off jobs are left out."],
+    }),
+  );
+  put(
+    explainOf({
+      key: "forecast:net",
+      title: "Net expected",
+      bucket: "cash",
+      scope: forecast.label,
+      value: forecast.net,
+      format: "inr",
+      plain: "What should be left from the next 12 months' rent after property tax and the usual costs.",
+      formula: "Rent expected − property tax due − usual costs (est.)",
+      steps: [
+        step("Rent expected", fINR(fRent), fRent),
+        step("Property tax due", fINR(fTax), fTax),
+        step("Usual costs (est.)", fINR(costs12), costs12),
+        step("Net expected", `${fINR(fRent)} − ${fINR(fTax)} − ${fINR(costs12)} = ${fINR(forecast.net)}`, forecast.net),
+      ],
+      notes: ["A forecast, not cash in hand: it assumes tenants stay and pay, and costs stay as usual."],
+    }),
+  );
+
+  // ── rental agreements to renew (current leases ending within the reminder window, or ended) ──
+  const reminderDays = settings.renewalReminderDays ?? 30;
+  const renewals: RenewalReminder[] = activeRows
+    .flatMap(({ u, current }) => (current?.agreementEndDate ? [{ u, l: current, days: agreementDaysLeft(current.agreementEndDate, asOf) }] : []))
+    .filter((x) => x.days <= reminderDays)
+    .sort((x, y) => x.days - y.days)
+    .map(({ u, l, days }) => ({
+      leaseId: l.id,
+      unitId: u.id,
+      unitName: u.name,
+      tenantName: l.tenantName,
+      agreementEndDate: iso(l.agreementEndDate!),
+      daysLeft: days,
+      state: days < 0 ? ("expired" as const) : ("due-soon" as const),
+    }));
+
   // ── series + composition ──
   const firstPurchase = owned.length ? owned.reduce((m, u) => (u.purchaseDate < m ? u.purchaseDate : m), owned[0].purchaseDate) : null;
   const series = monthlyByYear(payments, expenses, asOf, mode, firstPurchase);
@@ -2470,10 +2878,15 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
       lateFeeEnabled: settings.lateFeeEnabled,
       lateFeeAmount: round2(settings.lateFeeAmount),
       lateFeeGraceDays: settings.lateFeeGraceDays,
+      renewalReminderDays: reminderDays,
     },
     plot: plotGeometry(input.plot),
     kpis,
     periods: { allTime: pAll.summary, year: pYear.summary, month: pMonth.summary },
+    comparisons,
+    yields,
+    forecast,
+    renewals,
     units,
     unitsNotYetOwned: input.units
       .filter((u) => !ownedIds.has(u.id))

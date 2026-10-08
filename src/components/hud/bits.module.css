@@ -283,6 +283,14 @@
   flex: 1;
   min-width: 0;
 }
+/* hero figure with its ▲ / ▼ vs last year chip */
+.heroFig {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-width: 0;
+}
 .occRow {
   display: flex;
   align-items: baseline;
@@ -722,6 +730,9 @@
 }
 .lateText {
   color: #ff97a6;
+}
+.soonText {
+  color: var(--marigold);
 }
 
 /* =========================================================== pole */

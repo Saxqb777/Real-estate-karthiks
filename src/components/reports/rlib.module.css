@@ -7,8 +7,8 @@
   align-items: center;
   gap: 6px;
 }
-.year {
-  min-width: 128px;
+.period {
+  min-width: 0;
 }
 .lease {
   min-width: 260px;
@@ -46,7 +46,7 @@
 /* ---- home grid */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-auto-rows: 1fr;
   gap: 16px;
   padding: 18px 20px 20px;
@@ -155,6 +155,12 @@
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: #c9922e;
+}
+.kpiLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 .kpiValue {
   font-family: var(--ff-display);
@@ -292,6 +298,16 @@
 .st-paid {
   color: var(--teal);
 }
+/* "ends in 12 days" under an agreement end date (rent roll) */
+.renew {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+}
+/* a section after a plain table (value report → rental yield) */
+.tableBox + .section {
+  margin-top: 22px;
+}
 .st-part-paid,
 .st-unpaid {
   color: var(--coral);
@@ -420,6 +436,11 @@
   }
   .controls {
     flex-wrap: wrap;
+  }
+  /* custom dates: the picker takes the whole row (period above, From – To under it) */
+  .controlsDates,
+  .controlsDates .period {
+    width: 100%;
   }
   .lease {
     min-width: 0;

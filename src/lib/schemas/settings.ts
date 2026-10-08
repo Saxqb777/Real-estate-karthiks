@@ -22,6 +22,8 @@ export const settingsSchema = z.object({
   lateFeeEnabled: zFlag,
   lateFeeAmount: zMoney,
   lateFeeGraceDays: zRequired(zInt(0, 60)),
+  /** remind this many days before a rental agreement ends (owner 8/10/2026) */
+  renewalReminderDays: zRequired(zInt(1, 180)),
 });
 
 /** PUT body: partial — only the fields sent are changed. */

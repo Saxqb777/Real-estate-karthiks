@@ -15,13 +15,14 @@ const DEFAULT_SETTINGS: SettingsInput = {
   lateFeeEnabled: false,
   lateFeeAmount: 0,
   lateFeeGraceDays: 0,
+  renewalReminderDays: 30,
 };
 
 const num = (d: Prisma.Decimal) => d.toNumber();
 const numOrNull = (d: Prisma.Decimal | null) => (d === null ? null : d.toNumber());
 
 export async function loadDashboardInput(): Promise<DashboardInput> {
-  const [settings, plot, units, offers, leases, payments, expenses, categories, actions] = await prisma.$transaction(
+  const [settings, plot, units, offers, leases, payments, expenses, categories, actions, propertyTax] = await prisma.$transaction(
     [
       prisma.settings.findUnique({ where: { id: 1 } }),
       prisma.plot.findUnique({ where: { id: 1 } }),
@@ -51,6 +52,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       prisma.actionItem.findMany({
         select: { id: true, title: true, priority: true, dueDate: true, isDone: true, unitId: true, createdAt: true, doneAt: true },
       }),
+      prisma.propertyTax.findMany({ select: { id: true, unitId: true, year: true, amount: true, status: true } }),
     ],
     { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
   );
@@ -65,6 +67,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
           lateFeeEnabled: settings.lateFeeEnabled,
           lateFeeAmount: num(settings.lateFeeAmount),
           lateFeeGraceDays: settings.lateFeeGraceDays,
+          renewalReminderDays: settings.renewalReminderDays,
         }
       : DEFAULT_SETTINGS,
     plot: {
@@ -109,6 +112,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       securityDeposit: num(l.securityDeposit),
       depositRefundedAmount: numOrNull(l.depositRefundedAmount),
       depositRefundDate: l.depositRefundDate,
+      agreementEndDate: l.agreementEndDate,
     })),
     payments: payments.map((p) => ({ ...p, amount: num(p.amount) })),
     expenses: expenses.map((e) => ({ ...e, amount: num(e.amount) })),
@@ -123,6 +127,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       createdAt: a.createdAt,
       doneAt: a.doneAt,
     })),
+    propertyTax: propertyTax.map((t) => ({ id: t.id, unitId: t.unitId, year: t.year, amount: num(t.amount), status: t.status })),
   };
 }
 

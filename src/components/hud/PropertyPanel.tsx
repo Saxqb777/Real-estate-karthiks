@@ -5,9 +5,9 @@ import { Building2 } from "lucide-react";
 import { EmptyState, LevelBadge, LinkButton, SegmentedBar, cx } from "@/components/ui";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { Fig, FigLine, BucketHead, ScopeChip } from "./Figure";
+import { Fig, FigLine, BucketHead, PaperTag, ScopeChip, vsLastYear } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
-import { explainKey, inr } from "./format";
+import { explainKey, fmt, inr, yoyKey } from "./format";
 import { LedgerBadge } from "./LedgerBadge";
 import type { PeriodKind } from "./types";
 import s from "./hud.module.css";
@@ -41,6 +41,12 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
   );
   const noUnits = k.unitsActive === 0;
   const paper = k.unitsWithOffer > 0 && !k.bestOfferIsPartialEstimate ? "offer" : "est.";
+  // ▲ / ▼ vs the same days last year (the year and the month; all time has nothing before it)
+  const cmp = period === "allTime" ? null : data.comparisons[period];
+  const yoy = (field: "rentCollected" | "expenses" | "net") =>
+    period === "allTime" ? null : vsLastYear(cmp, field, () => open(yoyKey(field === "net" ? "netCash" : field, period)));
+  const y = data.yields.property;
+  const f = data.forecast;
 
   return (
     <DrillPanel
@@ -78,12 +84,15 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
             <div className={s.hero}>
               <div className={s.heroMain}>
                 <span className={s.heroLabel}>Net cash</span>
-                <Fig value={p.net} size="hero" tone="signed" onClick={() => open(explainKey("netCash", period))} />
+                <div className={b.heroFig}>
+                  <Fig value={p.net} size="hero" tone="signed" onClick={() => open(explainKey("netCash", period))} />
+                  {yoy("net")}
+                </div>
               </div>
             </div>
             <div className={s.lines}>
-              <FigLine label="Rent collected" value={p.rentCollected} sign="+" tone="income" onClick={() => open(explainKey("rentCollected", period))} />
-              <FigLine label="Expenses" value={p.expenses} sign="−" tone="expense" onClick={() => open(explainKey("expenses", period))} />
+              <FigLine label="Rent collected" value={p.rentCollected} sign="+" tone="income" delta={yoy("rentCollected")} onClick={() => open(explainKey("rentCollected", period))} />
+              <FigLine label="Expenses" value={p.expenses} sign="−" tone="expense" delta={yoy("expenses")} onClick={() => open(explainKey("expenses", period))} />
               <FigLine
                 label="Rent collection"
                 sub={p.rentUnpaid > 0 ? `${inr(p.rentUnpaid)} of the rent due is unpaid` : p.collectionPct === null ? "No rent has fallen due yet" : "Every rupee due is in"}
@@ -123,6 +132,36 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
                 missing={k.cagrNote ?? "Not enough history yet"}
                 onClick={k.cagr === null ? undefined : () => open("cagr")}
               />
+              {/* rental yield (owner 8/10): a year's rent ÷ what it's worth now; net = after expenses */}
+              <FigLine
+                label="Rental yield"
+                sub={y.netOnValue === null ? data.yields.label : `Net ${fmt(y.netOnValue, "pct")} · ${data.yields.label.toLowerCase()}`}
+                value={y.grossOnValue}
+                format="pct"
+                missing="No value recorded yet"
+                onClick={y.grossOnValue === null ? undefined : () => open("yield:grossValue")}
+              />
+            </div>
+          </section>
+
+          {/* ---------------- NEXT 12 MONTHS (owner 8/10): rent that will fall due − tax due − usual costs (est.) */}
+          <section className={s.section}>
+            <BucketHead
+              bucket="cash"
+              label="Next 12 months"
+              scope={<ScopeChip past={past}>{f.label}</ScopeChip>}
+              right={<PaperTag kind="est." />}
+            />
+            <div className={s.hero}>
+              <div className={s.heroMain}>
+                <span className={s.heroLabel}>Net cash expected</span>
+                <Fig value={f.net} size="hero" tone="signed" onClick={() => open("forecast:net")} />
+              </div>
+            </div>
+            <div className={s.lines}>
+              <FigLine label="Rent expected" value={f.rent} sign="+" tone="income" onClick={() => open("forecast:rent")} />
+              <FigLine label="Property tax due" value={f.tax} sign="−" tone="expense" onClick={() => open("forecast:tax")} />
+              <FigLine label="Usual costs" value={f.costs} sign="−" tone="expense" onClick={() => open("forecast:costs")} />
             </div>
           </section>
 

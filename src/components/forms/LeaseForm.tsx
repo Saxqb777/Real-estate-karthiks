@@ -1,5 +1,5 @@
 "use client";
-import { BellRing, UserPlus } from "lucide-react";
+import { BellRing, CalendarPlus, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DateInput, Field, FormGrid, NumberInput, Select, Textarea, Toggle } from "@/components/ui";
 import { api } from "@/lib/client";
@@ -14,7 +14,7 @@ import {
   type LeaseDetail,
   type LeaseListItem,
 } from "@/lib/schemas/lease";
-import { tenantOptions, unitOptions, useLeases, useSettings, useTenants, useUnits } from "./data";
+import { elevenMonthsFrom, tenantOptions, unitOptions, useLeases, useSettings, useTenants, useUnits } from "./data";
 import { FormActions, FormBody, FormNote, FormSection, inlineFrame, modalFrame, type BaseFormProps } from "./FormFrame";
 import { TenantForm } from "./TenantForm";
 import { useForm, type Issue } from "./useForm";
@@ -29,6 +29,7 @@ type Values = {
   rentTiming: "advance" | "arrears";
   rentDueDay: number | null;
   securityDeposit: number | null;
+  agreementEndDate: string;
   reminderEnabled: boolean;
   depositRefundedAmount: number | null;
   depositRefundDate: string;
@@ -72,7 +73,8 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       securityDeposit: v.securityDeposit ?? 0,
       depositRefundedAmount: v.depositRefundedAmount,
       depositRefundDate: v.depositRefundDate || null,
-    })].filter((i) => v.startDate || i.field !== "endDate");
+      agreementEndDate: v.agreementEndDate || null,
+    })].filter((i) => v.startDate || (i.field !== "endDate" && i.field !== "agreementEndDate"));
     if (v.unitId && v.startDate && leases.data) {
       const others = leases.data.items.filter((l) => l.unit.id === v.unitId && l.id !== lease?.id);
       const unitName = units.data?.items.find((u) => u.id === v.unitId)?.name ?? "This unit";
@@ -92,6 +94,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       rentTiming: lease?.rentTiming === "arrears" ? "arrears" : "advance",
       rentDueDay: lease?.rentDueDay ?? null,
       securityDeposit: lease?.securityDeposit ?? defaults?.securityDeposit ?? prev?.securityDeposit ?? null,
+      agreementEndDate: toInputDate(lease?.agreementEndDate),
       reminderEnabled: lease?.reminderEnabled ?? true,
       depositRefundedAmount: lease?.depositRefundedAmount ?? null,
       depositRefundDate: toInputDate(lease?.depositRefundDate),
@@ -109,6 +112,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         rentTiming: v.rentTiming,
         rentDueDay: v.rentDueDay,
         securityDeposit: v.securityDeposit ?? 0,
+        agreementEndDate: v.agreementEndDate || null,
         reminderEnabled: v.reminderEnabled,
       };
       return editing
@@ -196,7 +200,21 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         <Field label="Security deposit" error={form.error("securityDeposit")} hint="Held for the tenant — not income">
           <NumberInput {...form.number("securityDeposit")} currency placeholder="0" />
         </Field>
-        <Field label="Reminders" span="full">
+        {/* rental agreement (usually 11 months, owner 8/10): a reminder shows before it ends */}
+        <Field
+          label="Agreement ends"
+          error={form.error("agreementEndDate")}
+          aside={
+            v.startDate ? (
+              <button type="button" className={s.linkBtn} onClick={() => form.set("agreementEndDate", elevenMonthsFrom(v.startDate))}>
+                <CalendarPlus aria-hidden /> 11 months
+              </button>
+            ) : undefined
+          }
+        >
+          <DateInput {...form.date("agreementEndDate")} />
+        </Field>
+        <Field label="Reminders">
           <div data-field="reminderEnabled">
             <Toggle
               checked={v.reminderEnabled}

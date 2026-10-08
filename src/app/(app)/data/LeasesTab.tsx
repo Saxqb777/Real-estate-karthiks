@@ -6,6 +6,8 @@ import {
   ChoiceGroup,
   Facts,
   LeaseForm,
+  RenewAgreementButton,
+  agreementText,
   drawerFrame,
   leasePhase,
   leaseSpan,
@@ -54,6 +56,7 @@ export function PhasePill({ phase, size = "sm" }: { phase: LeasePhase; size?: "s
 
 export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
   const leases = useLeases();
+  const dash = useDashboard();
   const sel = useSelection(openId, onOpened);
   const create = useCreate();
   useNewSignal(newSignal, create.start);
@@ -125,13 +128,19 @@ export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
         >
           {(rows ?? []).map((l) => {
             const phase = leasePhase(l);
+            // agreement renewal reminder (owner 8/10): due soon = marigold, ended = coral
+            const renew = dash.data?.renewals.find((r) => r.leaseId === l.id);
             return (
               <GameCard
                 key={l.id}
                 badge={initials(l.tenant.name)}
                 title={l.tenant.name}
-                tag={{ text: l.unit.name, tone: phase === "current" ? "teal" : phase === "incoming" ? "marigold" : "muted" }}
-                line={leaseSpan(l)}
+                tag={
+                  renew
+                    ? { text: `Agreement ${agreementText(renew.daysLeft)}`, tone: renew.state === "expired" ? "coral" : "marigold" }
+                    : { text: l.unit.name, tone: phase === "current" ? "teal" : phase === "incoming" ? "marigold" : "muted" }
+                }
+                line={renew ? `${l.unit.name} · ${leaseSpan(l)}` : leaseSpan(l)}
                 stats={[
                   { label: "Rent", value: `${formatINR(l.monthlyRent)} /mo`, tone: phase === "past" ? "muted" : "teal" },
                   { label: "Collected", value: formatINR(l.paymentsTotal, l.paymentsTotal % 1 !== 0) },
@@ -166,6 +175,7 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
   const phase = l ? leasePhase(l) : "current";
   const blocked = l ? leaseDeleteBlockedMessage(l.tenant.name, l.unit.name, l.paymentsCount) : null;
   const [showAll, setShowAll] = useState(false);
+  const renew = l ? dash.data?.renewals.find((r) => r.leaseId === l.id) : undefined;
 
   const view = l ? (
     <div className={s.detail}>
@@ -218,6 +228,24 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
           { label: "Tenant", value: l.tenant.phone ? `${l.tenant.name} · ${l.tenant.phone}` : l.tenant.name },
           { label: "First day", value: formatDate(l.startDate), num: true },
           { label: "Last day of tenancy", value: l.endDate ? formatDate(l.endDate) : <span className="faint">open — still living there</span>, num: Boolean(l.endDate) },
+          (Boolean(l.agreementEndDate) || phase !== "past") && {
+            label: "Agreement ends",
+            value: l.agreementEndDate ? (
+              <span className={s.agreement}>
+                <span className="num">{formatDate(l.agreementEndDate)}</span>
+                {renew && (
+                  <>
+                    <Badge size="sm" tone={renew.state === "expired" ? "coral" : "marigold"}>
+                      {agreementText(renew.daysLeft)}
+                    </Badge>
+                    <RenewAgreementButton lease={l} tenantName={l.tenant.name} variant="ghost" />
+                  </>
+                )}
+              </span>
+            ) : (
+              <span className="faint">not recorded</span>
+            ),
+          },
           { label: "Monthly rent", value: formatINR(l.monthlyRent), num: true },
           { label: "Rent billing", value: l.rentTiming === "arrears" ? "IN ARREARS" : "IN ADVANCE" },
           {

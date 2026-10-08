@@ -2,7 +2,7 @@
 // Property manager walking round the plot → to-dos: tick one off (with Undo), tap one to edit, add a new one.
 import { Check, ListPlus } from "lucide-react";
 import { Badge, Button, EmptyState, toast, cx, type BadgeTone } from "@/components/ui";
-import { useActions } from "@/components/forms";
+import { RenewAgreementButton, agreementText, useActions } from "@/components/forms";
 import { api, useMutation } from "@/lib/client";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { daysBetween, formatDate } from "@/lib/dates";
@@ -37,7 +37,10 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
   const items =
     live.data?.items ??
     data.actions.pending.map((a) => ({ ...a, unit: a.unitId ? { id: a.unitId, name: unitName.get(a.unitId) ?? "Unit" } : null }) as unknown as ActionDTO);
-  const late = items.filter((a) => a.isOverdue).length;
+  // rental agreements ending soon / ended (owner 8/10) count as things to do
+  const renewals = data.renewals;
+  const late = items.filter((a) => a.isOverdue).length + renewals.filter((r) => r.state === "expired").length;
+  const count = items.length + renewals.length;
 
   return (
     <>
@@ -56,13 +59,31 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
       >
         <div className={b.boardHero}>
           <span className={b.boardCount}>
-            <span className="num">{items.length}</span> {items.length === 1 ? "thing" : "things"} to do
+            <span className="num">{count}</span> {count === 1 ? "thing" : "things"} to do
           </span>
-          {late > 0 ? <Badge tone="coral" marker size="sm">{late} late</Badge> : items.length > 0 ? <Badge tone="teal" marker size="sm">None late</Badge> : null}
+          {late > 0 ? <Badge tone="coral" marker size="sm">{late} late</Badge> : count > 0 ? <Badge tone="teal" marker size="sm">None late</Badge> : null}
         </div>
-        {items.length === 0 ? (
+        {renewals.length > 0 && (
+          <ul className={b.todos}>
+            {renewals.map((r) => (
+              <li key={r.leaseId} className={cx(b.todo, r.state === "expired" && b.todoLate)}>
+                <span className={b.todoMain}>
+                  <span className={b.todoTitle}>Renew {r.tenantName}&apos;s agreement</span>
+                  <span className={b.todoMeta}>
+                    {r.unitName} ·{" "}
+                    <span className={cx(r.state === "expired" && b.lateText)}>
+                      {agreementText(r.daysLeft)} ({formatDate(r.agreementEndDate)})
+                    </span>
+                  </span>
+                </span>
+                <RenewAgreementButton lease={{ id: r.leaseId, agreementEndDate: r.agreementEndDate }} tenantName={r.tenantName} variant={r.state === "expired" ? "primary" : "secondary"} />
+              </li>
+            ))}
+          </ul>
+        )}
+        {count === 0 ? (
           <EmptyState compact title="Nothing to do" />
-        ) : (
+        ) : items.length === 0 ? null : (
           <ul className={b.todos}>
             {items.map((a) => (
               <Todo

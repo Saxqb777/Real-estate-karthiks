@@ -4,8 +4,11 @@
 // from data.periods.allTime and the running net from data.cumulativeNetByYear (grouped by the API — the UI never regroups).
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { cx } from "@/components/ui";
-import type { YearSeries } from "@/lib/dashboard-types";
+import { changeOf } from "@/lib/calculations";
+import type { CashComparison, YearSeries } from "@/lib/dashboard-types";
+import { vsLastYear } from "../Figure";
 import { inr } from "../format";
 import { ChartTip, LegendKey, axisINR, barPath, niceTicks, useSize } from "./util";
 import s from "./charts.module.css";
@@ -15,6 +18,8 @@ export interface IncomeExpenseChartProps {
   /** all-time totals (data.periods.allTime) + running net per year (data.cumulativeNetByYear) → the ALL TIME view */
   allTime?: { rentCollected: number; expenses: number; net: number };
   cumulative?: { year: number; cumulative: number }[];
+  /** the running year vs the same days a year earlier (data.comparisons.year) → ▲ / ▼ on its totals */
+  lastYear?: CashComparison;
   /** selected year key or "all" (default: the year containing the as-of date) */
   year?: number | "all";
   onYearChange?: (year: number | "all") => void;
@@ -41,7 +46,7 @@ const shortYear = (label: string) => label.replace(/^FY (\d{2})(\d{2})-/, "FY $2
 const C = { income: "var(--teal)", expense: "var(--coral)", net: "var(--plaster)" };
 const M = { l: 50, r: 10, t: 12, b: 22 };
 
-export function IncomeExpenseChart({ years, allTime, cumulative, year: controlled, onYearChange, onDrill, className }: IncomeExpenseChartProps) {
+export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year: controlled, onYearChange, onDrill, className }: IncomeExpenseChartProps) {
   const current = years.find((y) => y.isCurrent) ?? years[years.length - 1];
   const [inner, setInner] = useState<number | "all" | undefined>(undefined);
   const picked = controlled ?? inner ?? current?.year;
@@ -97,6 +102,22 @@ export function IncomeExpenseChart({ years, allTime, cumulative, year: controlle
   const scope: YearSeries | "all" = all ? "all" : ys;
   const drill = onDrill && (all || ys.isCurrent) ? (k: "rentCollected" | "expenses" | "netCash") => onDrill(k, scope) : undefined;
   const allZero = past.every(({ m }) => m.income === 0 && m.expenses === 0);
+  // ▲ / ▼ on the totals: the running year vs the same days last year; a past year vs the whole year before it
+  const before = idx > 0 ? years[idx - 1] : null;
+  const cmp: CashComparison | null = all
+    ? null
+    : ys.isCurrent
+      ? (lastYear ?? null)
+      : before
+        ? {
+            label: before.label,
+            start: before.start,
+            end: before.end,
+            rentCollected: changeOf(ys.income, before.income),
+            expenses: changeOf(ys.expenses, before.expenses),
+            net: changeOf(ys.net, before.net),
+          }
+        : null;
 
   return (
     <div className={cx(s.chart, className)}>
@@ -123,9 +144,16 @@ export function IncomeExpenseChart({ years, allTime, cumulative, year: controlle
           <LegendKey color={C.net} label="Net cash" line />
         </div>
         <div className={s.totals}>
-          <Total label="Rent collected" value={head.income} tone="income" onClick={drill ? () => drill("rentCollected") : undefined} />
-          <Total label="Expenses" value={head.expenses} tone="expense" onClick={drill ? () => drill("expenses") : undefined} />
-          <Total label="Net cash" value={head.net} tone={head.net < 0 ? "expense" : head.net > 0 ? "income" : undefined} strong onClick={drill ? () => drill("netCash") : undefined} />
+          <Total label="Rent collected" value={head.income} tone="income" delta={vsLastYear(cmp, "rentCollected")} onClick={drill ? () => drill("rentCollected") : undefined} />
+          <Total label="Expenses" value={head.expenses} tone="expense" delta={vsLastYear(cmp, "expenses")} onClick={drill ? () => drill("expenses") : undefined} />
+          <Total
+            label="Net cash"
+            value={head.net}
+            tone={head.net < 0 ? "expense" : head.net > 0 ? "income" : undefined}
+            strong
+            delta={vsLastYear(cmp, "net")}
+            onClick={drill ? () => drill("netCash") : undefined}
+          />
         </div>
       </div>
       <div ref={box} className={s.plot} onMouseLeave={() => setHover(null)}>
@@ -211,11 +239,26 @@ export function IncomeExpenseChart({ years, allTime, cumulative, year: controlle
   );
 }
 
-function Total({ label, value, tone, strong, onClick }: { label: string; value: number; tone?: "income" | "expense"; strong?: boolean; onClick?: () => void }) {
+function Total({
+  label,
+  value,
+  tone,
+  strong,
+  delta,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  tone?: "income" | "expense";
+  strong?: boolean;
+  delta?: ReactNode;
+  onClick?: () => void;
+}) {
   const body = (
     <>
       <span className={s.totalLabel}>{label}</span>
       <span className={cx(s.totalValue, "num", value !== 0 && tone === "income" && s.tIncome, value !== 0 && tone === "expense" && s.tExpense, strong && s.totalStrong)}>{inr(value)}</span>
+      {delta}
     </>
   );
   return onClick ? (

@@ -313,6 +313,154 @@ describe("all-time statement (year = all)", () => {
   });
 });
 
+// ─────────────────────────────── upgrades (owner 8/10/2026) ───────────────────────────────
+
+describe("custom dates (from → to)", () => {
+  const pick = (t: { rentCollected: number; rentExpected: number; rentReceivedForScope: number; expenses: number; net: number }) => [
+    t.rentCollected,
+    t.rentExpected,
+    t.rentReceivedForScope,
+    t.expenses,
+    t.net,
+  ];
+
+  it("the dates of a whole FY = that FY's statement (months, totals, reconciliation)", () => {
+    const fy = buildAnnualReport(fixture(), { ...opts(), year: 2025 });
+    const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2025-04-01"), to: D("2026-03-31") } });
+    expect(r).toMatchObject({ kind: "range", label: "1/4/2025 – 31/3/2026", isPartial: false });
+    expect(pick(r.totals)).toEqual(pick(fy.totals));
+    expect(r.months.map((m) => [m.label, m.rentCollected, m.expenses])).toEqual(fy.months.map((m) => [m.label, m.rentCollected, m.expenses]));
+    expect(r.reconciliation.ledgerBalanced).toBe(true);
+  });
+
+  it("part months count only the days inside the dates", () => {
+    const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2026-06-15"), to: D("2026-08-20") } });
+    expect(r.months.map((m) => m.label)).toEqual(["Jun 2026", "Jul 2026", "Aug 2026"]);
+    // 5/6 payment is before the 15th; the 10,000 part payment on 18/7; the 470 bill on 19/8
+    expect([r.totals.rentCollected, r.totals.expenses]).toEqual([10_000, 470]);
+    expect(r.reconciliation.ledgerBalanced, JSON.stringify(r.reconciliation.items.filter((i) => !i.ok))).toBe(true);
+  });
+
+  it("over 24 months → one row per year, adding up; the whole history = all time", () => {
+    const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2019-01-01"), to: D("2026-10-02") } });
+    expect(r.months).toEqual([]);
+    expect(r.years[0].label).toBe("FY 2018-19");
+    expect(sum(r.years.map((y) => y.rentCollected))).toBe(r.totals.rentCollected);
+    expect(r.totals.rentCollected).toBe(dash().periods.allTime.rentCollected);
+    expect(r.reconciliation.ledgerBalanced).toBe(true);
+  });
+
+  it("dates running past today count up to today", () => {
+    const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2026-09-01"), to: D("2026-12-31") } });
+    expect(r).toMatchObject({ through: ISO("2026-10-02"), isPartial: true });
+    expect(r.months.map((m) => m.label)).toEqual(["Sep 2026", "Oct 2026"]);
+  });
+});
+
+describe("compared with last year", () => {
+  it("this FY so far vs the same days last year = the dashboard as it looked a year ago", () => {
+    const d = dash();
+    const then = dash(D("2025-10-02"));
+    const c = d.comparisons.year;
+    expect(c.label).toBe("FY 2025-26 to 2/10/2025");
+    expect([c.rentCollected.now, c.rentCollected.before]).toEqual([d.periods.year.rentCollected, then.periods.year.rentCollected]);
+    expect([c.expenses.now, c.expenses.before]).toEqual([d.periods.year.expenses, then.periods.year.expenses]);
+    expect(c.net.now).toBe(d.periods.year.net);
+    expect(c.rentCollected.change).toBeCloseTo((c.rentCollected.now - c.rentCollected.before) / c.rentCollected.before, 6);
+    // and this month: 1–2 Oct 2026 vs 1–2 Oct 2025
+    expect(d.comparisons.month.label).toBe("Oct 2025 to 2/10/2025");
+    expect(d.comparisons.month.rentCollected.before).toBe(then.periods.month.rentCollected);
+  });
+
+  it("per unit too, and nothing last year → no % (null), never a division by zero", () => {
+    const b = dash().units.find((u) => u.id === "B")!;
+    expect(b.comparisons.year.rentCollected).toEqual({ now: 0, before: 11_000, change: -1 });
+    const e = buildDashboard({ ...fixture(), payments: [], expenses: [] }, { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" });
+    expect(e.comparisons.year.rentCollected.change).toBeNull();
+  });
+
+  it("statements: a closed year vs the year before; custom dates vs the same dates a year earlier", () => {
+    const fy = buildAnnualReport(fixture(), { ...opts(), year: 2025 });
+    const prev = buildAnnualReport(fixture(), { ...opts(), year: 2024 });
+    expect(fy.previous).toMatchObject({ label: "FY 2024-25", rentCollected: { now: fy.totals.rentCollected, before: prev.totals.rentCollected } });
+    const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2025-04-01"), to: D("2026-03-31") } });
+    expect(r.previous?.rentCollected.before).toBe(prev.totals.rentCollected);
+    expect(buildAnnualReport(fixture(), { ...opts(), year: "all" }).previous).toBeNull();
+  });
+});
+
+describe("rental yield (last 12 months)", () => {
+  const y = dash().yields;
+  it("per unit: rent and own expenses ÷ price paid and ÷ worth now", () => {
+    const a = y.units.find((u) => u.unitId === "A")!;
+    // 3/10/2025 – 2/10/2026: nine 12,500 payments (Oct–Jun) + 10,000 part = 1,22,500; geyser 4,200
+    expect(a).toMatchObject({ rent: 122_500, expenses: 4_200, net: 118_300, price: 3_850_000, value: 6_150_000, fullYear: true });
+    expect(a.grossOnPrice).toBeCloseTo(122_500 / 3_850_000, 6);
+    expect(a.netOnPrice).toBeCloseTo(118_300 / 3_850_000, 6);
+    expect(a.grossOnValue).toBeCloseTo(122_500 / 6_150_000, 6);
+    const b = y.units.find((u) => u.unitId === "B")!;
+    expect(b).toMatchObject({ rent: 0, expenses: 850.5, net: -850.5, grossOnPrice: 0 });
+  });
+  it("the property: units + whole-plot costs, over invested and worth now", () => {
+    const d = dash();
+    expect(y.property).toMatchObject({ rent: 122_500, expenses: 5_050.5, price: d.kpis.invested, value: d.kpis.bestOfferTotal });
+    expect(y.property.netOnPrice).toBeCloseTo((122_500 - 5_050.5) / d.kpis.invested, 6);
+    expect(d.explain["yield:netPrice"].value).toBe(y.property.netOnPrice);
+  });
+});
+
+describe("next 12 months", () => {
+  const withTax = (): DashboardInput => ({
+    ...fixture(),
+    propertyTax: [
+      { id: "t0", unitId: "A", year: 2025, amount: 2_640, status: "Paid" },
+      { id: "t1", unitId: "A", year: 2026, amount: 2_640, status: "Due" },
+      { id: "t2", unitId: "B", year: 2026, amount: 2_720, status: "Due" },
+    ],
+  });
+  const f = buildDashboard(withTax(), { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" }).forecast;
+
+  it("rent falling due Oct 2026 – Sep 2027; overdue months are not in it", () => {
+    expect(f.label).toBe("Oct 2026 – Sep 2027");
+    expect(f.months).toHaveLength(12);
+    expect(f.months.every((m) => m.rent === 12_500)).toBe(true);
+    expect(f.units.map((u) => [u.unitName, u.rent, u.months])).toEqual([
+      ["Unit A", 150_000, 12],
+      ["Unit B", 0, 0],
+    ]);
+  });
+  it("property tax still due + usual costs (last 12 months, no tax, no one-offs) → net", () => {
+    expect([f.tax, f.months[0].tax]).toEqual([5_360, 5_360]);
+    expect(f.taxBills.map((t) => t.id)).toEqual(["t1", "t2"]);
+    expect([f.costs, f.costsMonthly]).toEqual([5_050.5, 420.88]);
+    expect(sum(f.months.map((m) => m.costs))).toBe(5_050.5);
+    expect(f.net).toBe(150_000 - 5_360 - 5_050.5);
+    expect(sum(f.months.map((m) => m.net))).toBe(f.net);
+  });
+  it("a rent change already entered is used from its month", () => {
+    const input = withTax();
+    input.leases = input.leases.map((l) => (l.id === "A2" ? { ...l, rentChanges: [{ effectiveFrom: D("2027-01-01"), monthlyRent: 14_000 }] } : l));
+    const g = buildDashboard(input, { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" }).forecast;
+    expect(g.rent).toBe(3 * 12_500 + 9 * 14_000);
+  });
+});
+
+describe("agreement renewals", () => {
+  const withEnd = (end: string, days?: number) => {
+    const input = fixture();
+    input.leases = input.leases.map((l) => (l.id === "A2" ? { ...l, agreementEndDate: D(end) } : l));
+    if (days !== undefined) input.settings = { ...input.settings, renewalReminderDays: days };
+    return buildDashboard(input, { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" });
+  };
+  it("listed when the agreement ends within the reminder days (30 by default), or has ended", () => {
+    expect(withEnd("2026-10-22").renewals).toMatchObject([{ leaseId: "A2", unitName: "Unit A", daysLeft: 20, state: "due-soon" }]);
+    expect(withEnd("2026-11-11").renewals).toEqual([]);
+    expect(withEnd("2026-11-11", 60).renewals).toMatchObject([{ daysLeft: 40, state: "due-soon" }]);
+    expect(withEnd("2026-09-29").renewals).toMatchObject([{ daysLeft: -3, state: "expired" }]);
+    expect(withEnd("2026-10-22").units.find((u) => u.id === "A")!.activeLease?.agreementEndDate).toBe(ISO("2026-10-22"));
+  });
+});
+
 // ─────────────────────────────── unit report ───────────────────────────────
 
 describe("unit report", () => {

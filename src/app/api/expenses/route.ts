@@ -1,4 +1,4 @@
-// GET /api/expenses?year=&yearMode=calendar|fy&unitId=(id|plot)&categoryId= → { items, total, count } (newest first) ; POST /api/expenses
+// GET /api/expenses?year=&yearMode=calendar|fy&from=&to=&unitId=(id|plot)&categoryId= → { items, total, count } (newest first) ; POST /api/expenses
 import type { Prisma } from "@prisma/client";
 import { handler, json, parseBody, parseQuery } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
@@ -14,10 +14,12 @@ import {
 } from "@/lib/schemas/expense";
 
 export const GET = handler(async (req) => {
-  const { year, yearMode, unitId, categoryId } = parseQuery(req, expenseListQuerySchema);
-  const range = year !== undefined ? yearRange(year, yearMode) : null;
+  const { year, yearMode, from, to, unitId, categoryId } = parseQuery(req, expenseListQuerySchema);
+  // custom dates (inclusive) win over a year
+  const yr = year !== undefined ? yearRange(year, yearMode) : null;
+  const range = from && to ? { gte: from, lte: to } : yr ? { gte: yr.from, lt: yr.to } : null;
   const where: Prisma.ExpenseWhereInput = {
-    ...(range && { expenseDate: { gte: range.from, lt: range.to } }),
+    ...(range && { expenseDate: range }),
     ...(unitId !== undefined && { unitId: unitId === WHOLE_PLOT ? null : unitId }),
     ...(categoryId !== undefined && { categoryId }),
   };

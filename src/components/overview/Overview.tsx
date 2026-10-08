@@ -383,7 +383,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
     const due = taxes.some((t) => t.status === "Due" && t.year <= year);
     const paidThisYear = taxes.some((t) => t.year === year) && taxes.filter((t) => t.year === year).every((t) => t.status !== "Due");
     return {
-      todos: data.actions.pending.length,
+      todos: data.actions.pending.length + data.renewals.length,
       mail: data.units.some((u) => u.rentState === "overdue" || u.rentState === "due-soon"),
       tax: due ? ("due" as const) : paidThisYear ? ("paid" as const) : undefined,
     };

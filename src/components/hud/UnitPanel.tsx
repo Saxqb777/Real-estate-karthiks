@@ -6,9 +6,10 @@ import { Check, Copy, DoorOpen, ExternalLink, FileSignature, Phone, ReceiptIndia
 import { useState } from "react";
 import { Badge, Button, LevelBadge, SegmentedBar, StatusPill, toast, cx } from "@/components/ui";
 import type { DashboardData, UnitBreakdown } from "@/lib/dashboard-types";
+import { agreementText } from "@/components/forms";
 import { daysBetween, formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { BucketHead, Fig, FigCell, FigCells, ScopeChip } from "./Figure";
+import { BucketHead, Fig, FigCell, FigCells, ScopeChip, vsLastYear } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
 import { explainKey, firstName, inr, monthList, positionLabel, telHref } from "./format";
@@ -73,6 +74,10 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
   const np = u.nextPayment;
   const arrears = np?.arrears;
   const p = u.periods[period];
+  // ▲ / ▼ vs the same days last year (year / month); its maths is linked from each figure's breakdown
+  const cmp = period === "allTime" ? null : u.comparisons[period];
+  const yld = data.yields.units.find((r) => r.unitId === u.id) ?? null;
+  const renew = lease ? data.renewals.find((r) => r.leaseId === lease.id) : undefined;
   const pos = positionLabel(u.position);
   const past = !data.isLive;
   const vacantNow = u.vacantPeriods.find((v) => v.ongoing);
@@ -141,6 +146,14 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
                   <span className={b.tenantMeta}>
                     since {formatDate(lease.startDate)}
                     {lease.endDate ? ` · last day ${formatDate(lease.endDate)}` : ""}
+                    {lease.agreementEndDate && (
+                      <>
+                        {" · "}
+                        <span className={cx(renew && (renew.state === "expired" ? b.lateText : b.soonText))}>
+                          agreement {renew ? agreementText(renew.daysLeft) : `to ${formatDate(lease.agreementEndDate)}`}
+                        </span>
+                      </>
+                    )}
                   </span>
                 </div>
                 {lease.tenantPhone ? (
@@ -230,9 +243,9 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
             <p className={s.calm}>No rent expected — nobody lives here {data.isLive ? "now" : "on this date"}.</p>
           )}
           <FigCells>
-            <FigCell label="Rent collected" value={p.rentCollected} tone="income" onClick={() => openScoped("rentCollected")} />
-            <FigCell label="Its expenses" value={p.expenses} tone="expense" onClick={() => openScoped("expenses")} />
-            <FigCell label="Net cash" value={p.net} tone="signed" onClick={() => openScoped("netCash")} />
+            <FigCell label="Rent collected" value={p.rentCollected} tone="income" delta={vsLastYear(cmp, "rentCollected")} onClick={() => openScoped("rentCollected")} />
+            <FigCell label="Its expenses" value={p.expenses} tone="expense" delta={vsLastYear(cmp, "expenses")} onClick={() => openScoped("expenses")} />
+            <FigCell label="Net cash" value={p.net} tone="signed" delta={vsLastYear(cmp, "net")} onClick={() => openScoped("netCash")} />
           </FigCells>
         </section>
 
@@ -259,6 +272,13 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
             />
             <FigCell label="Gain" value={u.appreciation} tone="value" paper="est." onClick={() => open("gain")} />
           </FigCells>
+          {/* rental yield, last 12 months (owner 8/10): rent ÷ worth now; net = after this unit's expenses */}
+          {yld && (
+            <FigCells cols={2}>
+              <FigCell label="Gross yield" value={yld.grossOnValue} format="pct" missing="No value recorded yet" onClick={yld.grossOnValue === null ? undefined : () => open("yield:grossValue")} />
+              <FigCell label="Net yield" value={yld.netOnValue} format="pct" missing="No value recorded yet" onClick={yld.netOnValue === null ? undefined : () => open("yield:netValue")} />
+            </FigCells>
+          )}
         </section>
 
         {/* ---------------- OCCUPANCY */}

@@ -296,6 +296,34 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   scope chip on cash sections (Property, Mailbox, House windows) and the dock "Where money went" / compare tabs.
   Data → Payments got the Expenses-style toolbar (Year incl. All time + FY/Calendar + lease; /api/payments?year=&yearMode=
   by the day received); Payments AND Expenses now OPEN on All time. Phone report KPIs = one full-width row each.
+- 8/10/2026: FIVE UPGRADES (owner picked from my list, "go ahead n deploy"). All maths in calculations.ts (tested) with
+  explain entries:
+  1. RENTAL YIELD, last 12 months (as-of − 1 y, as-of]: rent received ÷ worth now (the owner's "yearly rent ÷ value"),
+     gross and net (rent − expenses; a unit counts only its own expenses, the property counts all incl. whole plot); also
+     on price paid in the report. data.yields {units, property}; keys [unit:<id>:]yield:<gross|net><Price|Value>.
+     Shown: Property window value section "Rental yield" line (gross, sub "Net x%"), house window 2 cells (gross/net),
+     dock compare tab 2 rows, Property value report table "Rental yield · last 12 months".
+  2. COMPARED WITH LAST YEAR: ▲/▼ % chips (ui/Delta: green = good — rent/net up, expenses down) on rent / expenses /
+     net cash for the year or month (same days a year earlier, lastYearScope; none for all time). data.comparisons
+     {year, month} + per unit u.comparisons; AnnualReport.previous (year / custom dates). Keys [unit:<id>:]yoy:<year|
+     month>:<rentCollected|expenses|netCash>, linked as "related" from each figure's breakdown. Shown: Property window
+     (hero + lines), Mailbox hero, house window cells, dock income totals (past year = vs the whole year before), Income
+     report KPIs (hover = last year's figure).
+  3. NEXT 12 MONTHS (data.forecast): rent falling due from the as-of month on (current + incoming leases, rent changes
+     included, unpaid part only) − property tax still Due (first month) − usual costs (last 12 months' expenses without
+     property tax and one-offs ≥ ₹20,000, ÷ 12). Keys forecast:<rent|tax|costs|net>. Shown: Property window section
+     "NEXT 12 MONTHS" (est.), Mailbox cell, new 9th report card "Next 12 months" (KPIs, month table, rent by unit, tax
+     due, usual costs). Report home grid now 3 × 3.
+  4. CUSTOM DATES: PeriodPicker (forms/PeriodPicker.tsx: All time · Custom dates · each FY/calendar year; From/To boxes,
+     inclusive, From ≤ To kept) on Income & expenses / Occupancy reports and Data → Payments / Expenses. APIs take
+     from+to (win over year): /api/reports/annual (kind "range", month rows ≤ 24 months else year rows, From can't be
+     in the future), /api/payments, /api/expenses.
+  5. AGREEMENT RENEWAL: Lease.agreementEndDate (migration 20261008090000; also Settings.renewalReminderDays default 30,
+     Config → Settings "Renewal reminder … days before"). Lease form "Agreement ends" + "11 months" button (start + 11
+     months − 1 day). Reminder = current lease whose agreement ends within the window or has ended (data.renewals):
+     property manager window lists them first ("Renew X's agreement" + RENEW 11 MONTHS → next 11 months from the day
+     after), lease card tag "Agreement ends in N days", lease drawer fact + renew button, house window tenant line, rent
+     roll "Agreement ends" column. In-app only (no email/cron).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

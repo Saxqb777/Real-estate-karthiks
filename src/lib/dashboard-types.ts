@@ -106,6 +106,90 @@ export interface LeaseSummary {
   monthlyRent: number;
   securityDeposit: number;
   state: LeaseState;
+  /** the rental agreement's end (renew before it); null = not recorded */
+  agreementEndDate: string | null;
+}
+
+// ───────────────────────────── upgrades (owner 8/10/2026) ─────────────────────────────
+
+/** One figure now vs the same span a year earlier. change = (now − before) ÷ |before|; null when before is 0. */
+export interface CashChange {
+  now: number;
+  before: number;
+  change: number | null;
+}
+
+/** Rent collected / expenses / net cash vs the same span one year earlier ("compared with last year"). */
+export interface CashComparison {
+  /** what it's compared with: "FY 2025-26 to 8/10/2025" · "Oct 2025 to 8/10/2025" · "1/4/2025 – 30/9/2025" */
+  label: string;
+  start: string | null;
+  end: string;
+  rentCollected: CashChange;
+  expenses: CashChange;
+  net: CashChange;
+}
+
+/** Rental yield over the last 12 months: rent (and rent − expenses) ÷ the price paid and ÷ today's value. */
+export interface YieldRow {
+  unitId: string | null; // null = the whole property
+  name: string;
+  rent: number; // rent received in the last 12 months
+  expenses: number; // unit: its own expenses; property: all expenses incl. whole plot
+  net: number;
+  price: number; // purchase price (invested)
+  value: number; // worth now (est.)
+  grossOnPrice: number | null; // fraction
+  netOnPrice: number | null;
+  grossOnValue: number | null;
+  netOnValue: number | null;
+  /** owned for the whole 12 months (otherwise the yield covers only the months owned) */
+  fullYear: boolean;
+}
+
+export interface Yields {
+  label: string; // "Last 12 months"
+  start: string;
+  end: string;
+  units: YieldRow[]; // active units
+  property: YieldRow;
+}
+
+export interface ForecastMonth {
+  key: string; // "2026-10"
+  label: string; // "Oct 2026"
+  rent: number; // rent falling due this month (unpaid part), current + incoming leases
+  tax: number; // property tax still due (first month)
+  costs: number; // usual running costs (est.)
+  net: number;
+}
+
+/** Next 12 months: rent that will fall due (incl. rent changes already entered) − property tax due − usual costs (est.). */
+export interface Forecast {
+  label: string; // "Oct 2026 – Sep 2027"
+  start: string; // the day after the as-of date
+  end: string; // last day of the 12th month
+  months: ForecastMonth[];
+  rent: number;
+  tax: number;
+  costs: number;
+  net: number;
+  /** usual costs a month = expenses of the last 12 months (without property tax and one-offs ≥ oneOffMin) ÷ 12 */
+  costsMonthly: number;
+  oneOffMin: number;
+  units: { unitId: string; unitName: string; tenantName: string | null; rentNow: number | null; rent: number; months: number }[];
+  taxBills: { id: string; unitId: string; unitName: string; year: number; amount: number }[];
+}
+
+/** A current lease whose rental agreement ends within the reminder window (or already ended). */
+export interface RenewalReminder {
+  leaseId: string;
+  unitId: string;
+  unitName: string;
+  tenantName: string;
+  agreementEndDate: string;
+  daysLeft: number; // negative = ended that many days ago
+  state: "due-soon" | "expired";
 }
 
 /**
@@ -113,7 +197,8 @@ export interface LeaseSummary {
  * the UI never sums payments itself.
  */
 export interface PeriodSummary {
-  kind: "allTime" | "year" | "month";
+  /** "range" = custom dates (owner 8/10/2026) */
+  kind: "allTime" | "year" | "month" | "range";
   /** "all" | year key ("2025" = FY 2025-26 or calendar 2025) | "2026-10" */
   key: string;
   label: string; // "All time" | "FY 2025-26" | "2026" | "Oct 2026"
@@ -187,6 +272,8 @@ export interface UnitBreakdown {
   netCash: number;
   /** unit-scoped cash: rent of its leases, expenses tagged to it */
   periods: ScopedPeriods;
+  /** this year / this month vs the same span last year (unit-scoped cash) */
+  comparisons: { year: CashComparison; month: CashComparison };
   occupancyPct: number; // fraction 0..1
   daysOwned: number;
   daysOccupied: number;
@@ -450,11 +537,20 @@ export interface DashboardData {
     lateFeeEnabled: boolean;
     lateFeeAmount: number;
     lateFeeGraceDays: number;
+    renewalReminderDays: number;
   };
   plot: PlotGeometry;
   kpis: Kpis;
   /** cash summaries for the HUD's period control */
   periods: ScopedPeriods;
+  /** this year / this month vs the same span last year (portfolio cash) */
+  comparisons: { year: CashComparison; month: CashComparison };
+  /** rental yield, last 12 months (active units + the property) */
+  yields: Yields;
+  /** the next 12 months, from the as-of date */
+  forecast: Forecast;
+  /** rental agreements to renew (current leases ending within settings.renewalReminderDays, or ended) */
+  renewals: RenewalReminder[];
   /** units owned on the as-of date (active first), inactive flagged */
   units: UnitBreakdown[];
   /** units bought after the as-of date (time scrubber looking back) */
@@ -497,8 +593,8 @@ export interface AnnualReport {
   generatedAt: string;
   today: string;
   yearMode: YearMode;
-  /** "year" = one FY / calendar year; "allTime" = first record → today (year=all) */
-  kind: "year" | "allTime";
+  /** "year" = one FY / calendar year; "allTime" = first record → today (year=all); "range" = custom dates (from/to) */
+  kind: "year" | "allTime" | "range";
   year: number; // key: FY start year or calendar year (all time: the running year)
   label: string; // "FY 2025-26" · "All time"
   start: string;
@@ -508,7 +604,9 @@ export interface AnnualReport {
   isPartial: boolean;
   /** identical to the dashboard's periods.year when the dashboard's as-of date is in this year */
   totals: PeriodSummary;
-  /** one year: all 12 months (after `through` = 0); all time: [] */
+  /** the same span one year earlier (null for all time) */
+  previous: CashComparison | null;
+  /** one year: all 12 months (after `through` = 0); custom dates up to 24 months: their months; all time: [] */
   months: {
     year: number;
     month: number;
@@ -520,7 +618,7 @@ export interface AnnualReport {
     expenses: number;
     net: number;
   }[];
-  /** all time only (else []): cash flow per FY / calendar year, oldest first; the running year isPartial */
+  /** all time (and custom dates over 24 months) — else []: cash flow per FY / calendar year, oldest first */
   years: {
     year: number;
     key: string;

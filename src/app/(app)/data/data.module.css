@@ -31,6 +31,9 @@
   min-width: 150px;
   max-width: 260px;
 }
+.filterPeriod {
+  min-width: 0;
+}
 .clear {
   margin-left: auto;
   font-size: var(--fs-xs);
@@ -488,7 +491,8 @@ button.miniRow:hover {
   .toolbar {
     padding: 8px 12px;
   }
-  .filterSelect {
+  .filterSelect,
+  .filterPeriod {
     min-width: 0;
     flex: 1 1 140px;
   }
@@ -538,4 +542,12 @@ button.miniRow:hover {
   .rentChangeRow > :last-child {
     grid-column: 1 / -1;
   }
+}
+
+/* lease drawer: agreement end date + renewal state + renew (owner 8/10/2026) */
+.agreement {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
 }

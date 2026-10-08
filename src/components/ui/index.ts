@@ -28,6 +28,7 @@ export { Table, type TableProps, type Column } from "./Table";
 export { Badge, StatusPill, type BadgeProps, type BadgeTone, type StatusPillProps, type StatusKind } from "./Badge";
 
 export { AnimatedNumber, type AnimatedNumberProps } from "./AnimatedNumber";
+export { Delta, type DeltaProps } from "./Delta";
 export { formatNumber, type NumberFormat } from "./format-number";
 export { StatTile, type StatTileProps, type StatDelta } from "./StatTile";
 export { Sparkline, type SparklineProps } from "./Sparkline";

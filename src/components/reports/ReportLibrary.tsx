@@ -5,19 +5,34 @@
 // re-computed here except plain column totals (sumAmounts).
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Button, EmptyState, IconButton, LinkButton, Panel, Select, Skeleton, cx } from "@/components/ui";
-import { ChoiceGroup, currentYear, useLeases, usePropertyTax, useUnits, useYearMode, yearLabel, yearOf, type YearMode } from "@/components/forms";
+import { Button, Delta, EmptyState, IconButton, LinkButton, Panel, Select, Skeleton, cx } from "@/components/ui";
+import {
+  ChoiceGroup,
+  PeriodPicker,
+  agreementText,
+  currentYear,
+  periodParams,
+  periodText,
+  useLeases,
+  usePropertyTax,
+  useUnits,
+  useYearMode,
+  yearOf,
+  type PeriodPick,
+  type YearMode,
+} from "@/components/forms";
 import { sumAmounts } from "@/lib/calculations";
 import { useApi } from "@/lib/client";
-import type { AnnualReport, DashboardData, RentLedger } from "@/lib/dashboard-types";
+import type { AnnualReport, CashComparison, DashboardData, RentLedger } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
-import { formatINR, formatINRCompact } from "@/lib/format";
+import { formatINR, formatINRCompact, formatPercent } from "@/lib/format";
 import s from "./rlib.module.css";
 
-type ReportId = "income" | "rentroll" | "dues" | "occupancy" | "tenant" | "value" | "tax" | "deposits";
+type ReportId = "income" | "forecast" | "rentroll" | "dues" | "occupancy" | "tenant" | "value" | "tax" | "deposits";
 
 const REPORTS: { id: ReportId; title: string; line: string }[] = [
   { id: "income", title: "Income & expenses", line: "What came in, what went out" },
+  { id: "forecast", title: "Next 12 months", line: "Rent to come, bills ahead" },
   { id: "rentroll", title: "Rent roll", line: "Who lives where and pays what" },
   { id: "dues", title: "Dues & arrears", line: "Who owes you, how late" },
   { id: "occupancy", title: "Occupancy & vacancy", line: "Days let vs empty, rent lost" },
@@ -29,7 +44,7 @@ const REPORTS: { id: ReportId; title: string; line: string }[] = [
 
 const inr = (n: number | null | undefined) => (n == null ? "—" : formatINR(n));
 const dash = (n: number) => (n ? formatINR(n) : "—");
-const pct = (n: number | null | undefined) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`);
+const pct = (n: number | null | undefined) => formatPercent(n);
 
 /** Old deep links (/data?report=ledger&lease=…#reports) open the tenant statement. */
 function initialFromUrl(): { open: ReportId | null; leaseId: string | null } {
@@ -56,14 +71,16 @@ export function ReportLibrary() {
   const tax = usePropertyTax();
   const dashQ = useApi<DashboardData>(`/api/dashboard?yearMode=${yearMode}`, { keepPrevious: true });
 
-  // ---- the year (income & occupancy): one FY / calendar year, or ALL TIME (owner 8/10)
+  // ---- the period (income & occupancy): one FY / calendar year, ALL TIME or custom From–To dates (owner 8/10)
   const unitList = useMemo(() => units.data?.items ?? [], [units.data]);
   const lastYear = currentYear(yearMode);
   const firstYear = unitList.length ? Math.min(...unitList.map((u) => yearOf(u.purchaseDate, yearMode))) : lastYear;
-  const [yearPick, setYearPick] = useState<number | "all" | null>(null);
-  const allTime = yearPick === "all";
-  const year = Math.min(lastYear, Math.max(firstYear, typeof yearPick === "number" ? yearPick : lastYear));
-  const annual = useApi<AnnualReport>(unitList.length ? `/api/reports/annual?year=${allTime ? "all" : year}&yearMode=${yearMode}` : null, { keepPrevious: true });
+  const [pick, setPick] = useState<PeriodPick | null>(null);
+  const period: PeriodPick =
+    pick === null ? { kind: "year", year: lastYear } : pick.kind === "year" ? { kind: "year", year: Math.min(lastYear, Math.max(firstYear, pick.year)) } : pick;
+  const year = period.kind === "year" ? period.year : lastYear;
+  const annualQuery = new URLSearchParams({ ...(period.kind === "all" ? { year: "all" } : periodParams(period, yearMode)), yearMode }).toString();
+  const annual = useApi<AnnualReport>(unitList.length ? `/api/reports/annual?${annualQuery}` : null, { keepPrevious: true });
 
   // ---- the lease (tenant statement)
   const leaseList = useMemo(() => [...(leases.data?.items ?? [])].sort((a, z) => z.startDate.localeCompare(a.startDate)), [leases.data]);
@@ -71,12 +88,20 @@ export function ReportLibrary() {
   const ledger = useApi<RentLedger>(open === "tenant" && leaseId ? `/api/reports/rent-ledger/${encodeURIComponent(leaseId)}` : null, { keepPrevious: true });
 
   const d = dashQ.data;
+  // only the report for the period on screen (keepPrevious holds the last one while the next loads)
+  const ad = annual.data;
   const a =
-    annual.data && annual.data.yearMode === yearMode && (allTime ? annual.data.kind === "allTime" : annual.data.kind === "year" && annual.data.year === year)
-      ? annual.data
+    ad &&
+    ad.yearMode === yearMode &&
+    (period.kind === "all"
+      ? ad.kind === "allTime"
+      : period.kind === "year"
+        ? ad.kind === "year" && ad.year === period.year
+        : ad.kind === "range" && ad.start.slice(0, 10) === period.from && ad.end.slice(0, 10) === period.to)
+      ? ad
       : null;
   const taxItems = tax.data?.items ?? [];
-  const yLabel = allTime ? "All time" : yearLabel(year, yearMode);
+  const yLabel = periodText(period, yearMode);
   const today = d ? formatDate(d.today) : "";
 
   if (units.data && unitList.length === 0)
@@ -93,18 +118,22 @@ export function ReportLibrary() {
       </Panel>
     );
 
+  const isYear = period.kind === "year";
   const yearControl = (
-    <div className={s.controls}>
-      <IconButton size="sm" variant="ghost" label="Previous year" icon={<ChevronLeft />} disabled={allTime || year <= firstYear} onClick={() => setYearPick(year - 1)} />
-      <Select compact aria-label="Year" value={allTime ? "all" : String(year)} onChange={(e) => setYearPick(e.target.value === "all" ? "all" : Number(e.target.value))} className={s.year}>
-        <option value="all">All time</option>
-        {Array.from({ length: lastYear - firstYear + 1 }, (_, i) => lastYear - i).map((y) => (
-          <option key={y} value={y}>
-            {yearLabel(y, yearMode)}
-          </option>
-        ))}
-      </Select>
-      <IconButton size="sm" variant="ghost" label="Next year" icon={<ChevronRight />} disabled={allTime || year >= lastYear} onClick={() => setYearPick(year + 1)} />
+    <div className={cx(s.controls, period.kind === "range" && s.controlsDates)}>
+      {isYear && (
+        <IconButton size="sm" variant="ghost" label="Previous year" icon={<ChevronLeft />} disabled={year <= firstYear} onClick={() => setPick({ kind: "year", year: year - 1 })} />
+      )}
+      <PeriodPicker
+        value={period}
+        onChange={setPick}
+        years={Array.from({ length: lastYear - firstYear + 1 }, (_, i) => lastYear - i)}
+        mode={yearMode}
+        className={s.period}
+      />
+      {isYear && (
+        <IconButton size="sm" variant="ghost" label="Next year" icon={<ChevronRight />} disabled={year >= lastYear} onClick={() => setPick({ kind: "year", year: year + 1 })} />
+      )}
       <ChoiceGroup<YearMode>
         name="yearMode"
         size="sm"
@@ -124,13 +153,15 @@ export function ReportLibrary() {
     if (!d) return <Loading />;
     switch (id) {
       case "income":
-        return a ? <IncomeReport a={a} /> : <Loading />;
+        return a ? <IncomeReport a={a} /> : annual.error ? <EmptyState compact title={annual.error.message} /> : <Loading />;
+      case "forecast":
+        return <Forecast d={d} />;
       case "rentroll":
         return <RentRoll d={d} leases={leaseList} />;
       case "dues":
         return <Dues d={d} />;
       case "occupancy":
-        return a ? <Occupancy a={a} /> : <Loading />;
+        return a ? <Occupancy a={a} /> : annual.error ? <EmptyState compact title={annual.error.message} /> : <Loading />;
       case "tenant":
         return ledger.data && ledger.data.lease.id === leaseId ? <TenantStatement l={ledger.data} /> : leaseId ? <Loading /> : <EmptyState compact title="No leases yet" />;
       case "value":
@@ -150,6 +181,7 @@ export function ReportLibrary() {
     const curLease = d?.units.find((u) => u.activeLease)?.activeLease;
     const headline: Record<ReportId, { big: string; sub: string; tone?: string }> = {
       income: { big: a ? inr(a.totals.net) : "…", sub: `net cash · ${yLabel}`, tone: a ? netTone(a.totals.net) : undefined },
+      forecast: { big: d ? inr(d.forecast.net) : "…", sub: d ? `net cash expected (est.) · ${d.forecast.label}` : "", tone: d ? netTone(d.forecast.net) : undefined },
       rentroll: { big: k ? `${k.unitsOccupied} of ${k.unitsActive}` : "…", sub: k ? `units let · ${inr(k.monthlyRentRoll)}/mo` : "", tone: "" },
       dues: { big: k ? inr(k.overdueAmount) : "…", sub: k ? (k.overdueAmount ? `owed · ${k.overdueMonths} ${k.overdueMonths === 1 ? "month" : "months"}` : "nothing owed") : "", tone: k?.overdueAmount ? s.red : s.teal },
       occupancy: { big: a ? pct(avgOcc(a)) : "…", sub: a ? `occupied · ${sumOf(a.occupancy.map((o) => o.vacantDays))} days empty · ${yLabel}` : "", tone: "" },
@@ -259,17 +291,27 @@ function Loading() {
   );
 }
 
-function Kpis({ items }: { items: { label: string; value: string; tone?: string }[] }) {
+function Kpis({ items }: { items: { label: string; value: string; tone?: string; delta?: ReactNode }[] }) {
   return (
     <div className={s.kpis}>
       {items.map((k) => (
         <div key={k.label} className={s.kpi}>
           <span className={s.kpiLabel}>{k.label}</span>
-          <span className={cx(s.kpiValue, k.tone)}>{k.value}</span>
+          <span className={s.kpiLine}>
+            <span className={cx(s.kpiValue, k.tone)}>{k.value}</span>
+            {k.delta}
+          </span>
         </div>
       ))}
     </div>
   );
+}
+
+/** ▲ / ▼ vs the same span a year earlier (owner 8/10); hover = what it's compared with and last year's amount. */
+function vsLastYear(p: CashComparison | null, field: "rentCollected" | "expenses" | "net"): ReactNode {
+  if (!p) return null;
+  const c = p[field];
+  return <Delta change={c.change} better={field === "expenses" ? "down" : "up"} title={`${p.label}: ${formatINR(c.before)}`} />;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -288,24 +330,24 @@ const netTone = (n: number) => (n > 0 ? s.teal : n < 0 ? s.red : undefined);
 
 function IncomeReport({ a }: { a: AnnualReport }) {
   const t = a.totals;
-  const all = a.kind === "allTime";
-  // all time: one row per FY / calendar year, oldest first; one year: its 12 months in order
-  const rows = all ? a.years : a.months;
+  // all time (and custom dates over 24 months): one row per FY / calendar year, oldest first; else month by month
+  const byYear = a.years.length > 0;
+  const rows = byYear ? a.years : a.months;
   return (
     <>
       <Kpis
         items={[
-          { label: "Rent collected", value: inr(t.rentCollected), tone: s.teal },
-          { label: "Expenses", value: inr(t.expenses), tone: s.red },
-          { label: "Net cash", value: inr(t.net), tone: netTone(t.net) },
+          { label: "Rent collected", value: inr(t.rentCollected), tone: s.teal, delta: vsLastYear(a.previous, "rentCollected") },
+          { label: "Expenses", value: inr(t.expenses), tone: s.red, delta: vsLastYear(a.previous, "expenses") },
+          { label: "Net cash", value: inr(t.net), tone: netTone(t.net), delta: vsLastYear(a.previous, "net") },
         ]}
       />
       <div className={s.two}>
-        <Section title={all ? "Year by year" : "Month by month"}>
+        <Section title={byYear ? "Year by year" : "Month by month"}>
           <TableBox>
             <thead>
               <tr>
-                <th>{all ? "Year" : "Month"}</th>
+                <th>{byYear ? "Year" : "Month"}</th>
                 <th className={s.r}>Rent in</th>
                 <th className={s.r}>Expenses</th>
                 <th className={s.r}>Net</th>
@@ -412,6 +454,7 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
             <th>Tenant</th>
             <th>Phone</th>
             <th>Since</th>
+            <th>Agreement ends</th>
             <th className={s.r}>Rent</th>
             <th>Billing</th>
             <th className={s.r}>Deposit</th>
@@ -423,12 +466,17 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
             const l = u.activeLease;
             const extra = l ? leases.find((x) => x.id === l.id) : undefined;
             const due = extra?.rentDueDay ?? d.settings.rentDueDay;
+            const renew = l ? d.renewals.find((r) => r.leaseId === l.id) : undefined;
             return (
               <tr key={u.id}>
                 <td className={s.strong}>{u.name}</td>
                 <td>{l?.tenantName ?? "—"}</td>
                 <td>{l?.tenantPhone ?? "—"}</td>
                 <td>{l ? formatDate(l.startDate) : "—"}</td>
+                <td>
+                  {l?.agreementEndDate ? formatDate(l.agreementEndDate) : "—"}
+                  {renew && <span className={cx(s.status, s.renew, renew.state === "expired" ? s.red : s.mari)}>{agreementText(renew.daysLeft)}</span>}
+                </td>
                 <td className={s.r}>{l ? inr(l.monthlyRent) : "—"}</td>
                 <td>{l ? `${extra?.rentTiming === "arrears" ? "IN ARREARS" : "IN ADVANCE"} · day ${due}` : "—"}</td>
                 <td className={s.r}>{l ? inr(l.securityDeposit) : "—"}</td>
@@ -448,6 +496,7 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
             <td />
             <td />
             <td />
+            <td />
             <td className={s.r}>{inr(d.kpis.monthlyRentRoll)}</td>
             <td />
             <td className={s.r}>{inr(d.kpis.securityDepositsHeld)}</td>
@@ -455,6 +504,132 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
           </tr>
         </tfoot>
       </TableBox>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- 2b · next 12 months (owner 8/10)
+
+function Forecast({ d }: { d: DashboardData }) {
+  const f = d.forecast;
+  const bills = f.tax + f.costs;
+  return (
+    <>
+      <Kpis
+        items={[
+          { label: "Rent expected", value: inr(f.rent), tone: s.teal },
+          { label: "Bills & costs (est.)", value: inr(bills), tone: bills ? s.red : undefined },
+          { label: "Net cash expected", value: inr(f.net), tone: netTone(f.net) },
+        ]}
+      />
+      <div className={s.two}>
+        <Section title="Month by month">
+          <TableBox>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th className={s.r}>Rent</th>
+                <th className={s.r}>Property tax</th>
+                <th className={s.r}>Usual costs</th>
+                <th className={s.r}>Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              {f.months.map((m) => (
+                <tr key={m.key}>
+                  <td>{m.label}</td>
+                  <td className={cx(s.r, s.teal)}>{dash(m.rent)}</td>
+                  <td className={cx(s.r, s.red)}>{dash(m.tax)}</td>
+                  <td className={cx(s.r, s.red)}>{dash(m.costs)}</td>
+                  <td className={cx(s.r, netTone(m.net))}>{inr(m.net)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td className={cx(s.r, s.teal)}>{inr(f.rent)}</td>
+                <td className={cx(s.r, s.red)}>{inr(f.tax)}</td>
+                <td className={cx(s.r, s.red)}>{inr(f.costs)}</td>
+                <td className={cx(s.r, netTone(f.net))}>{inr(f.net)}</td>
+              </tr>
+            </tfoot>
+          </TableBox>
+        </Section>
+        <div>
+          <Section title="Rent by unit">
+            <TableBox>
+              <thead>
+                <tr>
+                  <th>Unit</th>
+                  <th>Tenant</th>
+                  <th className={s.r}>Rent now</th>
+                  <th className={s.r}>Months</th>
+                  <th className={s.r}>Expected</th>
+                </tr>
+              </thead>
+              <tbody>
+                {f.units.map((u) => (
+                  <tr key={u.unitId}>
+                    <td className={s.strong}>{u.unitName}</td>
+                    <td>{u.tenantName ?? "—"}</td>
+                    <td className={s.r}>{inr(u.rentNow)}</td>
+                    <td className={s.r}>{u.months || "—"}</td>
+                    <td className={cx(s.r, s.teal)}>{dash(u.rent)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td />
+                  <td />
+                  <td />
+                  <td className={cx(s.r, s.teal)}>{inr(f.rent)}</td>
+                </tr>
+              </tfoot>
+            </TableBox>
+          </Section>
+          <Section title="Property tax due">
+            {f.taxBills.length ? (
+              <TableBox>
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Year</th>
+                    <th className={s.r}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {f.taxBills.map((b) => (
+                    <tr key={b.id}>
+                      <td>{b.unitName}</td>
+                      <td>{b.year}</td>
+                      <td className={cx(s.r, s.red)}>{inr(b.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableBox>
+            ) : (
+              <p className={s.allClear}>Nothing due.</p>
+            )}
+          </Section>
+          <Section title="Usual costs (est.)">
+            <TableBox>
+              <tbody>
+                <tr>
+                  <td>A month</td>
+                  <td className={cx(s.r, s.red)}>{inr(f.costsMonthly)}</td>
+                </tr>
+                <tr>
+                  <td>12 months</td>
+                  <td className={cx(s.r, s.red)}>{inr(f.costs)}</td>
+                </tr>
+              </tbody>
+            </TableBox>
+          </Section>
+        </div>
+      </div>
     </>
   );
 }
@@ -591,7 +766,7 @@ function Occupancy({ a }: { a: AnnualReport }) {
               </tbody>
             </TableBox>
           ) : (
-            <p className={s.allClear}>No empty days this year.</p>
+            <p className={s.allClear}>{a.kind === "year" ? "No empty days this year." : "No empty days."}</p>
           )}
         </Section>
       </div>
@@ -719,7 +894,51 @@ function Value({ d }: { d: DashboardData }) {
           </tr>
         </tfoot>
       </TableBox>
+      <Yields d={d} />
     </>
+  );
+}
+
+/** Rental yield, last 12 months (owner 8/10): rent ÷ worth now and ÷ price paid; net = after expenses. */
+function Yields({ d }: { d: DashboardData }) {
+  const y = d.yields;
+  const row = (r: DashboardData["yields"]["property"], total?: boolean) => (
+    <>
+      <td className={total ? undefined : s.strong}>{total ? "Property" : r.name}</td>
+      <td className={cx(s.r, s.teal)}>{dash(r.rent)}</td>
+      <td className={cx(s.r, s.red)}>{dash(r.expenses)}</td>
+      <td className={cx(s.r, netTone(r.net))}>{inr(r.net)}</td>
+      <td className={s.r}>{pct(r.grossOnValue)}</td>
+      <td className={s.r}>{pct(r.netOnValue)}</td>
+      <td className={s.r}>{pct(r.grossOnPrice)}</td>
+      <td className={s.r}>{pct(r.netOnPrice)}</td>
+    </>
+  );
+  return (
+    <Section title={`Rental yield · ${y.label.toLowerCase()}`}>
+      <TableBox>
+        <thead>
+          <tr>
+            <th>Unit</th>
+            <th className={s.r}>Rent in</th>
+            <th className={s.r}>Expenses</th>
+            <th className={s.r}>Net</th>
+            <th className={s.r}>Gross on worth now</th>
+            <th className={s.r}>Net on worth now</th>
+            <th className={s.r}>Gross on price</th>
+            <th className={s.r}>Net on price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {y.units.map((r) => (
+            <tr key={r.unitId ?? "property"}>{row(r)}</tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>{row(y.property, true)}</tr>
+        </tfoot>
+      </TableBox>
+    </Section>
   );
 }
 

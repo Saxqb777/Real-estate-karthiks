@@ -20,10 +20,16 @@ export const useUnits = () => useApi<{ items: UnitListItem[] }>("/api/units");
 export const useTenants = () => useApi<{ items: TenantListItem[] }>("/api/tenants");
 export const useLeases = () => useApi<{ items: LeaseListItem[] }>("/api/leases");
 /** Rent payments, optionally for one lease and/or one FY / calendar year (by the day received); no year = all time. */
-export function usePayments(leaseId?: string | null, q: { year?: number | null; yearMode?: string } = {}) {
+/** Custom dates (from + to, both inclusive) win over a year. */
+type PeriodQuery = { year?: number | null; yearMode?: string; from?: string | null; to?: string | null };
+
+export function usePayments(leaseId?: string | null, q: PeriodQuery = {}) {
   const p = new URLSearchParams();
   if (leaseId) p.set("leaseId", leaseId);
-  if (q.year != null) {
+  if (q.from && q.to) {
+    p.set("from", q.from);
+    p.set("to", q.to);
+  } else if (q.year != null) {
     p.set("year", String(q.year));
     p.set("yearMode", q.yearMode ?? "fy");
   }
@@ -38,9 +44,12 @@ export const useDashboard = () => useApi<DashboardData>("/api/dashboard");
 export const useSettings = () => useApi<SettingsDTO>("/api/settings");
 export const usePlot = () => useApi<PlotDTO>("/api/plot");
 
-export function useExpenses(q: { year?: number | null; yearMode?: string; unitId?: string | null; categoryId?: string | null }) {
+export function useExpenses(q: PeriodQuery & { unitId?: string | null; categoryId?: string | null }) {
   const p = new URLSearchParams();
-  if (q.year != null) {
+  if (q.from && q.to) {
+    p.set("from", q.from);
+    p.set("to", q.to);
+  } else if (q.year != null) {
     p.set("year", String(q.year));
     p.set("yearMode", q.yearMode ?? "fy");
   }
@@ -51,6 +60,22 @@ export function useExpenses(q: { year?: number | null; yearMode?: string; unitId
 }
 
 // ---------------------------------------------------------------- labels
+
+/** The usual 11-month rental agreement: from a start day (YYYY-MM-DD) to the day before the same date 11 months on
+ *  (1/10/2026 → 31/8/2027). A month without that date (31st → 30 Nov) ends on its last day. */
+export function elevenMonthsFrom(start: string): string {
+  const [y, m, d] = start.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(y, m - 1 + 11 + 1, 0)).getUTCDate(); // days in the month 11 months on
+  const end = new Date(Date.UTC(y, m - 1 + 11, Math.min(d, lastDay) - 1));
+  return end.toISOString().slice(0, 10);
+}
+
+/** Rental agreement renewal (owner 8/10): "ends in 12 days" · "ends today" · "ended 3 days ago". */
+export function agreementText(daysLeft: number): string {
+  if (daysLeft === 0) return "ends today";
+  if (daysLeft > 0) return `ends in ${daysLeft} ${daysLeft === 1 ? "day" : "days"}`;
+  return `ended ${-daysLeft} ${daysLeft === -1 ? "day" : "days"} ago`;
+}
 
 type UnitLike = { id: string; name: string; position?: "front" | "back" | null; isActive?: boolean };
 

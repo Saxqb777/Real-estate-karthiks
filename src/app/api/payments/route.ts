@@ -18,10 +18,12 @@ const paymentInclude = {
 
 /** Payments, newest first (optionally for one lease and/or one FY / calendar year by the day received), with count and total. */
 export const GET = handler(async (req) => {
-  const { leaseId, year, yearMode } = parseQuery(req, paymentListQuerySchema);
-  const range = year !== undefined ? yearRange(year, yearMode) : null;
+  const { leaseId, year, yearMode, from, to } = parseQuery(req, paymentListQuerySchema);
+  // custom dates (inclusive) win over a year
+  const yr = year !== undefined ? yearRange(year, yearMode) : null;
+  const range = from && to ? { gte: from, lte: to } : yr ? { gte: yr.from, lt: yr.to } : null;
   const items = await prisma.payment.findMany({
-    where: { leaseId, ...(range && { paymentDate: { gte: range.from, lt: range.to } }) },
+    where: { leaseId, ...(range && { paymentDate: range }) },
     orderBy: [{ paymentDate: "desc" }, { invoiceSeq: "desc" }],
     include: paymentInclude,
   });
