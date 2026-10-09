@@ -175,7 +175,8 @@ function MetricView({ data, explainKey, push, onOpenUnit }: { data: DashboardDat
 // ---------------------------------------------------------------- records
 
 /** Is a date-only ISO string inside a period summary's [start, end]? (selection only) */
-function inScope(date: string, start: string | null, end: string) {
+/** date within [start, end] (start null = from the beginning) — the dashboard's own scope bounds. */
+export function inScope(date: string, start: string | null, end: string) {
   const t = new Date(date).getTime();
   return (start === null || t >= new Date(start).getTime()) && t <= new Date(end).getTime();
 }

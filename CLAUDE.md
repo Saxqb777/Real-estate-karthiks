@@ -333,11 +333,14 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 9/10/2026: RADIAL MENU REMOVED (owner: "LETS REMOVE THIS FEATURE"): the right-click / long-press 6-slot wheel on a house
   (RENT · EXPENSE · CALL · PAY EB · TO-DO · MOVE OUT) is gone — hud/RadialMenu.tsx + radial.module.css + overview re-export
   deleted, Inspect radial state, EstateScene onUnitContextMenu + the long-press / contextmenu handlers in Interact.tsx
-  removed (a click still opens the house window). Waiting to ship WITH the Electricity box redesign.
-- 9/10/2026: ELECTRICITY BOX (EB pole window, hud/PolePanel.tsx) redesign — owner asked for options; mocks sent
-  (scratchpad elec/mock.html): A Meter (glowing LCD consumer no. + last bill / this year / all time + Pay / Add bill per
-  house — my pick), B Bill book (last 4 bills list + paid so far), C Power bars (big last bill + 6-bill bar chart),
-  D Compact (one slim row per house). Pending the owner's pick → build desktop + phone → deploy with the radial removal.
+  removed (a click still opens the house window). Shipped with the Electricity box redesign.
+- 9/10/2026: ELECTRICITY BOX (EB pole window, hud/PolePanel.tsx) = design A "METER" (owner picked A of A Meter /
+  B Bill book / C Power bars / D Compact): a card per house — name + status pill, the TNPDCL consumer no. on a glowing
+  dark-green LCD (11 digits shown 2-3-3-3 "06 441 008 572"; tap = copy), LAST BILL (₹ + date → the bill) · THIS YEAR
+  (₹ + bills → that year's bills) · ALL TIME (₹ + bills → all bills), PAY BILL (gold, TNPDCL link) + ADD BILL (expense
+  form pre-filled: that house, the electricity/utilities category, "TNPDCL bill"). Old full-width "Add a bill you paid"
+  footer removed. Bills = the category's expenses for the house up to the as-of date (matches the dashboard
+  composition); stacks to one column on phones. Deployed together with the radial-menu removal.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
