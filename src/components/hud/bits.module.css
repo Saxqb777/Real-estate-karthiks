@@ -963,12 +963,261 @@
   margin-left: auto;
 }
 
-/* =========================================================== revenue officer · property tax: design D "compact" (owner 9/10/2026) */
-/* a smaller window than the other centre windows */
-.taxCompact {
+/* =========================================================== compact windows (owner 9/10/2026: style 1 "Compact")
+   The house, mailbox, property, to-do and property-tax windows: a smaller window, one column of slim bordered rows,
+   the main figure big at the top with its action beside it, buttons at the bottom. */
+.compactWin {
   max-width: 760px;
   margin-inline: auto;
 }
+.compactWide {
+  max-width: 860px;
+}
+.cw {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.cRow {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.cPerson {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-color: rgba(201, 146, 46, 0.35);
+  background: rgba(201, 146, 46, 0.06);
+}
+.cAv {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-family: var(--ff-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a1a08;
+  background: radial-gradient(circle at 35% 30%, #ffd98f, #e2a446 60%, #9b6416);
+  box-shadow: 0 0 0 2px rgba(201, 146, 46, 0.5);
+}
+.cWho {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.cName {
+  font-family: var(--ff-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.cMeta {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.cLink {
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted rgba(243, 233, 216, 0.35);
+  cursor: pointer;
+  transition:
+    color 0.15s var(--ease-out),
+    border-color 0.15s var(--ease-out);
+}
+.cLink:hover {
+  color: var(--marigold);
+  border-bottom-color: var(--marigold);
+}
+.cActs {
+  display: flex;
+  gap: 8px;
+}
+.cHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border-left: 3px solid var(--marigold);
+}
+.cOk {
+  border-left-color: var(--teal);
+}
+.cLate {
+  border-left-color: var(--coral);
+}
+.cGold {
+  border-left-color: #c9922e;
+}
+.cSky {
+  border-left-color: var(--sky);
+}
+.cLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ff-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.cBig {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 3px;
+}
+.cSub {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.cSub > * {
+  vertical-align: baseline;
+}
+.cSoon {
+  color: var(--marigold);
+}
+.cSide {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px;
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  border-radius: 3px;
+  background: rgba(74, 222, 128, 0.1);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cPill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+.cPillWarn {
+  color: var(--marigold);
+  border-color: rgba(255, 181, 71, 0.45);
+  background: rgba(255, 181, 71, 0.1);
+}
+.cSecHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 4px 2px -2px;
+  font-family: var(--ff-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.cSecHead a {
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+.cSecHead a:hover {
+  color: var(--marigold);
+}
+.cPayer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.cPayer:disabled {
+  cursor: default;
+}
+.cPayerName {
+  font-family: var(--ff-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+.cPayerName span {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+.cOcc {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 14px;
+}
+.cOccSub {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.cLines {
+  padding-block: 6px;
+}
+.cEmpty {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+/* narrow windows (phones): the action goes under the figure, contact buttons under the name */
+@container hudpanel (max-width: 560px) {
+  .cHero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cPerson {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .cPerson > :last-child {
+    grid-column: 2;
+  }
+  .cOcc {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .cOcc > :nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* =========================================================== revenue officer · property tax: design D "compact" (owner 9/10/2026) */
 .td {
   grid-column: 1 / -1;
   display: flex;

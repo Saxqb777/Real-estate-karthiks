@@ -21,6 +21,8 @@ export interface HudPanelProps {
   title: ReactNode;
   /** next to the title, e.g. a status pill */
   aside?: ReactNode;
+  /** extra controls in the title bar, left of 📌 / ✕ (e.g. the ALL TIME · year · month switch) */
+  tools?: ReactNode;
   /** Shows the 📌 pin; pinned panels stay open (remembered per browser under this id). */
   pinId?: string;
   /** ✕ button and Esc (Esc is ignored while pinned). */
@@ -48,6 +50,7 @@ export function HudPanel({
   eyebrow,
   title,
   aside,
+  tools,
   pinId,
   onClose,
   crumbs,
@@ -90,6 +93,7 @@ export function HudPanel({
             {aside}
           </div>
         </div>
+        {tools && <div className={s.panelHeadTools}>{tools}</div>}
         <div className={s.panelTools}>
           {canPin && (
             <IconButton

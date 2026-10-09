@@ -1,18 +1,19 @@
 "use client";
-// Right panel for one house (opens on a house click / inspect-card expand). Sections:
-// tenant (tap-to-call) · rent (state, next due, arrears) + its cash · value (worth now / best offer / gain) ·
-// occupancy · electricity (TNPDCL + Pay) · quick actions opening the real forms in a Drawer.
-import { Check, Copy, DoorOpen, ExternalLink, FileSignature, Phone, ReceiptIndianRupee, Wallet, Zap } from "lucide-react";
+// The house window (opens on a house click). Compact style (owner 9/10/2026): one column of slim rows — the tenant
+// (call / WhatsApp), the next rent big with Record rent beside it (or what's owed), this house's cash (period switch in
+// the title bar), value (worth now · gain · yields), occupancy, electricity (TNPDCL + Pay); Add expense / Move out at the
+// bottom. Every figure still drills down.
+import { Check, Copy, DoorOpen, ExternalLink, FileSignature, MessageCircle, Phone, ReceiptIndianRupee, Wallet, Zap } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, LevelBadge, SegmentedBar, StatusPill, toast, cx } from "@/components/ui";
+import { Badge, Button, SegmentedBar, StatusPill, toast, cx } from "@/components/ui";
 import type { DashboardData, UnitBreakdown } from "@/lib/dashboard-types";
 import { agreementText } from "@/components/forms";
 import { daysBetween, formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { BucketHead, Fig, FigCell, FigCells, ScopeChip, vsLastYear } from "./Figure";
+import { Fig, FigCell, FigCells, FigLine, vsLastYear } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
-import { explainKey, firstName, inr, monthList, positionLabel, telHref } from "./format";
+import { explainKey, firstName, inr, monthList, phoneText, positionLabel, telHref, waHref } from "./format";
 import type { PeriodKind } from "./types";
 import s from "./hud.module.css";
 import b from "./bits.module.css";
@@ -79,20 +80,22 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
   const yld = data.yields.units.find((r) => r.unitId === u.id) ?? null;
   const renew = lease ? data.renewals.find((r) => r.leaseId === lease.id) : undefined;
   const pos = positionLabel(u.position);
-  const past = !data.isLive;
   const vacantNow = u.vacantPeriods.find((v) => v.ongoing);
+
+  const recordRent = lease ? () => forms.open({ kind: "payment", props: { defaults: { leaseId: lease.id } } }) : null;
+  const newLease = () => forms.open({ kind: "lease", title: `New lease · ${u.name}`, props: { defaults: { unitId: u.id } } });
+  const heroAction = recordRent ? (
+    <Button variant="primary" size="sm" icon={<ReceiptIndianRupee />} onClick={recordRent}>
+      Record rent
+    </Button>
+  ) : (
+    <Button variant="primary" size="sm" icon={<FileSignature />} onClick={newLease}>
+      New lease
+    </Button>
+  );
 
   const actions = (
     <>
-      {lease ? (
-        <Button variant="primary" size="sm" icon={<ReceiptIndianRupee />} onClick={() => forms.open({ kind: "payment", props: { defaults: { leaseId: lease.id } } })}>
-          Record rent
-        </Button>
-      ) : (
-        <Button variant="primary" size="sm" icon={<FileSignature />} onClick={() => forms.open({ kind: "lease", title: `New lease · ${u.name}`, props: { defaults: { unitId: u.id } } })}>
-          New lease
-        </Button>
-      )}
       <Button variant="secondary" size="sm" icon={<Wallet />} onClick={() => forms.open({ kind: "expense", props: { defaults: { unitId: u.id } } })}>
         Add expense
       </Button>
@@ -130,175 +133,180 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
             <RentStatePill unit={u} />
           </span>
         }
+        tools={<PeriodSwitch data={data} period={period} />}
         pinId="unit"
         onClose={onClose}
         onOpenUnit={onOpenUnit}
         actions={actions}
-        className={className}
+        className={cx(b.compactWin, className)}
       >
-        {/* ---------------- TENANT */}
-        <section className={b.tenant}>
+        {/* compact window (owner 9/10/2026, style 1): one column of slim rows */}
+        <div className={b.cw}>
+          {/* ---------------- TENANT */}
           {lease ? (
-            <>
-              <div className={b.tenantTop}>
-                <div className={b.tenantWho}>
-                  <span className={b.tenantName}>{lease.tenantName}</span>
-                  <span className={b.tenantMeta}>
-                    since {formatDate(lease.startDate)}
-                    {lease.endDate ? ` · last day ${formatDate(lease.endDate)}` : ""}
-                    {lease.agreementEndDate && (
-                      <>
-                        {" · "}
-                        <span className={cx(renew && (renew.state === "expired" ? b.lateText : b.soonText))}>
-                          agreement {renew ? agreementText(renew.daysLeft) : `to ${formatDate(lease.agreementEndDate)}`}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </div>
-                {lease.tenantPhone ? (
-                  <a className={b.call} href={telHref(lease.tenantPhone)} title={`Call ${firstName(lease.tenantName)}`}>
-                    <Phone aria-hidden />
-                    <span className="num">{lease.tenantPhone}</span>
-                  </a>
-                ) : (
-                  <span className={b.noPhone}>No phone saved</span>
-                )}
-              </div>
-              <div className={b.tenantFacts}>
-                <button type="button" className={b.fact} onClick={() => open("rent")}>
-                  <span>Rent</span>
-                  <b className="num">{inr(lease.monthlyRent)}</b>
-                  <span className={b.factUnit}>/month</span>
-                </button>
-                <button type="button" className={b.fact} onClick={() => open("depositHeld")} title="Deposits are the tenant's money — not income">
-                  <span>Deposit held</span>
-                  <b className="num">{inr(u.depositHeld)}</b>
-                </button>
-              </div>
-            </>
+            <div className={cx(b.cRow, b.cPerson)}>
+              <span className={b.cAv} aria-hidden>
+                {initial(lease.tenantName)}
+              </span>
+              <span className={b.cWho}>
+                <span className={b.cName}>{lease.tenantName}</span>
+                <span className={b.cMeta}>
+                  since {formatDate(lease.startDate)}
+                  {lease.endDate ? ` · last day ${formatDate(lease.endDate)}` : ""}
+                  {" · "}
+                  <button type="button" className={b.cLink} onClick={() => open("rent")}>
+                    rent <span className="num">{inr(lease.monthlyRent)}</span>/month
+                  </button>
+                  {" · "}
+                  <button type="button" className={b.cLink} onClick={() => open("depositHeld")} title="Deposits are the tenant's money — not income">
+                    deposit <span className="num">{inr(u.depositHeld)}</span>
+                  </button>
+                  {lease.agreementEndDate && (
+                    <>
+                      {" · "}
+                      <span className={cx(renew && (renew.state === "expired" ? b.lateText : b.soonText))}>
+                        agreement {renew ? agreementText(renew.daysLeft) : `to ${formatDate(lease.agreementEndDate)}`}
+                      </span>
+                    </>
+                  )}
+                </span>
+              </span>
+              <ContactButtons phone={lease.tenantPhone} name={lease.tenantName} />
+            </div>
           ) : u.incomingLease ? (
-            <div className={b.tenantTop}>
-              <div className={b.tenantWho}>
-                <span className={b.tenantName}>{u.incomingLease.tenantName}</span>
-                <span className={b.tenantMeta}>
+            <div className={cx(b.cRow, b.cPerson)}>
+              <span className={b.cAv} aria-hidden>
+                {initial(u.incomingLease.tenantName)}
+              </span>
+              <span className={b.cWho}>
+                <span className={b.cName}>{u.incomingLease.tenantName}</span>
+                <span className={b.cMeta}>
                   moves in {formatDate(u.incomingLease.startDate)} · {inr(u.incomingLease.monthlyRent)}/month
                 </span>
-              </div>
-              {u.incomingLease.tenantPhone && (
-                <a className={b.call} href={telHref(u.incomingLease.tenantPhone)}>
-                  <Phone aria-hidden />
-                  <span className="num">{u.incomingLease.tenantPhone}</span>
-                </a>
-              )}
+              </span>
+              <ContactButtons phone={u.incomingLease.tenantPhone} name={u.incomingLease.tenantName} />
             </div>
           ) : (
-            <div className={b.vacant}>
-              <span className={b.vacantBig}>{u.status === "inactive" ? "Switched off" : "Empty"}</span>
-              <span className={b.tenantMeta}>
-                {vacantNow ? (
-                  <>
-                    since {formatDate(vacantNow.start)} · <span className="num">{vacantNow.days}</span> days
-                  </>
-                ) : (
-                  "No tenant recorded"
-                )}
+            <div className={cx(b.cRow, b.cHero, b.cLate)}>
+              <span className={b.cWho}>
+                <span className={b.cName}>{u.status === "inactive" ? "Switched off" : "Empty"}</span>
+                <span className={b.cMeta}>
+                  {vacantNow ? (
+                    <>
+                      since {formatDate(vacantNow.start)} · <span className="num">{vacantNow.days}</span> days
+                    </>
+                  ) : (
+                    "No tenant recorded"
+                  )}
+                </span>
               </span>
+              {u.status !== "inactive" && heroAction}
             </div>
           )}
-        </section>
 
-        {/* ---------------- RENT + this unit's cash */}
-        <section className={s.section}>
-          <BucketHead bucket="cash" label="Rent & cash" scope={<PeriodSwitch data={data} period={period} />} />
+          {/* ---------------- NEXT RENT (or what's owed) */}
           {arrears && arrears.months.length > 0 ? (
-            <div className={cx(b.rentState, b.rentOverdue)}>
-              <div className={s.heroMain}>
-                <span className={s.heroLabel}>
+            <div className={cx(b.cRow, b.cHero, b.cLate)}>
+              <div>
+                <span className={b.cLabel}>
                   {firstName(lease?.tenantName ?? "Tenant")} owes · {data.scopeLabels.asOf.toLowerCase()}
                 </span>
-                <Fig value={arrears.totalWithFees} size="lg" tone="expense" compact={false} onClick={() => open("overdue")} />
+                <div className={b.cBig}>
+                  <Fig value={arrears.totalWithFees} size="hero" tone="expense" compact={false} onClick={() => open("overdue")} />
+                </div>
+                <div className={cx(b.cSub, b.lateText)}>
+                  {monthList(arrears.months.map((m) => m.label))}
+                  {arrears.months.some((m) => m.paid > 0) ? " (one part-paid)" : ""}
+                  {arrears.lateFees > 0 ? ` · incl. ${inr(arrears.lateFees)} late fees` : ""}
+                </div>
               </div>
-              <p className={b.rentLine}>
-                {monthList(arrears.months.map((m) => m.label))}
-                {arrears.months.some((m) => m.paid > 0) ? " (one part-paid)" : ""}
-                {arrears.lateFees > 0 ? ` · incl. ${inr(arrears.lateFees)} late fees` : ""}
-              </p>
+              {heroAction}
             </div>
           ) : np ? (
-            <div className={b.rentState}>
-              <div className={s.heroMain}>
-                <span className={s.heroLabel}>
+            <div className={cx(b.cRow, b.cHero, u.rentState !== "due-soon" && b.cOk)}>
+              <div>
+                <span className={b.cLabel}>
                   Next rent · {np.label}
                   {np.paidSoFar > 0 ? ` · ${inr(np.paidSoFar)} paid` : ""}
                 </span>
-                <Fig value={np.amountDue} size="lg" compact={false} onClick={() => open("rent")} />
+                <div className={b.cBig}>
+                  <Fig value={np.amountDue} size="hero" compact={false} onClick={() => open("rent")} />
+                </div>
+                <div className={cx(b.cSub, u.rentState === "due-soon" && b.cSoon)}>{dueText(np.dueDate, data.asOf)}</div>
               </div>
-              <p className={b.rentLine}>
-                <Check aria-hidden className={b.okIcon} />
-                {dueText(np.dueDate, data.asOf)}
-              </p>
+              {heroAction}
             </div>
-          ) : (
-            <p className={s.calm}>No rent expected — nobody lives here {data.isLive ? "now" : "on this date"}.</p>
-          )}
+          ) : null}
+
+          {/* ---------------- this house's cash (the period switch is in the title bar) */}
           <FigCells>
             <FigCell label="Rent collected" value={p.rentCollected} tone="income" delta={vsLastYear(cmp, "rentCollected")} onClick={() => openScoped("rentCollected")} />
             <FigCell label="Its expenses" value={p.expenses} tone="expense" delta={vsLastYear(cmp, "expenses")} onClick={() => openScoped("expenses")} />
             <FigCell label="Net cash" value={p.net} tone="signed" delta={vsLastYear(cmp, "net")} onClick={() => openScoped("netCash")} />
           </FigCells>
-        </section>
 
-        {/* ---------------- VALUE */}
-        <section className={s.section}>
-          <BucketHead bucket="value" scope={<ScopeChip kind="asOf" past={past}>{data.scopeLabels.asOf}</ScopeChip>} />
-          <div className={s.hero}>
-            <div className={s.heroMain}>
-              <span className={s.heroLabel}>Worth now (est.)</span>
-              <Fig value={u.valuation} size="hero" paper={u.valuationSource === "offer" ? "offer" : "est."} onClick={() => open("worthNow")} />
+          {/* ---------------- VALUE */}
+          <div className={cx(b.cRow, b.cLines)}>
+            <div className={s.lines}>
+              <FigLine label="Worth now" value={u.valuation} compact paper={u.valuationSource === "offer" ? "offer" : "est."} onClick={() => open("worthNow")} />
+              <FigLine
+                label={u.purchasePrice === null ? "Gain" : `Gain on ${inr(u.purchasePrice)} invested`}
+                value={u.appreciation}
+                compact
+                tone="value"
+                paper="est."
+                onClick={() => open("gain")}
+              />
+              {/* rental yield, last 12 months (owner 8/10): rent ÷ worth now; net = after this unit's expenses */}
+              {yld && (
+                <>
+                  <FigLine label="Gross yield · last 12 months" value={yld.grossOnValue} format="pct" missing="No value recorded yet" onClick={yld.grossOnValue === null ? undefined : () => open("yield:grossValue")} />
+                  <FigLine label="Net yield · last 12 months" value={yld.netOnValue} format="pct" missing="No value recorded yet" onClick={yld.netOnValue === null ? undefined : () => open("yield:netValue")} />
+                </>
+              )}
             </div>
-            <button type="button" className={b.lvl} onClick={() => open("multiplier")} title="Level = Worth now ÷ Invested">
-              <LevelBadge value={u.capitalMultiplier === null ? null : `×${u.capitalMultiplier.toFixed(2)}`} size="sm" showTier={false} />
-            </button>
           </div>
-          <FigCells>
-            <FigCell label="Invested" value={u.purchasePrice} onClick={() => drill.push({ kind: "metric", key: "invested" })} />
-            <FigCell
-              label={u.offersCount > 0 ? `Best offer (${u.offersCount})` : "Best offer"}
-              value={u.bestOffer}
-              paper={u.bestOffer === null ? null : "offer"}
-              missing="No offer yet — worth now uses the growth estimate"
-              onClick={u.bestOffer === null ? undefined : () => open("bestOffer")}
-            />
-            <FigCell label="Gain" value={u.appreciation} tone="value" paper="est." onClick={() => open("gain")} />
-          </FigCells>
-          {/* rental yield, last 12 months (owner 8/10): rent ÷ worth now; net = after this unit's expenses */}
-          {yld && (
-            <FigCells cols={2}>
-              <FigCell label="Gross yield" value={yld.grossOnValue} format="pct" missing="No value recorded yet" onClick={yld.grossOnValue === null ? undefined : () => open("yield:grossValue")} />
-              <FigCell label="Net yield" value={yld.netOnValue} format="pct" missing="No value recorded yet" onClick={yld.netOnValue === null ? undefined : () => open("yield:netValue")} />
-            </FigCells>
-          )}
-        </section>
 
-        {/* ---------------- OCCUPANCY */}
-        <section className={s.section}>
-          <BucketHead bucket="occupancy" scope={<ScopeChip past={past}>{data.scopeLabels.allTime}</ScopeChip>} />
-          <div className={b.occLine}>
-            <Fig value={u.occupancyPct} format="pct" size="lg" onClick={() => open("occupancy")} />
-            <SegmentedBar value={u.occupancyPct} tone="sky" segments={18} valueLabel={null} size="sm" aria-label="Occupancy" className={b.grow} />
+          {/* ---------------- OCCUPANCY (all time) */}
+          <div className={cx(b.cRow, b.cOcc)}>
+            <span className={b.cLabel}>Occupancy · {data.scopeLabels.allTime}</span>
+            <SegmentedBar value={u.occupancyPct} tone="sky" segments={24} valueLabel={null} size="sm" aria-label="Occupancy" />
+            <Fig value={u.occupancyPct} format="pct" size="md" onClick={() => open("occupancy")} />
+            <span className={b.cOccSub}>
+              Vacant{" "}
+              <button type="button" className={b.cLink} onClick={() => open("vacantDays")}>
+                <span className="num">{u.vacantDays}</span> {u.vacantDays === 1 ? "day" : "days"}
+              </button>
+              {" · "}rent lost{" "}
+              <button type="button" className={b.cLink} onClick={() => open("rentLost")}>
+                <span className="num">{inr(u.unrealizedLoss)}</span>
+              </button>
+            </span>
           </div>
-          <FigCells cols={2}>
-            <FigCell label="Vacant days" value={u.vacantDays} format="days" onClick={() => open("vacantDays")} />
-            <FigCell label="Rent lost (vacant)" value={u.unrealizedLoss} tone="dim" onClick={() => open("rentLost")} />
-          </FigCells>
-        </section>
 
-        {/* ---------------- ELECTRICITY */}
-        <Electricity unit={u} />
+          {/* ---------------- ELECTRICITY */}
+          <Electricity unit={u} />
+        </div>
       </DrillPanel>
       {forms.element}
     </>
+  );
+}
+
+const initial = (name: string) => name.trim().charAt(0).toUpperCase() || "?";
+
+/** Call + WhatsApp buttons for a phone number (tenants; the revenue officer uses the same buttons). */
+export function ContactButtons({ phone, name }: { phone: string | null | undefined; name: string }) {
+  if (!phone) return <span className={b.noPhone}>No phone saved</span>;
+  return (
+    <span className={b.cActs}>
+      <a className={b.tdIcon} href={telHref(phone)} aria-label={`Call ${firstName(name)}`} title={phoneText(phone)}>
+        <Phone aria-hidden />
+      </a>
+      <a className={cx(b.tdIcon, b.tdWa)} href={waHref(phone)} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${firstName(name)}`} title="WhatsApp">
+        <MessageCircle aria-hidden />
+      </a>
+    </span>
   );
 }
 

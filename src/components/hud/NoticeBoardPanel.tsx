@@ -1,5 +1,6 @@
 "use client";
 // Property manager walking round the plot → to-dos: tick one off (with Undo), tap one to edit, add a new one.
+// Compact style (owner 9/10/2026): a smaller window, the list in one column, the count + late badge beside the title.
 import { Check, ListPlus } from "lucide-react";
 import { Badge, Button, EmptyState, toast, cx, type BadgeTone } from "@/components/ui";
 import { RenewAgreementButton, agreementText, useActions } from "@/components/forms";
@@ -50,51 +51,66 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
         title="Things to do"
         pinId="noticeboard"
         onClose={onClose}
-        className={className}
+        className={cx(b.compactWin, className)}
+        aside={
+          count > 0 ? (
+            <span className={b.pills}>
+              <Badge tone="neutral" size="sm">
+                <span className="num">{count}</span> to do
+              </Badge>
+              {late > 0 ? (
+                <Badge tone="coral" marker size="sm">
+                  {late} late
+                </Badge>
+              ) : (
+                <Badge tone="teal" marker size="sm">
+                  None late
+                </Badge>
+              )}
+            </span>
+          ) : undefined
+        }
         actions={
           <Button variant="primary" size="sm" icon={<ListPlus />} onClick={() => forms.open({ kind: "action" })}>
             Add a to-do
           </Button>
         }
       >
-        <div className={b.boardHero}>
-          <span className={b.boardCount}>
-            <span className="num">{count}</span> {count === 1 ? "thing" : "things"} to do
-          </span>
-          {late > 0 ? <Badge tone="coral" marker size="sm">{late} late</Badge> : count > 0 ? <Badge tone="teal" marker size="sm">None late</Badge> : null}
-        </div>
-        {renewals.length > 0 && (
-          <ul className={b.todos}>
-            {renewals.map((r) => (
-              <li key={r.leaseId} className={cx(b.todo, r.state === "expired" && b.todoLate)}>
-                <span className={b.todoMain}>
-                  <span className={b.todoTitle}>Renew {r.tenantName}&apos;s agreement</span>
-                  <span className={b.todoMeta}>
-                    {r.unitName} ·{" "}
-                    <span className={cx(r.state === "expired" && b.lateText)}>
-                      {agreementText(r.daysLeft)} ({formatDate(r.agreementEndDate)})
+        {/* compact window (owner 9/10/2026, style 1): the list in one column, the count beside the title */}
+        <div className={b.cw}>
+          {renewals.length > 0 && (
+            <ul className={b.todos}>
+              {renewals.map((r) => (
+                <li key={r.leaseId} className={cx(b.todo, r.state === "expired" && b.todoLate)}>
+                  <span className={b.todoMain}>
+                    <span className={b.todoTitle}>Renew {r.tenantName}&apos;s agreement</span>
+                    <span className={b.todoMeta}>
+                      {r.unitName} ·{" "}
+                      <span className={cx(r.state === "expired" && b.lateText)}>
+                        {agreementText(r.daysLeft)} ({formatDate(r.agreementEndDate)})
+                      </span>
                     </span>
                   </span>
-                </span>
-                <RenewAgreementButton lease={{ id: r.leaseId, agreementEndDate: r.agreementEndDate }} tenantName={r.tenantName} variant={r.state === "expired" ? "primary" : "secondary"} />
-              </li>
-            ))}
-          </ul>
-        )}
-        {count === 0 ? (
-          <EmptyState compact title="Nothing to do" />
-        ) : items.length === 0 ? null : (
-          <ul className={b.todos}>
-            {items.map((a) => (
-              <Todo
-                key={a.id}
-                a={a}
-                today={data.today}
-                onEdit={() => forms.open({ kind: "action", title: "Edit to-do", props: { action: a } })}
-              />
-            ))}
-          </ul>
-        )}
+                  <RenewAgreementButton lease={{ id: r.leaseId, agreementEndDate: r.agreementEndDate }} tenantName={r.tenantName} variant={r.state === "expired" ? "primary" : "secondary"} />
+                </li>
+              ))}
+            </ul>
+          )}
+          {count === 0 ? (
+            <EmptyState compact title="Nothing to do" />
+          ) : items.length === 0 ? null : (
+            <ul className={b.todos}>
+              {items.map((a) => (
+                <Todo
+                  key={a.id}
+                  a={a}
+                  today={data.today}
+                  onEdit={() => forms.open({ kind: "action", title: "Edit to-do", props: { action: a } })}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
       </HudPanel>
       {forms.element}
     </>

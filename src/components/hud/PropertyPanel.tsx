@@ -1,11 +1,12 @@
 "use client";
-// Left panel: the whole property in three buckets — CASH FLOW · PROPERTY VALUE · OCCUPANCY —
-// each with one hero number and at most three supporting figures. Every figure drills down (breadcrumb inside).
+// The property window (plot marker / P). Compact style (owner 9/10/2026): one column of slim rows — net cash (period
+// switch in the title bar), worth now, the next 12 months (est.) and occupancy, each big figure with its parts written
+// beneath; every figure and part drills down (breadcrumb inside). The ledger check sits next to the title.
 import { Building2 } from "lucide-react";
 import { EmptyState, LevelBadge, LinkButton, SegmentedBar, cx } from "@/components/ui";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { Fig, FigLine, BucketHead, PaperTag, ScopeChip, vsLastYear } from "./Figure";
+import { Fig, PaperTag, vsLastYear } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { explainKey, fmt, inr, yoyKey } from "./format";
 import { LedgerBadge } from "./LedgerBadge";
@@ -34,11 +35,6 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
   const p = data.periods[period];
   const open = (key: string) => drill.push({ kind: "metric", key });
   const past = !data.isLive;
-  const asOfChip = (
-    <ScopeChip kind="asOf" past={past}>
-      {data.scopeLabels.asOf}
-    </ScopeChip>
-  );
   const noUnits = k.unitsActive === 0;
   const paper = k.unitsWithOffer > 0 && !k.bestOfferIsPartialEstimate ? "offer" : "est.";
   // ▲ / ▼ vs the same days last year (the year and the month; all time has nothing before it)
@@ -48,6 +44,15 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
   const y = data.yields.property;
   const f = data.forecast;
 
+  // an amount inside a sentence that opens its breakdown
+  const amt = (value: number, key: string, tone: "income" | "expense" | "neutral" | "value" = "neutral", compact = false) => (
+    <button type="button" className={b.cLink} onClick={() => open(key)}>
+      <span className={cx("num", tone === "income" && value !== 0 && s.tIncome, tone === "expense" && value !== 0 && s.tExpense, tone === "value" && s.tValue)}>
+        {fmt(value, "inr", compact)}
+      </span>
+    </button>
+  );
+
   return (
     <DrillPanel
       data={data}
@@ -56,15 +61,12 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
       side={side}
       eyebrow={`Property · ${k.unitsActive} ${k.unitsActive === 1 ? "unit" : "units"}`}
       title={data.settings.brandName}
+      aside={<LedgerBadge checks={data.checks} onClick={() => drill.push({ kind: "checks" })} />}
+      tools={noUnits ? undefined : <PeriodSwitch data={data} period={period} />}
       pinId="property"
       onClose={onClose}
       onOpenUnit={onOpenUnit}
-      className={className}
-      hint={
-        <>
-          <LedgerBadge checks={data.checks} onClick={() => drill.push({ kind: "checks" })} />
-        </>
-      }
+      className={cx(b.compactWin, b.compactWide, className)}
     >
       {noUnits ? (
         <EmptyState
@@ -77,115 +79,113 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
           }
         />
       ) : (
-        <>
-          {/* ---------------- CASH FLOW */}
-          <section className={s.section}>
-            <BucketHead bucket="cash" scope={<PeriodSwitch data={data} period={period} />} />
-            <div className={s.hero}>
-              <div className={s.heroMain}>
-                <span className={s.heroLabel}>Net cash</span>
-                <div className={b.heroFig}>
-                  <Fig value={p.net} size="hero" tone="signed" onClick={() => open(explainKey("netCash", period))} />
-                  {yoy("net")}
-                </div>
+        /* compact window (owner 9/10/2026, style 1): one column of slim rows, each big figure with its parts beneath */
+        <div className={b.cw}>
+          {/* ---------------- CASH FLOW (period switch in the title bar) */}
+          <div className={cx(b.cRow, b.cHero, p.net < 0 ? b.cLate : b.cOk)}>
+            <div>
+              <span className={b.cLabel}>Net cash · {data.scopeLabels[period]}</span>
+              <div className={b.cBig}>
+                <Fig value={p.net} size="hero" tone="signed" onClick={() => open(explainKey("netCash", period))} />
+                {yoy("net")}
+              </div>
+              <div className={b.cSub}>
+                +{amt(p.rentCollected, explainKey("rentCollected", period), "income")} rent {yoy("rentCollected")}
+                {" · "}−{amt(p.expenses, explainKey("expenses", period), "expense")} expenses {yoy("expenses")}
+                {p.rentUnpaid > 0 && (
+                  <>
+                    {" · "}
+                    <span className={b.soonText}>{inr(p.rentUnpaid)} of the rent due unpaid</span>
+                  </>
+                )}
+                {k.securityDepositsHeld > 0 && (
+                  <>
+                    {" · "}deposits held {amt(k.securityDepositsHeld, "depositsHeld")}
+                  </>
+                )}
               </div>
             </div>
-            <div className={s.lines}>
-              <FigLine label="Rent collected" value={p.rentCollected} sign="+" tone="income" delta={yoy("rentCollected")} onClick={() => open(explainKey("rentCollected", period))} />
-              <FigLine label="Expenses" value={p.expenses} sign="−" tone="expense" delta={yoy("expenses")} onClick={() => open(explainKey("expenses", period))} />
-              <FigLine
-                label="Rent collection"
-                sub={p.rentUnpaid > 0 ? `${inr(p.rentUnpaid)} of the rent due is unpaid` : p.collectionPct === null ? "No rent has fallen due yet" : "Every rupee due is in"}
-                value={p.collectionPct}
-                format="pct"
-                missing="No rent has fallen due in this period yet"
-                onClick={() => open(explainKey("collection", period))}
-              />
-            </div>
-            {k.securityDepositsHeld > 0 && (
-              <button type="button" className={b.aside} onClick={() => open("depositsHeld")}>
-                Deposits held <b className="num">{inr(k.securityDepositsHeld)}</b>
+            <div className={b.cSide}>
+              <button type="button" className={cx(b.cPill, p.rentUnpaid > 0 && b.cPillWarn)} onClick={() => open(explainKey("collection", period))}>
+                {p.collectionPct === null ? "Nothing due yet" : `${fmt(p.collectionPct, "pct")} collected`}
               </button>
-            )}
-          </section>
+            </div>
+          </div>
 
-          {/* ---------------- PROPERTY VALUE */}
-          <section className={s.section}>
-            <BucketHead bucket="value" scope={asOfChip} />
-            <div className={s.hero}>
-              <div className={s.heroMain}>
-                <span className={s.heroLabel}>Worth now (est.)</span>
+          {/* ---------------- PROPERTY VALUE (as of the as-of date) */}
+          <div className={cx(b.cRow, b.cHero, b.cGold)}>
+            <div>
+              <span className={b.cLabel}>Worth now{past ? ` · ${data.scopeLabels.asOf}` : ""}</span>
+              <div className={b.cBig}>
                 <Fig value={k.bestOfferTotal} size="hero" paper={paper} onClick={() => open("worthNow")} />
               </div>
-              <button type="button" className={b.lvl} onClick={() => open("multiplier")} title="Level = Worth now ÷ Invested · click for the maths">
-                <LevelBadge value={k.capitalMultiplier === null ? null : `×${k.capitalMultiplier.toFixed(2)}`} size="sm" showTier={false} />
-              </button>
+              <div className={b.cSub}>
+                Gain {amt(k.appreciation, "gain", "value", true)} <PaperTag kind="est." /> on {amt(k.invested, "invested")}
+                {k.cagr !== null && (
+                  <>
+                    {" · "}growth{" "}
+                    <button type="button" className={b.cLink} onClick={() => open("cagr")}>
+                      <span className="num">{fmt(k.cagr, "pct")}</span>
+                    </button>{" "}
+                    a year
+                  </>
+                )}
+                {y.grossOnValue !== null && (
+                  <>
+                    {" · "}yield{" "}
+                    <button type="button" className={b.cLink} onClick={() => open("yield:grossValue")}>
+                      <span className="num">{fmt(y.grossOnValue, "pct")}</span>
+                    </button>
+                    {y.netOnValue !== null && (
+                      <>
+                        {" "}(net{" "}
+                        <button type="button" className={b.cLink} onClick={() => open("yield:netValue")}>
+                          <span className="num">{fmt(y.netOnValue, "pct")}</span>
+                        </button>
+                        )
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
-            <div className={s.lines}>
-              <FigLine label="Invested" value={k.invested} onClick={() => open("invested")} />
-              <FigLine label="Gain" value={k.appreciation} tone="value" paper="est." onClick={() => open("gain")} />
-              <FigLine
-                label="Growth per year"
-                sub={k.cagr === null ? (k.cagrNote ?? undefined) : `Over ${k.holdingYears.toFixed(1)} years held`}
-                value={k.cagr}
-                format="pct"
-                missing={k.cagrNote ?? "Not enough history yet"}
-                onClick={k.cagr === null ? undefined : () => open("cagr")}
-              />
-              {/* rental yield (owner 8/10): a year's rent ÷ what it's worth now; net = after expenses */}
-              <FigLine
-                label="Rental yield"
-                sub={y.netOnValue === null ? data.yields.label : `Net ${fmt(y.netOnValue, "pct")} · ${data.yields.label.toLowerCase()}`}
-                value={y.grossOnValue}
-                format="pct"
-                missing="No value recorded yet"
-                onClick={y.grossOnValue === null ? undefined : () => open("yield:grossValue")}
-              />
-            </div>
-          </section>
+            <button type="button" className={b.lvl} onClick={() => open("multiplier")} title="Level = Worth now ÷ Invested">
+              <LevelBadge value={k.capitalMultiplier === null ? null : `×${k.capitalMultiplier.toFixed(2)}`} size="sm" showTier={false} />
+            </button>
+          </div>
 
           {/* ---------------- NEXT 12 MONTHS (owner 8/10): rent that will fall due − tax due − usual costs (est.) */}
-          <section className={s.section}>
-            <BucketHead
-              bucket="cash"
-              label="Next 12 months"
-              scope={<ScopeChip past={past}>{f.label}</ScopeChip>}
-              right={<PaperTag kind="est." />}
-            />
-            <div className={s.hero}>
-              <div className={s.heroMain}>
-                <span className={s.heroLabel}>Net cash expected</span>
+          <div className={cx(b.cRow, b.cHero, b.cSky)}>
+            <div>
+              <span className={b.cLabel}>
+                Next 12 months <PaperTag kind="est." /> · {f.label}
+              </span>
+              <div className={b.cBig}>
                 <Fig value={f.net} size="hero" tone="signed" onClick={() => open("forecast:net")} />
               </div>
-            </div>
-            <div className={s.lines}>
-              <FigLine label="Rent expected" value={f.rent} sign="+" tone="income" onClick={() => open("forecast:rent")} />
-              <FigLine label="Property tax due" value={f.tax} sign="−" tone="expense" onClick={() => open("forecast:tax")} />
-              <FigLine label="Usual costs" value={f.costs} sign="−" tone="expense" onClick={() => open("forecast:costs")} />
-            </div>
-          </section>
-
-          {/* ---------------- OCCUPANCY */}
-          <section className={s.section}>
-            <BucketHead bucket="occupancy" scope={<ScopeChip past={past}>{data.scopeLabels.allTime}</ScopeChip>} />
-            <div className={s.hero}>
-              <div className={cx(s.heroMain, b.grow)}>
-                <span className={s.heroLabel}>Occupancy</span>
-                <div className={b.occRow}>
-                  <Fig value={k.occupancyPct} format="pct" size="hero" onClick={() => open("occupancy")} />
-                  <span className={b.letCount}>
-                    {k.unitsOccupied} of {k.unitsActive} let{k.unitsIncoming > 0 ? ` · ${k.unitsIncoming} moving in` : ""}
-                  </span>
-                </div>
-                <SegmentedBar value={k.occupancyPct} tone="sky" segments={24} valueLabel={null} size="sm" aria-label="Occupancy" />
+              <div className={b.cSub}>
+                +{amt(f.rent, "forecast:rent", "income")} rent{" · "}−{amt(f.costs, "forecast:costs", "expense")} usual costs{" · "}tax due{" "}
+                {amt(f.tax, "forecast:tax", "expense")}
               </div>
             </div>
-            <div className={s.lines}>
-              <FigLine label="Vacant days" value={k.vacantDays} format="days" onClick={() => open("vacantDays")} />
-              <FigLine label="Rent lost (vacant)" value={k.unrealizedLoss} tone="dim" onClick={() => open("rentLost")} />
-            </div>
-          </section>
-        </>
+          </div>
+
+          {/* ---------------- OCCUPANCY (all time) */}
+          <div className={cx(b.cRow, b.cOcc)}>
+            <span className={b.cLabel}>
+              Occupancy · {k.unitsOccupied} of {k.unitsActive} let{k.unitsIncoming > 0 ? ` · ${k.unitsIncoming} moving in` : ""}
+            </span>
+            <SegmentedBar value={k.occupancyPct} tone="sky" segments={24} valueLabel={null} size="sm" aria-label="Occupancy" />
+            <Fig value={k.occupancyPct} format="pct" size="md" onClick={() => open("occupancy")} />
+            <span className={b.cOccSub}>
+              Vacant{" "}
+              <button type="button" className={b.cLink} onClick={() => open("vacantDays")}>
+                <span className="num">{k.vacantDays}</span> {k.vacantDays === 1 ? "day" : "days"}
+              </button>
+              {" · "}rent lost {amt(k.unrealizedLoss, "rentLost")}
+            </span>
+          </div>
+        </div>
       )}
     </DrillPanel>
   );

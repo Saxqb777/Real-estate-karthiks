@@ -338,6 +338,8 @@
 /* =========================================================== side panel frame */
 .panel {
   --bracket: var(--marigold);
+  /* size container: the header and the compact rows adapt to the window's own width (phones, narrow galleries) */
+  container: hudpanel / inline-size;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -401,6 +403,7 @@
   position: relative;
   z-index: 1;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 8px;
   padding: 13px 8px 11px 16px;
@@ -456,6 +459,19 @@
   display: flex;
   gap: 2px;
   margin-top: -2px;
+}
+/* extra title-bar controls (the ALL TIME · year · month switch): beside the title, or under it in a narrow window */
+.panelHeadTools {
+  display: flex;
+  align-items: center;
+  margin: 2px 6px 0 0;
+}
+@container hudpanel (max-width: 600px) {
+  .panelHeadTools {
+    order: 3;
+    flex-basis: 100%;
+    margin: 2px 0 0;
+  }
 }
 .pinBtn svg {
   transform: rotate(35deg);

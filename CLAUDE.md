@@ -369,6 +369,19 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   officer · +91 …", call + WhatsApp icon buttons). The old 3-column report (Summary / By unit / Year by year) is gone —
   history lives in Data → Property tax and the Property tax report. Phones: name + amount left, pill + tick/button right.
 
+- 9/10/2026: POP-UPS = style 1 "COMPACT" (owner picked 1 of mocks 1 Compact / 2 Tabs / 3 Tiles, "LETS DEPLOY 1"): the
+  house, mailbox, property and property-manager windows (like the tax box) are smaller centre windows (max 760px, property
+  860px: .compactWin / .compactWide) with ONE column of slim bordered rows (bits.module.css .cw .cRow .cHero .cPerson .cOcc
+  …): the main figure big with its action beside it (house: next rent or what's owed + RECORD RENT / NEW LEASE; mailbox:
+  rent collected + RECORD RENT; property: net cash, worth now, next 12 months — each with its parts as clickable amounts
+  underneath). The ALL TIME · year · month switch sits in the TITLE BAR (HudPanel `tools` slot; it drops under the title
+  when the window is narrow — .panel is a size container "hudpanel", compact rows adapt by @container too). House:
+  tenant row with call + WhatsApp icon buttons (ContactButtons in UnitPanel), 3 cash cells, value rows (worth now, gain
+  on invested, gross + net yield), occupancy bar + vacant days / rent lost, electricity row; Add expense / Move out at the
+  bottom (best-offer line, LVL badge and section scope chips dropped there). Mailbox: who pays next rows + latest 4
+  receipts + "All receipts ›" (/data#payments). Property: ledger badge beside the title, LVL badge kept on worth now.
+  To-dos: count + late badges beside the title, list full width, Add a to-do at the bottom. Every figure still drills down.
+
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
   AnimatedNumber, StatTile, SegmentedBar, LevelBadge, Modal/Drawer/ConfirmDialog, toast, InspectCard, CommandProvider…);

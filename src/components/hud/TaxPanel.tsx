@@ -43,7 +43,7 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
         title="Property tax"
         pinId="tax"
         onClose={onClose}
-        className={cx(b.taxCompact, className)}
+        className={cx(b.compactWin, className)}
         accent={due.length ? "marigold" : "teal"}
       >
         <div className={b.td}>
