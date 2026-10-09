@@ -105,13 +105,31 @@
 
 /* ---------- phone ---------- */
 @media (max-width: 767px) {
+  /* "← Payments" on its own line, then the receipt heading with Print / Save PDF beside it (owner, 9/10/2026) */
   .toolbar {
-    gap: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "back back"
+      "title actions";
+    align-items: center;
+    gap: 10px 12px;
     padding-bottom: 10px;
   }
+  .toolBack {
+    grid-area: back;
+    justify-self: start;
+  }
   .toolTitle {
-    order: 3;
-    flex-basis: 100%;
+    grid-area: title;
+  }
+  .toolActions {
+    grid-area: actions;
+  }
+  .toolH {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
   .toolFacts {
     display: none;

@@ -30,7 +30,7 @@ export function InvoiceScreen({ id }: { id: string }) {
   return (
     <Screen className={s.screen}>
       <div className={s.toolbar}>
-        <LinkButton href="/data#payments" variant="ghost" size="sm" icon={<ArrowLeft />}>
+        <LinkButton href="/data#payments" variant="ghost" size="sm" icon={<ArrowLeft />} className={s.toolBack}>
           Payments
         </LinkButton>
         <div className={s.toolTitle}>

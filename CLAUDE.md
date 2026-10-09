@@ -400,6 +400,9 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   owner's signature line (+ revenue-stamp box for cash > ₹5,000). NO footer (deposit line, brand + number), NO dark
   band. One typeface on the receipt (Manrope; figures tabular via .rcNum, not the display-font .num). Old style-C (.cr*)
   and older (.receipt …) receipt CSS removed. Prints on one A4 page.
+- 9/10/2026: receipt page on PHONES (owner: "bring the print button down aligning with the heading"): "← Payments" on its
+  own line, then the receipt heading (RENT RECEIPT / PE-…) with PRINT / SAVE PDF beside it on the same row (the toolbar
+  is a grid on phones: back · title + actions; the number ellipsizes if ever too long). Desktop unchanged.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
