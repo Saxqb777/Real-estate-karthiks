@@ -862,7 +862,7 @@ function tripodParts(): Part[] {
  * Owner, 6/10/2026: a photographer on the grass beside the hand pump, by 116/B7 (the front unit), clear of the garden
  * walker's loop and the property manager's path. Camera on a TRIPOD (reads better than a hand-held one at this cartoon
  * scale): he stands at the camera and takes two pictures every 15 s — each shot FLASHES (white burst + a quick point light).
- * Clickable (kind "photographer") → his window shows the interior photos of 116/B7 (hud/PhotosPanel).
+ * Clickable (kind "photographer") → his window shows the front unit's interior photos (hud/PhotosPanel).
  */
 export function Photographer({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
   const { geo, rig } = useRig(photographerLimbs, []);

@@ -554,7 +554,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
               {rightOpen && data && (
                 <motion.div
                   key="centre-shade"
-                  className={s.centreShade}
+                  className={cx(s.centreShade, !propertyOpen && panel?.kind === "photos" && s.centreShadeDeep)}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}

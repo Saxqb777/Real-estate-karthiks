@@ -385,6 +385,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   row now has the SAME gold "⚡ PAY BILL ↗" button as the EB pole window — one shared PayBillButton (UnitPanel.tsx) used
   by both; disabled when no pay link is saved (the house row used to hide it). Old grey "Pay electricity" link (.payLink)
   removed.
+- 9/10/2026: PHOTOS window = design D "NO BOX" (owner picked D of A film strip / B polaroids / C picture wall / D no box;
+  "no need 116/B7 written in this"): no gold frame, no eyebrow / title (the unit name is gone; alt text "Interior photo
+  N"), the 3 photos float over a deeper shade (.centreShadeDeep, 0.8) with rounded corners + a soft shadow, only 📌 / ✕
+  as round gold-ringed buttons top-right (HudPanel `bare` prop → .panelBare); 3 across on desktop + phones; the row's
+  width is capped so the photos always fit between the top nav and the dock. NEXT (owner): receipt redesign — "should
+  look like a real professional receipt".
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

@@ -536,6 +536,10 @@
   background: rgba(8, 6, 4, 0.55);
   pointer-events: auto;
 }
+/* the photographer's photos float with no window (design D) — a deeper shade keeps the busy world out of the way */
+.centreShadeDeep {
+  background: rgba(8, 6, 4, 0.8);
+}
 .centre {
   position: fixed;
   z-index: 45;

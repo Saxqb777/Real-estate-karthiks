@@ -41,6 +41,8 @@ export interface HudPanelProps {
   /** Body without padding/scroll (for views that scroll themselves, e.g. inline forms). */
   bodyFlush?: boolean;
   width?: number;
+  /** No frame and no titles — only 📌 / ✕ above the content (the photographer's photos, owner 9/10/2026: design D). */
+  bare?: boolean;
   className?: string;
   children: ReactNode;
 }
@@ -61,6 +63,7 @@ export function HudPanel({
   bodyKey,
   bodyFlush,
   width,
+  bare,
   className,
   children,
 }: HudPanelProps) {
@@ -72,7 +75,7 @@ export function HudPanel({
 
   return (
     <motion.aside
-      className={cx(s.panel, s[`accent-${accent}`], side === "inline" && s.panelInline, className)}
+      className={cx(s.panel, s[`accent-${accent}`], side === "inline" && s.panelInline, bare && s.panelBare, className)}
       style={width ? { width } : undefined}
       initial={{ opacity: 0, x: dx }}
       animate={{ opacity: 1, x: 0 }}
@@ -81,18 +84,20 @@ export function HudPanel({
       aria-label={typeof title === "string" ? title : undefined}
     >
       <header className={s.panelHead}>
-        <div className={s.panelTitles}>
-          {eyebrow && (
-            <div className={s.panelEyebrow}>
-              <span className={s.pip} aria-hidden />
-              {eyebrow}
+        {!bare && (
+          <div className={s.panelTitles}>
+            {eyebrow && (
+              <div className={s.panelEyebrow}>
+                <span className={s.pip} aria-hidden />
+                {eyebrow}
+              </div>
+            )}
+            <div className={s.panelTitleRow}>
+              <h2 className={s.panelTitle}>{title}</h2>
+              {aside}
             </div>
-          )}
-          <div className={s.panelTitleRow}>
-            <h2 className={s.panelTitle}>{title}</h2>
-            {aside}
           </div>
-        </div>
+        )}
         {tools && <div className={s.panelHeadTools}>{tools}</div>}
         <div className={s.panelTools}>
           {canPin && (

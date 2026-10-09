@@ -772,3 +772,48 @@ button.mini:hover {
 :global([data-centre-panel]) .panelBody:not(.panelBodyFlush) > * {
   min-width: 0;
 }
+
+/* BARE window (the photographer's photos — owner picked design D "no box", 9/10/2026): no frame and no titles; the
+   content floats over the darkened world with only 📌 / ✕ as round buttons above it, right-aligned */
+.panelBare {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.panelBare::after {
+  display: none;
+}
+.panelBare .panelHead {
+  justify-content: flex-end;
+  padding: 0 0 12px;
+  border-bottom: 0;
+}
+.panelBare .panelHead::after {
+  display: none;
+}
+.panelBare .panelTools {
+  gap: 10px;
+  margin: 0;
+}
+.panelBare .panelTools button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(201, 146, 46, 0.55);
+  border-radius: 50%;
+  background: rgba(22, 17, 12, 0.88);
+  color: var(--text);
+}
+.panelBare .panelTools button:hover:not(:disabled) {
+  border-color: #c9922e;
+  background: rgba(40, 30, 18, 0.95);
+  color: var(--text);
+}
+.panelBare .pinOn {
+  border-color: #c9922e;
+  background: rgba(40, 30, 18, 0.95) !important;
+}
+.panelBare .panelBody,
+:global([data-centre-panel]) .panelBare .panelBody:not(.panelBodyFlush) {
+  padding: 0;
+  overflow: visible; /* the photos' shadows */
+}

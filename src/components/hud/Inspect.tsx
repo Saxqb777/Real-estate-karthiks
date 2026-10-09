@@ -173,7 +173,7 @@ export function HudPanelFor({ target, data, period, onClose, onOpenUnit, side, c
     case "tax":
       return <TaxPanel data={data} onClose={onClose} side={right} className={className} />;
     case "photos":
-      return <PhotosPanel data={data} onClose={onClose} side={right} className={className} />;
+      return <PhotosPanel onClose={onClose} side={right} className={className} />;
   }
 }
 

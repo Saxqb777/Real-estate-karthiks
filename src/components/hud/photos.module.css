@@ -1,4 +1,9 @@
-/* interior photos window (photographer) */
+/* interior photos (photographer) — design D "no box" (owner, 9/10/2026): the photos float over the darkened world */
+.panel {
+  /* never taller than the space between the top nav and the dock: 3 photos at 3:4 + 2 gaps, under the 📌 / ✕ row */
+  max-width: calc((100dvh - 210px) * 2.25 + 36px);
+  margin-inline: auto;
+}
 .wrap {
   grid-column: 1 / -1; /* the centre window's body is a grid — the photos take the full width */
   min-width: 0;
@@ -6,16 +11,16 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 18px;
 }
 .thumb {
-  display: block;
-  padding: 0;
   overflow: hidden;
   aspect-ratio: 3 / 4;
-  border: 1px solid rgba(201, 146, 46, 0.45);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #120f0c;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 22px 46px rgba(0, 0, 0, 0.65);
 }
 .thumb img {
   display: block;
@@ -25,7 +30,12 @@
 }
 @media (max-width: 767px) {
   .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+  }
+  .thumb {
+    border-radius: 8px;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 10px 22px rgba(0, 0, 0, 0.6);
   }
 }
