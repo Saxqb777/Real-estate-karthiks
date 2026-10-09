@@ -116,9 +116,9 @@ export function Table<T>({
                 >
                   {c.sortValue ? (
                     <button type="button" className={cx(styles.sortBtn, active && styles.sorted)} onClick={() => toggleSort(c.key)}>
-                      {c.numeric && (active ? sort!.dir === "asc" ? <ArrowUp aria-hidden /> : <ArrowDown aria-hidden /> : <ArrowUpDown aria-hidden />)}
                       {c.header}
-                      {!c.numeric && (active ? sort!.dir === "asc" ? <ArrowUp aria-hidden /> : <ArrowDown aria-hidden /> : <ArrowUpDown aria-hidden />)}
+                      {/* the arrow sits after the label in every column, numbers too (owner: one uniform header) */}
+                      {active ? sort!.dir === "asc" ? <ArrowUp aria-hidden /> : <ArrowDown aria-hidden /> : <ArrowUpDown aria-hidden />}
                     </button>
                   ) : (
                     c.header

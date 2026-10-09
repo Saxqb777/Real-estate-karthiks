@@ -81,7 +81,7 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
         },
       ]
     : [
-        { key: "year", header: "Tax year", sortValue: (t) => t.year, cell: (t) => <span className={`${s.strong} num`}>{t.year}</span>, footer },
+        { key: "year", header: "Tax year", sortValue: (t) => t.year, cell: (t) => <span className="num">{t.year}</span>, footer },
         { key: "unit", header: "Unit", sortValue: (t) => t.unit.name, cell: (t) => t.unit.name },
         { key: "amount", header: "Amount", numeric: true, sortValue: (t) => t.amount, cell: (t) => <span className="neg">{money(t.amount)}</span> },
         { key: "status", header: "Status", sortValue: (t) => t.status, cell: (t) => <StatusPill status={t.status === "Paid" ? "paid" : "due"} size="sm" /> },

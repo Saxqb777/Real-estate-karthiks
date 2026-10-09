@@ -93,17 +93,19 @@
 .center {
   text-align: center;
 }
+/* UNIFORM TEXT (owner, 9/10/2026): every cell — names, dates, years, amounts — in the same font, size and weight;
+   numbers only line up (tabular figures) and sit on the right. Headers all look the same, numeric ones included. */
 .numCell {
   text-align: right;
-  font-family: var(--ff-display);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   white-space: nowrap;
 }
-.th.numCell {
-  font-size: var(--fs-xs);
+.td :global(.num) {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 .wrapText {
   white-space: normal;
