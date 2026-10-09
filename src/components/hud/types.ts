@@ -18,6 +18,8 @@ export type PeriodKind = "allTime" | "year" | "month";
 export type PanelTarget =
   | { kind: "property" }
   | { kind: "unit"; unitId: string }
+  /** the tenant of a house (its current lease): the person, next rent / what's owed (owner 9/10/2026) */
+  | { kind: "tenant"; unitId: string }
   | { kind: "mailbox" }
   | { kind: "noticeboard" }
   | { kind: "pole" }

@@ -222,6 +222,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
     [openPanel, narrow, pinProperty, setPropertyOpen],
   );
   const openUnit = useCallback((unitId: string) => openRight({ kind: "unit", unitId }), [openRight]);
+  const openTenant = useCallback((unitId: string) => openRight({ kind: "tenant", unitId }), [openRight]);
   const toggleQuest = () => {
     if (questOpen) {
       setQuestOpen(false);
@@ -237,7 +238,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   // a panel whose unit doesn't exist on the as-of date closes
   useEffect(() => {
-    if (panel?.kind === "unit" && data && !data.units.some((u) => u.id === panel.unitId)) closePanel();
+    if ((panel?.kind === "unit" || panel?.kind === "tenant") && data && !data.units.some((u) => u.id === panel.unitId)) closePanel();
   }, [panel, data, closePanel]);
 
   const onGround = useCallback(() => {
@@ -396,7 +397,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const [bottomEl, setBottomEl] = useState<HTMLDivElement | null>(null);
   const insets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, bottom: bottomEl });
 
-  const selected = panel?.kind === "unit" ? panel.unitId : null;
+  const selected = panel?.kind === "unit" || panel?.kind === "tenant" ? panel.unitId : null;
   const dimmed = !mobile && !hudHidden && !tourOpen && (Boolean(tab) || Boolean(panel) || propertyOpen);
   const getObjectScreen = useCallback((fn: ObjectScreenFn | null) => {
     setLocate(() => fn);
@@ -579,8 +580,8 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
               ) : (
                 panel &&
                 data && (
-                  <div key={panel.kind === "unit" ? `unit:${panel.unitId}` : panel.kind} className={s.centre} data-centre-panel>
-                    <HudPanelFor target={panel} data={data} period={period} onClose={closePanel} onOpenUnit={openUnit} />
+                  <div key={panel.kind === "unit" || panel.kind === "tenant" ? `${panel.kind}:${panel.unitId}` : panel.kind} className={s.centre} data-centre-panel>
+                    <HudPanelFor target={panel} data={data} period={period} onClose={closePanel} onOpenUnit={openUnit} onOpenTenant={openTenant} />
                   </div>
                 )
               )}

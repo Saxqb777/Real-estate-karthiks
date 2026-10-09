@@ -20,12 +20,15 @@ export interface MailboxPanelProps {
   period: PeriodKind;
   onClose?: () => void;
   onOpenUnit?: (unitId: string) => void;
+  /** a payer row opens that house's tenant window (falls back to the house window) */
+  onOpenTenant?: (unitId: string) => void;
   side?: "right" | "inline";
   drill?: DrillStack;
   className?: string;
 }
 
-export function MailboxPanel({ data, period, onClose, onOpenUnit, side = "right", drill: external, className }: MailboxPanelProps) {
+export function MailboxPanel({ data, period, onClose, onOpenUnit, onOpenTenant, side = "right", drill: external, className }: MailboxPanelProps) {
+  const openPayer = onOpenTenant ?? onOpenUnit;
   const own = useDrillStack();
   const drill = external ?? own;
   const forms = useFormDrawer();
@@ -91,7 +94,7 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, side = "right"
               const late = u.rentState === "overdue";
               return (
                 <div key={u.id} className={cx(b.cRow, b.cHero, late ? b.cLate : u.rentState !== "due-soon" && b.cOk)}>
-                  <button type="button" className={b.cPayer} onClick={() => onOpenUnit?.(u.id)} disabled={!onOpenUnit} title={onOpenUnit ? `Open ${u.name}` : undefined}>
+                  <button type="button" className={b.cPayer} onClick={() => openPayer?.(u.id)} disabled={!openPayer} title={openPayer ? `Open ${u.activeLease!.tenantName}` : undefined}>
                     <span className={b.cPayerName}>
                       {firstName(u.activeLease!.tenantName)} <span>· {u.name}</span>
                     </span>

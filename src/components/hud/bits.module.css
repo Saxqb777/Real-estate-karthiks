@@ -1005,6 +1005,35 @@
   line-height: 1.55;
   color: var(--text-dim);
 }
+/* the house window's "who lives here" row — opens the tenant window */
+.cTenant {
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+button.cTenant {
+  cursor: pointer;
+  transition:
+    border-color 0.15s var(--ease-out),
+    background-color 0.15s var(--ease-out);
+}
+button.cTenant:hover {
+  border-color: rgba(201, 146, 46, 0.75);
+  background: rgba(201, 146, 46, 0.1);
+}
+.cTenantPill {
+  display: inline-flex;
+}
+.cTenantGo {
+  width: 18px;
+  height: 18px;
+  color: var(--text-dim);
+}
+button.cTenant:hover .cTenantGo {
+  color: var(--marigold);
+}
 .cLink {
   padding: 0;
   font: inherit;
@@ -1016,6 +1045,11 @@
   transition:
     color 0.15s var(--ease-out),
     border-color 0.15s var(--ease-out);
+}
+/* a link inside a name keeps the name's capitals (the tenant window's house name) */
+.cName .cLink {
+  letter-spacing: inherit;
+  text-transform: inherit;
 }
 .cLink:hover {
   color: var(--marigold);
@@ -1192,6 +1226,29 @@
   .cOcc > :nth-child(2) {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+}
+/* narrow: the house window's tenant row keeps its › on the right; the rent state goes under the name */
+@container hudpanel (max-width: 560px) {
+  .cTenant {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    row-gap: 6px;
+  }
+  .cTenant > .cAv {
+    grid-row: 1 / span 2;
+  }
+  .cTenant > .cWho {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .cTenant > .cTenantPill {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+  .cTenant > .cTenantGo {
+    grid-column: 3;
+    grid-row: 1 / span 2;
   }
 }
 

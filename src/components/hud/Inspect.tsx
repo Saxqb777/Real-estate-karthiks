@@ -28,6 +28,7 @@ import { useEscape, useExplored } from "./store";
 import { TaxPanel } from "./TaxPanel";
 import type { PanelTarget, PeriodKind, SceneObject, SceneObjectKind } from "./types";
 import { PhotosPanel } from "./PhotosPanel";
+import { TenantPanel } from "./TenantPanel";
 import { RentStatePill, UnitPanel, UnitStatusPill } from "./UnitPanel";
 import s from "./bits.module.css";
 
@@ -37,9 +38,11 @@ import s from "./bits.module.css";
 export function panelFor(obj: SceneObject): PanelTarget {
   switch (obj.kind) {
     case "unit":
-    case "tenant":
     case "tolet":
       return obj.unitId ? { kind: "unit", unitId: obj.unitId } : { kind: "property" };
+    case "tenant":
+      // the tenant has their own window (owner 9/10/2026); the house keeps the house's figures
+      return obj.unitId ? { kind: "tenant", unitId: obj.unitId } : { kind: "property" };
     case "mailbox":
       return { kind: "mailbox" };
     case "noticeboard":
@@ -152,20 +155,29 @@ export interface HudPanelForProps {
   onClose: () => void;
   /** switch the right panel to another unit (from a breakdown) */
   onOpenUnit?: (unitId: string) => void;
+  /** switch it to a house's tenant (the house window's "who lives here" row, the mailbox's payers) */
+  onOpenTenant?: (unitId: string) => void;
   side?: "left" | "right" | "inline";
   className?: string;
 }
 
 /** The side panel for a target. */
-export function HudPanelFor({ target, data, period, onClose, onOpenUnit, side, className }: HudPanelForProps) {
+export function HudPanelFor({ target, data, period, onClose, onOpenUnit, onOpenTenant, side, className }: HudPanelForProps) {
   const right = side === "inline" ? "inline" : "right";
   switch (target.kind) {
     case "property":
       return <PropertyPanel data={data} period={period} onClose={onClose} onOpenUnit={onOpenUnit} side={side === "inline" ? "inline" : "left"} className={className} />;
     case "unit":
-      return <UnitPanel data={data} unitId={target.unitId} period={period} onClose={onClose} onOpenUnit={onOpenUnit} side={right} className={className} />;
+      return <UnitPanel data={data} unitId={target.unitId} period={period} onClose={onClose} onOpenUnit={onOpenUnit} onOpenTenant={onOpenTenant} side={right} className={className} />;
+    case "tenant":
+      // nobody lives there (any more) → the house window
+      return data.units.find((x) => x.id === target.unitId)?.activeLease ? (
+        <TenantPanel data={data} unitId={target.unitId} onClose={onClose} onOpenUnit={onOpenUnit} side={right} className={className} />
+      ) : (
+        <UnitPanel data={data} unitId={target.unitId} period={period} onClose={onClose} onOpenUnit={onOpenUnit} onOpenTenant={onOpenTenant} side={right} className={className} />
+      );
     case "mailbox":
-      return <MailboxPanel data={data} period={period} onClose={onClose} onOpenUnit={onOpenUnit} side={right} className={className} />;
+      return <MailboxPanel data={data} period={period} onClose={onClose} onOpenUnit={onOpenUnit} onOpenTenant={onOpenTenant} side={right} className={className} />;
     case "noticeboard":
       return <NoticeBoardPanel data={data} onClose={onClose} side={right} className={className} />;
     case "pole":

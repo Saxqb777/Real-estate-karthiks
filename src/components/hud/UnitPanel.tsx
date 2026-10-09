@@ -1,19 +1,19 @@
 "use client";
-// The house window (opens on a house click). Compact style (owner 9/10/2026): one column of slim rows — the tenant
-// (call / WhatsApp), the next rent big with Record rent beside it (or what's owed), this house's cash (period switch in
-// the title bar), value (worth now · gain · yields), occupancy, electricity (TNPDCL + Pay); Add expense / Move out at the
-// bottom. Every figure still drills down.
-import { Check, Copy, DoorOpen, ExternalLink, FileSignature, MessageCircle, Phone, ReceiptIndianRupee, Wallet, Zap } from "lucide-react";
-import { useState } from "react";
+// The house window (opens on a house click). Compact style (owner 9/10/2026): one column of slim rows — who lives here
+// (one row; it opens the tenant window, TenantPanel, which holds the person, the next rent / what's owed and its
+// breakdown — owner 9/10/2026: tenant and house each get their own window), this house's cash (period switch in the
+// title bar), value (worth now · gain · yields), occupancy, electricity (TNPDCL + Pay); Add expense / Move out at the
+// bottom. An empty house shows how long it has been empty with New lease. Every figure still drills down.
+import { Check, ChevronRight, Copy, DoorOpen, ExternalLink, FileSignature, MessageCircle, Phone, Wallet, Zap } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { Badge, Button, SegmentedBar, StatusPill, buttonClass, toast, cx } from "@/components/ui";
 import type { DashboardData, UnitBreakdown } from "@/lib/dashboard-types";
-import { agreementText } from "@/components/forms";
 import { daysBetween, formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
 import { Fig, FigCell, FigCells, FigLine, vsLastYear } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
-import { explainKey, firstName, inr, monthList, phoneText, positionLabel, telHref, waHref } from "./format";
+import { explainKey, firstName, inr, phoneText, positionLabel, telHref, waHref } from "./format";
 import type { PeriodKind } from "./types";
 import s from "./hud.module.css";
 import b from "./bits.module.css";
@@ -25,6 +25,8 @@ export interface UnitPanelProps {
   onClose?: () => void;
   /** a different unit was clicked inside a breakdown */
   onOpenUnit?: (unitId: string) => void;
+  /** opens the tenant window (the "who lives here" row) */
+  onOpenTenant?: (unitId: string) => void;
   side?: "right" | "inline";
   drill?: DrillStack;
   className?: string;
@@ -62,7 +64,7 @@ export function UnitPanel(props: UnitPanelProps) {
   return <UnitPanelInner key={props.unitId} {...props} />;
 }
 
-function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "right", drill: external, className }: UnitPanelProps) {
+function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenant, side = "right", drill: external, className }: UnitPanelProps) {
   const own = useDrillStack();
   const drill = external ?? own;
   const forms = useFormDrawer();
@@ -72,27 +74,14 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
   const open = (key: string) => drill.push({ kind: "metric", key: `unit:${u.id}:${key}` });
   const openScoped = (key: string) => drill.push({ kind: "metric", key: explainKey(key, period, u.id) });
   const lease = u.activeLease;
-  const np = u.nextPayment;
-  const arrears = np?.arrears;
   const p = u.periods[period];
   // ▲ / ▼ vs the same days last year (year / month); its maths is linked from each figure's breakdown
   const cmp = period === "allTime" ? null : u.comparisons[period];
   const yld = data.yields.units.find((r) => r.unitId === u.id) ?? null;
-  const renew = lease ? data.renewals.find((r) => r.leaseId === lease.id) : undefined;
   const pos = positionLabel(u.position);
   const vacantNow = u.vacantPeriods.find((v) => v.ongoing);
 
-  const recordRent = lease ? () => forms.open({ kind: "payment", props: { defaults: { leaseId: lease.id } } }) : null;
   const newLease = () => forms.open({ kind: "lease", title: `New lease · ${u.name}`, props: { defaults: { unitId: u.id } } });
-  const heroAction = recordRent ? (
-    <Button variant="primary" size="sm" icon={<ReceiptIndianRupee />} onClick={recordRent}>
-      Record rent
-    </Button>
-  ) : (
-    <Button variant="primary" size="sm" icon={<FileSignature />} onClick={newLease}>
-      New lease
-    </Button>
-  );
 
   const actions = (
     <>
@@ -127,12 +116,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
         side={side}
         eyebrow={`${pos ? `${pos} unit` : "Unit"} · ${u.type}`}
         title={u.name}
-        aside={
-          <span className={b.pills}>
-            <UnitStatusPill unit={u} />
-            <RentStatePill unit={u} />
-          </span>
-        }
+        aside={<UnitStatusPill unit={u} />}
         tools={<PeriodSwitch data={data} period={period} />}
         pinId="unit"
         onClose={onClose}
@@ -142,37 +126,9 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
       >
         {/* compact window (owner 9/10/2026, style 1): one column of slim rows */}
         <div className={b.cw}>
-          {/* ---------------- TENANT */}
+          {/* ---------------- WHO LIVES HERE → the tenant window (the person, next rent, what's owed) */}
           {lease ? (
-            <div className={cx(b.cRow, b.cPerson)}>
-              <span className={b.cAv} aria-hidden>
-                {initial(lease.tenantName)}
-              </span>
-              <span className={b.cWho}>
-                <span className={b.cName}>{lease.tenantName}</span>
-                <span className={b.cMeta}>
-                  since {formatDate(lease.startDate)}
-                  {lease.endDate ? ` · last day ${formatDate(lease.endDate)}` : ""}
-                  {" · "}
-                  <button type="button" className={b.cLink} onClick={() => open("rent")}>
-                    rent <span className="num">{inr(lease.monthlyRent)}</span>/month
-                  </button>
-                  {" · "}
-                  <button type="button" className={b.cLink} onClick={() => open("depositHeld")} title="Deposits are the tenant's money — not income">
-                    deposit <span className="num">{inr(u.depositHeld)}</span>
-                  </button>
-                  {lease.agreementEndDate && (
-                    <>
-                      {" · "}
-                      <span className={cx(renew && (renew.state === "expired" ? b.lateText : b.soonText))}>
-                        agreement {renew ? agreementText(renew.daysLeft) : `to ${formatDate(lease.agreementEndDate)}`}
-                      </span>
-                    </>
-                  )}
-                </span>
-              </span>
-              <ContactButtons phone={lease.tenantPhone} name={lease.tenantName} />
-            </div>
+            <TenantRow name={lease.tenantName} meta={`Tenant · since ${formatDate(lease.startDate)}`} pill={<RentStatePill unit={u} />} onOpen={onOpenTenant ? () => onOpenTenant(u.id) : undefined} />
           ) : u.incomingLease ? (
             <div className={cx(b.cRow, b.cPerson)}>
               <span className={b.cAv} aria-hidden>
@@ -200,43 +156,13 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
                   )}
                 </span>
               </span>
-              {u.status !== "inactive" && heroAction}
+              {u.status !== "inactive" && (
+                <Button variant="primary" size="sm" icon={<FileSignature />} onClick={newLease}>
+                  New lease
+                </Button>
+              )}
             </div>
           )}
-
-          {/* ---------------- NEXT RENT (or what's owed) */}
-          {arrears && arrears.months.length > 0 ? (
-            <div className={cx(b.cRow, b.cHero, b.cLate)}>
-              <div>
-                <span className={b.cLabel}>
-                  {firstName(lease?.tenantName ?? "Tenant")} owes · {data.scopeLabels.asOf.toLowerCase()}
-                </span>
-                <div className={b.cBig}>
-                  <Fig value={arrears.totalWithFees} size="hero" tone="expense" compact={false} onClick={() => open("overdue")} />
-                </div>
-                <div className={cx(b.cSub, b.lateText)}>
-                  {monthList(arrears.months.map((m) => m.label))}
-                  {arrears.months.some((m) => m.paid > 0) ? " (one part-paid)" : ""}
-                  {arrears.lateFees > 0 ? ` · incl. ${inr(arrears.lateFees)} late fees` : ""}
-                </div>
-              </div>
-              {heroAction}
-            </div>
-          ) : np ? (
-            <div className={cx(b.cRow, b.cHero, u.rentState !== "due-soon" && b.cOk)}>
-              <div>
-                <span className={b.cLabel}>
-                  Next rent · {np.label}
-                  {np.paidSoFar > 0 ? ` · ${inr(np.paidSoFar)} paid` : ""}
-                </span>
-                <div className={b.cBig}>
-                  <Fig value={np.amountDue} size="hero" compact={false} onClick={() => open("rent")} />
-                </div>
-                <div className={cx(b.cSub, u.rentState === "due-soon" && b.cSoon)}>{dueText(np.dueDate, data.asOf)}</div>
-              </div>
-              {heroAction}
-            </div>
-          ) : null}
 
           {/* ---------------- this house's cash (the period switch is in the title bar) */}
           <FigCells>
@@ -295,6 +221,30 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, side = "rig
 
 const initial = (name: string) => name.trim().charAt(0).toUpperCase() || "?";
 
+/** The house window's "who lives here" row: initial, name, a short line and the rent state; opens the tenant window. */
+function TenantRow({ name, meta, pill, onOpen }: { name: string; meta: string; pill: ReactNode; onOpen?: () => void }) {
+  const inner = (
+    <>
+      <span className={b.cAv} aria-hidden>
+        {initial(name)}
+      </span>
+      <span className={b.cWho}>
+        <span className={b.cName}>{name}</span>
+        <span className={b.cMeta}>{meta}</span>
+      </span>
+      {pill && <span className={b.cTenantPill}>{pill}</span>}
+      {onOpen && <ChevronRight className={b.cTenantGo} aria-hidden />}
+    </>
+  );
+  return onOpen ? (
+    <button type="button" className={cx(b.cRow, b.cPerson, b.cTenant)} onClick={onOpen} title={`Open ${name}`}>
+      {inner}
+    </button>
+  ) : (
+    <div className={cx(b.cRow, b.cPerson, b.cTenant)}>{inner}</div>
+  );
+}
+
 /** Call + WhatsApp buttons for a phone number (tenants; the revenue officer uses the same buttons). */
 export function ContactButtons({ phone, name }: { phone: string | null | undefined; name: string }) {
   if (!phone) return <span className={b.noPhone}>No phone saved</span>;
@@ -310,7 +260,8 @@ export function ContactButtons({ phone, name }: { phone: string | null | undefin
   );
 }
 
-function dueText(due: string, asOf: string): string {
+/** "Due tomorrow, 10/10/2026" — the next rent's due line (tenant window). */
+export function dueText(due: string, asOf: string): string {
   const d = daysBetween(new Date(asOf), new Date(due));
   if (d < 0) return `Was due ${formatDate(due)}`;
   if (d === 0) return `Due today, ${formatDate(due)}`;

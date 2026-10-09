@@ -403,6 +403,14 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 9/10/2026: receipt page on PHONES (owner: "bring the print button down aligning with the heading"): "← Payments" on its
   own line, then the receipt heading (RENT RECEIPT / PE-…) with PRINT / SAVE PDF beside it on the same row (the toolbar
   is a grid on phones: back · title + actions; the number ellipsizes if ever too long). Desktop unchanged.
+- 9/10/2026: TENANT ≠ HOUSE WINDOWS (owner: "when you click the tenant and the house the same pop up box shows up …
+  divide it"; approved my split with "deploy"): clicking the TENANT opens its own window (hud/TenantPanel.tsx, PanelTarget
+  kind "tenant"): eyebrow "Tenant · <house>", title = name + rent-state pill; row = house name (→ house window) · since ·
+  rent · deposit · agreement · phone + call / WhatsApp; the next rent big with RECORD RENT (or what's owed); what's owed
+  month by month (days late, part-paid, late fees — each opens the breakdown). The HOUSE window keeps the house: a "who
+  lives here" row (name · since · rent-state pill · ›) that opens the tenant window, rent collected / its expenses / net
+  cash, value, occupancy, electricity, Add expense / Move out; empty → "Empty since …" + NEW LEASE. Mailbox "who pays
+  next" rows open the tenant window. A tenant target whose house has no current lease falls back to the house window.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
