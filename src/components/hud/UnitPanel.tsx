@@ -5,7 +5,7 @@
 // bottom. Every figure still drills down.
 import { Check, Copy, DoorOpen, ExternalLink, FileSignature, MessageCircle, Phone, ReceiptIndianRupee, Wallet, Zap } from "lucide-react";
 import { useState } from "react";
-import { Badge, Button, SegmentedBar, StatusPill, toast, cx } from "@/components/ui";
+import { Badge, Button, SegmentedBar, StatusPill, buttonClass, toast, cx } from "@/components/ui";
 import type { DashboardData, UnitBreakdown } from "@/lib/dashboard-types";
 import { agreementText } from "@/components/forms";
 import { daysBetween, formatDate } from "@/lib/dates";
@@ -318,7 +318,23 @@ function dueText(due: string, asOf: string): string {
   return `Due ${formatDate(due)} · in ${d} days`;
 }
 
-/** TNPDCL consumer number (copy) + "Pay electricity" — also used by the pole panel. */
+/** The gold "Pay bill" button (TNPDCL site; disabled when no pay link is saved) — one button for the house window and the
+ *  EB pole window so they always look the same (owner, 9/10/2026). */
+export function PayBillButton({ url, block }: { url: string | null; block?: boolean }) {
+  return url ? (
+    <a className={buttonClass({ variant: "primary", block })} href={url} target="_blank" rel="noopener noreferrer">
+      <Zap aria-hidden />
+      <span>Pay bill</span>
+      <ExternalLink aria-hidden />
+    </a>
+  ) : (
+    <Button variant="primary" block={block} icon={<Zap />} disabled>
+      Pay bill
+    </Button>
+  );
+}
+
+/** TNPDCL consumer number (copy) + the gold Pay bill button (house window). */
 export function Electricity({ unit, compact }: { unit: Pick<UnitBreakdown, "name" | "electricityConsumerNumber" | "electricityPayUrl">; compact?: boolean }) {
   const [copied, setCopied] = useState(false);
   const no = unit.electricityConsumerNumber;
@@ -347,12 +363,7 @@ export function Electricity({ unit, compact }: { unit: Pick<UnitBreakdown, "name
           <span className={b.noPhone}>Not saved</span>
         )}
       </div>
-      {unit.electricityPayUrl && (
-        <a className={b.payLink} href={unit.electricityPayUrl} target="_blank" rel="noopener noreferrer">
-          Pay electricity
-          <ExternalLink aria-hidden />
-        </a>
-      )}
+      <PayBillButton url={unit.electricityPayUrl} />
     </section>
   );
 }

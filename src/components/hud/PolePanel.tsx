@@ -3,9 +3,9 @@
 // TNPDCL consumer number on a glowing meter display (tap to copy), its last bill · this year · all time (tap for the
 // bills) and Pay bill (TNPDCL site) + Add bill (an expense pre-filled for that house). Bills = the electricity /
 // utilities category's expenses, counted up to the as-of date like every other figure; totals via sumAmounts().
-import { Check, Copy, ExternalLink, Plus, Zap } from "lucide-react";
+import { Check, Copy, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Button, buttonClass, cx, toast } from "@/components/ui";
+import { Button, cx, toast } from "@/components/ui";
 import { useCategories } from "@/components/forms";
 import { sumAmounts } from "@/lib/calculations";
 import { useApi } from "@/lib/client";
@@ -15,7 +15,7 @@ import type { ExpenseDTO, ExpenseListResponse } from "@/lib/schemas/expense";
 import { DrillPanel, inScope, useDrillStack, type DrillStack } from "./DrillDown";
 import { useFormDrawer } from "./FormDrawer";
 import { inr } from "./format";
-import { UnitStatusPill } from "./UnitPanel";
+import { PayBillButton, UnitStatusPill } from "./UnitPanel";
 import b from "./bits.module.css";
 
 export interface PolePanelProps {
@@ -170,17 +170,7 @@ function MeterCard({
       </div>
 
       <div className={b.mActs}>
-        {u.electricityPayUrl ? (
-          <a className={buttonClass({ variant: "primary", block: true })} href={u.electricityPayUrl} target="_blank" rel="noopener noreferrer">
-            <Zap aria-hidden />
-            <span>Pay bill</span>
-            <ExternalLink aria-hidden />
-          </a>
-        ) : (
-          <Button variant="primary" block icon={<Zap />} disabled>
-            Pay bill
-          </Button>
-        )}
+        <PayBillButton url={u.electricityPayUrl} block />
         <Button variant="secondary" block icon={<Plus />} onClick={onAdd}>
           Add bill
         </Button>

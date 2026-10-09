@@ -381,6 +381,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   bottom (best-offer line, LVL badge and section scope chips dropped there). Mailbox: who pays next rows + latest 4
   receipts + "All receipts ›" (/data#payments). Property: ledger badge beside the title, LVL badge kept on worth now.
   To-dos: count + late badges beside the title, list full width, Add a to-do at the bottom. Every figure still drills down.
+- 9/10/2026: PAY BILL button (owner: "should match in all sections how it's in the EB pole"): the house window's electricity
+  row now has the SAME gold "⚡ PAY BILL ↗" button as the EB pole window — one shared PayBillButton (UnitPanel.tsx) used
+  by both; disabled when no pay link is saved (the house row used to hide it). Old grey "Pay electricity" link (.payLink)
+  removed.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
