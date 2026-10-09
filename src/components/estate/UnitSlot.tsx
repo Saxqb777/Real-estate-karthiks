@@ -14,6 +14,7 @@ import { useTamilFont } from "./Fixtures";
 import { Hotspot, spotKey, useScene, type V3 } from "./Interact";
 import { G, PAL, std } from "./materials";
 import { TenantFigure } from "./People";
+import { kolamCentre } from "./street-life";
 import { Townhouse } from "./Townhouse";
 import { glowTex, kolamTex, movingInTex, toLetTex } from "./textures";
 import type { LabelSpec, Tone } from "./Overlay";
@@ -185,7 +186,7 @@ function BuiltSlot({ slot, world, env, mode, selected, highlighted, interactive,
       {slot.status === "occupied" && u.rentState === "overdue" && <QuestMarker x={cx} z={cz} y={totalH + 7} roof={totalH} reduced={reduced} />}
       {empty && <LetBoard slot={slot} world={world} reduced={reduced} at={signAt} onWall={!!boardOnWall} incoming={slot.status === "incoming"} />}
       {slot.status === "occupied" && mode !== "preview" && interactive && <TenantFigure slot={slot} world={world} env={env} index={index} gateAt={signAt} />}
-      {slot.status === "occupied" && signAt && <StreetKolam x={world.x(signAt.x - (signAt.side ? 1.2 : 0))} z={world.z(signAt.z - (signAt.side ? 0 : 1.2))} env={env} />}
+      {slot.status === "occupied" && signAt && <StreetKolam x={world.x(kolamCentre(signAt).x)} z={world.z(kolamCentre(signAt).z)} env={env} />}
     </group>
   );
 }

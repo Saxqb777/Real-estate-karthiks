@@ -3,18 +3,10 @@
 // The EB poles live in Fixtures.tsx (they are clickable).
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { offsetPolygon, type Pt, type SiteLayout } from "@/lib/site-layout";
+import { offsetPolygon, type SiteLayout } from "@/lib/site-layout";
 import { std } from "./materials";
 import { earthTex, strataTex, withRepeat } from "./textures";
 import { FLAT, planShape, rng, type World } from "./util";
-
-/** x of a polygon edge (a → b) at plan z. */
-const xOnEdge = (a: Pt, b: Pt, z: number) => (Math.abs(b.z - a.z) < 1e-9 ? a.x : a.x + ((b.x - a.x) * (z - a.z)) / (b.z - a.z));
-
-export function tileXRange(layout: SiteLayout, z: number): [number, number] {
-  const [FL, FR, BR, BL] = layout.site.tile;
-  return [xOnEdge(FL, BL, z), xOnEdge(FR, BR, z)];
-}
 
 const BANDS = [
   { inset: 0, top: 0, bottom: -1.2, color: "#4e3322", bevel: 0.35, vRep: 1.2 },

@@ -411,6 +411,22 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   lives here" row (name · since · rent-state pill · ›) that opens the tenant window, rent collected / its expenses / net
   cash, value, occupancy, electricity, Add expense / Move out; empty → "Empty since …" + NEW LEASE. Mailbox "who pays
   next" rows open the tenant window. A tenant target whose house has no current lease falls back to the house window.
+- 9/10/2026: UNIFORM DATA TABLES (owner: "the text and tables are not uniform here, pls check and fix" — Property tax):
+  ui/Table.module.css — every cell (names, dates, years, amounts) in ONE font / size / weight (the body font; numbers
+  only tabular + right-aligned, colours stay green / red), the table-wide `.num` display font is neutralised inside
+  cells, the AMOUNT header looks like every other header, the sort arrow sits AFTER the label in every column; the
+  property tax year is no longer bold; Payments receipt numbers in the row's font. All Data tables + Config categories.
+- 9/10/2026: STREET LIFE FIX (owner: "a random person standing next to the tenant … too close … facing random
+  direction"): where everyone on the grass is now comes from estate/street-life.ts (pure; tested in
+  __tests__/street-life.test.ts — 2 h of scene time on 3 plot sizes, front house occupied / empty: nobody stands within
+  4 ft of anybody, nobody walks through someone standing, nobody stands on a kolam, passers-by take turns). Passers-by
+  (umbrella man, saree lady, lungi man) take TURNS on ONE track (CROSS_Z −4.6 ft), each stopping once to look at the
+  houses: umbrella man right of Gate A (clear of the revenue officer at the number pole), lungi man left of it (between
+  the dog and the tenant), saree lady at the TO-LET board when the front house is empty. The tenant WAITS BESIDE the
+  gate (front: 3 ft left of it, lane gate: towards the front) facing it — never on the kolam. The stray dog NAPS off the
+  front-left corner (no more trotting across the front). Garden stroller's stops moved to the far side of her loop
+  (off the property manager's lane walk). gateSign / kolamCentre / tileXRange live there too; /lab?debug=1 exposes
+  window.__peEnv (scene clock) for checks like this.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

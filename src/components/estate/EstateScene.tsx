@@ -29,6 +29,7 @@ import { UnitSlot, dayMonth, slotLabels, type SceneMode } from "./UnitSlot";
 import { useAnimatedLayout } from "./useAnimatedLayout";
 import { Clouds, Fireflies } from "./SkyLife";
 import { Garden, Greenery, Palms } from "./Vegetation";
+import { gateSign } from "./street-life";
 import { SCENE_OBJECT_INFO, type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind } from "./types";
 import { makeWorld, prefersReducedMotion } from "./util";
 import s from "./estate.module.css";
@@ -391,8 +392,13 @@ function SceneContents({
   three,
   spots,
   onCursor,
+  debug,
 }: ContentsProps) {
   const env = useRef(createEnv());
+  // debug handle for automated checks (debug on only): read / jump the scene clock, e.g. to a passer-by's stop
+  useEffect(() => {
+    if (debug) (window as unknown as { __peEnv?: unknown }).__peEnv = env;
+  }, [debug]);
   const tooltips = tooltipsProp ?? !onObjectHover;
   const { layout, target } = useAnimatedLayout(plot, units, !reduced);
   const warnSig = target.warnings.join("\n");
@@ -469,13 +475,8 @@ function SceneContents({
     };
   }, []);
   // each unit's own gate: the front unit's main gate at its stair foot (front wall), the back unit's gate in the
-  // middle of the lane-side wall; the point just outside it carries the TO-LET board / the kolam
-  const frontGate = layout.compoundWalls.find((w) => w.gate === "front");
-  const sideGate = layout.compoundWalls.find((w) => w.gate === "side");
-  const signAt = (sl: SlotName) => {
-    if (sl === "back" && sideGate) return { x: (sideGate.a.x + sideGate.b.x) / 2 - 2.6, z: (sideGate.a.z + sideGate.b.z) / 2, side: true };
-    return frontGate ? { x: (frontGate.a.x + frontGate.b.x) / 2, z: -2.6 } : undefined;
-  };
+  // middle of the lane-side wall; the point just outside it carries the TO-LET board / the kolam (street-life.ts)
+  const signAt = (sl: SlotName) => gateSign(layout, sl);
 
   // ── DOM labels: cards / tags / tooltips / hint markers / dimensions (anchors read every frame) ──
   const anchors = useRef(new Map<string, V3>());

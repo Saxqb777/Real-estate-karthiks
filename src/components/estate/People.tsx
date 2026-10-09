@@ -1,21 +1,40 @@
 "use client";
-// Low-poly life on the grass round the plot (no road): a veshti man with an umbrella who stops at the gate, a saree
-// lady who pauses to read the TO-LET board, a man in a lungi, a school kid running round the palms, a lady strolling
-// through the banana garden, a stray dog napping by the gate, a zebu cow grazing under the palms, and the tenant at
-// the door of each occupied house (a clickable world object). Every character is ONE draw call (rig.ts). Movement follows
-// scripted timelines on scene time → frame-rate independent and slowed by focus dimming.
+// Low-poly life on the grass round the plot (no road): passers-by taking turns across the front grass — a veshti man
+// with an umbrella, a saree lady (she reads the TO-LET board when the front house is empty), a man in a lungi — each
+// stopping once to look at the houses, a lady strolling through the banana garden, a stray dog napping off the
+// front-left corner, a zebu cow grazing under the palms, and the tenant of each occupied house waiting beside its gate
+// (a clickable world object). Every character is ONE draw call (rig.ts). WHERE everyone is comes from street-life.ts
+// (pure, tested so nobody stands in anybody — owner, 9/10/2026); movement runs on scene time → frame-rate independent
+// and slowed by focus dimming.
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
-import type { BuildingSlot, Pt, SiteLayout } from "@/lib/site-layout";
+import type { BuildingSlot, SiteLayout } from "@/lib/site-layout";
 import type { Env } from "./env";
-import { tileXRange } from "./Island";
 import { Hotspot, spotKey, useScene, type V3 } from "./Interact";
 import { gateNear } from "./gate-state";
 import { EDGE_CLIP, G } from "./materials";
 import { bake, ball, box, cone, type Part } from "./bake";
-import { SKIN, personLimbs, posePerson, rigGeometry, rigMaterials, type Gait, type Limb, type Outfit, type RigMaterials } from "./rig";
+import { SKIN, personLimbs, posePerson, rigGeometry, rigMaterials, type Limb, type Outfit, type RigMaterials } from "./rig";
 import { blobTex } from "./textures";
+import {
+  WALKERS,
+  cowSpot,
+  dogSpot,
+  gatePoint,
+  legTimeline,
+  managerAt,
+  managerLoop,
+  photographerSpot,
+  streetSchedule,
+  tenantAt,
+  tenantRoute,
+  tileXRange,
+  walkerAt,
+  type Leg,
+  type WalkerPlan,
+  type WalkSpec,
+} from "./street-life";
 import { smoothstep, type World } from "./util";
 
 // ───────────────────────────── shared character mesh ─────────────────────────────
@@ -36,143 +55,35 @@ export function RigMesh({ geo, rig, cast = true }: { geo: THREE.BufferGeometry; 
 
 // ───────────────────────────── people on the grass ─────────────────────────────
 
-type StopAt = "gate" | "board" | "center" | number;
-interface Stop {
-  /** where along the walk: a landmark (crossers) or a fraction 0..1 of the walk */
-  at: StopAt;
-  dur: number;
-  /** what they do while stopped: "look" turns to the houses */
-  act?: "look" | "idle";
-}
-type Route =
-  /** walks across the open grass in front of the plot at this distance (ft) from the front wall, edge to edge */
-  | { kind: "cross"; dist: number; dir: 1 | -1 }
-  /** strolls a closed loop around the palms on the right / the banana garden on the left */
-  | { kind: "loop"; area: "palms" | "garden" };
-interface PedSpec {
-  outfit: Outfit;
-  scale: number;
-  speed: number;
-  gait: Gait;
-  route: Route;
-  /** scene-time offset into the loop */
-  offset: number;
-  /** seconds off-stage after each crossing (loops never leave) */
-  wait: number;
-  stops: Stop[];
-}
-
-// three passers-by on separate tracks across the front grass (nobody walks through anybody) and a lady strolling
-// through the banana garden (the school kid round the palms was removed — owner: a policeman guards the tax collector's moped there)
-const PEDS: PedSpec[] = [
-  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", route: { kind: "cross", dist: 5.2, dir: 1 }, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
-  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", route: { kind: "cross", dist: 6.0, dir: -1 }, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
-  { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, scale: 0.95, speed: 2.6, gait: "walk", route: { kind: "loop", area: "garden" }, offset: 22, wait: 0, stops: [{ at: 0.22, dur: 4, act: "look" }, { at: 0.62, dur: 3, act: "idle" }] },
-  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, scale: 1, speed: 2.8, gait: "walk", route: { kind: "cross", dist: 4.6, dir: 1 }, offset: 30, wait: 12, stops: [{ at: "center", dur: 3, act: "look" }] },
+/** How each passer-by looks — the same order as WALKERS (street-life.ts says where they walk and stop). */
+const WALKER_LOOKS: { outfit: Outfit; seed: number }[] = [
+  { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, seed: 4 },
+  { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, seed: 14 },
+  { outfit: { top: "#8a2f5a", bottom: "#2e8b57", wrap: "saree", hair: "plait", jasmine: true, skin: SKIN.dark }, seed: 22 },
+  { outfit: { top: "#f1e3c4", bottom: "#3b5c8f", wrap: "lungi", skin: SKIN.dark }, seed: 30 },
 ];
 
-interface Landmarks {
-  gateX: number;
-  boardX: number | null;
-  centerX: number;
-}
-
-/** The plan-space polyline a walker follows (closed for loops). */
-function routePath(route: Route, layout: SiteLayout): Pt[] {
-  const [FL, , , BL] = layout.plot.polygon;
-  const D = layout.plot.depthFt;
-  const R = layout.plot.rightX;
-  const lx = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
-  if (route.kind === "cross") {
-    const z = -route.dist;
-    const [x0, x1] = tileXRange(layout, z);
-    const pts = [
-      { x: x0 - 3, z },
-      { x: x1 + 3, z },
-    ];
-    return route.dir > 0 ? pts : pts.reverse();
-  }
-  if (route.area === "palms") {
-    // round the front-right palm, between the hedge and the right edge of the island
-    return [
-      { x: R + 4.5, z: 0.4 },
-      { x: R + 11.5, z: -0.6 },
-      { x: R + 12.6, z: 6.5 },
-      { x: R + 8.5, z: 10 },
-      { x: R + 4.6, z: 7 },
-    ];
-  }
-  // through the side garden: up along the wall, round the banana clumps, back past the chilli mat
-  return [
-    { x: lx(2) - 3, z: 2 },
-    { x: lx(20) - 3, z: 20 },
-    { x: lx(33) - 5.5, z: 33 },
-    { x: lx(Math.min(52, D * 0.68)) - 4, z: Math.min(52, D * 0.68) },
-    { x: lx(Math.min(60, D * 0.78)) - 12, z: Math.min(60, D * 0.78) },
-    { x: lx(40) - 14.5, z: 40 },
-    { x: lx(20) - 14, z: 20 },
-    { x: lx(4) - 14.5, z: 4 },
-    { x: lx(1) - 9, z: 1 },
-  ];
-}
-
-interface Timeline {
-  pts: Pt[];
-  cum: number[];
-  segs: { t0: number; t1: number; d0: number; d1: number; stop?: Stop }[];
-  period: number;
-  walkEnd: number;
-}
-
-function buildTimeline(spec: PedSpec, layout: SiteLayout, marks: Landmarks): Timeline {
-  const loop = spec.route.kind === "loop";
-  const raw = routePath(spec.route, layout);
-  const pts = loop ? [...raw, raw[0]] : raw;
-  const cum = [0];
-  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z));
-  const span = cum[cum.length - 1];
-  // landmarks are x positions on a crossing (straight along x)
-  const alongX = (x: number) => Math.abs(x - pts[0].x);
-  const stops = spec.stops
-    .map((s) => {
-      const d = typeof s.at === "number" ? span * s.at : loop ? null : s.at === "gate" ? alongX(marks.gateX) : s.at === "board" ? (marks.boardX === null ? null : alongX(marks.boardX)) : alongX(marks.centerX);
-      return d === null ? null : { s, d };
-    })
-    .filter((v): v is { s: Stop; d: number } => !!v && v.d > 1 && v.d < span - 1)
-    .sort((a, b) => a.d - b.d);
-  const segs: Timeline["segs"] = [];
-  let t = 0;
-  let d = 0;
-  for (const st of stops) {
-    const dt = (st.d - d) / spec.speed;
-    segs.push({ t0: t, t1: t + dt, d0: d, d1: st.d });
-    t += dt;
-    segs.push({ t0: t, t1: t + st.s.dur, d0: st.d, d1: st.d, stop: st.s });
-    t += st.s.dur;
-    d = st.d;
-  }
-  const dt = (span - d) / spec.speed;
-  segs.push({ t0: t, t1: t + dt, d0: d, d1: span });
-  t += dt;
-  return { pts, cum, segs, period: t + (loop ? 0 : spec.wait), walkEnd: t };
-}
-
-/** Point + direction at distance d along the polyline. */
-function along(tl: Timeline, d: number): { p: Pt; dx: number; dz: number } {
-  const { pts, cum } = tl;
-  let i = 1;
-  while (i < cum.length - 1 && cum[i] < d) i++;
-  const a = pts[i - 1];
-  const b = pts[i];
-  const len = cum[i] - cum[i - 1] || 1;
-  const k = Math.min(1, Math.max(0, (d - cum[i - 1]) / len));
-  return { p: { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k }, dx: (b.x - a.x) / len, dz: (b.z - a.z) / len };
-}
-
-function Pedestrian({ spec, layout, world, env, marks, onGroup }: { spec: PedSpec; layout: SiteLayout; world: World; env: RefObject<Env>; marks: Landmarks; onGroup?: (g: THREE.Group | null) => void }) {
-  const { geo, rig } = useRig(() => personLimbs(spec.outfit), [spec], { clip: true });
+function Pedestrian({
+  spec,
+  plan,
+  outfit,
+  seed,
+  layout,
+  world,
+  env,
+  onGroup,
+}: {
+  spec: WalkSpec;
+  plan: WalkerPlan;
+  outfit: Outfit;
+  seed: number;
+  layout: SiteLayout;
+  world: World;
+  env: RefObject<Env>;
+  onGroup?: (g: THREE.Group | null) => void;
+}) {
+  const { geo, rig } = useRig(() => personLimbs(outfit), [outfit], { clip: true });
   const root = useRef<THREE.Group>(null);
-  const tl = useMemo(() => buildTimeline(spec, layout, marks), [spec, layout, marks]);
   const heading = useRef<number | null>(null);
   const walked = useRef(0);
   const look = useMemo(() => ({ x: world.x(layout.center.x), z: world.z(layout.center.z) }), [layout, world]);
@@ -181,21 +92,20 @@ function Pedestrian({ spec, layout, world, env, marks, onGroup }: { spec: PedSpe
     const g = root.current;
     if (!g) return;
     const e = env.current;
-    const tt = (((e.t + spec.offset) % tl.period) + tl.period) % tl.period;
-    if (tt >= tl.walkEnd) {
+    const s = walkerAt(plan, e.t);
+    if (!s.on) {
+      // off stage between turns: they come back facing the way they walk
       g.visible = false;
+      heading.current = null;
       return;
     }
     g.visible = true;
-    const seg = tl.segs.find((s) => tt < s.t1) ?? tl.segs[tl.segs.length - 1];
-    const k = seg.t1 > seg.t0 ? (tt - seg.t0) / (seg.t1 - seg.t0) : 0;
-    const at = along(tl, seg.d0 + (seg.d1 - seg.d0) * k);
-    const X = world.x(at.p.x);
-    const Z = world.z(at.p.z);
+    const X = world.x(s.p.x);
+    const Z = world.z(s.p.z);
     g.position.set(X, 0, Z);
-    const stopped = !!seg.stop;
+    const stopped = !!s.stop;
     // face the way they walk (plan (dx, dz) → world (dx, −dz)); while stopped to look, turn to the houses
-    const want = stopped && seg.stop?.act === "look" ? Math.atan2(look.x - X, look.z - Z) : Math.atan2(at.dx, -at.dz);
+    const want = stopped && s.stop?.act === "look" ? Math.atan2(look.x - X, look.z - Z) : Math.atan2(s.dx, -s.dz);
     if (heading.current === null) heading.current = want;
     let dh = want - heading.current;
     while (dh > Math.PI) dh -= Math.PI * 2;
@@ -203,9 +113,8 @@ function Pedestrian({ spec, layout, world, env, marks, onGroup }: { spec: PedSpe
     heading.current += dh * (1 - Math.exp(-e.dt * 6));
     g.rotation.y = heading.current;
     if (!stopped) walked.current += spec.speed * e.dt;
-    const stride = spec.gait === "run" ? 2.2 : 1.6;
-    const phase = (walked.current / (spec.scale * stride)) * Math.PI;
-    posePerson(rig.u, stopped ? "idle" : spec.gait, stopped ? 0 : phase, e.t, spec.offset);
+    const phase = (walked.current / (spec.scale * 1.6)) * Math.PI;
+    posePerson(rig.u, stopped ? "idle" : "walk", stopped ? 0 : phase, e.t, seed);
   });
 
   return (
@@ -226,14 +135,7 @@ export interface MoverRegistry {
 }
 
 export function Pedestrians({ layout, world, env, count, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; count: number; movers?: MoverRegistry }) {
-  const marks = useMemo<Landmarks>(() => {
-    const porch = layout.compoundWalls.find((w) => w.gate === "front") ?? layout.compoundWalls.find((w) => w.kind === "gate");
-    const gateX = porch ? (porch.a.x + porch.b.x) / 2 : layout.plot.rightX / 2;
-    const vacant = layout.slots.find((s) => s.status === "vacant" || s.status === "incoming");
-    // the back house's board stands at Gate B on the lane side, off the walkers' tracks: they only stop for the front one
-    const boardGate = vacant && vacant.slot === "front" ? porch : null;
-    return { gateX, boardX: boardGate ? (boardGate.a.x + boardGate.b.x) / 2 : null, centerX: (layout.plot.polygon[0].x + layout.plot.rightX) / 2 };
-  }, [layout]);
+  const plans = useMemo(() => streetSchedule(layout), [layout]);
   // passers-by appear from / vanish into the island's cut edges
   useEffect(() => {
     const [x0, x1] = tileXRange(layout, layout.site.meadow.z0 / 2);
@@ -246,8 +148,18 @@ export function Pedestrians({ layout, world, env, count, movers }: { layout: Sit
   }, [layout, world]);
   return (
     <group>
-      {PEDS.slice(0, count).map((p, i) => (
-        <Pedestrian key={i} spec={p} layout={layout} world={world} env={env} marks={marks} onGroup={(g) => movers?.set(`ped${i}`, g, 1.7 * p.scale)} />
+      {WALKERS.slice(0, count).map((w, i) => (
+        <Pedestrian
+          key={i}
+          spec={w}
+          plan={plans[i]}
+          outfit={WALKER_LOOKS[i].outfit}
+          seed={WALKER_LOOKS[i].seed}
+          layout={layout}
+          world={world}
+          env={env}
+          onGroup={(g) => movers?.set(`ped${i}`, g, 1.7 * w.scale)}
+        />
       ))}
     </group>
   );
@@ -260,77 +172,6 @@ const TENANT_OUTFITS: Outfit[] = [
   { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", towel: "#d9b26a", skin: SKIN.dark },
 ];
 
-/** One leg of the tenant's walk: to (x, z) in plan feet at height y, at this speed (ft/s), then a pause. */
-type Leg = { x: number; z: number; y: number; speed: number; pause?: number; look?: "front" };
-
-/**
- * The tenant's day (owner, 5/10/2026): waits outside the unit's own gate, the gate swings open, walks in, climbs the
- * dog-leg stair (lower flight → U-turn landing → upper flight → arrival platform), strolls out on the terrace and looks
- * round, comes back down, walks out and the gate shuts behind. Loops on scene time.
- */
-function tenantRoute(slot: BuildingSlot, gate: { x: number; z: number; side: boolean }): Leg[] {
-  const st = slot.stairs;
-  const w = st.x1 - st.x0;
-  const land = Math.min(2.4, w * 0.24);
-  const top = Math.min(1.8, w * 0.18);
-  const riser = Math.min(1.4, w * 0.14);
-  const H = slot.heightFt;
-  const runL = w - land;
-  const runU = w - riser - top - land;
-  const rise1 = (H * runL) / (runL + runU);
-  const zMid = (st.z0 + st.z1) / 2;
-  const lowZ = (st.z0 + zMid) / 2; // lower flight lane (towards the yard)
-  const upZ = (zMid + st.z1) / 2; // upper flight lane (along the house front)
-  const xLand = st.x1 - land / 2;
-  const xArr = st.x0 + riser + top / 2; // the gap in the front parapet
-  const r = slot.rect;
-  // outside / just outside / just inside the gate
-  const out = gate.side ? { x: gate.x - 4, z: gate.z + 0.6 } : { x: gate.x + 0.9, z: gate.z - 4 };
-  const near = gate.side ? { x: gate.x - 1.6, z: gate.z } : { x: gate.x, z: gate.z - 1.6 };
-  const inside = gate.side ? { x: gate.x + 2.2, z: gate.z } : { x: gate.x, z: gate.z + 2.2 };
-  const foot = { x: st.x0 - 1.0, z: lowZ };
-  const walk = 3.0;
-  const climb = 1.7;
-  const up: Leg[] = [
-    { ...near, y: 0, speed: walk, pause: 1.1 }, // the gate swings open
-    { ...inside, y: 0, speed: walk },
-    { ...foot, y: 0, speed: walk },
-    { x: st.x0 + 0.3, z: lowZ, y: 0, speed: walk },
-    { x: st.x1 - land, z: lowZ, y: rise1, speed: climb },
-    { x: xLand, z: lowZ, y: rise1, speed: climb },
-    { x: xLand, z: upZ, y: rise1, speed: climb },
-    { x: st.x1 - land - 0.1, z: upZ, y: rise1, speed: climb },
-    { x: st.x0 + riser + top, z: upZ, y: H, speed: climb },
-    { x: xArr, z: upZ, y: H, speed: climb },
-  ];
-  const terrace: Leg[] = [
-    { x: xArr, z: st.z1 + 1.6, y: H, speed: walk },
-    { x: (r.x0 + r.x1) / 2, z: r.z0 + (r.z1 - r.z0) * 0.35, y: H, speed: walk * 0.8, pause: 6, look: "front" },
-    { x: r.x0 + 3.5, z: r.z0 + 3, y: H, speed: walk * 0.8, pause: 3.5 },
-    { x: xArr, z: st.z1 + 1.6, y: H, speed: walk * 0.8 },
-  ];
-  // back down = the climb in reverse, then out of the gate and away (the gate shuts once they've stepped clear)
-  const rev = [...up].reverse();
-  // going down: stair pace until the foot, then a normal walk
-  const down = rev.map((l, i) => ({ ...l, pause: undefined, speed: i === 0 || l.y > 0 || rev[i - 1].y > 0 ? climb : walk }));
-  return [{ ...out, y: 0, speed: walk, pause: 14 }, ...up, ...terrace, ...down.slice(0, -1), { ...near, y: 0, speed: walk }, { ...out, y: 0, speed: walk }];
-}
-
-type Timed = { a: Leg; b: Leg; t0: number; t1: number; p1: number };
-function legTimeline(legs: Leg[]): { segs: Timed[]; period: number } {
-  const segs: Timed[] = [];
-  let t = 0;
-  for (let i = 0; i < legs.length; i++) {
-    const a = legs[i];
-    const b = legs[(i + 1) % legs.length];
-    const len = Math.hypot(b.x - a.x, b.z - a.z, b.y - a.y);
-    const dur = len / b.speed;
-    segs.push({ a, b, t0: t, t1: t + dur, p1: t + dur + (b.pause ?? 0) });
-    t += dur + (b.pause ?? 0);
-  }
-  return { segs, period: t };
-}
-
 /**
  * The tenant of an occupied house (clickable → "tenant", waves when hovered while standing). Starts outside the unit's
  * own gate (Gate to Unit A in the front wall, Gate to Unit B in the lane wall) and goes up to the terrace and back.
@@ -342,9 +183,11 @@ export function TenantFigure({ slot, world, env, index, gateAt }: { slot: Buildi
   const { geo, rig } = useRig(() => personLimbs(outfit), [outfit]);
   const root = useRef<THREE.Group>(null);
   const anchor = useMemo<V3>(() => [0, 7.2, 0], []);
-  const side = !!gateAt?.side;
-  // the gate itself (signAt sits 2.6 ft outside it: in front of Gate A, on the lane side of Gate B)
-  const gate = useMemo(() => (gateAt ? (side ? { x: gateAt.x + 2.6, z: gateAt.z, side } : { x: gateAt.x, z: 0, side }) : null), [gateAt, side]);
+  // the gate itself (its sign sits 2.6 ft outside it: in front of Gate A, on the lane side of Gate B)
+  const gx = gateAt?.x;
+  const gz = gateAt?.z;
+  const gs = !!gateAt?.side;
+  const gate = useMemo(() => (gx === undefined || gz === undefined ? null : gatePoint({ x: gx, z: gz, side: gs })), [gx, gz, gs]);
   const tl = useMemo(() => (gate ? legTimeline(tenantRoute(slot, gate)) : null), [slot, gate]);
   const heading = useRef<number | null>(null);
   const walked = useRef(0);
@@ -364,16 +207,14 @@ export function TenantFigure({ slot, world, env, index, gateAt }: { slot: Buildi
     let moving = false;
     let look: Leg["look"];
     if (tl) {
-      const tt = (((e.t + index * 23) % tl.period) + tl.period) % tl.period;
-      const sg = tl.segs.find((s) => tt < s.p1) ?? tl.segs[tl.segs.length - 1];
-      const k = sg.t1 > sg.t0 ? Math.min(1, Math.max(0, (tt - sg.t0) / (sg.t1 - sg.t0))) : 1;
-      x = sg.a.x + (sg.b.x - sg.a.x) * k;
-      z = sg.a.z + (sg.b.z - sg.a.z) * k;
-      y = sg.a.y + (sg.b.y - sg.a.y) * k;
-      moving = tt < sg.t1 && Math.hypot(sg.b.x - sg.a.x, sg.b.z - sg.a.z) > 0.01;
-      dx = sg.b.x - sg.a.x;
-      dz = sg.b.z - sg.a.z;
-      if (!moving) look = sg.b.look;
+      const s = tenantAt(tl, e.t, index);
+      x = s.x;
+      z = s.z;
+      y = s.y;
+      moving = s.moving;
+      dx = s.dx;
+      dz = s.dz;
+      look = s.look;
       if (gate) gateNear[gate.side ? "side" : "front"] = Math.hypot(x - gate.x, z - gate.z) < 2.4;
       // a moving click target: re-pick now and then so hover follows them
       if (state.clock.elapsedTime - lastPick.current > 0.15) {
@@ -384,7 +225,8 @@ export function TenantFigure({ slot, world, env, index, gateAt }: { slot: Buildi
     const X = world.x(x);
     const Z = world.z(z);
     g.position.set(X, y, Z);
-    const want = look === "front" ? 0 : Math.atan2(dx, -dz);
+    // waiting by the gate they face it; on the terrace they look out front; else the way they walk
+    const want = look === "front" ? 0 : look === "gate" && gate ? Math.atan2(gate.x - x, -(gate.z - z)) : Math.atan2(dx, -dz);
     if (heading.current === null) heading.current = want;
     if (moving || look) {
       let dh = want - heading.current;
@@ -440,49 +282,18 @@ function dogLimbs(): Limb[] {
 export function Dog({ layout, world, env, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; movers?: MoverRegistry }) {
   const { geo, rig } = useRig(dogLimbs, []);
   const g = useRef<THREE.Group>(null);
-  const z = -5.2; // on the grass in front of the wall, between the gate kolam and the walkers' tracks
-  const gate = layout.compoundWalls.find((w) => w.kind === "gate");
-  const a = gate ? (gate.a.x + gate.b.x) / 2 - 1.5 : layout.plot.polygon[0].x + 2;
-  const b = layout.plot.rightX + 1.2;
-  const nap = 16;
-  const trot = Math.abs(b - a) / 5.5;
-  const period = (nap + trot) * 2;
+  // napping off the front-left corner, by the wall, clear of everyone's path (street-life.ts; owner 9/10/2026)
+  const spot = useMemo(() => dogSpot(layout), [layout]);
   useFrame(() => {
-    const e = env.current;
-    const t = e.t % period;
-    let x: number;
-    let moving = false;
-    let dir = 1;
-    if (t < nap) x = a;
-    else if (t < nap + trot) {
-      x = a + (b - a) * smoothstep(0, 1, (t - nap) / trot);
-      moving = true;
-    } else if (t < nap * 2 + trot) {
-      x = b;
-      dir = -1;
-    } else {
-      x = b + (a - b) * smoothstep(0, 1, (t - nap * 2 - trot) / trot);
-      moving = true;
-      dir = -1;
-    }
     if (!g.current) return;
-    g.current.position.set(world.x(x), 0, world.z(z));
-    g.current.rotation.y = moving ? (dir > 0 ? 0 : Math.PI) : dir > 0 ? 0.4 : Math.PI - 0.4;
     const A = rig.u.uAng.value;
-    const T = e.t;
-    if (moving) {
-      for (let i = 1; i <= 4; i++) A[i] = Math.sin(T * 12 + (i % 2) * Math.PI + (i > 2 ? Math.PI / 2 : 0)) * 0.6;
-      A[5] = Math.sin(T * 14) * 0.5;
-      A[6] = Math.sin(T * 12) * 0.05;
-      rig.u.uShift.value.set(0, Math.abs(Math.sin(T * 12)) * 0.08, 0);
-    } else {
-      // lying down: legs folded under, slow breathing, an occasional head lift
-      A[1] = A[2] = 1.45;
-      A[3] = A[4] = -1.45;
-      A[5] = 0.15 + Math.sin(T * 0.6) * 0.1;
-      A[6] = -0.5 + Math.max(0, Math.sin(T * 0.21)) ** 8 * 0.6;
-      rig.u.uShift.value.set(0, -0.78 + Math.sin(T * 2.2) * 0.02, 0);
-    }
+    const T = env.current.t;
+    // lying down: legs folded under, slow breathing, an occasional head lift
+    A[1] = A[2] = 1.45;
+    A[3] = A[4] = -1.45;
+    A[5] = 0.15 + Math.sin(T * 0.6) * 0.1;
+    A[6] = -0.5 + Math.max(0, Math.sin(T * 0.21)) ** 8 * 0.6;
+    rig.u.uShift.value.set(0, -0.78 + Math.sin(T * 2.2) * 0.02, 0);
   });
   return (
     <group
@@ -490,6 +301,8 @@ export function Dog({ layout, world, env, movers }: { layout: SiteLayout; world:
         g.current = o;
         movers?.set("dog", o, 1.9);
       }}
+      position={[world.x(spot.x), 0, world.z(spot.z)]}
+      rotation={[0, 0.4, 0]}
     >
       <RigMesh geo={geo} rig={rig} />
     </group>
@@ -540,8 +353,7 @@ export function Cow({ layout, world, env, movers }: { layout: SiteLayout; world:
   const { geo, rig } = useRig(cowLimbs, []);
   const g = useRef<THREE.Group>(null);
   // grazing on the front grass under the palms at the right, clear of the walkers' tracks
-  const z = layout.site.meadow.z0 + 3;
-  const x = layout.plot.rightX + 2;
+  const { x, z } = useMemo(() => cowSpot(layout), [layout]);
   const neck = useRef(0);
   useFrame(() => {
     const e = env.current;
@@ -680,24 +492,8 @@ export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; wo
   const { geo, rig } = useRig(officerLimbs, []);
   const root = useRef<THREE.Group>(null);
   const anchor = useMemo<V3>(() => [0, 7.4, 0], []);
-  // a loop outside the wall: front grass → right passage → behind the back → down the lane, clear of the gates' boards
-  const loop = useMemo(() => {
-    const [FL, FR, BR, BL] = layout.plot.polygon;
-    const pts: Pt[] = [
-      { x: FL.x - 5, z: FL.z - 6.5 },
-      { x: FR.x + 3, z: FR.z - 6.5 },
-      { x: BR.x + 3, z: BR.z + 3.8 },
-      { x: BL.x - 5, z: BL.z + 3.8 },
-    ];
-    const segs = pts.map((a, i) => {
-      const b = pts[(i + 1) % pts.length];
-      return { a, b, len: Math.hypot(b.x - a.x, b.z - a.z) };
-    });
-    return { segs, total: segs.reduce((n, sg) => n + sg.len, 0) };
-  }, [layout]);
-  const SPEED = 2.1; // ft/s
-  const WRITE = 4; // s at each corner
-  const cycle = loop.total / SPEED + WRITE * loop.segs.length;
+  // a loop outside the wall: front grass → right passage → behind the back → down the lane (street-life.ts)
+  const loop = useMemo(() => managerLoop(layout), [layout]);
   const heading = useRef<number | null>(null);
   const lastPick = useRef(0);
   useFrame((state) => {
@@ -708,36 +504,7 @@ export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; wo
       state.events.update?.();
     }
     const e = env.current;
-    let t = (((e.t + cycle * 0.35) % cycle) + cycle) % cycle; // starts on the right side, away from the front walkers
-    let x = 0;
-    let z = 0;
-    let dx = 1;
-    let dz = 0;
-    let writing = false;
-    let walked = 0;
-    for (const sg of loop.segs) {
-      const walkT = sg.len / SPEED;
-      if (t < WRITE) {
-        writing = true;
-        x = sg.a.x;
-        z = sg.a.z;
-        dx = sg.b.x - sg.a.x;
-        dz = sg.b.z - sg.a.z;
-        break;
-      }
-      t -= WRITE;
-      if (t < walkT) {
-        const k = t / walkT;
-        x = sg.a.x + (sg.b.x - sg.a.x) * k;
-        z = sg.a.z + (sg.b.z - sg.a.z) * k;
-        dx = sg.b.x - sg.a.x;
-        dz = sg.b.z - sg.a.z;
-        walked += t * SPEED;
-        break;
-      }
-      t -= walkT;
-      walked += sg.len;
-    }
+    const { x, z, dx, dz, writing, walked } = managerAt(loop, e.t);
     const X = world.x(x);
     const Z = world.z(z);
     g.position.set(X, 0, Z);
@@ -871,11 +638,7 @@ export function Photographer({ layout, world, env }: { layout: SiteLayout; world
   const flash = useRef<THREE.Sprite>(null);
   const light = useRef<THREE.PointLight>(null);
   const spot = useMemo(() => {
-    const [FL, , , BL] = layout.plot.polygon;
-    const D = layout.plot.depthFt;
-    const lx = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
-    const z = D * 0.26; // between the pump (D·0.2) and the banana clumps (D·0.36)
-    const p = { x: lx(z) - 10, z };
+    const p = photographerSpot(layout); // between the pump (D·0.2) and the banana clumps (D·0.36)
     const front = layout.slots.find((s) => s.slot === "front");
     const aim = front ? { x: (front.rect.x0 + front.rect.x1) / 2, z: (front.rect.z0 + front.rect.z1) / 2 } : { x: p.x + 10, z: p.z };
     const X = world.x(p.x);
