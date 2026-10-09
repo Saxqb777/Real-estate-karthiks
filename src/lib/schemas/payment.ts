@@ -168,4 +168,7 @@ export interface InvoiceData {
   method: PaymentMethodValue;
   notes: string | null;
   lease: { id: string; startDate: string; endDate: string | null; monthlyRent: number; securityDeposit: number };
+  /** the receipt's rent month: its rent, paid towards it before this payment, and the balance after it (calculations
+   *  receiptMonthFor; negative = more than the month's rent was paid) */
+  month: { rent: number; paidBefore: number; balance: number };
 }

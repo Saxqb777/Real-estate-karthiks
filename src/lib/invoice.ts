@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { amountInWords } from "@/lib/amount-words";
-import { rentForMonth } from "@/lib/calculations";
+import { receiptMonthFor, rentForMonth } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
 import { periodLabel, type InvoiceData } from "@/lib/schemas/payment";
 
@@ -49,6 +49,21 @@ export async function buildInvoice(paymentId: string): Promise<InvoiceData | nul
   const { lease } = payment;
   const amount = payment.amount.toNumber();
   const period = { month: payment.periodMonth, year: payment.periodYear };
+  // the rent for the month this receipt is for (after any rent change)
+  const monthRent = rentForMonth(
+    { monthlyRent: lease.monthlyRent.toNumber(), rentChanges: lease.rentChanges.map((c) => ({ effectiveFrom: c.effectiveFrom, monthlyRent: c.monthlyRent.toNumber() })) },
+    period.year,
+    period.month,
+  );
+  const samePeriod = await prisma.payment.findMany({
+    where: { leaseId: payment.leaseId, periodYear: payment.periodYear, periodMonth: payment.periodMonth },
+    select: { id: true, amount: true, paymentDate: true, periodYear: true, periodMonth: true, invoiceSeq: true },
+  });
+  const month = receiptMonthFor(
+    monthRent,
+    { id: payment.id, amount, paymentDate: payment.paymentDate, periodYear: payment.periodYear, periodMonth: payment.periodMonth, invoiceSeq: payment.invoiceSeq },
+    samePeriod.map((p) => ({ ...p, amount: p.amount.toNumber() })),
+  );
 
   return {
     paymentId: payment.id,
@@ -76,13 +91,9 @@ export async function buildInvoice(paymentId: string): Promise<InvoiceData | nul
       id: lease.id,
       startDate: lease.startDate.toISOString(),
       endDate: lease.endDate?.toISOString() ?? null,
-      // the rent for the month this receipt is for (after any rent change)
-      monthlyRent: rentForMonth(
-        { monthlyRent: lease.monthlyRent.toNumber(), rentChanges: lease.rentChanges.map((c) => ({ effectiveFrom: c.effectiveFrom, monthlyRent: c.monthlyRent.toNumber() })) },
-        period.year,
-        period.month,
-      ),
+      monthlyRent: monthRent,
       securityDeposit: lease.securityDeposit.toNumber(),
     },
+    month: { rent: month.rent, paidBefore: month.paidBefore, balance: month.balance },
   };
 }

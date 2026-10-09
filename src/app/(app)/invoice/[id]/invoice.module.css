@@ -103,350 +103,6 @@
   max-width: 640px;
 }
 
-/* ---------- the receipt (paper) ---------- */
-.receipt {
-  --ink: #1f1a15;
-  --ink-dim: #5b5146;
-  --ink-faint: #8e8478;
-  --rule: #d8cdbb;
-  --rule-soft: #e7dfd1;
-  --accent: #b5532e;
-  --stamp: #b5532e;
-  position: relative;
-  overflow: hidden;
-  padding: 34px 42px 26px;
-  color: var(--ink);
-  font-family: var(--ff-body);
-  font-size: 14px;
-  line-height: 1.45;
-  background:
-    radial-gradient(120% 90% at 0% 0%, rgba(255, 255, 255, 0.65), transparent 60%),
-    linear-gradient(180deg, #fbf8f1, #f6f1e6);
-  border-radius: 3px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 2px 4px rgba(0, 0, 0, 0.35),
-    0 28px 70px rgba(0, 0, 0, 0.55);
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-/* paper fibre */
-.receipt::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--noise);
-  opacity: 0.18;
-  mix-blend-mode: multiply;
-}
-.receiptPrint {
-  padding: 9mm 10mm 7mm;
-  font-size: 10pt;
-  background: #fff;
-  border: 1px solid var(--rule);
-  border-radius: 0;
-  box-shadow: none;
-}
-.receiptPrint::after {
-  display: none;
-}
-.band {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 7px;
-  background: var(--chettinad) 0 0 / 21px 7px repeat-x;
-}
-.receiptPrint .band {
-  height: 5px;
-  background-size: 15px 5px;
-}
-
-.head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px 24px;
-  flex-wrap: wrap;
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  min-width: 0;
-}
-.mark {
-  flex: none;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-}
-.brandText {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  line-height: 1;
-}
-.brandName {
-  font-family: var(--ff-display);
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-.brandSub {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--ink-faint);
-}
-.brandSub :global(.tamil) {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--accent);
-}
-.title {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  text-align: right;
-}
-.titleEn {
-  font-family: var(--ff-display);
-  font-size: 23px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  line-height: 1;
-  color: var(--accent);
-}
-.titleTa {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-dim);
-}
-
-.meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px 20px;
-  flex-wrap: wrap;
-  margin-top: 22px;
-  padding: 9px 0;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-  font-size: 12.5px;
-  color: var(--ink-dim);
-}
-.metaNum {
-  margin-left: 6px;
-  font-family: var(--ff-display);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--ink);
-}
-
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-  margin-top: 22px;
-}
-.line {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  min-width: 0;
-}
-.lineSplit {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: 13px 26px;
-}
-.lbl {
-  flex: none;
-  font-size: 13px;
-  font-style: italic;
-  color: var(--ink-dim);
-  white-space: nowrap;
-}
-.fill {
-  flex: 1;
-  min-width: 0;
-  padding: 0 2px 2px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink);
-  border-bottom: 1.5px dotted var(--rule);
-}
-.fillDim {
-  font-weight: 500;
-  color: var(--ink-dim);
-}
-.words {
-  font-weight: 700;
-}
-
-.foot {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: end;
-  gap: 18px;
-  margin-top: 30px;
-}
-.amountBox {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 10px 18px 11px;
-  border: 1.5px solid var(--ink);
-  border-radius: 2px;
-  box-shadow: 3px 3px 0 var(--rule-soft);
-  background: rgba(255, 255, 255, 0.55);
-}
-.amountLbl {
-  font-family: var(--ff-display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-.amount {
-  font-family: var(--ff-display);
-  font-size: 34px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums lining-nums;
-  line-height: 1;
-  letter-spacing: 0.01em;
-}
-.stamp {
-  justify-self: center;
-  width: 104px;
-  height: 104px;
-  margin-bottom: -6px;
-  transform: rotate(-13deg);
-  opacity: 0.72;
-  overflow: visible;
-}
-.stampRing {
-  fill: none;
-  stroke: var(--stamp);
-  stroke-width: 2.4;
-}
-.stampRingThin {
-  fill: none;
-  stroke: var(--stamp);
-  stroke-width: 1.1;
-}
-.stampRingText {
-  font-family: var(--ff-display);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  fill: var(--stamp);
-}
-.stampPaid {
-  font-family: var(--ff-display);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  fill: var(--stamp);
-}
-.stampDate {
-  font-family: var(--ff-display);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  fill: var(--stamp);
-}
-.signArea {
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-}
-.revenue {
-  display: grid;
-  place-items: center;
-  width: 62px;
-  height: 70px;
-  font-family: var(--ff-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-  text-align: center;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  border: 1.5px dashed var(--rule);
-}
-.sign {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  min-width: 200px;
-}
-.signLine {
-  width: 100%;
-  height: 40px;
-  border-bottom: 1px solid var(--ink);
-}
-.signFor {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-}
-.signWho {
-  font-size: 11px;
-  color: var(--ink-faint);
-}
-
-.small {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 0;
-  margin-top: 24px;
-  padding-top: 10px;
-  border-top: 1px solid var(--rule-soft);
-  font-size: 11.5px;
-  color: var(--ink-faint);
-}
-.small span:not(:last-child)::after {
-  content: "·";
-  margin: 0 9px;
-  color: var(--rule);
-}
-
-.receiptPrint .brandName {
-  font-size: 16pt;
-}
-.receiptPrint .titleEn {
-  font-size: 17pt;
-}
-.receiptPrint .fill {
-  font-size: 12pt;
-}
-.receiptPrint .lbl {
-  font-size: 10pt;
-}
-.receiptPrint .amount {
-  font-size: 25pt;
-}
-.receiptPrint .metaNum {
-  font-size: 13pt;
-}
-.receiptPrint .small {
-  font-size: 8.5pt;
-}
-
 /* ---------- phone ---------- */
 @media (max-width: 767px) {
   .toolbar {
@@ -466,191 +122,151 @@
   .desk {
     padding: 16px 0 20px;
   }
-  .receipt {
-    padding: 24px 18px 18px;
-    font-size: 13px;
-  }
-  .head {
-    gap: 14px;
-  }
-  .title {
-    align-items: flex-start;
-    text-align: left;
-  }
-  .brandName {
-    font-size: 17px;
-  }
-  .titleEn {
-    font-size: 18px;
-  }
-  .meta {
-    margin-top: 16px;
-  }
-  .line {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 2px;
-  }
-  .lineSplit {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .fill {
-    font-size: 15px;
-  }
-  .foot {
-    grid-template-columns: 1fr auto;
-    gap: 16px 10px;
-  }
-  .stamp {
-    grid-row: 1;
-    grid-column: 2;
-    width: 86px;
-    height: 86px;
-  }
-  .amountBox {
-    grid-row: 1;
-    grid-column: 1;
-    justify-self: start;
-  }
-  .amount {
-    font-size: 28px;
-  }
-  .signArea {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
-  .sign {
-    min-width: 170px;
-  }
 }
 
-/* ---- rent receipt, printable style C (owner, 5/10/2026): dark band, cream amount box with a gold edge, no logo/stamp */
-.cr {
-  position: relative;
+/* ---- rent receipt, design D "modern" (owner picked D, 9/10/2026 — no footer, no town under the heading): clean white
+   paper, the brand in small gold capitals, AMOUNT PAID · DATE PAID · PAID BY, a summary of the rent month, from /
+   property, the owner's signature. Light paper on screen and in print. */
+.rc {
+  --ink: #1d1a16;
+  --mute: #6b645a;
+  --faint: #9a9287;
+  --rule: #e6e0d6;
+  --soft: #f6f2ea;
+  --gold: #a87620;
   display: flex;
   flex-direction: column;
-  min-height: 760px;
+  min-height: 1000px;
+  padding: 60px 64px 56px;
   background: #fff;
-  color: #1a1612;
+  color: var(--ink);
   font-family: var(--ff-body);
-  font-size: 14px;
+  font-size: 14.5px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.crPrint {
+/* one typeface on the receipt — figures keep even widths (not the app's display-font .num) */
+.rcNum {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.rcPrint {
   min-height: 0;
+  padding: 2mm 1mm 0;
   box-shadow: none;
   font-size: 10.5pt;
 }
-.crBand {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  padding: 30px 44px;
-  background: #1f1a15;
-  color: #fff;
-}
-.crBand > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.crName {
-  font-family: var(--ff-display);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-.crTitle {
-  font-family: var(--ff-display);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: #e0a640;
-}
-.crSub {
-  font-size: 12.5px;
-  color: #b7ab98;
-}
-.crRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-}
-.crIn {
-  flex: 1;
-  padding: 30px 44px 26px;
-}
-.crHero {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  padding: 20px 24px;
-  background: #f6f2ea;
-  border-left: 5px solid #c9922e;
-}
-.crHero > div:first-child {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.crLbl {
-  font-family: var(--ff-display);
-  font-size: 11px;
+.rcBrand {
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #8a6320;
+  color: var(--gold);
 }
-.crAmount {
-  font-family: var(--ff-display);
-  font-size: 44px;
+.rcTitle {
+  margin: 18px 0 0;
+  font-family: var(--ff-body);
+  font-size: 40px;
   font-weight: 700;
-  line-height: 1.05;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--ink);
 }
-.crWords {
-  font-size: 13px;
-  color: #6b6155;
+.rcSub {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--mute);
 }
-.crPeriod {
-  font-family: var(--ff-display);
+.rcLbl {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.rcKpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 34px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.rcKpis > div {
+  min-width: 0;
+  padding: 16px 18px;
+}
+.rcKpis > div + div {
+  border-left: 1px solid var(--rule);
+}
+.rcKpis b {
+  display: block;
+  margin-top: 6px;
   font-size: 22px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  white-space: nowrap;
 }
-.crList {
-  margin-top: 18px;
+.rcKpis b.rcBig {
+  font-size: 26px;
 }
-.crList > div {
+.rcH {
+  margin-top: 36px;
+}
+.rcSum {
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.rcSum > div {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
-  padding: 12px 0;
-  border-bottom: 1px solid #ece7df;
+  gap: 16px;
+  padding: 14px 18px;
 }
-.crList dt {
-  color: #7a7064;
+.rcSum > div + div {
+  border-top: 1px solid var(--rule);
 }
-.crList dd {
-  font-weight: 600;
-  text-align: right;
+.rcMute > span:first-child {
+  color: var(--mute);
 }
-.crSign {
+.rcTot {
+  font-weight: 700;
+  background: var(--soft);
+}
+.rcWords {
+  margin-top: 10px;
+  font-size: 13.5px;
+  color: var(--mute);
+}
+.rcParties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  margin-top: 34px;
+}
+.rcParties > div {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  min-width: 0;
+}
+.rcParties b {
+  margin-top: 7px;
+  font-size: 15px;
+}
+.rcParties span:not(.rcLbl) {
+  margin-top: 2px;
+  font-size: 13.5px;
+  color: var(--mute);
+}
+.rcSign {
+  display: flex;
   align-items: flex-end;
   gap: 18px;
-  margin-top: 56px;
+  margin-top: auto;
+  padding-top: 56px;
 }
-.crStamp {
+.rcStamp {
   display: grid;
   place-items: center;
   width: 64px;
@@ -659,18 +275,49 @@
   font-size: 10px;
   line-height: 1.2;
   text-align: center;
-  color: #9a9083;
+  color: var(--faint);
 }
-.crSignLine {
-  width: 220px;
-  padding-top: 6px;
-  border-top: 1px solid #1a1612;
-  text-align: center;
-  font-size: 12px;
-  color: #7a7064;
+.rcSignLine {
+  width: 240px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ink);
+  font-size: 13px;
+  color: var(--mute);
 }
-.crFoot {
-  padding: 14px 44px 24px;
-  font-size: 11.5px;
-  color: #9a9083;
+@media (max-width: 767px) {
+  .rc {
+    min-height: 0;
+    padding: 28px 20px 30px;
+    font-size: 13.5px;
+  }
+  .rcTitle {
+    font-size: 30px;
+  }
+  /* the three facts become label · value rows */
+  .rcKpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rcKpis > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .rcKpis > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .rcKpis b,
+  .rcKpis b.rcBig {
+    margin-top: 0;
+    font-size: 18px;
+  }
+  .rcSum > div {
+    padding: 12px 14px;
+  }
+  .rcParties {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
 }

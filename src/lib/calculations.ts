@@ -767,6 +767,39 @@ export function unitStatusFor(isActive: boolean, hasCurrentLease: boolean, hasIn
   return hasIncomingLease ? "incoming" : "vacant";
 }
 
+type ReceiptPayment = Pick<PaymentInput, "id" | "amount" | "paymentDate" | "periodMonth" | "periodYear" | "invoiceSeq">;
+
+export interface ReceiptMonth {
+  /** the month's rent (after any rent change) */
+  rent: number;
+  /** paid towards the same month BEFORE this payment */
+  paidBefore: number;
+  /** this payment */
+  amount: number;
+  /** rent − paidBefore − amount; negative = more than the month's rent was paid */
+  balance: number;
+}
+
+/**
+ * A rent receipt's month summary (receipt design D, owner 9/10/2026). "Before" = an earlier payment date, or the same
+ * day with an earlier receipt (invoiceSeq) — later payments never change an old receipt. Only payments for the same
+ * rent month count; pass the lease's payments.
+ */
+export function receiptMonthFor(rent: number, payment: ReceiptPayment, leasePayments: ReceiptPayment[]): ReceiptMonth {
+  const d = dayNum(payment.paymentDate);
+  const before = leasePayments.filter(
+    (p) =>
+      p.id !== payment.id &&
+      p.periodYear === payment.periodYear &&
+      p.periodMonth === payment.periodMonth &&
+      (dayNum(p.paymentDate) < d || (dayNum(p.paymentDate) === d && p.invoiceSeq < payment.invoiceSeq)),
+  );
+  const r = round2(rent);
+  const paidBefore = sum2(before.map((p) => p.amount));
+  const amount = round2(payment.amount);
+  return { rent: r, paidBefore, amount, balance: round2(r - paidBefore - amount) };
+}
+
 // ───────────────────────────── deposits ─────────────────────────────
 
 /** One lease's deposit position on A (null when the lease starts after A). See RULES: Deposits. */

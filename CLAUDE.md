@@ -389,8 +389,17 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   "no need 116/B7 written in this"): no gold frame, no eyebrow / title (the unit name is gone; alt text "Interior photo
   N"), the 3 photos float over a deeper shade (.centreShadeDeep, 0.8) with rounded corners + a soft shadow, only 📌 / ✕
   as round gold-ringed buttons top-right (HudPanel `bare` prop → .panelBare); 3 across on desktop + phones; the row's
-  width is capped so the photos always fit between the top nav and the dock. NEXT (owner): receipt redesign — "should
-  look like a real professional receipt".
+  width is capped so the photos always fit between the top nav and the dock.
+- 9/10/2026: RENT RECEIPT = design D "MODERN" (owner: "should look like a real professional receipt"; picked D of A
+  classic / B formal / C receipt book / D modern, "remove the footer details and pattukkottai below the heading"):
+  white paper, brand in small gold capitals, "Rent receipt" + "Receipt PE-…" (no town), AMOUNT PAID · DATE PAID ·
+  PAID BY boxes (label · value rows on phones), SUMMARY = the month's rent · Paid earlier (only when any) · Amount paid
+  · "Balance for <month>" (or "Extra paid" when over) — calculations.receiptMonthFor (earlier = an earlier date, or the
+  same day with a lower invoiceSeq; later payments never change an old receipt; tested) → InvoiceData.month; amount in
+  words; FROM (tenant + phone as +91 XXXXX XXXXX) · PROPERTY (unit, address + town unless the address already names it);
+  owner's signature line (+ revenue-stamp box for cash > ₹5,000). NO footer (deposit line, brand + number), NO dark
+  band. One typeface on the receipt (Manrope; figures tabular via .rcNum, not the display-font .num). Old style-C (.cr*)
+  and older (.receipt …) receipt CSS removed. Prints on one A4 page.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

@@ -22,6 +22,7 @@ import {
   rentOn,
   pickBestOffer,
   plotGeometry,
+  receiptMonthFor,
   rentStateFor,
   round0,
   round2,
@@ -736,5 +737,39 @@ describe("Expense composition", () => {
 
   it("no expenses → no slices", () => {
     expect(expenseSlices([], categories)).toEqual([]);
+  });
+});
+
+describe("receiptMonthFor (rent receipt summary)", () => {
+  // August 2026 rent ₹5,000; payments for August: ₹2,000 on 5/9 (seq 10), ₹3,000 on 12/9 (seq 14), ₹500 on 12/9 (seq 15)
+  const aug = (id: string, amount: number, day: string, seq: number) => ({ id, amount, paymentDate: D(day), periodYear: 2026, periodMonth: 8, invoiceSeq: seq });
+  const p1 = aug("p1", 2000, "2026-09-05", 10);
+  const p2 = aug("p2", 3000, "2026-09-12", 14);
+  const p3 = aug("p3", 500, "2026-09-12", 15);
+  const sept = { id: "s1", amount: 5000, paymentDate: D("2026-09-01"), periodYear: 2026, periodMonth: 9, invoiceSeq: 9 };
+  const all = [p1, p2, p3, sept];
+
+  it("one full payment → nothing before, balance 0", () => {
+    const one = aug("x", 5000, "2026-09-12", 22);
+    expect(receiptMonthFor(5000, one, [one])).toEqual({ rent: 5000, paidBefore: 0, amount: 5000, balance: 0 });
+  });
+
+  it("counts only earlier payments for the same month; later ones never change an old receipt", () => {
+    // first receipt: 5,000 − 0 − 2,000 = 3,000 left (p2 / p3 came later; the September payment is another month)
+    expect(receiptMonthFor(5000, p1, all)).toEqual({ rent: 5000, paidBefore: 0, amount: 2000, balance: 3000 });
+    // second: 5,000 − 2,000 − 3,000 = 0
+    expect(receiptMonthFor(5000, p2, all)).toEqual({ rent: 5000, paidBefore: 2000, amount: 3000, balance: 0 });
+  });
+
+  it("same day: the earlier receipt number counts as before; overpaying gives a negative balance", () => {
+    // p3 is the same day as p2 but a later receipt → before = 2,000 + 3,000; 5,000 − 5,000 − 500 = −500
+    expect(receiptMonthFor(5000, p3, all)).toEqual({ rent: 5000, paidBefore: 5000, amount: 500, balance: -500 });
+  });
+
+  it("rounds to the paisa", () => {
+    const a = aug("a", 1000.105, "2026-09-01", 1);
+    const b = aug("b", 999.2, "2026-09-02", 2);
+    // 2,500.5 − 1,000.11 − 999.2 = 501.19
+    expect(receiptMonthFor(2500.5, b, [a, b])).toEqual({ rent: 2500.5, paidBefore: 1000.11, amount: 999.2, balance: 501.19 });
   });
 });
