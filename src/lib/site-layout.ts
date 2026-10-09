@@ -150,8 +150,7 @@ export interface SiteFixtures {
   mailbox: Pt;
   /** notice board on the outer face of the lane-side (left) compound wall near the front (faces −x, the lane) */
   noticeBoard: Pt & { widthFt: number };
-  /** property-tax stamp plaque on the middle pillar of the front wall right of the gate */
-  /** the little village property-tax office (a thatched hut on the grass right of the plot) — the tax entry point */
+  /** the property-tax spot on the grass right of the plot: the tax collector's moped (TaxCollector.tsx) — the tax entry point */
   taxStamp: Pt & { on: "office" };
   /** survey stone + ranging flag just outside the back-left corner */
   plotMarker: Pt;
@@ -605,10 +604,10 @@ function buildFixtures(polygon: Pt[], walls: CompoundWall[], frontSlot: Building
   const gate = walls.find((w) => w.gate === "front");
   // mailbox on Gate A's corner-side pillar
   const mailbox = gate ? { ...gate.a } : { x: FR.x - 1, z: 0 };
-  // property-tax office (owner): a mini thatched village office on the grass right of the plot, between the palms
-  // (they stand at z ≈ 5 and 23), its door facing the front
+  // property-tax spot (owner): the tax collector's moped on the grass right of the plot, beside Unit A's front yard
+  // (where a palm used to stand) — far enough forward that the default camera sees it past the stair (it is low)
   const [, tFR0, tBR0] = tile;
-  const taxZ = 14;
+  const taxZ = 7;
   const taxStamp: SiteFixtures["taxStamp"] = { x: r2(Math.min(FR.x + 9.5, xAt(tFR0, tBR0, taxZ) - 5)), z: taxZ, on: "office" };
   // notice board: on the lane-side (left) compound wall a few feet in from the front, facing the lane
   const depth = BL.z - FL.z;

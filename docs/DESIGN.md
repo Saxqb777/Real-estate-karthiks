@@ -169,7 +169,7 @@ Pop-up style (owner: "think of it like a game") → RPG "inspect" pattern, three
 | TO-LET board (vacant unit)    | New lease wizard                              |
 | Tenant figure at the door     | Tenant profile, tap-to-call                   |
 | Plot boundary / ground marker | Plot dimensions (opens Config → Plot)          |
-| Tax stamp on the gate pillar  | Property tax per year (mark paid)             |
+| Tax collector + moped (right of the plot) | Property tax per year (mark paid) + collector's call / WhatsApp |
 Objects show a subtle interact hint on hover (outline + cursor + tooltip) so they're discoverable; a "?" help overlay lists them.
 
 ### Every number drills down

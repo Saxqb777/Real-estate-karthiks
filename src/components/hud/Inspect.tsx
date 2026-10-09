@@ -248,7 +248,7 @@ const TAG_NAME: Record<SceneObjectKind, string> = {
   pole: "EB pole",
   tolet: "TO-LET board",
   tenant: "Tenant",
-  taxstamp: "Tax office",
+  taxstamp: "Tax collector",
   plot: "Plot marker",
   car: "Car",
   photographer: "Photographer",
@@ -257,8 +257,10 @@ export function WorldHint({ obj, data }: { obj: SceneObject | null; data: Dashbo
   const isClient = useIsClient();
   if (!isClient) return null;
   const u = (obj?.kind === "unit" || obj?.kind === "tenant") && obj.unitId ? data.units.find((x) => x.id === obj.unitId) : undefined;
-  // houses show the unit name, tenants the tenant's own name (health check, 5/10/2026)
-  const name = obj ? ((obj.kind === "tenant" ? u?.activeLease?.tenantName : u?.name) ?? TAG_NAME[obj.kind]) : "";
+  // houses show the unit name, tenants the tenant's own name (health check, 5/10/2026), the tax collector the
+  // collector's name from Settings (owner, 9/10/2026)
+  const collector = obj?.kind === "taxstamp" && data.settings.taxCollectorName ? `${TAG_NAME.taxstamp} · ${data.settings.taxCollectorName}` : undefined;
+  const name = obj ? ((obj.kind === "tenant" ? u?.activeLease?.tenantName : u?.name) ?? collector ?? TAG_NAME[obj.kind]) : "";
   return createPortal(
     <AnimatePresence>
       {obj?.screen && (
@@ -613,7 +615,7 @@ function useCardParts({
       const thisYear = new Date(data.asOf).getUTCFullYear();
       const due = (tax.data?.items ?? []).filter((t) => t.status === "Due" && t.year <= thisYear);
       return {
-        eyebrow: "Tax office",
+        eyebrow: "Tax collector",
         title: "Property tax",
         body: due.length ? (
           <div className={s.cardBody}>

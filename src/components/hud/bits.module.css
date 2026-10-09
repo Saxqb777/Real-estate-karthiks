@@ -1027,12 +1027,54 @@
   margin-left: auto;
 }
 
-/* =========================================================== tax office report (centre window) */
+/* =========================================================== tax collector report (centre window) */
 .taxCol {
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+}
+/* the tax collector's contact strip, full width above the three columns (owner 9/10/2026) */
+.taxContact {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(201, 146, 46, 0.35);
+  border-radius: var(--radius-xs);
+  background: rgba(201, 146, 46, 0.06);
+}
+.taxContactIcon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: #c9922e;
+}
+.taxContactWho {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.taxContactName {
+  font-family: var(--ff-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.taxContactPhone {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.taxContactActs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .taxHead {
   font-family: var(--ff-display);

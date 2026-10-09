@@ -68,6 +68,8 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
           lateFeeAmount: num(settings.lateFeeAmount),
           lateFeeGraceDays: settings.lateFeeGraceDays,
           renewalReminderDays: settings.renewalReminderDays,
+          taxCollectorName: settings.taxCollectorName,
+          taxCollectorPhone: settings.taxCollectorPhone,
         }
       : DEFAULT_SETTINGS,
     plot: {

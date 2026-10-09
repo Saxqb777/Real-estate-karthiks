@@ -49,6 +49,9 @@ model Settings {
   lateFeeGraceDays    Int      @default(0) @map("late_fee_grace_days")
   /// remind this many days before a rental agreement ends
   renewalReminderDays Int      @default(30) @map("renewal_reminder_days")
+  /// the municipal tax collector (shown in the tax collector window with call / WhatsApp)
+  taxCollectorName    String?  @map("tax_collector_name")
+  taxCollectorPhone   String?  @map("tax_collector_phone")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@map("settings")

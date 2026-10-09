@@ -538,6 +538,9 @@ export interface DashboardData {
     lateFeeAmount: number;
     lateFeeGraceDays: number;
     renewalReminderDays: number;
+    /** the municipal tax collector (Config → Settings) */
+    taxCollectorName: string | null;
+    taxCollectorPhone: string | null;
   };
   plot: PlotGeometry;
   kpis: Kpis;

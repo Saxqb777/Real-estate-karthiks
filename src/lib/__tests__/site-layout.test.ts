@@ -336,7 +336,7 @@ describe("front-wall fixtures (clickable world objects)", () => {
   const L = computeSiteLayout(PLOT, [A, B]);
   const F = L.fixtures;
   const [FL, FR, , BL] = L.plot.polygon;
-  it("mounts the mailbox on Gate A's pillar and puts the tax office on the grass right of the plot", () => {
+  it("mounts the mailbox on Gate A's pillar and puts the tax collector's spot on the grass right of the plot", () => {
     const gate = L.compoundWalls.find((w) => w.gate === "front")!;
     expect(F.mailbox).toEqual(gate.a);
     expect(F.taxStamp.on).toBe("office");

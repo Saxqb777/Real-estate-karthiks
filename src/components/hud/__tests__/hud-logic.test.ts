@@ -5,7 +5,7 @@ import type { DashboardData, Explain } from "../../../lib/dashboard-types";
 import { buildStatusChips } from "../chips";
 import { axisINR, niceTicks } from "../charts/scale";
 import { parseExplainKey, relatedExplains } from "../explain-keys";
-import { explainKey, fmt, inr, monthList } from "../format";
+import { explainKey, fmt, inr, monthList, phoneText, waHref } from "../format";
 
 describe("fmt / inr — identical formats everywhere", () => {
   it("prints whole rupees with Indian grouping, a real minus sign and paise only when they exist", () => {
@@ -132,5 +132,19 @@ describe("axis ticks (layout only)", () => {
     expect(axisINR(250000)).toBe("₹2.5 L");
     expect(axisINR(-250000)).toBe("−₹2.5 L");
     expect(axisINR(12000000)).toBe("₹1.2 Cr");
+  });
+});
+
+describe("tax collector's phone (call / WhatsApp)", () => {
+  it("shows Indian mobiles as +91 XXXXX XXXXX and keeps anything else as typed", () => {
+    expect(phoneText("+919876543210")).toBe("+91 98765 43210");
+    expect(phoneText("+91 98765-43210")).toBe("+91 98765 43210");
+    expect(phoneText("9876543210")).toBe("+91 98765 43210");
+    expect(phoneText(" +971 50 123 4567 ")).toBe("+971 50 123 4567");
+  });
+  it("links WhatsApp with the country code (a bare 10-digit number is Indian)", () => {
+    expect(waHref("+91 98765 43210")).toBe("https://wa.me/919876543210");
+    expect(waHref("9876543210")).toBe("https://wa.me/919876543210");
+    expect(waHref("+971 50 123 4567")).toBe("https://wa.me/971501234567");
   });
 });

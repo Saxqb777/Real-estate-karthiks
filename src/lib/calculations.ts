@@ -106,6 +106,9 @@ export interface SettingsInput {
   lateFeeGraceDays: number;
   /** remind this many days before a rental agreement ends (default 30) */
   renewalReminderDays?: number;
+  /** the municipal tax collector's name and phone (shown in the tax collector window) */
+  taxCollectorName?: string | null;
+  taxCollectorPhone?: string | null;
 }
 
 export interface PlotInput {
@@ -2879,6 +2882,8 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
       lateFeeAmount: round2(settings.lateFeeAmount),
       lateFeeGraceDays: settings.lateFeeGraceDays,
       renewalReminderDays: reminderDays,
+      taxCollectorName: settings.taxCollectorName ?? null,
+      taxCollectorPhone: settings.taxCollectorPhone ?? null,
     },
     plot: plotGeometry(input.plot),
     kpis,

@@ -1,7 +1,8 @@
 "use client";
-// Tax office (village hut on the grass) → property tax per year and unit; "Mark paid" in one step (it then appears in
+// Tax collector (the moped + collector on the grass; owner 9/10/2026) → the collector's name + call / WhatsApp, then
+// property tax per year and unit; "Mark paid" in one step (it then appears in
 // Expenses on the payment date — the API creates that expense, the HUD never adds it up itself).
-import { CircleCheck, Landmark, Plus } from "lucide-react";
+import { CircleCheck, Landmark, MessageCircle, Phone, Plus, UserRound } from "lucide-react";
 import { Button, EmptyState, Skeleton, StatusPill, cx } from "@/components/ui";
 import { usePropertyTax } from "@/components/forms";
 import { sumAmounts } from "@/lib/calculations";
@@ -9,6 +10,7 @@ import type { DashboardData } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
 import type { PropertyTaxDTO } from "@/lib/schemas/property-tax";
 import { Rupees } from "./Figure";
+import { phoneText, telHref, waHref } from "./format";
 import { useFormDrawer } from "./FormDrawer";
 import { HudPanel } from "./HudPanel";
 import s from "./hud.module.css";
@@ -34,12 +36,13 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
   const lastPaid = [...paidRows].filter((t) => t.paymentDate).sort((a, z) => (z.paymentDate ?? "").localeCompare(a.paymentDate ?? ""))[0];
   const units = data.units.filter((u) => u.isActive);
   const maxYear = Math.max(0, ...years.map((y) => sumAmounts(items.filter((t) => t.year === y))));
+  const { taxCollectorName: who, taxCollectorPhone: phone } = data.settings;
 
   return (
     <>
       <HudPanel
         side={side}
-        eyebrow="Tax office · property tax"
+        eyebrow="Tax collector"
         title="Property tax"
         pinId="tax"
         onClose={onClose}
@@ -51,6 +54,27 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
           </Button>
         }
       >
+        {(who || phone) && (
+          <section className={b.taxContact} aria-label="Tax collector">
+            <UserRound aria-hidden className={b.taxContactIcon} />
+            <div className={b.taxContactWho}>
+              <span className={b.taxContactName}>{who ?? "Tax collector"}</span>
+              {phone && <span className={cx(b.taxContactPhone, "num")}>{phoneText(phone)}</span>}
+            </div>
+            {phone && (
+              <div className={b.taxContactActs}>
+                <a className={b.call} href={telHref(phone)}>
+                  <Phone aria-hidden />
+                  Call
+                </a>
+                <a className={b.call} href={waHref(phone)} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle aria-hidden />
+                  WhatsApp
+                </a>
+              </div>
+            )}
+          </section>
+        )}
         {tax.loading ? (
           <div className={b.taxSkel}>
             {[0, 1, 2].map((i) => (

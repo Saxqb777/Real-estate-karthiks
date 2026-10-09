@@ -3,6 +3,7 @@ import type { Settings } from "@prisma/client";
 import { z } from "zod";
 import "./messages";
 import type { Serialized } from "@/lib/types";
+import { zPhoneOrNull } from "./tenant";
 import { zEmailOrNull, zFlag, zInt, zMoney, zRequired, zRequiredText, zText } from "@/lib/validation";
 
 export const DATE_FORMATS = ["D/M/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"] as const;
@@ -24,6 +25,9 @@ export const settingsSchema = z.object({
   lateFeeGraceDays: zRequired(zInt(0, 60)),
   /** remind this many days before a rental agreement ends (owner 8/10/2026) */
   renewalReminderDays: zRequired(zInt(1, 180)),
+  /** the municipal tax collector (owner 9/10/2026): shown in the tax collector window with call / WhatsApp */
+  taxCollectorName: zText(80),
+  taxCollectorPhone: zPhoneOrNull,
 });
 
 /** PUT body: partial — only the fields sent are changed. */

@@ -1,5 +1,5 @@
 "use client";
-import { Mail, Type } from "lucide-react";
+import { Mail, Phone, Type, UserRound } from "lucide-react";
 import { Field, FormGrid, Input, NumberInput, Select, Toggle } from "@/components/ui";
 import { api } from "@/lib/client";
 import { formatINR } from "@/lib/format";
@@ -19,6 +19,8 @@ type Values = {
   lateFeeAmount: number | null;
   lateFeeGraceDays: number | null;
   renewalReminderDays: number | null;
+  taxCollectorName: string;
+  taxCollectorPhone: string;
 };
 
 export interface SettingsFormProps extends BaseFormProps<SettingsDTO> {
@@ -41,6 +43,8 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
       lateFeeAmount: settings.lateFeeAmount,
       lateFeeGraceDays: settings.lateFeeGraceDays,
       renewalReminderDays: settings.renewalReminderDays,
+      taxCollectorName: settings.taxCollectorName ?? "",
+      taxCollectorPhone: settings.taxCollectorPhone ?? "",
     },
     schema: settingsSchema,
     toBody: (v) => ({ ...v, lateFeeAmount: v.lateFeeAmount ?? 0 }),
@@ -92,6 +96,17 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
         <FormGrid cols={3}>
           <Field label="Renewal reminder" required error={form.error("renewalReminderDays")}>
             <NumberInput {...form.number("renewalReminderDays")} decimals={0} min={1} max={180} suffix="days before" hideHint />
+          </Field>
+        </FormGrid>
+      </FormSection>
+
+      <FormSection title="Tax collector">
+        <FormGrid cols={2}>
+          <Field label="Name" aside="optional" error={form.error("taxCollectorName")}>
+            <Input {...form.text("taxCollectorName")} icon={<UserRound />} autoComplete="off" />
+          </Field>
+          <Field label="Phone" aside="optional" error={form.error("taxCollectorPhone")}>
+            <Input {...form.text("taxCollectorPhone")} icon={<Phone />} type="tel" autoComplete="off" placeholder="+91 98765 43210" />
           </Field>
         </FormGrid>
       </FormSection>

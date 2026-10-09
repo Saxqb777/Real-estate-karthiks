@@ -95,3 +95,17 @@ export function monthList(labels: string[]): string {
 
 /** "+91 90036 42871" → "tel:+919003642871" */
 export const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+
+/** WhatsApp chat link; a bare 10-digit Indian mobile gets the +91 country code. */
+export function waHref(phone: string): string {
+  const d = phone.replace(/\D/g, "");
+  return `https://wa.me/${d.length === 10 ? `91${d}` : d}`;
+}
+
+/** "+919876543210" / "9876543210" → "+91 98765 43210"; anything else as typed. */
+export function phoneText(phone: string): string {
+  const d = phone.replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("91")) return `+91 ${d.slice(2, 7)} ${d.slice(7)}`;
+  if (d.length === 10 && !phone.trim().startsWith("+")) return `+91 ${d.slice(0, 5)} ${d.slice(5)}`;
+  return phone.trim();
+}

@@ -222,6 +222,8 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       lateFeeAmount: 500,
       lateFeeGraceDays: 3,
       renewalReminderDays: 30,
+      taxCollectorName: null,
+      taxCollectorPhone: null,
     });
     expect(d.plot).toEqual({
       frontWidthFt: 23.25,

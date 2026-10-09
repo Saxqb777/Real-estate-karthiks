@@ -20,7 +20,7 @@ import { smoothstep, type World } from "./util";
 
 // ───────────────────────────── shared character mesh ─────────────────────────────
 
-function useRig(limbs: () => Limb[], deps: unknown[], o: { clip?: boolean } = {}): { geo: THREE.BufferGeometry; rig: RigMaterials } {
+export function useRig(limbs: () => Limb[], deps: unknown[], o: { clip?: boolean } = {}): { geo: THREE.BufferGeometry; rig: RigMaterials } {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const geo = useMemo(() => rigGeometry(limbs()), deps);
   useEffect(() => () => geo.dispose(), [geo]);
@@ -30,7 +30,7 @@ function useRig(limbs: () => Limb[], deps: unknown[], o: { clip?: boolean } = {}
   return { geo, rig };
 }
 
-function RigMesh({ geo, rig, cast = true }: { geo: THREE.BufferGeometry; rig: RigMaterials; cast?: boolean }) {
+export function RigMesh({ geo, rig, cast = true }: { geo: THREE.BufferGeometry; rig: RigMaterials; cast?: boolean }) {
   return <mesh geometry={geo} material={rig.mat} customDepthMaterial={rig.depth} castShadow={cast} />;
 }
 
@@ -63,7 +63,7 @@ interface PedSpec {
 }
 
 // three passers-by on separate tracks across the front grass (nobody walks through anybody) and a lady strolling
-// through the banana garden (the school kid round the palms was removed — owner: a policeman guards the tax hut there)
+// through the banana garden (the school kid round the palms was removed — owner: a policeman guards the tax collector's moped there)
 const PEDS: PedSpec[] = [
   { outfit: { top: "#f4f1ea", bottom: "#f7f4ec", wrap: "veshti", umbrella: true, towel: "#c9a46b" }, scale: 1, speed: 3.4, gait: "walk", route: { kind: "cross", dist: 5.2, dir: 1 }, offset: 4, wait: 9, stops: [{ at: "gate", dur: 4.5, act: "look" }] },
   { outfit: { top: "#e0a020", bottom: "#c2185b", wrap: "saree", hair: "bun", jasmine: true }, scale: 0.96, speed: 3.0, gait: "walk", route: { kind: "cross", dist: 6.0, dir: -1 }, offset: 14, wait: 8, stops: [{ at: "board", dur: 3.5, act: "look" }] },
@@ -766,7 +766,7 @@ export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; wo
   );
 }
 
-// ───────────────────────────── angry policeman guarding the tax office ─────────────────────────────
+// ───────────────────────────── angry policeman guarding the tax collector's moped ─────────────────────────────
 
 /** Tamil Nadu police constable: khaki uniform, red-band peaked cap, brown belt with brass buckle, black boots, a thick
  *  moustache under angry brows, a bamboo lathi in the right hand. */
@@ -799,8 +799,8 @@ function policeLimbs(): Limb[] {
 }
 
 /**
- * The policeman guarding the tax office: stands by the porch, legs apart, left hand on the hip, tapping his lathi,
- * slowly turning to scan the grounds with a scowl. Placed in the hut's local frame (see TaxStamp in Fixtures.tsx).
+ * The policeman guarding the tax collector's moped and its cash box: legs apart, left hand on the hip, tapping his
+ * lathi, slowly turning to scan the grounds with a scowl. Placed in the moped's frame (see TaxCollector.tsx).
  */
 export function PoliceGuard({ env, position, rotationY = 0 }: { env: RefObject<Env>; position: V3; rotationY?: number }) {
   const { geo, rig } = useRig(policeLimbs, []);

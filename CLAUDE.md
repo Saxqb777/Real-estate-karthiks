@@ -341,6 +341,22 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   form pre-filled: that house, the electricity/utilities category, "TNPDCL bill"). Old full-width "Add a bill you paid"
   footer removed. Bills = the category's expenses for the house up to the as-of date (matches the dashboard
   composition); stacks to one column on phones. Deployed together with the radial-menu removal.
+- 9/10/2026: TAX COLLECTOR replaces the bamboo tax hut (owner picked idea 1 of 6 previews — "tax collector on a moped" —
+  "more realistic rather than just holding the paper all day"; renamed "Tax office" → "Tax collector" everywhere).
+  estate/TaxCollector.tsx: TVS XL-style moped (dusty blue, leaning on its side stand, maroon cash box on the carrier,
+  helmet on the mirror) at layout.fixtures.taxStamp, moved FORWARD to z = 7 so the default camera sees it past Unit A's
+  stair; the angry policeman now guards the cash box (GUARD_AT, moped frame). The collector = UMMARANI (owner), a woman
+  in a deep-blue saree + mustard blouse, bun + jasmine, cloth bag, register + pen (owner picked "woman in a saree"; a
+  lap-drape limb shows the saree over the knees when seated). Routine on scene time (estate/tax-route.ts, unit tested:
+  stays outside the wall, clear of the EB pole / number pole / moped / policeman on 3 plot sizes): perched side-saddle on
+  the seat writing → gets up → checks the phone → walks round the front-right corner behind the EB pole, along the front
+  wall to the door-number pole right of Gate A → reads it + writes (tax due: holds the demand notice up to the house,
+  waits, glances at the watch; else ticks + nods) → walks back → files the register in the cash box → sits. Clickable:
+  moped/policeman (key "taxstamp") + the walking collector (key "taxcollector", kind "taxstamp") → tax window.
+  Hover tag "Tax collector · <name>". Tax window eyebrow "Tax collector" + contact strip (name, +91 XXXXX XXXXX, CALL
+  tel: + WHATSAPP wa.me). Name + phone live in Settings (taxCollectorName / taxCollectorPhone, migration
+  20261009090000; Config → Settings "Tax collector"); the owner's values go into the prod DB, NOT the repo.
+  Hut code + its bamboo / thatch / office-board / round tax-stamp textures deleted.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
