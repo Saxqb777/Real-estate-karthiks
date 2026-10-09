@@ -436,8 +436,8 @@ function SceneContents({
         return () => {
           if (spots.current.get(sp.key) === sp) spots.current.delete(sp.key);
           setSpotVersion((v) => v + 1);
-          // a moving object (the property manager) re-registers with its new anchor while it is hovered: only drop the
-          // hover when the spot is really gone, not when the same key registers again right after this cleanup
+          // only drop the hover when the spot is really gone, not when the same key registers again right after this
+          // cleanup (useRegisterSpot re-registers only for a new key / kind / unit, never for movement)
           queueMicrotask(() => {
             if (!spots.current.has(sp.key)) setHovered((cur) => (cur?.key === sp.key ? null : cur));
           });

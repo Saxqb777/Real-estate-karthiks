@@ -324,6 +324,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
      property manager window lists them first ("Renew X's agreement" + RENEW 11 MONTHS → next 11 months from the day
      after), lease card tag "Agreement ends in N days", lease drawer fact + renew button, house window tenant line, rent
      roll "Agreement ends" column. In-app only (no email/cron).
+- 9/10/2026: FIX (owner "FIX IT"): dev-only React warning "Maximum update depth exceeded" while hovering the walking
+  property manager / tenants. Cause: useRegisterSpot (estate/Interact.tsx) put the anchor's VALUES in its effect key; a
+  walker's anchor is one array moved every frame, so every scene render re-registered them → setSpotVersion → another
+  render (a loop). Now a hotspot registers once per key / kind / unit and its registered entry follows the latest
+  anchor in place. Checked: 0 warnings in ~20 min of hover/click tests (old code: 2 in 5 min); every world object +
+  the manager and tenant still show their tag and open their window (desktop + phone taps).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

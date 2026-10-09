@@ -135,15 +135,31 @@ export function useSpotHandlers(spot: Spot | null) {
   }, [interactive, objects, kind, setHover, activate, contextMenu]);
 }
 
-/** Registers a hotspot's anchor for hint dots, tooltips and getObjectScreen. */
+/**
+ * Registers a hotspot's anchor for hint dots, tooltips and getObjectScreen. It registers once per key / kind / unit;
+ * the anchor is kept current in place. A walking person's anchor is one array moved every frame, so putting its
+ * position in the registration made every scene render re-register them, and each re-register rendered the scene
+ * again ("Maximum update depth exceeded" while hovering the property manager / tenants).
+ */
 export function useRegisterSpot(spot: Spot | null) {
   const { register } = useScene();
-  const sig = spot ? `${spot.key}|${spot.kind}|${spot.unitId ?? ""}|${spot.anchor.map((v) => v.toFixed(2)).join(",")}` : "";
+  const entry = useRef<Spot | null>(null);
+  const id = spot ? `${spot.key}|${spot.kind}|${spot.unitId ?? ""}` : "";
   useEffect(() => {
     if (!spot) return;
-    return register(spot);
+    const own: Spot = { ...spot };
+    entry.current = own;
+    const off = register(own);
+    return () => {
+      if (entry.current === own) entry.current = null;
+      off();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig, register]);
+  }, [id, register]);
+  // a static object can move too (Config preview resizes the plot): the registered entry follows its latest anchor
+  useEffect(() => {
+    if (spot && entry.current) entry.current.anchor = spot.anchor;
+  });
 }
 
 /**
