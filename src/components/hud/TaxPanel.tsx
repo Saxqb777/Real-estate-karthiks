@@ -1,5 +1,5 @@
 "use client";
-// Tax collector (the moped + collector on the grass; owner 9/10/2026) → the collector's name + call / WhatsApp, then
+// Revenue officer (the tax collector + moped on the grass; owner 9/10/2026) → the officer's name + call / WhatsApp, then
 // property tax per year and unit; "Mark paid" in one step (it then appears in
 // Expenses on the payment date — the API creates that expense, the HUD never adds it up itself).
 import { CircleCheck, Landmark, MessageCircle, Phone, Plus, UserRound } from "lucide-react";
@@ -42,7 +42,7 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
     <>
       <HudPanel
         side={side}
-        eyebrow="Tax collector"
+        eyebrow="Revenue officer"
         title="Property tax"
         pinId="tax"
         onClose={onClose}
@@ -55,10 +55,10 @@ export function TaxPanel({ data, onClose, side = "right", className }: TaxPanelP
         }
       >
         {(who || phone) && (
-          <section className={b.taxContact} aria-label="Tax collector">
+          <section className={b.taxContact} aria-label="Revenue officer">
             <UserRound aria-hidden className={b.taxContactIcon} />
             <div className={b.taxContactWho}>
-              <span className={b.taxContactName}>{who ?? "Tax collector"}</span>
+              <span className={b.taxContactName}>{who ?? "Revenue officer"}</span>
               {phone && <span className={cx(b.taxContactPhone, "num")}>{phoneText(phone)}</span>}
             </div>
             {phone && (

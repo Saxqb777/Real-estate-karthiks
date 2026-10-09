@@ -356,7 +356,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   Hover tag "Tax collector · <name>". Tax window eyebrow "Tax collector" + contact strip (name, +91 XXXXX XXXXX, CALL
   tel: + WHATSAPP wa.me). Name + phone live in Settings (taxCollectorName / taxCollectorPhone, migration
   20261009090000; Config → Settings "Tax collector"); the owner's values go into the prod DB, NOT the repo.
-  Hut code + its bamboo / thatch / office-board / round tax-stamp textures deleted.
+  Hut code + its bamboo / thatch / office-board / round tax-stamp textures deleted. DEPLOYED (4d44196); the owner's
+  name + number set in the prod Settings row.
+- 9/10/2026: renamed again (owner: "JUST RENAME IT TO REVENUE OFFICER"): every label now says REVENUE OFFICER (hover tag
+  "Revenue officer · <name>", "?" tag, window eyebrow, Config → Settings section). Code / DB names stay taxCollector*,
+  TaxCollector.tsx, tax-route.ts, kind "taxstamp".
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

@@ -215,7 +215,7 @@ const SPOTS: { kind: SceneObjectKind; pos?: "front" | "back"; x: number; y: numb
   { kind: "tolet", pos: "back", x: 70, y: 37, label: "TO-LET" },
   { kind: "mailbox", x: 31, y: 85, label: "Mailbox" },
   { kind: "noticeboard", x: 40, y: 88, label: "Property manager" },
-  { kind: "taxstamp", x: 59, y: 87, label: "Tax collector" },
+  { kind: "taxstamp", x: 59, y: 87, label: "Revenue officer" },
   { kind: "pole", x: 82, y: 90, label: "Pole" },
   { kind: "plot", x: 24, y: 42, label: "Plot" },
 ];

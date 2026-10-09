@@ -39,7 +39,7 @@ export const SCENE_OBJECT_INFO: Record<SceneObjectKind, { name: string; opens: s
   pole: { name: "EB pole & meter", opens: "Electricity (TNPDCL)" },
   tolet: { name: "TO-LET board", opens: "New lease" },
   tenant: { name: "Tenant", opens: "Tenant profile" },
-  taxstamp: { name: "Tax collector", opens: "Property tax" },
+  taxstamp: { name: "Revenue officer", opens: "Property tax" },
   plot: { name: "Plot marker", opens: "Plot dimensions" },
   car: { name: "Car", opens: "Leave the estate (sign out)" },
   photographer: { name: "Photographer", opens: "Interior photos of 116/B7" },

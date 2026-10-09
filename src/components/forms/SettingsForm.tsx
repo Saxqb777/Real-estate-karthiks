@@ -100,7 +100,7 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
         </FormGrid>
       </FormSection>
 
-      <FormSection title="Tax collector">
+      <FormSection title="Revenue officer">
         <FormGrid cols={2}>
           <Field label="Name" aside="optional" error={form.error("taxCollectorName")}>
             <Input {...form.text("taxCollectorName")} icon={<UserRound />} autoComplete="off" />

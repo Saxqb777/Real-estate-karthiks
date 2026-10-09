@@ -248,7 +248,7 @@ const TAG_NAME: Record<SceneObjectKind, string> = {
   pole: "EB pole",
   tolet: "TO-LET board",
   tenant: "Tenant",
-  taxstamp: "Tax collector",
+  taxstamp: "Revenue officer",
   plot: "Plot marker",
   car: "Car",
   photographer: "Photographer",
@@ -615,7 +615,7 @@ function useCardParts({
       const thisYear = new Date(data.asOf).getUTCFullYear();
       const due = (tax.data?.items ?? []).filter((t) => t.status === "Due" && t.year <= thisYear);
       return {
-        eyebrow: "Tax collector",
+        eyebrow: "Revenue officer",
         title: "Property tax",
         body: due.length ? (
           <div className={s.cardBody}>
