@@ -29,7 +29,7 @@ import { UnitSlot, dayMonth, slotLabels, type SceneMode } from "./UnitSlot";
 import { useAnimatedLayout } from "./useAnimatedLayout";
 import { Clouds, Fireflies } from "./SkyLife";
 import { Garden, Greenery, Palms } from "./Vegetation";
-import { SCENE_OBJECT_INFO, type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind, type ScreenPoint } from "./types";
+import { SCENE_OBJECT_INFO, type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind } from "./types";
 import { makeWorld, prefersReducedMotion } from "./util";
 import s from "./estate.module.css";
 
@@ -74,8 +74,6 @@ export interface EstateSceneProps {
   onObjectClick?: (obj: SceneObject) => void;
   /** Hover enter (object) / leave (null) — for hint labels in the HUD. */
   onObjectHover?: (obj: SceneObject | null) => void;
-  /** Right-click (desktop) or long-press (touch) on a house → radial menu. */
-  onUnitContextMenu?: (unitId: string, screen: ScreenPoint) => void;
   /** Pixels covered by HUD panels; the camera frames the plot in the free area (animated). */
   insets?: SceneInsets;
   /** Focus dimming: the world softly dims / desaturates and ambient motion slows (while a panel is read). */
@@ -387,7 +385,6 @@ function SceneContents({
   hintObjects,
   onObjectClick,
   onObjectHover,
-  onUnitContextMenu,
   tooltips: tooltipsProp,
   objectNotes,
   cues,
@@ -415,8 +412,8 @@ function SceneContents({
   const [hovered, setHovered] = useState<Spot | null>(null);
   const [spotVersion, setSpotVersion] = useState(0);
   const screenOf = useCallback((sp: Spot) => projectToViewport(sp.anchor, camera, canvas) ?? undefined, [camera, canvas]);
-  const cb = useRef({ onObjectClick, onObjectHover, onUnitContextMenu, onSelectUnit });
-  cb.current = { onObjectClick, onObjectHover, onUnitContextMenu, onSelectUnit };
+  const cb = useRef({ onObjectClick, onObjectHover, onSelectUnit });
+  cb.current = { onObjectClick, onObjectHover, onSelectUnit };
   const objects = interactive && (mode === "hero" || !!onObjectClick);
   // stable callbacks (hotspots register once; only `hovered` changes on hover)
   const fns = useMemo(
@@ -425,10 +422,6 @@ function SceneContents({
       activate: (sp: Spot) => {
         if (sp.kind === "unit" && sp.unitId) cb.current.onSelectUnit?.(sp.unitId);
         cb.current.onObjectClick?.({ kind: sp.kind, unitId: sp.unitId, screen: screenOf(sp) });
-      },
-      contextMenu: (sp: Spot) => {
-        const at = screenOf(sp);
-        if (sp.unitId && at) cb.current.onUnitContextMenu?.(sp.unitId, at);
       },
       register: (sp: Spot) => {
         spots.current.set(sp.key, sp);

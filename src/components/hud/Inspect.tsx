@@ -24,7 +24,6 @@ import { MailboxPanel } from "./MailboxPanel";
 import { NoticeBoardPanel } from "./NoticeBoardPanel";
 import { PolePanel } from "./PolePanel";
 import { PropertyPanel } from "./PropertyPanel";
-import { RadialMenu } from "./RadialMenu";
 import { useEscape, useExplored } from "./store";
 import { TaxPanel } from "./TaxPanel";
 import type { PanelTarget, PeriodKind, SceneObject, SceneObjectKind } from "./types";
@@ -80,10 +79,6 @@ export interface InspectController {
   setPropertyOpen: (open: boolean) => void;
   /** a world object has never been opened → show its marigold "unexplored" dot */
   explored: ReturnType<typeof useExplored>;
-  /** radial action wheel (right-click / long-press on a house) */
-  radial: { unitId: string; at: { x: number; y: number } } | null;
-  onUnitContextMenu: (unitId: string, screen: { x: number; y: number }) => void;
-  closeRadial: () => void;
 }
 
 /** State machine for hover → card → panel. Pass its callbacks to the 3D scene. */
@@ -92,7 +87,6 @@ export function useInspect({ direct = [], initialPanel = null }: UseInspectOptio
   const [card, setCard] = useState<SceneObject | null>(null);
   const [panel, setPanel] = useState<PanelTarget | null>(initialPanel);
   const [propertyOpen, setPropertyOpenState] = useState(false);
-  const [radial, setRadial] = useState<{ unitId: string; at: { x: number; y: number } } | null>(null);
   const explored = useExplored();
   const { markExplored } = explored;
 
@@ -132,16 +126,6 @@ export function useInspect({ direct = [], initialPanel = null }: UseInspectOptio
   const closePanel = useCallback(() => setPanel(null), []);
   const setPropertyOpen = useCallback((o: boolean) => setPropertyOpenState(o), []);
   useEscape(card !== null, closeCard);
-  const onUnitContextMenu = useCallback(
-    (unitId: string, at: { x: number; y: number }) => {
-      setHover(null);
-      setCard(null);
-      setRadial({ unitId, at });
-      markExplored("radial");
-    },
-    [markExplored],
-  );
-  const closeRadial = useCallback(() => setRadial(null), []);
 
   return {
     hover,
@@ -156,9 +140,6 @@ export function useInspect({ direct = [], initialPanel = null }: UseInspectOptio
     closePanel,
     setPropertyOpen,
     explored,
-    radial,
-    onUnitContextMenu,
-    closeRadial,
   };
 }
 
@@ -223,7 +204,7 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
             : u.rentState === "paid"
               ? "Rent paid"
               : `Worth ${inrCompact(u.valuation)} ${u.valuationSource === "offer" ? "(offer)" : "(est.)"}`;
-      return { title: `${u.name}${positionLabel(u.position) ? ` · ${positionLabel(u.position)}` : ""}`, lines: [who, rent], tone: unitTone(u), action: "Click to inspect · right-click for actions" };
+      return { title: `${u.name}${positionLabel(u.position) ? ` · ${positionLabel(u.position)}` : ""}`, lines: [who, rent], tone: unitTone(u), action: "Click to inspect" };
     }
     case "tenant":
       return u?.activeLease
@@ -313,14 +294,13 @@ export interface InspectLayerProps {
   onLeave?: () => void;
 }
 
-/** Hover hint + the anchored inspect card + the radial wheel. Forms open in a drawer from here. */
+/** Hover hint + the anchored inspect card. Forms open in a drawer from here. */
 export function InspectLayer({ data, inspect, locate, onLeave }: InspectLayerProps) {
   const forms = useFormDrawer();
   const { card } = inspect;
   return (
     <>
-      <WorldHint obj={card || inspect.radial || inspect.panel || inspect.propertyOpen ? null : inspect.hover} data={data} />
-      <RadialMenu data={data} unitId={inspect.radial?.unitId ?? null} at={inspect.radial?.at ?? null} onClose={inspect.closeRadial} />
+      <WorldHint obj={card || inspect.panel || inspect.propertyOpen ? null : inspect.hover} data={data} />
       <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} locate={locate} onLeave={onLeave} />
       {forms.element}
     </>

@@ -167,10 +167,6 @@ export default function EstateLab({ initial }: { initial: LabConfig }) {
           setMark(o.screen ? { ...o.screen, label: o.kind } : null);
         }}
         onObjectHover={(o) => o && note(`hover ${o.kind}${o.unitId ? ` ${o.unitId}` : ""}`)}
-        onUnitContextMenu={(id, at) => {
-          note(`radial menu ${id} @ ${at.x}, ${at.y}`);
-          setMark({ ...at, label: "menu" });
-        }}
         insets={insets}
         dimmed={c.dimmed}
         hintObjects={c.hints}

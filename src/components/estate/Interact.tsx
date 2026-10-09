@@ -1,7 +1,8 @@
 "use client";
 // Interaction layer of the world (DESIGN.md "inspect like a game"): every interactive object is a <Hotspot> that
-// registers its anchor, shows the hover outline, sets the cursor, and reports hover / click / right-click /
-// long-press with the object's position on screen (viewport px) so the HUD can anchor its inspect card to it.
+// registers its anchor, shows the hover outline, sets the cursor, and reports hover / click with the object's
+// position on screen (viewport px) so the HUD can anchor to it. (The right-click / long-press radial menu was
+// removed by the owner, 9/10/2026.)
 import { type ThreeEvent } from "@react-three/fiber";
 import { Select } from "@react-three/postprocessing";
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
@@ -30,7 +31,6 @@ export interface SceneApi {
   hovered: string | null;
   setHover: (spot: Spot | null, key?: string) => void;
   activate: (spot: Spot) => void;
-  contextMenu: (spot: Spot) => void;
   register: (spot: Spot) => () => void;
 }
 
@@ -45,30 +45,13 @@ export function useScene(): SceneApi {
 
 export const spotKey = (kind: SceneObjectKind, unitId?: string) => (unitId ? `${kind}:${unitId}` : kind);
 
-const LONG_PRESS_MS = 520;
-const MOVE_TOLERANCE = 9;
-
-/** Shared gesture state (one pointer at a time is enough for a diorama). */
-const gesture = {
-  timer: 0 as ReturnType<typeof setTimeout> | 0,
-  down: null as { x: number; y: number; button: number; touch: boolean } | null,
-  /** the click that ends a long-press must not also select the house */
-  longPressed: false,
-  lastLongPress: 0,
-};
-
-function cancelLongPress() {
-  if (gesture.timer) clearTimeout(gesture.timer);
-  gesture.timer = 0;
-}
-
 /** Pointer handlers for one hotspot (spread them on a group or mesh). */
 export function useSpotHandlers(spot: Spot | null) {
   const api = useScene();
   const ref = useRef(spot);
   ref.current = spot;
   const kind = spot?.kind;
-  const { interactive, objects, setHover, activate, contextMenu } = api;
+  const { interactive, objects, setHover, activate } = api;
   return useMemo(() => {
     if (!interactive || (kind !== "unit" && !objects)) return {};
     const cur = () => ref.current;
@@ -82,57 +65,14 @@ export function useSpotHandlers(spot: Spot | null) {
         const s = cur();
         if (s) setHover(null, s.key);
       },
-      onPointerDown: (e: ThreeEvent<PointerEvent>) => {
-        const ne = e.nativeEvent;
-        const touch = ne.pointerType === "touch" || ne.pointerType === "pen";
-        gesture.down = { x: ne.clientX, y: ne.clientY, button: ne.button, touch };
-        gesture.longPressed = false;
-        cancelLongPress();
-        const s = cur();
-        if (!touch || !s || s.kind !== "unit") return;
-        e.stopPropagation();
-        const onMove = (m: PointerEvent) => {
-          if (gesture.down && Math.hypot(m.clientX - gesture.down.x, m.clientY - gesture.down.y) > MOVE_TOLERANCE) done();
-        };
-        const done = () => {
-          cancelLongPress();
-          window.removeEventListener("pointermove", onMove);
-          window.removeEventListener("pointerup", done);
-          window.removeEventListener("pointercancel", done);
-        };
-        window.addEventListener("pointermove", onMove, { passive: true });
-        window.addEventListener("pointerup", done);
-        window.addEventListener("pointercancel", done);
-        gesture.timer = setTimeout(() => {
-          gesture.timer = 0;
-          gesture.longPressed = true;
-          gesture.lastLongPress = performance.now();
-          navigator.vibrate?.(12);
-          contextMenu(s);
-          done();
-        }, LONG_PRESS_MS);
-      },
       onClick: (e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
-        cancelLongPress();
-        if (e.delta > 6 || gesture.longPressed) return;
+        if (e.delta > 6) return; // a drag (camera orbit / pan), not a click
         const s = cur();
         if (s) activate(s);
       },
-      onContextMenu: (e: ThreeEvent<MouseEvent>) => {
-        e.stopPropagation();
-        e.nativeEvent.preventDefault();
-        const s = cur();
-        if (!s || s.kind !== "unit") return;
-        // touch browsers also fire contextmenu on a long press — the long-press timer already handled it
-        if (performance.now() - gesture.lastLongPress < 1200 || gesture.down?.touch) return;
-        const d = gesture.down;
-        // right-drag pans the camera: only a still right-click opens the menu
-        if (d && d.button === 2 && Math.hypot(e.nativeEvent.clientX - d.x, e.nativeEvent.clientY - d.y) > 6) return;
-        contextMenu(s);
-      },
     };
-  }, [interactive, objects, kind, setHover, activate, contextMenu]);
+  }, [interactive, objects, kind, setHover, activate]);
 }
 
 /**

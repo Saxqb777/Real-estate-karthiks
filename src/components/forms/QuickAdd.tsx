@@ -1,5 +1,5 @@
 "use client";
-// Quick-add pop-ups for any screen (overview radial menu, world objects, ⌘K):
+// Quick-add pop-ups for any screen (world objects, ⌘K):
 //   quickAdd("payment", { defaults: { leaseId } });   quickAdd("lease", { defaults: { unitId } });
 //   quickAdd("moveOut", { lease });                     quickAdd("tenant", { tenant })  // edit
 // Mount <QuickAddHost /> once (the app shell); extra hosts stay dormant, so pages may mount one too.

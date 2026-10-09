@@ -420,7 +420,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       onEmptySlotClick={data && live ? (slot) => quickAdd("unit", { defaults: { position: slot } }) : undefined}
       onObjectClick={onObjectClick}
       onObjectHover={onObjectHover}
-      onUnitContextMenu={inspect.onUnitContextMenu}
       insets={framed ? ZERO : insets}
       dimmed={dimmed}
       hintObjects={hintObjects}

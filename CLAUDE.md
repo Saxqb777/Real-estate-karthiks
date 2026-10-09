@@ -329,7 +329,15 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   walker's anchor is one array moved every frame, so every scene render re-registered them → setSpotVersion → another
   render (a loop). Now a hotspot registers once per key / kind / unit and its registered entry follows the latest
   anchor in place. Checked: 0 warnings in ~20 min of hover/click tests (old code: 2 in 5 min); every world object +
-  the manager and tenant still show their tag and open their window (desktop + phone taps).
+  the manager and tenant still show their tag and open their window (desktop + phone taps). DEPLOYED (dc37384).
+- 9/10/2026: RADIAL MENU REMOVED (owner: "LETS REMOVE THIS FEATURE"): the right-click / long-press 6-slot wheel on a house
+  (RENT · EXPENSE · CALL · PAY EB · TO-DO · MOVE OUT) is gone — hud/RadialMenu.tsx + radial.module.css + overview re-export
+  deleted, Inspect radial state, EstateScene onUnitContextMenu + the long-press / contextmenu handlers in Interact.tsx
+  removed (a click still opens the house window). Waiting to ship WITH the Electricity box redesign.
+- 9/10/2026: ELECTRICITY BOX (EB pole window, hud/PolePanel.tsx) redesign — owner asked for options; mocks sent
+  (scratchpad elec/mock.html): A Meter (glowing LCD consumer no. + last bill / this year / all time + Pay / Add bill per
+  house — my pick), B Bill book (last 4 bills list + paid so far), C Power bars (big last bill + 6-bill bar chart),
+  D Compact (one slim row per house). Pending the owner's pick → build desktop + phone → deploy with the radial removal.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

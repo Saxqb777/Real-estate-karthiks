@@ -33,7 +33,6 @@ export { PolePanel, type PolePanelProps } from "./PolePanel";
 export { TaxPanel, type TaxPanelProps } from "./TaxPanel";
 
 export { useInspect, InspectLayer, WorldHint, HudPanelFor, panelFor, hintFor, type InspectController, type UseInspectOptions, type HudPanelForProps } from "./Inspect";
-export { RadialMenu, type RadialMenuProps } from "./RadialMenu";
 export { Dock, DOCK_TABS, dockTabLabel, type DockProps } from "./Dock";
 export { IncomeExpenseChart } from "./charts/IncomeExpenseChart";
 export { SpendingDonut } from "./charts/SpendingDonut";

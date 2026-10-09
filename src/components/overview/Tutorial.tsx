@@ -86,7 +86,7 @@ export function Tutorial({ open, onClose, locate, units, insets, rootEl }: Tutor
       title: house ? `${house.name} — click it` : "Click a house",
       body: (
         <>
-          Opens its tenant, rent and what it&rsquo;s worth. <b>Right-click</b> it (press and hold on a phone) for quick actions like Record rent.
+          Opens its tenant, rent and what it&rsquo;s worth.
         </>
       ),
       find: () => {

@@ -45,7 +45,7 @@ function worldSpots(units: UnitBreakdown[], mobile: boolean): Spot[] {
       kind: "unit",
       unitId: u.id,
       title: u.name,
-      opens: mobile ? "Tap · hold for actions" : "Click: details · right-click: actions",
+      opens: mobile ? "Tap: details" : "Click: details",
     });
     if (u.activeLease) out.push({ key: `tenant:${u.id}`, kind: "tenant", unitId: u.id, title: "Tenant", opens: "Profile · tap to call" });
     if (u.status === "vacant" && u.isActive) out.push({ key: `tolet:${u.id}`, kind: "tolet", unitId: u.id, title: "TO-LET board", opens: "Sign a new lease" });

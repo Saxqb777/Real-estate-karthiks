@@ -176,9 +176,9 @@ Objects show a subtle interact hint on hover (outline + cursor + tooltip) so the
 Any KPI/total is clickable → breakdown card (e.g. Net profit → rent by unit + expenses by category) → click a row → the underlying
 records (payments / expenses) with inline edit. Breadcrumb inside the panel ("Net profit › Expenses › Maintenance").
 
-### Radial action menu
-Right-click (desktop) / long-press (touch) on a house → game-style radial wheel (6 slots, keyboard 1–6):
-Record rent · Add expense · Call tenant · Pay electricity · Add to-do · Move out / New lease (context aware). Opens the right quick form.
+### Radial action menu — REMOVED (owner, 9/10/2026)
+Was: right-click (desktop) / long-press (touch) on a house → 6-slot wheel (Record rent · Add expense · Call tenant · Pay
+electricity · Add to-do · Move out). Owner: "LETS REMOVE THIS FEATURE". A house click opens its window; its actions live there.
 
 ### Time scrubber
 A slim timeline in the bottom dock (purchase date → today). Dragging it sets an "as of" date:
@@ -247,7 +247,7 @@ The spec describes the old site's data; presentation must be rethought so nothin
 
 ## Discoverability & hints (owner: "everything opens with an interactive click, with hints showing")
 - Everything clickable looks clickable: hover → pointer cursor + hairline glow + lift; a short hint label appears after ~300ms
-  ("Click for breakdown", "Click to record rent", "Right-click for actions"). Touch: first tap shows the hint + opens; long-press = radial menu.
+  ("Click for breakdown", "Click to record rent"). Touch: a tap opens. (Right-click / long-press radial menu removed 9/10/2026.)
 - **First-run tutorial** like a game: a 5–6 step coach-mark tour (spotlight + short text + Next/Skip) the first time the owner logs in —
   the world, a house, the mailbox, a HUD number (show-the-maths), the dock, ⌘K. Re-playable from the "?" menu. Remembered per browser.
 - **Unexplored hints**: a tiny marigold dot on interactive things never opened yet (houses, mailbox, notice board, pole, each dock tab);
