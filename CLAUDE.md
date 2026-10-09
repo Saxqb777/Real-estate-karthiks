@@ -361,7 +361,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 9/10/2026: renamed again (owner: "JUST RENAME IT TO REVENUE OFFICER"): every label now says REVENUE OFFICER (hover tag,
   "?" tag, window eyebrow, Config → Settings section). Code / DB names stay taxCollector*, TaxCollector.tsx, tax-route.ts,
   kind "taxstamp". DEPLOYED (490a014). Then (owner): NO NAME on the hover tag — it reads just "Revenue officer"; her
-  name + number show only in the window's contact strip.
+  name + number show only in the window.
+- 9/10/2026: PROPERTY TAX WINDOW = design D "COMPACT" (owner picked D of A house cards / B ledger / C officer's desk /
+  D compact): a smaller centre window (max 760px, .taxCompact) — one slim row per house (the OLDEST bill still due, else
+  the latest year: amount + "year · paid date" / "due", PAID tick or MARK PAID), then PAID IN TOTAL (+ STILL TO PAY when
+  something is due) with ADD A YEAR, and the revenue officer on one line at the bottom (initial badge, name, "Revenue
+  officer · +91 …", call + WhatsApp icon buttons). The old 3-column report (Summary / By unit / Year by year) is gone —
+  history lives in Data → Property tax and the Property tax report. Phones: name + amount left, pill + tick/button right.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
