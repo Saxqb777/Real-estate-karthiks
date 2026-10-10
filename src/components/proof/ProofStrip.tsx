@@ -3,7 +3,7 @@
 // tile. Tap a thumbnail to see it full screen; "+" opens the phone's camera / photos / files (or drop files on the row).
 // ProofStrip works on a saved record; usePendingProofs + PendingProofStrip hold files in a form until the record is
 // saved, then upload them onto it.
-import { FileText, ImagePlus, Loader2, Paperclip, X } from "lucide-react";
+import { FileText, Loader2, Paperclip, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { cx, toast } from "@/components/ui";
 import type { AttachmentOwner } from "@/lib/attachment-rules";
@@ -22,13 +22,13 @@ const ownerQuery = (owner: AttachmentOwner) =>
 let seq = 0;
 const nextId = () => `p${++seq}`;
 
-/** "+" tile: the phone's picker (camera, photos, files); several files at once. */
-function AddTile({ onFiles, label = "Add a photo or PDF" }: { onFiles: (files: File[]) => void; label?: string }) {
+/** A clean paperclip button (owner, 10/10/2026): the phone's picker (camera, photos, files); several files at once. */
+function AddTile({ onFiles, label = "Attach a photo or PDF" }: { onFiles: (files: File[]) => void; label?: string }) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <>
-      <button type="button" className={cx(s.tile, s.add)} aria-label={label} title={label} onClick={() => input.current?.click()}>
-        <ImagePlus aria-hidden />
+      <button type="button" className={s.attach} aria-label={label} title="Attach" onClick={() => input.current?.click()}>
+        <Paperclip aria-hidden />
       </button>
       <input
         ref={input}
@@ -81,7 +81,7 @@ function Thumb({ a, onOpen }: { a: AttachmentDTO; onOpen: () => void }) {
     <button type="button" className={s.tile} onClick={onOpen} aria-label={`Open ${a.fileName}`} title={a.fileName}>
       {a.image ? (
         // eslint-disable-next-line @next/next/no-img-element -- private file behind the login, not an optimisable asset
-        <img src={attachmentUrl(a.id, { thumb: true })} alt="" loading="lazy" draggable={false} />
+        <img src={attachmentUrl(a.id, { thumb: true })} alt="" draggable={false} />
       ) : (
         <span className={s.doc}>
           <FileText aria-hidden />
@@ -253,9 +253,9 @@ export function ProofMark({ count }: { count: number | undefined }) {
 /** The 📎 column's header in the Data tables. */
 export function ProofHead() {
   return (
-    <span className={s.head} title="Proof">
+    <span className={s.head} title="Attachment">
       <Paperclip aria-hidden />
-      <span className="sr-only">Proof</span>
+      <span className="sr-only">Attachment</span>
     </span>
   );
 }

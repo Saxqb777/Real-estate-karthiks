@@ -260,7 +260,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
             <Input {...form.text("reference")} className={s.refInput} maxLength={60} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
           </Field>
         )}
-        <Field label="Proof" span="full">
+        <Field label="Attachment" span="full">
           <PendingProofStrip pending={pending} />
         </Field>
       </FormGrid>

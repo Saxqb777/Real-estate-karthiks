@@ -80,7 +80,7 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
             <Textarea {...form.text("description")} placeholder="e.g. Plumber — kitchen tap and tank float valve" />
           </Field>
           {!editing && (
-            <Field label="Proof" span="full">
+            <Field label="Attachment" span="full">
               <PendingProofStrip pending={pending} />
             </Field>
           )}

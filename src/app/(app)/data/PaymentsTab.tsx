@@ -221,7 +221,7 @@ function PaymentDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
           p.notes ? { label: "Note", value: p.notes } : null,
         ]}
       />
-      <DetailSection title="Proof">
+      <DetailSection title="Attachment">
         <ProofStrip owner={{ paymentId: p.id }} />
       </DetailSection>
     </div>

@@ -255,7 +255,7 @@ function ExpenseDrawer({ sel, goto }: { sel: ReturnType<typeof useSelection>; go
         ]}
       />
       {!linked && (
-        <DetailSection title="Proof">
+        <DetailSection title="Attachment">
           <ProofStrip owner={{ expenseId: e.id }} />
         </DetailSection>
       )}

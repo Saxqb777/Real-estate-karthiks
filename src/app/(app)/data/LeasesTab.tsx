@@ -269,7 +269,7 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
         ]}
       />
       {l.securityDeposit > 0 && (
-        <DetailSection title="Deposit proof">
+        <DetailSection title="Deposit attachment">
           <ProofStrip owner={{ leaseId: l.id }} />
         </DetailSection>
       )}

@@ -214,7 +214,7 @@ function TaxDrawer({ sel, goto, items }: { sel: ReturnType<typeof useSelection>;
           },
         ]}
       />
-      <DetailSection title="Proof">
+      <DetailSection title="Attachment">
         <ProofStrip owner={{ propertyTaxId: t.id }} />
       </DetailSection>
     </div>

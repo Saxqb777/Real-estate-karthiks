@@ -489,6 +489,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   "pattukottai-proofs" (store_wGJkc3Lr4hRVqDuW, region sin1, access private, connected to the project for production /
   preview / development → env BLOB_READ_WRITE_TOKEN), then redeployed so the site has the key. Hobby plan: 1 GB storage
   + 10 GB transfer a month included, never billed (over the limit Blob pauses for 30 days).
+- 10/10/2026: ATTACHMENT (owner: "RENAME IT ATTACHMENT AND JUST KEEP A CLEAN CLIP ICON TO BE PROFESSIONAL"): every
+  "Proof" label now says ATTACHMENT (drawer sections, the Record rent / Add expense field, the 📎 column's title) and the
+  lease's is "Deposit attachment"; the dashed "+" image tile is replaced by a clean gold PAPERCLIP button (44 px, no
+  border, soft gold tile on hover — proof.module.css .attach), centred on the thumbnails; with no files yet the clip lines
+  up exactly with the heading. Thumbnails now load at once (no lazy loading inside drawers).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
