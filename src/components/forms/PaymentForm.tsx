@@ -1,7 +1,7 @@
 "use client";
 import { Banknote, Building, Smartphone } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { PendingProofStrip, ProofClip, usePendingProofs } from "@/components/proof";
+import { PendingProofClip, usePendingProofs } from "@/components/proof";
 import { DateInput, Field, FormGrid, Input, NumberInput, Select, toast } from "@/components/ui";
 import { rentForMonth } from "@/lib/calculations";
 import { api } from "@/lib/client";
@@ -243,7 +243,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
           <DateInput {...form.date("paymentDate")} max={toInputDate(todayIST())} />
         </Field>
 
-        {/* the clip (owner, 10/10/2026): inside the Ref no. box for UPI / Bank, beside the choices for cash */}
+        {/* the clip (owner, 10/10/2026: no files showing): inside the Ref no. box for UPI / Bank, beside the choices for cash */}
         <Field label="Paid by" span="full" error={form.error("method")}>
           <div className={s.payRow}>
             <ChoiceGroup
@@ -256,9 +256,8 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
                 { value: "bank", label: "Bank", icon: <Building aria-hidden /> },
               ]}
             />
-            {v.method === "cash" && <ProofClip onFiles={pending.add} />}
+            {v.method === "cash" && <PendingProofClip pending={pending} />}
           </div>
-          {v.method === "cash" && <PendingProofStrip pending={pending} thumbsOnly />}
         </Field>
         {v.method !== "cash" && (
           <Field label="Ref no. (UTR)" span="full" error={form.error("reference")}>
@@ -269,9 +268,8 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
               autoComplete="off"
               autoCapitalize="characters"
               spellCheck={false}
-              suffix={<ProofClip onFiles={pending.add} />}
+              suffix={<PendingProofClip pending={pending} />}
             />
-            <PendingProofStrip pending={pending} thumbsOnly />
           </Field>
         )}
       </FormGrid>

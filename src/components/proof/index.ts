@@ -2,14 +2,12 @@
 export {
   ProofStrip,
   ProofClip,
-  ProofThumbs,
-  useProofFiles,
+  PendingProofClip,
   PendingProofStrip,
   ProofHead,
   ProofMark,
   proofCount,
   usePendingProofs,
   type PendingProofs,
-  type ProofFiles,
 } from "./ProofStrip";
 export { ProofViewer } from "./ProofViewer";

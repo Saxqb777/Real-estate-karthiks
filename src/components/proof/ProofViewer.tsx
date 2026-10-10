@@ -1,27 +1,61 @@
 "use client";
-// Full-screen view of a record's proof files (owner, 10/10/2026): the photo as large as the screen allows (or a PDF card
-// that opens the PDF), ‹ › / arrow keys / swipe between files, and Save · Open · Delete · Close as round gold buttons.
-import { ChevronLeft, ChevronRight, Download, ExternalLink, FileText, Loader2, Trash2, X } from "lucide-react";
+// Full-screen view of a record's attached files (owner, 10/10/2026): the photo as large as the screen allows (or a PDF
+// card that opens the PDF), ‹ › / arrow keys / swipe between files, and round gold buttons: Attach more · Save · Open ·
+// Delete · Close. Works for saved files and for files picked in a form that is not saved yet.
+import { ChevronLeft, ChevronRight, Download, ExternalLink, FileText, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { buttonClass, confirmDialog, cx, toast, useFocusTrap, useScrollLock } from "@/components/ui";
 import { sizeText } from "@/lib/attachment-rules";
-import { api, invalidate } from "@/lib/client";
 import { attachmentUrl, type AttachmentDTO } from "@/lib/schemas/attachment";
+import { ACCEPT } from "./prepare";
 import s from "./proof.module.css";
+
+/** One file in the view: a saved attachment, or a file picked in a form (a local object URL). */
+export interface ViewItem {
+  id: string;
+  fileName: string;
+  image: boolean;
+  size: number;
+  src: string;
+  /** saved files only */
+  saveHref?: string;
+  openHref: string;
+}
+
+export const viewItem = (a: AttachmentDTO): ViewItem => ({
+  id: a.id,
+  fileName: a.fileName,
+  image: a.image,
+  size: a.size,
+  src: attachmentUrl(a.id),
+  saveHref: attachmentUrl(a.id, { download: true }),
+  openHref: attachmentUrl(a.id),
+});
 
 export function ProofViewer({
   items,
   index,
   onIndex,
   onClose,
+  onDelete,
+  confirmDelete = true,
+  onAttach,
+  attaching,
 }: {
-  items: AttachmentDTO[];
+  items: ViewItem[];
   index: number;
   onIndex: (i: number) => void;
   onClose: () => void;
+  /** take the file away (the viewer asks first when confirmDelete) */
+  onDelete: (item: ViewItem) => Promise<void> | void;
+  confirmDelete?: boolean;
+  /** add more files from here */
+  onAttach?: (files: File[]) => void;
+  attaching?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const picker = useRef<HTMLInputElement>(null);
   useFocusTrap(ref, true, onClose);
   useScrollLock(true);
   const [loadedId, setLoadedId] = useState<string | null>(null);
@@ -33,15 +67,19 @@ export function ProofViewer({
   const go = (step: number) => many && onIndex((index + step + items.length) % items.length);
 
   const remove = async () => {
-    const ok = await confirmDialog({ title: a.image ? "Delete this photo?" : "Delete this PDF?", confirmLabel: "Delete", tone: "danger" });
-    if (!ok) return;
+    if (confirmDelete) {
+      const ok = await confirmDialog({
+        title: a.image ? "Delete this photo?" : "Delete this PDF?",
+        confirmLabel: "Delete",
+        tone: "danger",
+      });
+      if (!ok) return;
+    }
     setDeleting(true);
     try {
-      await api(`/api/attachments/${a.id}`, { method: "DELETE" });
+      await onDelete(a);
       if (items.length === 1) onClose();
       else if (index === items.length - 1) onIndex(index - 1);
-      invalidate("/api/");
-      toast.success(a.image ? "Photo deleted" : "PDF deleted");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -72,10 +110,40 @@ export function ProofViewer({
           <span className={s.name}>{a.fileName}</span>
         </div>
         <div className={s.tools}>
-          <a className={s.round} href={attachmentUrl(a.id, { download: true })} aria-label="Save this file" title="Save">
-            <Download aria-hidden />
-          </a>
-          <a className={s.round} href={attachmentUrl(a.id)} target="_blank" rel="noopener" aria-label="Open in a new tab" title="Open">
+          {onAttach && (
+            <>
+              <button
+                type="button"
+                className={s.round}
+                onClick={() => picker.current?.click()}
+                disabled={attaching}
+                aria-label="Attach more files"
+                title="Attach"
+              >
+                {attaching ? <Loader2 className={s.spinIcon} aria-hidden /> : <Paperclip aria-hidden />}
+              </button>
+              <input
+                ref={picker}
+                className={s.input}
+                type="file"
+                accept={ACCEPT}
+                multiple
+                tabIndex={-1}
+                aria-hidden
+                onChange={(e) => {
+                  const files = [...(e.target.files ?? [])];
+                  e.target.value = "";
+                  if (files.length) onAttach(files);
+                }}
+              />
+            </>
+          )}
+          {a.saveHref && (
+            <a className={s.round} href={a.saveHref} aria-label="Save this file" title="Save">
+              <Download aria-hidden />
+            </a>
+          )}
+          <a className={s.round} href={a.openHref} target="_blank" rel="noopener" aria-label="Open in a new tab" title="Open">
             <ExternalLink aria-hidden />
           </a>
           <button type="button" className={s.round} onClick={remove} disabled={deleting} aria-label="Delete this file" title="Delete">
@@ -109,7 +177,7 @@ export function ProofViewer({
             {/* eslint-disable-next-line @next/next/no-img-element -- private file behind the login */}
             <img
               key={a.id}
-              src={attachmentUrl(a.id)}
+              src={a.src}
               alt={a.fileName}
               draggable={false}
               className={s.photo}
@@ -123,7 +191,7 @@ export function ProofViewer({
             <span className={s.pdfName}>{a.fileName}</span>
             <span className={s.pdfSize}>PDF · {sizeText(a.size)}</span>
             {/* a plain link (not next/link): the PDF is a file, never prefetched */}
-            <a className={buttonClass({ variant: "primary" })} href={attachmentUrl(a.id)} target="_blank" rel="noopener">
+            <a className={buttonClass({ variant: "primary" })} href={a.openHref} target="_blank" rel="noopener">
               <ExternalLink aria-hidden />
               Open PDF
             </a>

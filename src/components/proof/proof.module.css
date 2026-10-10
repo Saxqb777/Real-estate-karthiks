@@ -89,15 +89,18 @@ button.tile:focus-visible {
 .strip > .attach:first-child {
   margin-left: -11px;
 }
-/* the clip on its own: inside the Ref no. box (right end) or beside a value in the details */
+/* the clip on its own (owner: no files showing): inside the Ref no. box (right end) or beside a value in the details;
+   with files it carries their count and opens them */
 .clip {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   flex: none;
-  width: 30px;
+  min-width: 30px;
   height: 30px;
   margin: -4px -6px -4px 0;
-  padding: 0;
+  padding: 0 6px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -117,35 +120,15 @@ button.tile:focus-visible {
   width: 18px;
   height: 18px;
 }
-/* small thumbnails under the line the clip is on */
-.small {
-  gap: 6px;
-  margin-top: 8px;
+.clipCount {
+  font-family: var(--ff-display);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
-.end {
-  justify-content: flex-end;
-}
-.small .tile {
-  width: 52px;
-  height: 52px;
-  border-radius: 7px;
-}
-.small .doc {
-  font-size: 9px;
-}
-.small .doc svg {
-  width: 18px;
-  height: 18px;
-}
-.small .remove {
-  top: 2px;
-  right: 2px;
-  width: 18px;
-  height: 18px;
-}
-.small .remove svg {
-  width: 10px;
-  height: 10px;
+.spinIcon {
+  animation: spin 0.8s linear infinite;
 }
 .busy img {
   opacity: 0.4;
@@ -349,10 +332,6 @@ button.tile:focus-visible {
   .tile {
     width: 64px;
     height: 64px;
-  }
-  .small .tile {
-    width: 52px;
-    height: 52px;
   }
   .bar {
     padding: 10px 12px;

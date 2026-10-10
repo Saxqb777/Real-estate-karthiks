@@ -1,16 +1,17 @@
 "use client";
-// Proof files on a record (owner, 10/10/2026: "attach images with transactions"): a row of small thumbnails and a "+"
-// tile. Tap a thumbnail to see it full screen; "+" opens the phone's camera / photos / files (or drop files on the row).
-// ProofStrip works on a saved record; usePendingProofs + PendingProofStrip hold files in a form until the record is
-// saved, then upload them onto it.
+// Attached files on a record (owner, 10/10/2026: "attach images with transactions"). Two looks:
+//  - ProofClip / PendingProofClip: JUST the paperclip (owner: no files showing) — with no files it opens the phone's
+//    camera / photos / files; with files it shows how many and opens them full screen (attach more / delete there).
+//  - ProofStrip / PendingProofStrip: a row of small thumbnails + the clip (expenses, property tax, deposits for now).
+// usePendingProofs holds files picked in a form until its record is saved, then uploads them onto it.
 import { FileText, Loader2, Paperclip, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { cx, toast } from "@/components/ui";
 import type { AttachmentOwner } from "@/lib/attachment-rules";
-import { invalidate, useApi } from "@/lib/client";
+import { api, invalidate, useApi } from "@/lib/client";
 import { attachmentUrl, type AttachmentDTO, type AttachmentListResponse } from "@/lib/schemas/attachment";
 import { ACCEPT, prepareProof, proofErrorText, uploadProof, type PreparedProof } from "./prepare";
-import { ProofViewer } from "./ProofViewer";
+import { ProofViewer, viewItem, type ViewItem } from "./ProofViewer";
 import s from "./proof.module.css";
 
 const ownerQuery = (owner: AttachmentOwner) =>
@@ -23,19 +24,11 @@ let seq = 0;
 const nextId = () => `p${++seq}`;
 
 /** A clean paperclip button (owner, 10/10/2026): the phone's picker (camera, photos, files); several files at once. */
-function AddTile({
-  onFiles,
-  label = "Attach a photo or PDF",
-  inline,
-}: {
-  onFiles: (files: File[]) => void;
-  label?: string;
-  inline?: boolean;
-}) {
+function AddTile({ onFiles, label = "Attach a photo or PDF" }: { onFiles: (files: File[]) => void; label?: string }) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <>
-      <button type="button" className={inline ? s.clip : s.attach} aria-label={label} title="Attach" onClick={() => input.current?.click()}>
+      <button type="button" className={s.attach} aria-label={label} title="Attach" onClick={() => input.current?.click()}>
         <Paperclip aria-hidden />
       </button>
       <input
@@ -57,22 +50,12 @@ function AddTile({
 }
 
 /** The row, with drop-to-add on desktop. */
-function Strip({
-  onFiles,
-  small,
-  end,
-  children,
-}: {
-  onFiles: (files: File[]) => void;
-  small?: boolean;
-  end?: boolean;
-  children: ReactNode;
-}) {
+function Strip({ onFiles, children }: { onFiles: (files: File[]) => void; children: ReactNode }) {
   const [over, setOver] = useState(false);
   const hasFiles = (e: DragEvent) => [...e.dataTransfer.types].includes("Files");
   return (
     <div
-      className={cx(s.strip, small && s.small, end && s.end)}
+      className={s.strip}
       data-over={over || undefined}
       onDragOver={(e) => {
         if (!hasFiles(e)) return;
@@ -120,9 +103,9 @@ function BusyTile({ preview }: { preview?: string | null }) {
   );
 }
 
-/** The files on a saved record and adding more (each uploaded straight away). null = no record yet (nothing loads). */
-export function useProofFiles(owner: AttachmentOwner | null) {
-  const list = useApi<AttachmentListResponse>(owner ? `/api/attachments?${ownerQuery(owner)}` : null);
+/** The files on a saved record and adding more (each uploaded straight away). */
+function useProofFiles(owner: AttachmentOwner) {
+  const list = useApi<AttachmentListResponse>(`/api/attachments?${ownerQuery(owner)}`);
   const items = list.data?.items ?? [];
   const [busy, setBusy] = useState<{ id: string; preview: string | null }[]>([]);
   const [open, setOpen] = useState<number | null>(null);
@@ -131,8 +114,6 @@ export function useProofFiles(owner: AttachmentOwner | null) {
 
   const add = useCallback(async (files: File[]) => {
     for (const f of files) {
-      const owner = ownerRef.current;
-      if (!owner) return;
       const id = nextId();
       setBusy((b) => [...b, { id, preview: null }]);
       let preview: string | null = null;
@@ -142,7 +123,7 @@ export function useProofFiles(owner: AttachmentOwner | null) {
           preview = URL.createObjectURL(p.thumb);
           setBusy((b) => b.map((x) => (x.id === id ? { ...x, preview } : x)));
         }
-        await uploadProof(owner, p);
+        await uploadProof(ownerRef.current, p);
         invalidate("/api/");
       } catch (err) {
         toast.error(proofErrorText(err, f.name));
@@ -156,7 +137,7 @@ export function useProofFiles(owner: AttachmentOwner | null) {
   return { items, busy, add, open, setOpen };
 }
 
-export type ProofFiles = ReturnType<typeof useProofFiles>;
+type ProofFiles = ReturnType<typeof useProofFiles>;
 
 function Files({ files }: { files: ProofFiles }) {
   const { items, busy, open, setOpen } = files;
@@ -169,7 +150,9 @@ function Files({ files }: { files: ProofFiles }) {
       {busy.map((b) => (
         <BusyTile key={b.id} preview={b.preview} />
       ))}
-      {shown !== null && <ProofViewer items={items} index={shown} onIndex={setOpen} onClose={() => setOpen(null)} />}
+      {shown !== null && (
+        <ProofViewer items={items.map(viewItem)} index={shown} onIndex={setOpen} onClose={() => setOpen(null)} onDelete={deleteSaved} />
+      )}
     </>
   );
 }
@@ -185,21 +168,74 @@ export function ProofStrip({ owner }: { owner: AttachmentOwner }) {
   );
 }
 
-/** Just the clip (inside the Ref no. box, or beside a value): opens the picker. */
-export function ProofClip({ onFiles }: { onFiles: (files: File[]) => void }) {
-  return <AddTile onFiles={onFiles} inline />;
+/** Delete a saved file (the viewer has already asked). */
+async function deleteSaved(item: ViewItem) {
+  await api(`/api/attachments/${item.id}`, { method: "DELETE" });
+  invalidate("/api/");
+  toast.success(item.image ? "Photo deleted" : "PDF deleted");
 }
 
-/**
- * A record's files as small thumbnails under the line its clip is on (tap = full screen); nothing when there are none.
- * `end`: lined up on the right, under a right-aligned value (the details lists).
- */
-export function ProofThumbs({ files, end = true }: { files: ProofFiles; end?: boolean }) {
-  if (!files.items.length && !files.busy.length) return null;
+/** The phone's picker (camera, photos, files), several files at once, opened from a button. */
+function usePicker(onFiles: (files: File[]) => void) {
+  const input = useRef<HTMLInputElement>(null);
+  const element = (
+    <input
+      ref={input}
+      className={s.input}
+      type="file"
+      accept={ACCEPT}
+      multiple
+      tabIndex={-1}
+      aria-hidden
+      onChange={(e) => {
+        const files = [...(e.target.files ?? [])];
+        e.target.value = ""; // the same file can be picked again
+        if (files.length) onFiles(files);
+      }}
+    />
+  );
+  return { open: () => input.current?.click(), element };
+}
+
+/** The clip itself: gold paperclip + how many files (none → opens the picker, some → opens them). */
+function Clip({ count, busy, onPick, onOpen }: { count: number; busy: boolean; onPick: () => void; onOpen: () => void }) {
+  const label = count ? `${count} attached file${count === 1 ? "" : "s"}` : "Attach a photo or PDF";
   return (
-    <Strip onFiles={files.add} small end={end}>
-      <Files files={files} />
-    </Strip>
+    <button type="button" className={s.clip} onClick={count ? onOpen : onPick} aria-label={label} title={count ? label : "Attach"}>
+      {busy ? <Loader2 className={s.spinIcon} aria-hidden /> : <Paperclip aria-hidden />}
+      {count > 0 && <span className={s.clipCount}>{count}</span>}
+    </button>
+  );
+}
+
+/** Just the clip, for a saved record (owner, 10/10/2026: the clip beside the ref no., no files showing). */
+export function ProofClip({ owner }: { owner: AttachmentOwner }) {
+  const files = useProofFiles(owner);
+  const picker = usePicker(files.add);
+  const { items, busy, open, setOpen } = files;
+  // a file added from the full-screen view: show it
+  const seen = useRef(items.length);
+  useEffect(() => {
+    if (items.length > seen.current && open !== null) setOpen(items.length - 1);
+    seen.current = items.length;
+  }, [items.length, open, setOpen]);
+  const shown = open !== null && open < items.length ? open : null;
+  return (
+    <>
+      <Clip count={items.length} busy={busy.length > 0} onPick={picker.open} onOpen={() => setOpen(0)} />
+      {picker.element}
+      {shown !== null && (
+        <ProofViewer
+          items={items.map(viewItem)}
+          index={shown}
+          onIndex={setOpen}
+          onClose={() => setOpen(null)}
+          onDelete={deleteSaved}
+          onAttach={files.add}
+          attaching={busy.length > 0}
+        />
+      )}
+    </>
   );
 }
 
@@ -207,6 +243,8 @@ interface PendingItem {
   id: string;
   name: string;
   preview: string | null;
+  /** the whole prepared file as an object URL (to look at it before saving) */
+  src: string | null;
   /** null while it is being prepared */
   prepared: PreparedProof | null;
 }
@@ -221,16 +259,17 @@ export function usePendingProofs() {
   itemsRef.current = items;
 
   // previews are object URLs: let them go when the form closes
-  useEffect(() => () => itemsRef.current.forEach((i) => i.preview && URL.revokeObjectURL(i.preview)), []);
+  useEffect(() => () => itemsRef.current.forEach(revoke), []);
 
   const add = useCallback(async (files: File[]) => {
     for (const f of files) {
       const id = nextId();
-      setItems((xs) => [...xs, { id, name: f.name, preview: null, prepared: null }]);
+      setItems((xs) => [...xs, { id, name: f.name, preview: null, src: null, prepared: null }]);
       try {
         const prepared = await prepareProof(f);
         const preview = prepared.thumb ? URL.createObjectURL(prepared.thumb) : null;
-        setItems((xs) => xs.map((x) => (x.id === id ? { ...x, prepared, preview } : x)));
+        const src = URL.createObjectURL(prepared.file);
+        setItems((xs) => xs.map((x) => (x.id === id ? { ...x, prepared, preview, src } : x)));
       } catch (err) {
         toast.error(proofErrorText(err, f.name));
         setItems((xs) => xs.filter((x) => x.id !== id));
@@ -241,7 +280,7 @@ export function usePendingProofs() {
   const remove = useCallback((id: string) => {
     setItems((xs) => {
       const gone = xs.find((x) => x.id === id);
-      if (gone?.preview) URL.revokeObjectURL(gone.preview);
+      if (gone) revoke(gone);
       return xs.filter((x) => x.id !== id);
     });
   }, []);
@@ -264,11 +303,55 @@ export function usePendingProofs() {
 
 export type PendingProofs = ReturnType<typeof usePendingProofs>;
 
-/** The form's row of picked files (✕ takes one out again). `thumbsOnly`: no clip in the row (it sits in a box above). */
-export function PendingProofStrip({ pending, thumbsOnly }: { pending: PendingProofs; thumbsOnly?: boolean }) {
-  if (thumbsOnly && !pending.items.length) return null;
+function revoke(i: PendingItem) {
+  if (i.preview) URL.revokeObjectURL(i.preview);
+  if (i.src) URL.revokeObjectURL(i.src);
+}
+
+/** Just the clip, in a form (Record rent): files picked before the record is saved; ✕ in the full-screen view takes one out. */
+export function PendingProofClip({ pending }: { pending: PendingProofs }) {
+  const picker = usePicker(pending.add);
+  const [open, setOpen] = useState<number | null>(null);
+  const ready = pending.items.filter((i) => i.prepared && i.src);
+  const items: ViewItem[] = ready.map((i) => ({
+    id: i.id,
+    fileName: i.prepared!.name,
+    image: i.prepared!.image,
+    size: i.prepared!.file.size,
+    src: i.src!,
+    openHref: i.src!,
+  }));
+  const busy = pending.items.length > ready.length;
+  const seen = useRef(items.length);
+  useEffect(() => {
+    if (items.length > seen.current && open !== null) setOpen(items.length - 1);
+    seen.current = items.length;
+  }, [items.length, open]);
+  const shown = open !== null && open < items.length ? open : null;
   return (
-    <Strip onFiles={pending.add} small={thumbsOnly}>
+    <>
+      <Clip count={items.length} busy={busy} onPick={picker.open} onOpen={() => setOpen(0)} />
+      {picker.element}
+      {shown !== null && (
+        <ProofViewer
+          items={items}
+          index={shown}
+          onIndex={setOpen}
+          onClose={() => setOpen(null)}
+          onDelete={(item) => pending.remove(item.id)}
+          confirmDelete={false}
+          onAttach={pending.add}
+          attaching={busy}
+        />
+      )}
+    </>
+  );
+}
+
+/** The form's row of picked files (✕ takes one out again). */
+export function PendingProofStrip({ pending }: { pending: PendingProofs }) {
+  return (
+    <Strip onFiles={pending.add}>
       {pending.items.map((i) =>
         i.prepared ? (
           <span key={i.id} className={s.tile} title={i.name}>
@@ -289,7 +372,7 @@ export function PendingProofStrip({ pending, thumbsOnly }: { pending: PendingPro
           <BusyTile key={i.id} />
         ),
       )}
-      {!thumbsOnly && <AddTile onFiles={pending.add} />}
+      <AddTile onFiles={pending.add} />
     </Strip>
   );
 }

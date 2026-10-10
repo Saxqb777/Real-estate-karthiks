@@ -20,7 +20,7 @@ import {
   yearOf,
   type PeriodPick,
 } from "@/components/forms";
-import { ProofClip, ProofHead, ProofMark, ProofThumbs, proofCount, useProofFiles, type ProofFiles } from "@/components/proof";
+import { ProofClip, ProofHead, ProofMark, proofCount } from "@/components/proof";
 import { api, useApi, useMutation } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -204,7 +204,6 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
 function PaymentDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
   const detail = useApi<PaymentDetail>(sel.shown ? `/api/payments/${sel.shown}` : null);
   const p = detail.data?.id === sel.shown ? detail.data : undefined;
-  const files = useProofFiles(p ? { paymentId: p.id } : null);
   // the clip sits on the Ref no. line (owner, 10/10/2026); a cash payment has none, so it sits on its Paid by line
   const refLine = p ? p.method !== "cash" || Boolean(p.reference) : false;
 
@@ -222,16 +221,13 @@ function PaymentDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
             value: refLine ? (
               METHOD_LABEL[p.method]
             ) : (
-              <>
-                <span className={s.refView}>
-                  {METHOD_LABEL[p.method]}
-                  <ProofClip onFiles={files.add} />
-                </span>
-                <ProofThumbs files={files} />
-              </>
+              <span className={s.refView}>
+                {METHOD_LABEL[p.method]}
+                <ProofClip owner={{ paymentId: p.id }} />
+              </span>
             ),
           },
-          refLine ? { label: "Ref no.", value: <RefNo key={p.id} payment={p} files={files} /> } : null,
+          refLine ? { label: "Ref no.", value: <RefNo key={p.id} payment={p} /> } : null,
           { label: "Receipt no.", value: p.invoiceNumber, num: true },
           { label: "Lease rent", value: formatINR(p.lease.monthlyRent), num: true, hint: `Lease ${leaseSpan(p.lease)}` },
           p.notes ? { label: "Note", value: p.notes } : null,
@@ -275,7 +271,7 @@ function PaymentDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
  * The bank / UPI ref no. (UTR) in the payment drawer (owner, 10/10/2026): the number with a pencil, or "Add" when there
  * is none; both open a small box in place. The only part of a payment that can change after it is recorded.
  */
-function RefNo({ payment: p, files }: { payment: PaymentDetail; files: ProofFiles }) {
+function RefNo({ payment: p }: { payment: PaymentDetail }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const save = useMutation(
@@ -294,55 +290,49 @@ function RefNo({ payment: p, files }: { payment: PaymentDetail; files: ProofFile
 
   if (!editing) {
     return (
-      <>
-        <span className={s.refView}>
-          {p.reference ? (
-            <>
-              <span className={cx("num", s.refNum)}>{p.reference}</span>
-              <button type="button" className={s.iconLink} aria-label="Change the ref no." onClick={start}>
-                <Pencil aria-hidden />
-              </button>
-            </>
-          ) : (
-            <button type="button" className={s.inlineLink} onClick={start}>
-              Add
+      <span className={s.refView}>
+        {p.reference ? (
+          <>
+            <span className={cx("num", s.refNum)}>{p.reference}</span>
+            <button type="button" className={s.iconLink} aria-label="Change the ref no." onClick={start}>
+              <Pencil aria-hidden />
             </button>
-          )}
-          <ProofClip onFiles={files.add} />
-        </span>
-        <ProofThumbs files={files} />
-      </>
+          </>
+        ) : (
+          <button type="button" className={s.inlineLink} onClick={start}>
+            Add
+          </button>
+        )}
+        <ProofClip owner={{ paymentId: p.id }} />
+      </span>
     );
   }
   return (
-    <>
-      <form
-        className={s.refEdit}
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save.run();
-        }}
-      >
-        <Input
-          compact
-          autoFocus
-          aria-label="Ref no. (UTR)"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className={s.refBox}
-          maxLength={60}
-          autoComplete="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-        />
-        <Button type="submit" size="sm" variant="primary" loading={save.loading}>
-          Save
-        </Button>
-        <button type="button" className={s.iconLink} aria-label="Cancel" onClick={() => setEditing(false)}>
-          <X aria-hidden />
-        </button>
-      </form>
-      <ProofThumbs files={files} />
-    </>
+    <form
+      className={s.refEdit}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save.run();
+      }}
+    >
+      <Input
+        compact
+        autoFocus
+        aria-label="Ref no. (UTR)"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className={s.refBox}
+        maxLength={60}
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+      />
+      <Button type="submit" size="sm" variant="primary" loading={save.loading}>
+        Save
+      </Button>
+      <button type="button" className={s.iconLink} aria-label="Cancel" onClick={() => setEditing(false)}>
+        <X aria-hidden />
+      </button>
+    </form>
   );
 }
