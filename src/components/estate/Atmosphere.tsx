@@ -161,7 +161,7 @@ export function Backdrop({ env, insets }: { env: RefObject<Env>; insets?: SceneI
 }
 
 /** Hemisphere + key (sun/moon, shadow-casting) + fill light, and matching fog. */
-export function Lights({ env, radius, shadowSize, shadows }: { env: RefObject<Env>; radius: number; shadowSize: number; shadows: boolean }) {
+export function Lights({ env, radius, shadowSize, shadowRadius = 4, shadows }: { env: RefObject<Env>; radius: number; shadowSize: number; shadowRadius?: number; shadows: boolean }) {
   const hemi = useRef<THREE.HemisphereLight>(null);
   const key = useRef<THREE.DirectionalLight>(null);
   const fill = useRef<THREE.DirectionalLight>(null);
@@ -223,7 +223,7 @@ export function Lights({ env, radius, shadowSize, shadows }: { env: RefObject<En
         castShadow={shadows}
         shadow-bias={-0.0004}
         shadow-normalBias={0.06}
-        shadow-radius={4}
+        shadow-radius={shadowRadius}
         shadow-blurSamples={12}
       />
       <directionalLight ref={fill} />

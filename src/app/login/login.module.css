@@ -23,6 +23,27 @@
 .map path {
   vector-effect: non-scaling-stroke;
 }
+/* the land, roads and streets are painted on a canvas under the SVG (map-painter.ts); the SVG's own copy of those
+   layers is only there for the first paint and fades out once the canvas has drawn */
+.mapCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  /* the painter sizes it larger than the screen (a margin round the view) — no global max-width clamp */
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+}
+.base {
+  transition:
+    opacity 0.5s ease-out,
+    visibility 0s linear 0.5s;
+}
+.map[data-canvas] .base {
+  opacity: 0;
+  visibility: hidden;
+}
 .busy {
   fill: none;
   stroke: #fbe7c6;
@@ -31,13 +52,6 @@
   stroke-width: calc(20px + var(--z) * 40px);
   opacity: calc(1 - var(--z) * 0.6);
 }
-.bld {
-  fill: #e1e3e8;
-  stroke: #d2d6dc;
-  stroke-width: 0.8px;
-  opacity: clamp(0, calc((var(--z) - 0.35) * 2.2), 1);
-}
-.minor,
 .lane,
 .road,
 .roadCase,
@@ -48,11 +62,6 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-.minor {
-  stroke: #ffffff;
-  stroke-width: calc(1.5px + var(--z) * 5px);
-  animation: fadeIn 0.6s ease-out both;
 }
 .lane {
   stroke: #ffffff;
@@ -224,12 +233,6 @@
     transform: translateY(-4px);
   }
 }
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-}
-
 /* map chrome */
 .scale {
   position: absolute;

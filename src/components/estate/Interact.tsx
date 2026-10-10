@@ -29,6 +29,9 @@ export interface SceneApi {
   objects: boolean;
   /** key of the hovered hotspot */
   hovered: string | null;
+  /** the first few frames: every hotspot is in the outline selection once, so its shaders are built under the
+   *  arrival cover instead of stalling the first hover (owner, 10/10/2026: smooth on every device) */
+  warm?: boolean;
   setHover: (spot: Spot | null, key?: string) => void;
   activate: (spot: Spot) => void;
   register: (spot: Spot) => () => void;
@@ -114,7 +117,7 @@ export function Hotspot({ spot, children, hit, outline = true, selected = false 
   const live = api.interactive && (spot.kind === "unit" || api.objects);
   return (
     <group {...handlers}>
-      <Select enabled={outline && on && live}>{children}</Select>
+      <Select enabled={outline && live && (on || !!api.warm)}>{children}</Select>
       {hit}
     </group>
   );

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, Noto_Sans_Tamil, Rajdhani } from "next/font/google";
+import { Manrope, Rajdhani } from "next/font/google";
 import "./globals.css";
 
 const display = Rajdhani({
@@ -15,12 +15,7 @@ const body = Manrope({
   display: "swap",
 });
 
-const tamil = Noto_Sans_Tamil({
-  subsets: ["tamil"],
-  weight: ["500", "600"],
-  variable: "--font-tamil",
-  display: "swap",
-});
+// (no Tamil font: nothing on the site is in Tamil any more — owner, 5/10/2026 — so it is no longer downloaded)
 
 export const metadata: Metadata = {
   title: { default: "Pattukottai Estates", template: "%s · Pattukottai Estates" },
@@ -38,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${tamil.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body>{children}</body>
     </html>
   );

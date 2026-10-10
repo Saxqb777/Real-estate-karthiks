@@ -6,21 +6,55 @@ import { cssFont, rng } from "./util";
 type Draw = (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
 const cache = new Map<string, THREE.CanvasTexture>();
 
-function make(key: string, w: number, h: number, draw: Draw, o: { srgb?: boolean; repeat?: boolean; aniso?: number } = {}) {
+/**
+ * Canvas pixels per drawing unit (owner, 10/10/2026: "make it ultra HD"): every texture is painted twice as sharp —
+ * the drawing code below is unchanged, the canvas is simply scaled. Soft glow sprites stay at 1×.
+ */
+const SHARP = 2;
+
+interface MakeOpts {
+  srgb?: boolean;
+  repeat?: boolean;
+  aniso?: number;
+  /** canvas pixels per drawing unit (default SHARP) */
+  scale?: number;
+  /** fine per-pixel grain (± this share of the brightness) for close-up detail on large surfaces */
+  grain?: number;
+}
+
+function make(key: string, w: number, h: number, draw: Draw, o: MakeOpts = {}) {
   const hit = cache.get(key);
   if (hit) return hit;
+  const k = o.scale ?? SHARP;
   const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = Math.round(w * k);
+  canvas.height = Math.round(h * k);
   const ctx = canvas.getContext("2d")!;
+  ctx.scale(k, k);
   draw(ctx, w, h);
+  if (o.grain) grain(ctx, canvas.width, canvas.height, o.grain);
   const tex = new THREE.CanvasTexture(canvas);
   if (o.srgb !== false) tex.colorSpace = THREE.SRGBColorSpace;
   if (o.repeat !== false) tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.anisotropy = o.aniso ?? 8;
+  // the GPU clamps this to what it supports (16 almost everywhere): crisp ground at the low viewing angle
+  tex.anisotropy = o.aniso ?? 16;
   tex.needsUpdate = true;
   cache.set(key, tex);
   return tex;
+}
+
+/** Per-pixel brightness grain (tiles seamlessly — every pixel is independent). Fades out with distance via mipmaps. */
+function grain(ctx: CanvasRenderingContext2D, w: number, h: number, amount: number) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const r = rng(97);
+  for (let i = 0; i < d.length; i += 4) {
+    const f = 1 + (r() - 0.5) * 2 * amount;
+    d[i] *= f;
+    d[i + 1] *= f;
+    d[i + 2] *= f;
+  }
+  ctx.putImageData(img, 0, 0);
 }
 
 const repeats = new Map<string, THREE.Texture>();
@@ -79,7 +113,7 @@ export const plasterTex = () =>
       wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, r() > 0.5 ? "#e6e6e6" : "#ffffff", 0.22));
     }
     speckle(ctx, w, h, 2200, ["#e2e2e2", "#ffffff", "#ebebeb"], [1, 2], 0.45, 8);
-  });
+  }, { grain: 0.035 });
 
 /** Red laterite earth with patchy coconut-grove grass (tile top). */
 export const earthTex = () =>
@@ -101,7 +135,7 @@ export const earthTex = () =>
       wrapDraw(w, h, x, y, rad, (xx, yy) => blob(ctx, xx, yy, rad, "#bd6b40", 0.6));
     }
     speckle(ctx, w, h, 9000, ["#4f6a2e", "#8fa55a", "#7b4127", "#b8714a"], [1, 3], 0.45, 12);
-  });
+  }, { grain: 0.07 });
 
 /** Vesicular laterite / soil strata for the tile edge (multiplied with each band colour). */
 export const strataTex = () =>
@@ -524,7 +558,7 @@ export const glowTex = () =>
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, w);
     },
-    { repeat: false, srgb: false },
+    { repeat: false, srgb: false, scale: 1 },
   );
 
 /** Green notice board with pinned notes (one per open to-do, up to 6) and a Tamil + English header. */
@@ -660,7 +694,7 @@ export const blobTex = () =>
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, w);
     },
-    { repeat: false, srgb: false },
+    { repeat: false, srgb: false, scale: 1 },
   );
 
 /** Black steel gate (on transparent): frame, vertical bars and a column of diamonds with gold-cream squares. */

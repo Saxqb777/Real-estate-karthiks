@@ -175,6 +175,7 @@ export default function EstateLab({ initial }: { initial: LabConfig }) {
         cues={cues}
         life={c.life}
         quality={c.quality === "auto" ? undefined : c.quality}
+        governor={c.gov === "auto" ? undefined : c.gov === "on"}
         hud
         wheelZoom="always"
         intro={c.intro}

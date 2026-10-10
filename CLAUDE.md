@@ -436,6 +436,31 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   stands in them). Lungi man's "left" stop now = halfway between the property manager's front-left corner and the
   waiting tenant. DogFamily in People.tsx (not clickable). CLOTHES LINE (owner: "remove the clothes hanging from the
   house in the back"): the terrace washing line shows on the FRONT house only (116/B7); none on the back house (116/B8).
+- 10/10/2026: QUALITY MAX (owner: "max the quality … smooth on my phone and laptop … ultra HD … deploy it"). Same look,
+  sharper + smoother; nothing functional changed:
+  • 3D resolution = the screen's own sharpness (up to 2× laptop, 2.5× phone; was capped 1.5 / 1.25 / 1.75). PHONES now get
+    the "mid" world + post effects "lite" (bloom, hover outline, tone, vignette, SMAA; they had none) — tiers: desktop hero
+    high/fx full (AO + tilt-shift too), preview + tablets + phones mid/fx lite, forced low = no composer + MSAA.
+  • GOVERNOR (EstateScene, drei PerformanceMonitor bounds 50–57 fps, starts 2 s in): under ~50 fps → resolution down
+    (jumps straight to ≈ what reaches 60 fps, never below 1×), then effects full → lite → aa; steady 60 → back up ¼ step;
+    after 3 up/down turns it stops going UP (never stops going down). Off in automated browsers (navigator.webdriver) so
+    screenshots show full quality; lab param gov=auto|on|off, prop `governor`.
+  • PACER: frameloop="never" + advance() from our own rAF: 60 Hz screens draw every refresh, 120/144 Hz every other one
+    (steady 60–72 fps, half the GPU work), 90 Hz every refresh; stops off screen / tab hidden.
+  • SHADERS: no stall on the first hover any more — the hero's first 2 frames (under the arrival cover) put every hotspot
+    in the outline selection (SceneApi.warm), and frame 2 runs gl.compileAsync on the whole scene (hidden things too).
+    Static world parts are React.memo'd (TileM, PalmsM, LifeM …) so a hover re-renders only houses / labels / hotspots.
+  • SHARPER: shadows 4096 (radius 5) on the desktop hero (2048 elsewhere, 1024 forced low); every canvas texture painted at
+    2× (textures.ts SHARP; glow/blob sprites 1×), anisotropy 16, fine per-pixel grain on ground (7 %) + plaster (3.5 %).
+  • LOGIN MAP: land / water / roads / generated streets + buildings now painted on a <canvas> under the SVG
+    (login/map-painter.ts): one vector render of the view + 25 % margin, moved/scaled by a CSS transform between redraws
+    (redraw past ±30 % zoom or out of the margin, plus once exactly at rest; ≤ 16 M px, ≤ 2.5×) — the title drift / flight
+    no longer re-draw ~25,000 SVG segments a frame (~8× the frame rate in tests). The SVG keeps plot + labels + pin; its
+    copy of the base layers (data `base` group) only shows until the canvas has drawn. Map data + generator moved to
+    login/town-data.ts (pure). Street-level buildings no longer sit on streets or on each other (blocker(): street
+    half-widths 1.7 / 2.3 / 3.4 / 4.9 + oriented-box checks; packed a little tighter) — tested in
+    login/__tests__/town-data.test.ts.
+  • Unused Noto Sans Tamil web font no longer downloaded (layout.tsx).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

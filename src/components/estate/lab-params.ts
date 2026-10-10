@@ -49,6 +49,8 @@ export interface LabConfig {
   hl: string;
   life: boolean;
   quality: Tier | "auto";
+  /** frame-rate governor: auto (on, except in automated browsers) | on | off */
+  gov: "auto" | "on" | "off";
   panel: boolean;
   intro: boolean;
   sel: "" | "a" | "b";
@@ -86,6 +88,7 @@ export const LAB_DEFAULTS: LabConfig = {
   hl: "",
   life: true,
   quality: "auto",
+  gov: "auto",
   panel: true,
   intro: true,
   sel: "",
@@ -136,6 +139,7 @@ export function parseLabParams(sp: Record<string, string | string[] | undefined>
     hl: FIELDS.includes(g("hl") ?? "") ? (g("hl") ?? "") : D.hl,
     life: flag("life", D.life),
     quality: pick("q", ["auto", "high", "mid", "low"] as const, D.quality),
+    gov: pick("gov", ["auto", "on", "off"] as const, D.gov),
     panel: flag("panel", D.panel),
     intro: flag("intro", D.intro),
     sel: pick("sel", ["", "a", "b"] as const, D.sel),
@@ -175,6 +179,7 @@ export function toParams(c: LabConfig): string {
   put("hl", c.hl, D.hl);
   put("life", c.life, D.life);
   put("q", c.quality, D.quality);
+  put("gov", c.gov, D.gov);
   put("panel", c.panel, D.panel);
   put("intro", c.intro, D.intro);
   put("cam", c.cam, D.cam);

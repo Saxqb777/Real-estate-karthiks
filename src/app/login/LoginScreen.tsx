@@ -31,6 +31,7 @@ import { useEpochSecond } from "@/components/shell/IstClock";
 import { Field, Input, cx, useIsClient } from "@/components/ui";
 import { api, ApiClientError } from "@/lib/client";
 import { formatTimeIST } from "@/lib/day-phase";
+import { createMapPainter, type MapPainter } from "./map-painter";
 import { MAP_H, M_PER_UNIT, PLOT, TownMap } from "./TownMap";
 import s from "./login.module.css";
 
@@ -97,6 +98,8 @@ function niceMetres(m: number) {
 
 function useMapCamera() {
   const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const painter = useRef<MapPainter | null>(null);
   const scaleLabel = useRef<HTMLSpanElement>(null);
   const scaleBar = useRef<HTMLElement>(null);
   const view = useRef<View>({ cx: 1000, cy: 625, w: 1920 });
@@ -109,9 +112,11 @@ function useMapCamera() {
     const W = window.innerWidth,
       H = window.innerHeight;
     const h = (v.w * H) / W;
+    const x = v.cx - v.w / 2,
+      y = v.cy - h / 2;
     svg.setAttribute(
       "viewBox",
-      `${(v.cx - v.w / 2).toFixed(2)} ${(v.cy - h / 2).toFixed(2)} ${v.w.toFixed(2)} ${h.toFixed(2)}`,
+      `${x.toFixed(2)} ${y.toFixed(2)} ${v.w.toFixed(2)} ${h.toFixed(2)}`,
     );
     const k = v.w / W;
     const z = Math.min(
@@ -120,6 +125,8 @@ function useMapCamera() {
     );
     svg.style.setProperty("--k", k.toFixed(4));
     svg.style.setProperty("--z", z.toFixed(3));
+    // the land, roads and streets underneath (cached canvas: cheap unless the camera has moved far)
+    painter.current?.paint({ x, y, w: v.w, h }, z);
     // scale bar: a round distance about 90 px long
     const m = niceMetres(90 * k * M_PER_UNIT);
     if (scaleLabel.current)
@@ -129,6 +136,20 @@ function useMapCamera() {
   }, []);
 
   const stop = useCallback(() => cancelAnimationFrame(raf.current), []);
+
+  // the canvas painter: once it has drawn, the SVG's own copy of the base layers fades out
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const p = createMapPainter(canvas, () =>
+      svgRef.current?.setAttribute("data-canvas", ""),
+    );
+    painter.current = p;
+    return () => {
+      painter.current = null;
+      p.dispose();
+    };
+  }, []);
 
   /** fly from the current view to `to` (zoom eased in log space so it feels like a real map) */
   const flyTo = useCallback(
@@ -171,7 +192,16 @@ function useMapCamera() {
 
   useEffect(() => stop, [stop]);
   return useMemo(
-    () => ({ svgRef, scaleLabel, scaleBar, apply, flyTo, drift, stop }),
+    () => ({
+      svgRef,
+      canvasRef,
+      scaleLabel,
+      scaleBar,
+      apply,
+      flyTo,
+      drift,
+      stop,
+    }),
     [apply, flyTo, drift, stop],
   );
 }
@@ -329,7 +359,11 @@ export function LoginScreen({ next }: { next: string }) {
 
   return (
     <div className={s.page} data-stage={stage}>
-      <TownMap svgRef={cam.svgRef} className={s.map} detail={hydrated} />
+      <TownMap
+        svgRef={cam.svgRef}
+        canvasRef={cam.canvasRef}
+        className={s.map}
+      />
 
       {/* map chrome */}
       <div className={s.scale} aria-hidden>

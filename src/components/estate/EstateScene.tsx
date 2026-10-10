@@ -5,9 +5,9 @@
 // SCENE CONTRACT v2 (types.ts): world objects report hover / click / right-click with their screen position,
 // the camera frames the plot inside the area the HUD leaves free, and `dimmed` softly dims the world.
 import { PerformanceMonitor } from "@react-three/drei";
-import { Canvas, useFrame, useThree, events as r3fEvents } from "@react-three/fiber";
+import { Canvas, advance, useFrame, useThree, events as r3fEvents } from "@react-three/fiber";
 import { Selection } from "@react-three/postprocessing";
-import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { Component, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
 import type { PlotGeometry } from "@/lib/dashboard-types";
 import { computeSiteLayout, formatFeetInches, highlightedSlots, type SceneUnit, type SlotName } from "@/lib/site-layout";
@@ -15,7 +15,7 @@ import { formatIndianNumber } from "@/lib/format";
 import { Backdrop, EnvDriver, Lights } from "./Atmosphere";
 import { CameraRig, FOV, NO_INSETS } from "./CameraRig";
 import { Dimensions, dimensionLabels } from "./Dimensions";
-import { Effects, type Tier } from "./Effects";
+import { Effects, type FxLevel, type Tier } from "./Effects";
 import { createEnv, type TimeOfDay } from "./env";
 import { Fixtures, type WorldCues } from "./Fixtures";
 import { GroundShade } from "./GroundShade";
@@ -55,7 +55,7 @@ export interface EstateSceneProps {
   className?: string;
   /** World life (people, the cow and the dog, birds, petals). Uncontrolled by default with a toggle in the scene HUD. */
   life?: boolean;
-  /** Force a quality tier (default: auto — high on desktop hero, mid in preview, low on phones; steps down if slow). */
+  /** Force a quality tier (default: auto — high on the desktop hero, mid in the preview and on phones / tablets). */
   quality?: Tier;
   /** Show the small in-scene HUD (Life toggle). Default: hero only. */
   hud?: boolean;
@@ -69,6 +69,11 @@ export interface EstateSceneProps {
   cameraView?: { theta?: number; phi?: number; fit?: number };
   /** Show fps / draw calls / triangles (for performance checks). */
   debug?: boolean;
+  /**
+   * Adapt the render resolution / post effects to the frame rate (default: on — except in automated browsers, whose
+   * software-rendered frame rates say nothing about a real device; screenshots there show the full quality).
+   */
+  governor?: boolean;
 
   // ── SCENE CONTRACT v2 ──
   /** Every interactive world object (house, mailbox, notice board, pole, TO-LET, tenant, tax stamp, plot marker). A house click also calls onSelectUnit. */
@@ -131,6 +136,87 @@ function FirstFrames({ onDone }: { onDone: () => void }) {
   return null;
 }
 
+/**
+ * Paces the world at a steady frame rate (owner, 10/10/2026: "smooth on my phone and laptop and any other device"):
+ * on a 60 Hz screen every refresh draws; on 120 / 144 Hz screens every other one (a steady 60–72 fps instead of
+ * frames jittering between 8 and 16 ms, and half the GPU work); 90 Hz screens draw every refresh. Drives R3F with
+ * frameloop="never" + advance(), so nothing runs while the scene is off screen or the tab is hidden.
+ */
+function Pacer({ active }: { active: boolean }) {
+  useEffect(() => {
+    if (!active) return;
+    let raf = 0;
+    let prev = 0;
+    let last = -Infinity;
+    // the screen's refresh interval: the shortest gap between callbacks (a skipped callback returns at once, so its
+    // successor lands exactly one refresh later)
+    const gaps: number[] = [];
+    let vsync = 1000 / 60;
+    const loop = (now: number) => {
+      raf = requestAnimationFrame(loop);
+      if (prev) {
+        gaps.push(now - prev);
+        if (gaps.length > 90) gaps.shift();
+        if (gaps.length >= 20) vsync = Math.max(4, Math.min(...gaps));
+      }
+      prev = now;
+      const every = Math.max(1, Math.floor(1000 / vsync / 60 + 0.1));
+      if (now - last < every * vsync - vsync / 2) return;
+      last = now;
+      advance(now / 1000);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [active]);
+  return null;
+}
+
+// The world's static parts don't depend on what is hovered or selected: a hover / click re-renders only the houses,
+// the labels and the hotspots — not every palm, person, wall and cloud (owner, 10/10/2026: smooth on every device).
+const TileM = memo(Tile);
+const PlotGroundM = memo(PlotGround);
+const GroundShadeM = memo(GroundShade);
+const GreeneryM = memo(Greenery);
+const PalmsM = memo(Palms);
+const GardenM = memo(Garden);
+const FixturesM = memo(Fixtures);
+const LifeM = memo(Life);
+const FirefliesM = memo(Fireflies);
+const CloudsM = memo(Clouds);
+
+/** Render resolution steps the governor moves through (never below 1×). */
+const DPR_STEP = 0.25;
+const FX_DOWN: Record<FxLevel, FxLevel | null> = { full: "lite", lite: "aa", aa: null };
+const order = (l: FxLevel) => ({ full: 0, lite: 1, aa: 2 })[l];
+
+/** Calls `onDone` once `n` frames have been drawn. */
+function AfterFrames({ n, onDone }: { n: number; onDone: () => void }) {
+  const count = useRef(0);
+  const done = useRef(onDone);
+  done.current = onDone;
+  useFrame(() => {
+    if (++count.current === n + 1) done.current();
+  });
+  return null;
+}
+
+/**
+ * Once the world has drawn, builds the shaders of everything in it — hidden things too (gate leaves, the car's lamps,
+ * night glows, people waiting off stage) — without blocking where the browser can (KHR_parallel_shader_compile), so
+ * nothing stalls the first time it shows up.
+ */
+function Precompile() {
+  const gl = useThree((st) => st.gl);
+  const scene = useThree((st) => st.scene);
+  const camera = useThree((st) => st.camera);
+  const frames = useRef(0);
+  useFrame(() => {
+    if (++frames.current !== 2) return;
+    gl.compileAsync(scene, camera).catch(() => {});
+  });
+  return null;
+}
+
 interface ThreeHandle {
   camera: THREE.Camera;
   canvas: HTMLCanvasElement;
@@ -148,9 +234,14 @@ export default function EstateScene(props: EstateSceneProps) {
   const [lifeState, setLifeState] = useState<boolean | null>(null);
   const [zoomFocus, setZoomFocus] = useState(false);
   const [autoTier, setAutoTier] = useState<Tier>("high");
-  // render resolution: adapts quietly to the device (the tier — and so what is in the world — never changes mid-session)
+  // render resolution: starts at the screen's own sharpness and adapts quietly to the device (the tier — and so what
+  // is in the world — never changes mid-session)
   const [dpr, setDpr] = useState(1);
   const [monitor, setMonitor] = useState(false);
+  // post effects: full on the desktop hero, lite elsewhere; the governor may step them down on a slow device
+  const [fxDown, setFxDown] = useState<FxLevel | null>(null);
+  const settled = useRef(false);
+  const [automated, setAutomated] = useState(false);
   const [labels, setLabels] = useState<LabelSpec[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [hoverCursor, setHoverCursor] = useState(false);
@@ -167,10 +258,12 @@ export default function EstateScene(props: EstateSceneProps) {
     if (!gl) props.onFirstFrame?.();
     const rm = prefersReducedMotion();
     setReduced(rm);
+    setAutomated(!!navigator.webdriver);
     const phone = window.matchMedia?.("(max-width: 720px) and (pointer: coarse), (max-width: 520px)").matches ?? false;
     const small = phone || (window.matchMedia?.("(pointer: coarse)").matches ?? false);
     setMobile(small);
-    const auto: Tier = phone ? "low" : mode === "preview" || small ? "mid" : "high";
+    // phones get the mid world + the same post effects as a laptop (owner, 10/10/2026); the governor protects slow ones
+    const auto: Tier = mode === "preview" || small ? "mid" : "high";
     setAutoTier(auto);
     setAntialias((props.quality ?? auto) === "low");
     setReady(true);
@@ -186,12 +279,53 @@ export default function EstateScene(props: EstateSceneProps) {
   }, [mode]);
 
   const tier: Tier = props.quality ?? autoTier;
-  const maxDpr = tier === "high" ? 1.5 : tier === "mid" ? 1.25 : 1.75;
+  // the sharpest worth drawing: the screen's own pixels, up to 2× on a laptop and 2.5× on a phone (3× phones look the
+  // same at 2.5× for far less work)
+  const maxDpr = mobile ? 2.5 : 2;
+  const fxStart: FxLevel | null = tier === "high" ? "full" : tier === "mid" ? "lite" : null;
+  const fx: FxLevel | null = fxStart && fxDown && order(fxDown) > order(fxStart) ? fxDown : fxStart;
   useEffect(() => {
     setDpr(Math.min(window.devicePixelRatio || 1, maxDpr));
     // judge the frame rate only once the first-load work (shader compile, uploads) is over
-    const t = window.setTimeout(() => setMonitor(true), 5000);
+    const t = window.setTimeout(() => setMonitor(true), 2000);
     return () => window.clearTimeout(t);
+  }, [maxDpr]);
+  // governor: under ~50 fps → a quarter step less resolution (never below 1×), then lighter post effects; a steady
+  // 60 → a quarter step back up (to the screen's own sharpness). If it keeps going down and up again it stops going
+  // up (the lower setting wins); it never stops going down, so a device that heats up later still stays smooth.
+  const dprNow = useRef(dpr);
+  dprNow.current = dpr;
+  const lastWay = useRef<0 | 1 | -1>(0);
+  const turns = useRef(0);
+  const turn = (way: 1 | -1) => {
+    if (lastWay.current === -way) turns.current++;
+    lastWay.current = way;
+  };
+  const decline = useCallback((fps: number) => {
+    const d = dprNow.current;
+    if (d > 1) {
+      turn(-1);
+      // the drawing cost goes with the pixel count (dpr²): jump straight to about what reaches 60 fps
+      const fit = Math.floor(d * Math.sqrt(Math.max(10, fps) / 58) * 4) / 4;
+      setDpr(Math.max(1, Math.min(+(d - DPR_STEP).toFixed(2), fit)));
+      return;
+    }
+    const down = fx ? FX_DOWN[fx] : null;
+    if (down) {
+      turn(-1);
+      setFxDown(down);
+    }
+  }, [fx]);
+  const incline = useCallback(() => {
+    const top = Math.min(window.devicePixelRatio || 1, maxDpr);
+    const d = dprNow.current;
+    if (settled.current || d >= top) return;
+    turn(1);
+    if (turns.current >= 3) {
+      settled.current = true;
+      return;
+    }
+    setDpr(Math.min(top, +(d + DPR_STEP).toFixed(2)));
   }, [maxDpr]);
   const life = props.life ?? lifeState ?? !reduced;
   const hud = props.hud ?? mode === "hero";
@@ -244,7 +378,7 @@ export default function EstateScene(props: EstateSceneProps) {
             className={`${s.canvas} ${s.fadeIn}`}
             shadows={{ type: THREE.PCFShadowMap }}
             dpr={dpr}
-            frameloop={active ? "always" : "never"}
+            frameloop="never"
             camera={{ fov: FOV, near: 2, far: 6000, position: [-120, 140, 220] }}
             gl={{ antialias, powerPreference: "high-performance", stencil: false }}
             onPointerMissed={missed}
@@ -265,6 +399,7 @@ export default function EstateScene(props: EstateSceneProps) {
               {...props}
               mode={mode}
               tier={tier}
+              fx={fx}
               reduced={reduced}
               mobile={mobile}
               life={life}
@@ -276,15 +411,10 @@ export default function EstateScene(props: EstateSceneProps) {
               spots={spots}
               onCursor={setHoverCursor}
             />
+            <Pacer active={active} />
             {props.onFirstFrame && <FirstFrames onDone={props.onFirstFrame} />}
-            {props.debug && <DebugStats target={debugEl} tier={tier} />}
-            {monitor && (
-              <PerformanceMonitor
-                flipflops={4}
-                onDecline={() => setDpr((d) => Math.max(1, +(d - 0.25).toFixed(2)))}
-                onIncline={() => setDpr((d) => Math.min(Math.min(window.devicePixelRatio || 1, maxDpr), +(d + 0.25).toFixed(2)))}
-              />
-            )}
+            {props.debug && <DebugStats target={debugEl} tier={tier} fx={fx} />}
+            {monitor && (props.governor ?? !automated) && <PerformanceMonitor bounds={() => [50, 57]} onDecline={(m) => decline(m.fps)} onIncline={incline} />}
           </Canvas>
         </SceneBoundary>
       )}
@@ -307,7 +437,7 @@ export default function EstateScene(props: EstateSceneProps) {
 }
 
 /** fps / draw calls / triangles, sampled twice a second (counts every pass of the frame). */
-function DebugStats({ target, tier }: { target: RefObject<HTMLDivElement | null>; tier: Tier }) {
+function DebugStats({ target, tier, fx }: { target: RefObject<HTMLDivElement | null>; tier: Tier; fx: FxLevel | null }) {
   const acc = useRef({ frames: 0, t: 0, calls: 0, tris: 0 });
   const state = useThree();
   useEffect(() => {
@@ -323,7 +453,7 @@ function DebugStats({ target, tier }: { target: RefObject<HTMLDivElement | null>
     a.frames++;
     a.t += dt;
     if (a.t >= 0.5 && target.current) {
-      target.current.textContent = `${Math.round(a.frames / a.t)} fps · ${a.calls} calls · ${(a.tris / 1000).toFixed(0)}k tris · ${tier} · dpr ${gl.getPixelRatio()}`;
+      target.current.textContent = `${Math.round(a.frames / a.t)} fps · ${a.calls} calls · ${(a.tris / 1000).toFixed(0)}k tris · ${tier} · fx ${fx ?? "off"} · dpr ${gl.getPixelRatio()}`;
       target.current.dataset.calls = String(a.calls);
       a.frames = 0;
       a.t = 0;
@@ -335,6 +465,7 @@ function DebugStats({ target, tier }: { target: RefObject<HTMLDivElement | null>
 interface ContentsProps extends EstateSceneProps {
   mode: SceneMode;
   tier: Tier;
+  fx: FxLevel | null;
   reduced: boolean;
   mobile: boolean;
   life: boolean;
@@ -372,6 +503,7 @@ function SceneContents({
   showDimensions = false,
   highlightField = null,
   tier,
+  fx,
   reduced,
   mobile,
   life,
@@ -445,7 +577,9 @@ function SceneContents({
     }),
     [screenOf, spots],
   );
-  const api = useMemo<SceneApi>(() => ({ env, interactive, objects, hovered: hovered?.key ?? null, ...fns }), [hovered, interactive, objects, fns]);
+  // hero: the first frames (under the arrival cover) outline everything once, so the outline's shaders are ready
+  const [warm, setWarm] = useState(mode === "hero");
+  const api = useMemo<SceneApi>(() => ({ env, interactive, objects, hovered: hovered?.key ?? null, warm, ...fns }), [hovered, interactive, objects, warm, fns]);
   // hover → cursor + HUD callback (once per object, not per face the pointer crosses)
   const hoveredKey = hovered?.key ?? null;
   const hoveredRef = useRef(hovered);
@@ -522,13 +656,13 @@ function SceneContents({
   const showFixtures = mode === "hero";
   const body = (
     <>
-      <Tile layout={layout} world={world} />
-      <PlotGround layout={layout} world={world} animate={animate} />
-      <GroundShade layout={layout} world={world} />
-      <Greenery layout={layout} world={world} grassCount={counts.grass} />
-      <Palms layout={layout} world={world} env={env} animate={animate} count={counts.palms} />
-      {mode !== "preview" && <Garden layout={layout} world={world} env={env} animate={animate} />}
-      <Fixtures layout={layout} world={world} env={env} cues={cues} lampLight={tier !== "low"} crows={life && animate && tier !== "low" && showFixtures} />
+      <TileM layout={layout} world={world} />
+      <PlotGroundM layout={layout} world={world} animate={animate} />
+      <GroundShadeM layout={layout} world={world} />
+      <GreeneryM layout={layout} world={world} grassCount={counts.grass} />
+      <PalmsM layout={layout} world={world} env={env} animate={animate} count={counts.palms} />
+      {mode !== "preview" && <GardenM layout={layout} world={world} env={env} animate={animate} />}
+      <FixturesM layout={layout} world={world} env={env} cues={cues} lampLight={tier !== "low"} crows={life && animate && tier !== "low" && showFixtures} />
       {layout.slots.map((slot, i) => (
         <UnitSlot
           key={`${slot.slot}-${slot.unit?.id ?? "empty"}`}
@@ -550,8 +684,8 @@ function SceneContents({
         />
       ))}
       <Dimensions layout={layout} world={world} show={showDimensions} highlight={highlightField} reduced={reduced} />
-      <Life layout={layout} world={world} env={env} enabled={life && animate} tier={tier} mobile={mobile} />
-      <Fireflies layout={layout} world={world} env={env} count={counts.flies} animate={animate} />
+      <LifeM layout={layout} world={world} env={env} enabled={life && animate} tier={tier} mobile={mobile} />
+      <FirefliesM layout={layout} world={world} env={env} count={counts.flies} animate={animate} />
     </>
   );
 
@@ -559,11 +693,12 @@ function SceneContents({
     <SceneApiProvider value={api}>
       <EnvDriver env={env} timeOfDay={timeOfDay} instant={reduced} dimmed={dimmed} />
       <Backdrop env={env} insets={insets} />
-      <Clouds layout={layout} env={env} count={counts.clouds} animate={animate} />
-      <Lights env={env} radius={layout.radius} shadowSize={tier === "high" ? 2048 : 1024} shadows />
-      {/* the tree shape stays the same across tiers so dropping to "low" never remounts the world */}
-      <Selection enabled={tier !== "low"}>
-        {tier !== "low" && <Effects tier={tier} preview={mode === "preview"} />}
+      <CloudsM layout={layout} env={env} count={counts.clouds} animate={animate} />
+      {/* sharper shadows (owner, 10/10/2026: ultra HD): 4096 on the desktop hero while it runs its full effects */}
+      <Lights env={env} radius={layout.radius} shadowSize={tier === "high" && fx === "full" ? 4096 : tier === "low" ? 1024 : 2048} shadowRadius={tier === "high" && fx === "full" ? 5 : 4} shadows />
+      {/* the tree shape stays the same across tiers / effect levels so stepping down never remounts the world */}
+      <Selection enabled={!!fx && fx !== "aa"}>
+        {fx && <Effects level={fx} preview={mode === "preview"} />}
         {body}
       </Selection>
       <CameraRig
@@ -578,6 +713,8 @@ function SceneContents({
         insets={insets ?? NO_INSETS}
       />
       <LabelProjector anchors={anchors} registry={registry} occluders={occluders} />
+      {warm && <AfterFrames n={2} onDone={() => setWarm(false)} />}
+      <Precompile />
     </SceneApiProvider>
   );
 }
