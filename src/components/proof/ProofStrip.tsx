@@ -23,11 +23,19 @@ let seq = 0;
 const nextId = () => `p${++seq}`;
 
 /** A clean paperclip button (owner, 10/10/2026): the phone's picker (camera, photos, files); several files at once. */
-function AddTile({ onFiles, label = "Attach a photo or PDF" }: { onFiles: (files: File[]) => void; label?: string }) {
+function AddTile({
+  onFiles,
+  label = "Attach a photo or PDF",
+  inline,
+}: {
+  onFiles: (files: File[]) => void;
+  label?: string;
+  inline?: boolean;
+}) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <>
-      <button type="button" className={s.attach} aria-label={label} title="Attach" onClick={() => input.current?.click()}>
+      <button type="button" className={inline ? s.clip : s.attach} aria-label={label} title="Attach" onClick={() => input.current?.click()}>
         <Paperclip aria-hidden />
       </button>
       <input
@@ -49,12 +57,22 @@ function AddTile({ onFiles, label = "Attach a photo or PDF" }: { onFiles: (files
 }
 
 /** The row, with drop-to-add on desktop. */
-function Strip({ onFiles, children }: { onFiles: (files: File[]) => void; children: ReactNode }) {
+function Strip({
+  onFiles,
+  small,
+  end,
+  children,
+}: {
+  onFiles: (files: File[]) => void;
+  small?: boolean;
+  end?: boolean;
+  children: ReactNode;
+}) {
   const [over, setOver] = useState(false);
   const hasFiles = (e: DragEvent) => [...e.dataTransfer.types].includes("Files");
   return (
     <div
-      className={s.strip}
+      className={cx(s.strip, small && s.small, end && s.end)}
       data-over={over || undefined}
       onDragOver={(e) => {
         if (!hasFiles(e)) return;
@@ -102,9 +120,9 @@ function BusyTile({ preview }: { preview?: string | null }) {
   );
 }
 
-/** The proof files on a saved record — shown, opened full screen, added (uploaded straight away) and deleted. */
-export function ProofStrip({ owner }: { owner: AttachmentOwner }) {
-  const list = useApi<AttachmentListResponse>(`/api/attachments?${ownerQuery(owner)}`);
+/** The files on a saved record and adding more (each uploaded straight away). null = no record yet (nothing loads). */
+export function useProofFiles(owner: AttachmentOwner | null) {
+  const list = useApi<AttachmentListResponse>(owner ? `/api/attachments?${ownerQuery(owner)}` : null);
   const items = list.data?.items ?? [];
   const [busy, setBusy] = useState<{ id: string; preview: string | null }[]>([]);
   const [open, setOpen] = useState<number | null>(null);
@@ -113,6 +131,8 @@ export function ProofStrip({ owner }: { owner: AttachmentOwner }) {
 
   const add = useCallback(async (files: File[]) => {
     for (const f of files) {
+      const owner = ownerRef.current;
+      if (!owner) return;
       const id = nextId();
       setBusy((b) => [...b, { id, preview: null }]);
       let preview: string | null = null;
@@ -122,7 +142,7 @@ export function ProofStrip({ owner }: { owner: AttachmentOwner }) {
           preview = URL.createObjectURL(p.thumb);
           setBusy((b) => b.map((x) => (x.id === id ? { ...x, preview } : x)));
         }
-        await uploadProof(ownerRef.current, p);
+        await uploadProof(owner, p);
         invalidate("/api/");
       } catch (err) {
         toast.error(proofErrorText(err, f.name));
@@ -133,17 +153,52 @@ export function ProofStrip({ owner }: { owner: AttachmentOwner }) {
     }
   }, []);
 
+  return { items, busy, add, open, setOpen };
+}
+
+export type ProofFiles = ReturnType<typeof useProofFiles>;
+
+function Files({ files }: { files: ProofFiles }) {
+  const { items, busy, open, setOpen } = files;
   const shown = open !== null && open < items.length ? open : null;
   return (
-    <Strip onFiles={add}>
+    <>
       {items.map((a, i) => (
         <Thumb key={a.id} a={a} onOpen={() => setOpen(i)} />
       ))}
       {busy.map((b) => (
         <BusyTile key={b.id} preview={b.preview} />
       ))}
-      <AddTile onFiles={add} />
       {shown !== null && <ProofViewer items={items} index={shown} onIndex={setOpen} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
+/** The proof files on a saved record — shown, opened full screen, added (uploaded straight away) and deleted. */
+export function ProofStrip({ owner }: { owner: AttachmentOwner }) {
+  const files = useProofFiles(owner);
+  return (
+    <Strip onFiles={files.add}>
+      <Files files={files} />
+      <AddTile onFiles={files.add} />
+    </Strip>
+  );
+}
+
+/** Just the clip (inside the Ref no. box, or beside a value): opens the picker. */
+export function ProofClip({ onFiles }: { onFiles: (files: File[]) => void }) {
+  return <AddTile onFiles={onFiles} inline />;
+}
+
+/**
+ * A record's files as small thumbnails under the line its clip is on (tap = full screen); nothing when there are none.
+ * `end`: lined up on the right, under a right-aligned value (the details lists).
+ */
+export function ProofThumbs({ files, end = true }: { files: ProofFiles; end?: boolean }) {
+  if (!files.items.length && !files.busy.length) return null;
+  return (
+    <Strip onFiles={files.add} small end={end}>
+      <Files files={files} />
     </Strip>
   );
 }
@@ -209,10 +264,11 @@ export function usePendingProofs() {
 
 export type PendingProofs = ReturnType<typeof usePendingProofs>;
 
-/** The form's row of picked files (✕ takes one out again). */
-export function PendingProofStrip({ pending }: { pending: PendingProofs }) {
+/** The form's row of picked files (✕ takes one out again). `thumbsOnly`: no clip in the row (it sits in a box above). */
+export function PendingProofStrip({ pending, thumbsOnly }: { pending: PendingProofs; thumbsOnly?: boolean }) {
+  if (thumbsOnly && !pending.items.length) return null;
   return (
-    <Strip onFiles={pending.add}>
+    <Strip onFiles={pending.add} small={thumbsOnly}>
       {pending.items.map((i) =>
         i.prepared ? (
           <span key={i.id} className={s.tile} title={i.name}>
@@ -233,7 +289,7 @@ export function PendingProofStrip({ pending }: { pending: PendingProofs }) {
           <BusyTile key={i.id} />
         ),
       )}
-      <AddTile onFiles={pending.add} />
+      {!thumbsOnly && <AddTile onFiles={pending.add} />}
     </Strip>
   );
 }

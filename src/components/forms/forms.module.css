@@ -404,6 +404,12 @@
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
 }
+/* Paid by: the choices, then the clip (cash — no Ref no. box to hold it) */
+.payRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .quick {
   display: flex;
   flex-wrap: wrap;
