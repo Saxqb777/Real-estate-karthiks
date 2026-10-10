@@ -298,14 +298,23 @@ export function Select({ options, placeholder, icon, compact, className, id, dis
 
 // ---------------------------------------------------------------- Textarea
 
-export type TextareaProps = ComponentProps<"textarea">;
+export interface TextareaProps extends ComponentProps<"textarea"> {
+  /** Sits in the bottom-right corner (e.g. the attachment clip); the text keeps clear of it. */
+  suffix?: ReactNode;
+}
 
 /** Grows with its content (CSS field-sizing) up to 320px. */
-export function Textarea({ className, id, disabled, required, ...rest }: TextareaProps) {
+export function Textarea({ suffix, className, id, disabled, required, ...rest }: TextareaProps) {
   const { invalid, ...a11y } = useFieldProps(id, rest["aria-describedby"], rest["aria-invalid"], required);
   return (
-    <div className={cx(styles.control, styles.areaControl, className)} data-invalid={invalid} data-disabled={disabled}>
+    <div
+      className={cx(styles.control, styles.areaControl, className)}
+      data-invalid={invalid}
+      data-disabled={disabled}
+      data-trail={suffix ? true : undefined}
+    >
       <textarea className={cx(styles.input, styles.textarea)} disabled={disabled} rows={3} {...rest} {...a11y} />
+      {suffix && <span className={styles.areaTrail}>{suffix}</span>}
     </div>
   );
 }

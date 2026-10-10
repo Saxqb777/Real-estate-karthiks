@@ -1,96 +1,7 @@
-/* Proof files (owner, 10/10/2026): thumbnail row, the 📎 mark in lists, and the full-screen view. */
+/* Attached files (owner, 10/10/2026): the paperclip, the 📎 mark in lists, and the full-screen view. */
 
-/* ---- thumbnail row */
-.strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  border-radius: 10px;
-}
-.strip[data-over] {
-  outline: 2px dashed #c9922e;
-  outline-offset: 4px;
-}
-.tile {
-  position: relative;
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 72px;
-  height: 72px;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--bg-3);
-  color: var(--text-dim);
-  transition:
-    border-color 0.15s,
-    transform 0.15s;
-}
-button.tile {
-  cursor: pointer;
-}
-button.tile:hover,
-button.tile:focus-visible {
-  border-color: #c9922e;
-  transform: translateY(-1px);
-}
-.tile img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.doc {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--ff-display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--text-dim);
-}
-.doc svg {
-  width: 24px;
-  height: 24px;
-  color: #c9922e;
-}
-/* the attach button: just a clean gold paperclip (owner: "just keep a clean clip icon"), centred on the thumbnails */
-.attach {
-  display: grid;
-  place-items: center;
-  flex: none;
-  align-self: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #c9922e;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-.attach:hover,
-.attach:focus-visible {
-  background: rgba(201, 146, 46, 0.12);
-  color: #ffcf7a;
-}
-.attach svg {
-  width: 22px;
-  height: 22px;
-}
-/* no files yet: the clip itself lines up with the ATTACHMENT heading (its hover tile reaches a little to the left) */
-.strip > .attach:first-child {
-  margin-left: -11px;
-}
-/* the clip on its own (owner: no files showing): inside the Ref no. box (right end) or beside a value in the details;
-   with files it carries their count and opens them */
+/* ---- the clip (owner: no files showing): inside a box's right end (Ref no., Deposit ref no., What for) or beside a
+   value in the details; with files it carries their count and opens them */
 .clip {
   display: inline-flex;
   align-items: center;
@@ -130,44 +41,10 @@ button.tile:focus-visible {
 .spinIcon {
   animation: spin 0.8s linear infinite;
 }
-.busy img {
-  opacity: 0.4;
-}
-.spin {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 24px;
-  height: 24px;
-  color: #ffcf7a;
-  animation: spin 0.8s linear infinite;
-}
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
-}
-.remove {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid rgba(201, 146, 46, 0.6);
-  border-radius: 50%;
-  background: rgba(14, 13, 11, 0.85);
-  color: var(--text);
-  cursor: pointer;
-}
-.remove:hover {
-  border-color: #c9922e;
-}
-.remove svg {
-  width: 12px;
-  height: 12px;
 }
 .input {
   display: none;
@@ -278,6 +155,16 @@ button.tile:focus-visible {
   touch-action: pan-y pinch-zoom;
   user-select: none;
 }
+/* while a photo loads */
+.spin {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 24px;
+  height: 24px;
+  color: #ffcf7a;
+  animation: spin 0.8s linear infinite;
+}
 .photo {
   max-width: 100%;
   max-height: 100%;
@@ -329,10 +216,6 @@ button.tile:focus-visible {
 }
 
 @media (max-width: 640px) {
-  .tile {
-    width: 64px;
-    height: 64px;
-  }
   .bar {
     padding: 10px 12px;
   }

@@ -2,6 +2,7 @@
 import { BellRing, CalendarPlus, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DateInput, Field, FormGrid, Input, NumberInput, Select, Textarea, Toggle } from "@/components/ui";
+import { PendingProofClip, ProofClip, usePendingProofs } from "@/components/proof";
 import { api } from "@/lib/client";
 import { formatDate, toInputDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -86,6 +87,8 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
     return out;
   };
 
+  // the deposit statement picked while signing — uploaded once the lease is saved (a saved one's clip uploads straight away)
+  const pending = usePendingProofs();
   const form = useForm<Values, LeaseSaved>({
     initial: {
       unitId: lease?.unitId ?? defaults?.unitId ?? "",
@@ -126,7 +129,10 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
     submit: (body) =>
       lease ? api<LeaseDetail>(`/api/leases/${lease.id}`, { method: "PUT", body }) : api<LeaseListItem>("/api/leases", { method: "POST", body }),
     success: (r) => (editing ? `Lease saved · ${r.tenant.name}` : `Lease signed · ${r.tenant.name} in ${r.unit.name}`),
-    onSaved,
+    onSaved: (r) => {
+      if (!editing) void pending.uploadTo({ leaseId: r.id });
+      onSaved?.(r);
+    },
   });
   const v = form.values;
 
@@ -220,7 +226,15 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         </Field>
         {/* under Security deposit in the 2-column grid */}
         <Field label="Deposit ref no. (UTR)" error={form.error("depositReference")}>
-          <Input {...form.text("depositReference")} className={s.refInput} maxLength={60} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+          <Input
+            {...form.text("depositReference")}
+            className={s.refInput}
+            maxLength={60}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            suffix={lease ? <ProofClip owner={{ leaseId: lease.id }} /> : <PendingProofClip pending={pending} />}
+          />
         </Field>
         <Field label="Reminders">
           <div data-field="reminderEnabled">
@@ -276,7 +290,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
     body,
     actions: <FormActions form={form} onCancel={onCancel} submitLabel={submitLabel ?? (editing ? "Save lease" : "Sign lease")} />,
     onSubmit: form.handleSubmit,
-    dirty: form.dirty,
+    dirty: form.dirty || pending.count > 0,
     busy: form.busy,
   });
 }

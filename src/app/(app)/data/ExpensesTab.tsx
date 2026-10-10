@@ -19,7 +19,7 @@ import {
   yearOf,
   type PeriodPick,
 } from "@/components/forms";
-import { ProofHead, ProofMark, ProofStrip, proofCount } from "@/components/proof";
+import { ProofClip, ProofHead, ProofMark, proofCount } from "@/components/proof";
 import { useApi } from "@/lib/client";
 import { formatDate } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -28,7 +28,6 @@ import {
   BlockedNote,
   DataPanel,
   DeleteButton,
-  DetailSection,
   DrawerLoading,
   DetailHero,
   EditButton,
@@ -251,14 +250,20 @@ function ExpenseDrawer({ sel, goto }: { sel: ReturnType<typeof useSelection>; go
             ),
           },
           { label: "For", value: e.unit?.name ?? "Whole plot (shared)" },
-          { label: "What for", value: e.description ?? <span className="faint">—</span> },
+          {
+            label: "What for",
+            // the bill's clip (owner, 10/10/2026: clip only, no files showing); the automatic tax expense has none
+            value: linked ? (
+              (e.description ?? <span className="faint">—</span>)
+            ) : (
+              <span className={s.refView}>
+                {e.description ?? <span className="faint">—</span>}
+                <ProofClip owner={{ expenseId: e.id }} />
+              </span>
+            ),
+          },
         ]}
       />
-      {!linked && (
-        <DetailSection title="Attachment">
-          <ProofStrip owner={{ expenseId: e.id }} />
-        </DetailSection>
-      )}
       {linked && (
         <BlockedNote>
           Added automatically when property tax was marked Paid, so it can only be changed there.{" "}

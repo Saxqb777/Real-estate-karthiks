@@ -1,6 +1,6 @@
 "use client";
 import { Landmark, Lock } from "lucide-react";
-import { PendingProofStrip, usePendingProofs } from "@/components/proof";
+import { PendingProofClip, ProofClip, usePendingProofs } from "@/components/proof";
 import { Button, DateInput, Field, FormGrid, NumberInput, Select, Textarea } from "@/components/ui";
 import { api } from "@/lib/client";
 import { toInputDate, todayIST } from "@/lib/dates";
@@ -26,7 +26,7 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
   const linked = Boolean(expense?.propertyTaxId);
   const units = useUnits();
   const cats = useCategories();
-  // the bill picked while adding (a saved expense shows its own proof row in its details)
+  // the bill picked while adding — uploaded once the expense is saved (a saved one's clip uploads straight away)
   const pending = usePendingProofs();
   const form = useForm<Values, ExpenseDTO>({
     initial: {
@@ -77,13 +77,13 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
             <Select {...form.select("unitId")} options={[{ value: "", label: "Whole plot (shared)" }, ...unitOptions(units.data?.items, { keepId: expense?.unitId })]} />
           </Field>
           <Field label="What was it for?" aside="optional" span="full" error={form.error("description")}>
-            <Textarea {...form.text("description")} placeholder="e.g. Plumber — kitchen tap and tank float valve" />
+            {/* the clip (owner, 10/10/2026: clip only, no files showing) in the corner of the "What for" box */}
+            <Textarea
+              {...form.text("description")}
+              placeholder="e.g. Plumber — kitchen tap and tank float valve"
+              suffix={linked ? undefined : expense ? <ProofClip owner={{ expenseId: expense.id }} /> : <PendingProofClip pending={pending} />}
+            />
           </Field>
-          {!editing && (
-            <Field label="Attachment" span="full">
-              <PendingProofStrip pending={pending} />
-            </Field>
-          )}
         </FormGrid>
       </fieldset>
       {isTaxCategory && !linked && (

@@ -352,7 +352,7 @@ button.miniRow:hover {
   color: var(--marigold);
   background: var(--marigold-a08);
 }
-/* payment drawer: the ref no. (UTR) with its pencil, and the box it is changed in */
+/* drawers: a value with its buttons beside it (ref no. + pencil + clip, a date + clip …), and the ref no.'s edit box */
 .refView {
   display: inline-flex;
   align-items: center;

@@ -189,6 +189,16 @@
   field-sizing: content;
   max-height: 320px;
 }
+.areaControl[data-trail] .textarea {
+  padding-right: 44px;
+}
+.areaTrail {
+  position: absolute;
+  right: 11px;
+  bottom: 9px;
+  display: flex;
+  align-items: center;
+}
 
 /* date: the value is drawn in D/M/YYYY over the native field (whose own text follows the browser locale); while the
    field is focused the native text shows so typing works, and the face hides */

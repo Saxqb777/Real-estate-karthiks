@@ -16,7 +16,7 @@ import {
   useLeases,
   type LeasePhase,
 } from "@/components/forms";
-import { ProofStrip } from "@/components/proof";
+import { ProofClip } from "@/components/proof";
 import { useApi } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -262,17 +262,18 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
           },
           (l.securityDeposit > 0 || Boolean(l.depositReference)) && {
             label: "Deposit ref no.",
-            value: l.depositReference ? <span className="num">{l.depositReference}</span> : <span className="faint">—</span>,
+            // the deposit's clip (owner, 10/10/2026: clip only, no files showing)
+            value: (
+              <span className={s.refView}>
+                {l.depositReference ? <span className="num">{l.depositReference}</span> : <span className="faint">—</span>}
+                <ProofClip owner={{ leaseId: l.id }} />
+              </span>
+            ),
           },
           { label: "Rent reminders", value: l.reminderEnabled ? "On" : "Off" },
           l.moveOutNotes ? { label: "Move-out notes", value: l.moveOutNotes } : null,
         ]}
       />
-      {l.securityDeposit > 0 && (
-        <DetailSection title="Deposit attachment">
-          <ProofStrip owner={{ leaseId: l.id }} />
-        </DetailSection>
-      )}
       <RentChanges lease={l} />
       <DetailSection title="Payments" aside={<span className="faint">{l.payments.length ? "newest first" : null}</span>}>
         {l.payments.length ? (

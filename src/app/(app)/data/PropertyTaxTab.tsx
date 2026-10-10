@@ -3,7 +3,7 @@ import { CircleCheck, Landmark, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button, EmptyState, StatusPill, Table, type Column } from "@/components/ui";
 import { ChoiceGroup, Facts, PropertyTaxForm, drawerFrame, quickAdd, usePropertyTax } from "@/components/forms";
-import { ProofHead, ProofMark, ProofStrip, proofCount } from "@/components/proof";
+import { ProofClip, ProofHead, ProofMark, proofCount } from "@/components/proof";
 import { sumAmounts } from "@/lib/calculations";
 import { formatDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -11,7 +11,6 @@ import type { PropertyTaxDTO } from "@/lib/schemas/property-tax";
 import {
   DataPanel,
   DeleteButton,
-  DetailSection,
   DrawerLoading,
   DetailHero,
   EditButton,
@@ -201,7 +200,17 @@ function TaxDrawer({ sel, goto, items }: { sel: ReturnType<typeof useSelection>;
           { label: "Unit", value: t.unit.name },
           { label: "Tax year", value: t.year, num: true },
           { label: "Status", value: <StatusPill status={t.status === "Paid" ? "paid" : "due"} size="sm" /> },
-          { label: "Paid on", value: t.paymentDate ? formatDate(t.paymentDate) : <span className="faint">not yet</span>, num: Boolean(t.paymentDate) },
+          {
+            label: "Paid on",
+            // the tax receipt's clip (owner, 10/10/2026: clip only, no files showing)
+            value: (
+              <span className={s.refView}>
+                {t.paymentDate ? formatDate(t.paymentDate) : <span className="faint">not yet</span>}
+                <ProofClip owner={{ propertyTaxId: t.id }} />
+              </span>
+            ),
+            num: Boolean(t.paymentDate),
+          },
           {
             label: "In expenses",
             value: t.expense ? (
@@ -214,9 +223,6 @@ function TaxDrawer({ sel, goto, items }: { sel: ReturnType<typeof useSelection>;
           },
         ]}
       />
-      <DetailSection title="Attachment">
-        <ProofStrip owner={{ propertyTaxId: t.id }} />
-      </DetailSection>
     </div>
   ) : (
     <DrawerLoading />
