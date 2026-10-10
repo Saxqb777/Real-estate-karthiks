@@ -427,6 +427,15 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   front-left corner (no more trotting across the front). Garden stroller's stops moved to the far side of her loop
   (off the property manager's lane walk). gateSign / kolamCentre / tileXRange live there too; /lab?debug=1 exposes
   window.__peEnv (scene clock) for checks like this.
+- 9/10/2026: DOG FAMILY (owner: "remove the dog from front and keep 1 big dog here and 2 babies with it … on the side
+  of the property"): the front stray dog is GONE; a big fawn MOTHER dog lies sphinx-style on the lane-side grass
+  (dogFamily: lane x − 9.4 ft, z = depth × 0.485 — below Gate B's kolam, between the banana clumps, inside the garden
+  stroller's loop), facing the front; head turns to follow the pups, tail sweeps. Her 2 PUPS (one fawn, one cream) nap
+  against her right flank, wake, trot out, play-bow, chase each other round her (zoomies), then flop down again — a
+  54 s cycle on scene time (pupAt / motherLook in street-life.ts, tested: never through her, ≤ 3.2 ft from her, nobody
+  stands in them). Lungi man's "left" stop now = halfway between the property manager's front-left corner and the
+  waiting tenant. DogFamily in People.tsx (not clickable). CLOTHES LINE (owner: "remove the clothes hanging from the
+  house in the back"): the terrace washing line shows on the FRONT house only (116/B7); none on the back house (116/B8).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

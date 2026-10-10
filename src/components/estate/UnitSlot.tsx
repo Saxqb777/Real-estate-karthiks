@@ -167,7 +167,8 @@ function BuiltSlot({ slot, world, env, mode, selected, highlighted, interactive,
             finish={slot.status === "inactive" ? "muted" : "normal"}
             ghost={empty}
             lived={slot.status === "occupied"}
-            clothes={slot.status === "occupied" && life}
+            // washing on the terrace line: front house only (owner, 9/10/2026: none on the back house)
+            clothes={slot.status === "occupied" && slot.slot === "front" && life}
             animate={!reduced && life}
           />
         </group>

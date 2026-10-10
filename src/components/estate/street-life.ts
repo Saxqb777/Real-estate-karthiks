@@ -4,9 +4,10 @@
 // Owner, 9/10/2026: a passer-by stopped right beside the tenant waiting at the gate — both on the gate kolam, facing
 // nowhere in particular. Since then:
 //   • the passers-by on the front grass take TURNS (one at a time) on one track, and each stops once to look at the
-//     houses at a spot clear of the gate, the tenant, the revenue officer and the dog;
-//   • a tenant waits BESIDE the unit's gate (never on its kolam), facing it, until it swings open;
-//   • the stray dog naps by the front-left corner (it no longer trots across everybody's path).
+//     houses at a spot clear of the gate, the tenant, the revenue officer and the property manager;
+//   • a tenant waits BESIDE the unit's gate (never on its kolam), facing it, until it swings open.
+// Owner, 9/10/2026 (later): the dog left the front — a big mother dog lies on the lane-side grass with her 2 pups
+// (dogFamily / pupAt): they nap against her, wake, play and chase each other round her, then flop down again.
 import type { BuildingSlot, Pt, SiteLayout } from "../../lib/site-layout";
 
 /** x of a polygon edge (a → b) at plan z. */
@@ -88,7 +89,8 @@ export const WALKERS: WalkSpec[] = [
 ];
 
 /** x of each crossers' stop on the track: in front of the house left of the gate (clear of the waiting tenant and the
- *  dog), right of it (clear of the revenue officer at the door-number pole), the TO-LET board (empty front house only). */
+ *  property manager's corner), right of it (clear of the revenue officer at the door-number pole), the TO-LET board
+ *  (empty front house only). */
 export function crossSpots(layout: Pick<SiteLayout, "compoundWalls" | "slots" | "plot">): Record<"left" | "right" | "board", number | null> {
   const gate = layout.compoundWalls.find((w) => w.gate === "front");
   const R = layout.plot.rightX;
@@ -98,13 +100,14 @@ export function crossSpots(layout: Pick<SiteLayout, "compoundWalls" | "slots" | 
   const front = layout.slots.find((s) => s.slot === "front");
   const empty = !!front && (front.status === "vacant" || front.status === "incoming");
   const right = Math.min(gr + 6.5, R + 2);
-  // left of the gate: halfway between the napping dog and the tenant waiting by the gate, if that leaves room round
-  // both — else right of the gate (the passers-by take turns, so two of them never stand there together)
-  const dog = dogSpot(layout);
+  // left of the gate: halfway between the property manager's front-left corner (he stops there to write) and the tenant
+  // waiting by the gate, if that leaves room round both — else right of the gate (the passers-by take turns, so two of
+  // them never stand there together)
+  const corner = managerLoop(layout).segs[0].a;
   const sign = gateSign(layout, "front");
   const wait = sign ? tenantWaitSpot(gatePoint(sign)) : null;
-  const clear = (x: number) => Math.hypot(x - dog.x, CROSS_Z - dog.z) >= 4.6 && (!wait || Math.hypot(x - wait.x, CROSS_Z - wait.z) >= 4.1);
-  const mid = wait ? (dog.x + wait.x) / 2 : gl - 4.8;
+  const clear = (x: number) => Math.hypot(x - corner.x, CROSS_Z - corner.z) >= 4.1 && (!wait || Math.hypot(x - wait.x, CROSS_Z - wait.z) >= 4.1);
+  const mid = wait ? (corner.x + wait.x) / 2 : gl - 4.8;
   const left = clear(mid) ? mid : clear(gl - 4.8) ? gl - 4.8 : right;
   return { left, right, board: empty ? (gl + gr) / 2 : null };
 }
@@ -344,13 +347,162 @@ export function tenantAt(tl: { segs: Timed[]; period: number }, t: number, index
   };
 }
 
-// ───────────────────────────── the stray dog, the property manager, the photographer, the cow ─────────────────────────────
+// ───────────────────────────── the dog family ─────────────────────────────
 
-/** The stray dog naps on the grass off the front-left corner, by the wall and clear of everyone's path. */
-export function dogSpot(layout: Pick<SiteLayout, "plot">): Pt {
-  const FL = layout.plot.polygon[0];
-  return { x: FL.x - 2.4, z: FL.z - 1.2 };
+/** Where the mother dog lies (plan ft) and the way she faces (plan unit vector). */
+export interface DogFamily {
+  x: number;
+  z: number;
+  fx: number;
+  fz: number;
 }
+
+/**
+ * The dog family on the lane side (owner, 9/10/2026: "remove the dog from front and keep 1 big dog here and 2 babies
+ * with it … on the side of the property"): the mother lies on the open grass between the banana clumps, off the side
+ * gate's kolam, facing the front — inside the garden stroller's loop and clear of the property manager's walk down the
+ * lane, the back tenant at Gate B and the photographer by the hand pump.
+ */
+export function dogFamily(layout: Pick<SiteLayout, "plot">): DogFamily {
+  const [FL, , , BL] = layout.plot.polygon;
+  const D = layout.plot.depthFt;
+  const z = D * 0.485;
+  const f = Math.hypot(0.26, 1);
+  return { x: FL.x + ((BL.x - FL.x) * z) / D - 9.4, z, fx: -0.26 / f, fz: -1 / f };
+}
+
+/** What a pup is doing: asleep against its mother, getting up / lying down, a play-bow, trotting, or running. */
+export type PupAct = "nap" | "wake" | "settle" | "bow" | "trot" | "run";
+
+/** The pups' day repeats every this many seconds of scene time. */
+export const PUP_CYCLE = 54;
+
+type V2 = [number, number];
+/** A stretch of a pup's day in the mother's frame (u = ahead of her, w = to her right): stay at `at` facing `face`,
+ *  move from → to, or run round her (the zoomies) from angle a0 to a1 on ZOOM. */
+type PupSeg =
+  | { t0: number; t1: number; act: "nap" | "wake" | "settle" | "bow"; at: V2; face: V2 | "mom" | "pup" }
+  | { t0: number; t1: number; act: "trot"; from: V2; to: V2 }
+  | { t0: number; t1: number; act: "run"; a0: number; a1: number };
+
+/** The ellipse the pups chase each other round her on (centre u, half-length along u, half-width along w). */
+const ZOOM = { u: 0.15, a: 2.6, b: 1.75 };
+const onZoom = (a: number): V2 => [ZOOM.u + ZOOM.a * Math.cos(a), ZOOM.b * Math.sin(a)];
+
+/** The two pups' naps against her right flank (the side facing the lane-side view). */
+const NAP: [V2, V2] = [
+  [-0.65, 1.0],
+  [0.75, 1.0],
+];
+
+/**
+ * The pups' day. Pup 1 wakes first, trots out in front of her, play-bows at her, hops aside and bows at its sibling;
+ * pup 0 wakes and joins; they chase each other round their mother (pup 0 a little behind), then trot back to her side
+ * and flop down to sleep again.
+ */
+const PUP_DAYS: [PupSeg[], PupSeg[]] = [
+  [
+    { t0: 0, t1: 24.5, act: "nap", at: NAP[0], face: [1, 0] },
+    { t0: 24.5, t1: 25.3, act: "wake", at: NAP[0], face: [1, 0] },
+    { t0: 25.3, t1: 26.5, act: "trot", from: NAP[0], to: onZoom(0.4) },
+    { t0: 26.5, t1: 34, act: "run", a0: 0.4, a1: 0.4 - 10.5 },
+    { t0: 34, t1: 34.6, act: "trot", from: onZoom(0.4 - 10.5), to: NAP[0] },
+    { t0: 34.6, t1: 35.4, act: "settle", at: NAP[0], face: [1, 0] },
+    { t0: 35.4, t1: PUP_CYCLE, act: "nap", at: NAP[0], face: [1, 0] },
+  ],
+  [
+    { t0: 0, t1: 19, act: "nap", at: NAP[1], face: [1, 0] },
+    { t0: 19, t1: 19.8, act: "wake", at: NAP[1], face: [1, 0] },
+    { t0: 19.8, t1: 21, act: "trot", from: NAP[1], to: [2.9, 0.4] },
+    { t0: 21, t1: 24, act: "bow", at: [2.9, 0.4], face: "mom" },
+    { t0: 24, t1: 25, act: "trot", from: [2.9, 0.4], to: onZoom(-0.5) },
+    { t0: 25, t1: 26.5, act: "bow", at: onZoom(-0.5), face: "pup" },
+    { t0: 26.5, t1: 34, act: "run", a0: -0.5, a1: -0.5 - 10.5 },
+    { t0: 34, t1: 34.6, act: "trot", from: onZoom(-11), to: NAP[1] },
+    { t0: 34.6, t1: 35.4, act: "settle", at: NAP[1], face: [1, 0] },
+    { t0: 35.4, t1: PUP_CYCLE, act: "nap", at: NAP[1], face: [1, 0] },
+  ],
+];
+
+export interface PupState {
+  /** plan ft */
+  x: number;
+  z: number;
+  /** the way it faces (plan, unit) */
+  hx: number;
+  hz: number;
+  act: PupAct;
+  /** 0..1 through this stretch (getting up / lying down) */
+  k: number;
+  /** ft/s while moving, else 0 */
+  speed: number;
+}
+
+/** Pup i (0 or 1) at scene time t. */
+export function pupAt(fam: DogFamily, i: 0 | 1, t: number): PupState {
+  const tt = mod(t, PUP_CYCLE);
+  const segs = PUP_DAYS[i];
+  const sg = segs.find((s) => tt < s.t1) ?? segs[segs.length - 1];
+  const k = Math.min(1, Math.max(0, (tt - sg.t0) / (sg.t1 - sg.t0)));
+  let at: V2;
+  let face: V2;
+  let speed = 0;
+  if (sg.act === "trot") {
+    at = [sg.from[0] + (sg.to[0] - sg.from[0]) * k, sg.from[1] + (sg.to[1] - sg.from[1]) * k];
+    face = [sg.to[0] - sg.from[0], sg.to[1] - sg.from[1]];
+    speed = Math.hypot(face[0], face[1]) / (sg.t1 - sg.t0);
+  } else if (sg.act === "run") {
+    const a = sg.a0 + (sg.a1 - sg.a0) * k;
+    const dir = Math.sign(sg.a1 - sg.a0);
+    at = onZoom(a);
+    face = [-ZOOM.a * Math.sin(a) * dir, ZOOM.b * Math.cos(a) * dir];
+    speed = (Math.abs(sg.a1 - sg.a0) * (ZOOM.a + ZOOM.b)) / 2 / (sg.t1 - sg.t0);
+  } else {
+    at = sg.at;
+    if (sg.face === "mom") face = [-at[0], -at[1]];
+    else if (sg.face === "pup") {
+      const o = pupLocal(1 - i, tt);
+      face = [o[0] - at[0], o[1] - at[1]];
+    } else face = sg.face;
+  }
+  const n = Math.hypot(face[0], face[1]) || 1;
+  const [u, w] = at;
+  // plan = mother + u · ahead + w · right (her right = (fz, −fx))
+  return {
+    x: fam.x + u * fam.fx + w * fam.fz,
+    z: fam.z + u * fam.fz - w * fam.fx,
+    hx: (face[0] * fam.fx + face[1] * fam.fz) / n,
+    hz: (face[0] * fam.fz - face[1] * fam.fx) / n,
+    act: sg.act,
+    k,
+    speed,
+  };
+}
+
+/** A pup's spot in its mother's frame (for the sibling it bows at). */
+function pupLocal(i: number, tt: number): V2 {
+  const sg = PUP_DAYS[i].find((s) => tt < s.t1) ?? PUP_DAYS[i][PUP_DAYS[i].length - 1];
+  const k = Math.min(1, Math.max(0, (tt - sg.t0) / (sg.t1 - sg.t0)));
+  if (sg.act === "trot") return [sg.from[0] + (sg.to[0] - sg.from[0]) * k, sg.from[1] + (sg.to[1] - sg.from[1]) * k];
+  if (sg.act === "run") return onZoom(sg.a0 + (sg.a1 - sg.a0) * k);
+  return sg.at;
+}
+
+/**
+ * Where the mother looks (radians, + = to her left): at pup 1 while it's up and playing, else down at the two asleep
+ * against her right flank with a slow look round now and then. Her neck turns about ±1.1 rad at most.
+ */
+export function motherLook(fam: DogFamily, t: number): number {
+  const tt = mod(t, PUP_CYCLE);
+  const up = PUP_DAYS[1].find((s) => tt < s.t1);
+  if (up && up.act !== "nap") {
+    const [u, w] = pupLocal(1, tt);
+    return Math.max(-1.1, Math.min(1.1, Math.atan2(-w, u - 1.2)));
+  }
+  return -0.45 + Math.sin(t * 0.13) * 0.35;
+}
+
+// ───────────────────────────── the property manager, the photographer, the cow ─────────────────────────────
 
 export const MANAGER_SPEED = 2.1; // ft/s
 export const MANAGER_WRITE = 4; // s at each corner

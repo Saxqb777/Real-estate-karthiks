@@ -1,16 +1,17 @@
 // The people on the grass (owner, 9/10/2026: a passer-by stood right beside the waiting tenant, both on the gate kolam).
-// Plays everyone's day — the passers-by, both tenants, the stray dog, the property manager, the revenue officer, the
-// photographer, the policeman and the cow — over two hours of scene time on three plot sizes (and with the front house
-// empty) and checks: nobody stands within 4 ft of anybody, nobody walks through someone standing, nobody stands on a
-// kolam, and the passers-by take turns on the front grass.
+// Plays everyone's day — the passers-by, both tenants, the dog family (a mother and her 2 pups on the lane side), the
+// property manager, the revenue officer, the photographer, the policeman and the cow — over two hours of scene time on
+// three plot sizes (and with the front house empty) and checks: nobody stands within 4 ft of anybody, nobody walks
+// through someone standing, nobody stands on a kolam, and the passers-by take turns on the front grass.
 import { describe, expect, it } from "vitest";
 import { computeSiteLayout, type Pt, type SceneUnit, type SiteLayout } from "../../../lib/site-layout";
 import { GUARD_AT, collectorRoutine, mopedFrame } from "../tax-route";
 import {
   KOLAM_FT,
   WALKERS,
+  PUP_CYCLE,
   cowSpot,
-  dogSpot,
+  dogFamily,
   gatePoint,
   gateSign,
   kolamCentre,
@@ -18,6 +19,7 @@ import {
   managerAt,
   managerLoop,
   photographerSpot,
+  pupAt,
   streetSchedule,
   tenantAt,
   tenantRoute,
@@ -59,8 +61,10 @@ function cast(L: SiteLayout) {
     .map((t) => ({ ...t, tl: legTimeline(tenantRoute(t.slot, gatePoint(t.sign!))) }));
   const loop = managerLoop(L);
   const day = collectorRoutine(L);
+  const fam = dogFamily(L);
   const statics: Body[] = [
-    { who: "dog", p: dogSpot(L), standing: true, r: 1 },
+    // she's ~3.4 ft nose to rump (+ the tail curled round): a 1.9 ft body
+    { who: "dog", p: { x: fam.x, z: fam.z }, standing: true, r: 1.9 },
     { who: "photographer", p: photographerSpot(L), standing: true, r: 1.3 },
     { who: "policeman", p: mopedFrame(L).at(GUARD_AT.x, GUARD_AT.z), standing: true, r: 0.7 },
   ];
@@ -70,6 +74,10 @@ function cast(L: SiteLayout) {
     tenants,
     at(t: number): Body[] {
       const out: Body[] = [...statics];
+      for (const i of [0, 1] as const) {
+        const s = pupAt(fam, i, t);
+        out.push({ who: `pup${i}`, p: { x: s.x, z: s.z }, standing: s.speed === 0, r: 0.6 });
+      }
       const cow = cowSpot(L);
       out.push({ who: "cow", p: { x: cow.x + Math.sin((t + 3.7) * 0.05) * 1.5, z: cow.z }, standing: true, r: 2.6 });
       walkers.forEach((w, i) => {
@@ -91,8 +99,10 @@ function cast(L: SiteLayout) {
   };
 }
 
-// the revenue officer perches on her moped right by the policeman who guards it (tax-route.test checks that walk)
-const intended = (a: string, b: string) => (a === "officer" && b === "policeman") || (a === "policeman" && b === "officer");
+// the revenue officer perches on her moped right by the policeman who guards it (tax-route.test checks that walk); the
+// pups nap against their mother and play round her
+const family = (w: string) => w === "dog" || w.startsWith("pup");
+const intended = (a: string, b: string) => (a === "officer" && b === "policeman") || (a === "policeman" && b === "officer") || (family(a) && family(b));
 
 describe("the people on the grass", () => {
   for (const c of CASES) {
@@ -134,6 +144,30 @@ describe("the people on the grass", () => {
       const plans = streetSchedule(L);
       const crossers = plans.filter((_, i) => WALKERS[i].route.kind === "cross");
       for (let t = 0; t < 1800; t += 0.5) expect(crossers.filter((p) => walkerAt(p, t).on).length).toBeLessThanOrEqual(1);
+    });
+
+    it(`the pups stay with their mother and never run through her (${c.label})`, () => {
+      const fam = dogFamily(L);
+      const bad: string[] = [];
+      for (let t = 0; t < PUP_CYCLE; t += 0.05)
+        for (const i of [0, 1] as const) {
+          const s = pupAt(fam, i, t);
+          // her body in her own frame: u along her, w across (she's an ellipse ~2.4 × 0.6 ft round her middle)
+          const dx = s.x - fam.x;
+          const dz = s.z - fam.z;
+          const u = dx * fam.fx + dz * fam.fz - 0.2;
+          const w = dx * fam.fz - dz * fam.fx;
+          if ((u / 2.35) ** 2 + (w / 0.75) ** 2 < 1) bad.push(`t=${t.toFixed(2)} pup${i} inside her at u ${u.toFixed(2)}, w ${w.toFixed(2)}`);
+          if (Math.hypot(dx, dz) > 3.2) bad.push(`t=${t.toFixed(2)} pup${i} ${Math.hypot(dx, dz).toFixed(2)} ft from her`);
+          if (s.speed > 4) bad.push(`t=${t.toFixed(2)} pup${i} at ${s.speed.toFixed(1)} ft/s`);
+        }
+      expect(bad.slice(0, 8)).toEqual([]);
+      // both nap against her for a good part of the day, and each one is up and about at some point
+      for (const i of [0, 1] as const) {
+        const acts = Array.from({ length: PUP_CYCLE * 4 }, (_, k) => pupAt(fam, i, k / 4).act);
+        expect(acts.filter((a) => a === "nap").length / acts.length).toBeGreaterThan(0.5);
+        expect(acts).toContain("run");
+      }
     });
 
     it(`a tenant waits beside the gate, facing it, with the gate shut (${c.label})`, () => {

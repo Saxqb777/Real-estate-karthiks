@@ -1,8 +1,8 @@
 "use client";
 // Low-poly life on the grass round the plot (no road): passers-by taking turns across the front grass — a veshti man
 // with an umbrella, a saree lady (she reads the TO-LET board when the front house is empty), a man in a lungi — each
-// stopping once to look at the houses, a lady strolling through the banana garden, a stray dog napping off the
-// front-left corner, a zebu cow grazing under the palms, and the tenant of each occupied house waiting beside its gate
+// stopping once to look at the houses, a lady strolling through the banana garden, a mother dog with her two pups on
+// the lane side, a zebu cow grazing under the palms, and the tenant of each occupied house waiting beside its gate
 // (a clickable world object). Every character is ONE draw call (rig.ts). WHERE everyone is comes from street-life.ts
 // (pure, tested so nobody stands in anybody — owner, 9/10/2026); movement runs on scene time → frame-rate independent
 // and slowed by focus dimming.
@@ -14,24 +14,28 @@ import type { Env } from "./env";
 import { Hotspot, spotKey, useScene, type V3 } from "./Interact";
 import { gateNear } from "./gate-state";
 import { EDGE_CLIP, G } from "./materials";
-import { bake, ball, box, cone, type Part } from "./bake";
+import { bake, ball, box, cone, rod, type Part } from "./bake";
 import { SKIN, personLimbs, posePerson, rigGeometry, rigMaterials, type Limb, type Outfit, type RigMaterials } from "./rig";
 import { blobTex } from "./textures";
 import {
   WALKERS,
   cowSpot,
-  dogSpot,
+  dogFamily,
   gatePoint,
   legTimeline,
   managerAt,
   managerLoop,
+  motherLook,
   photographerSpot,
+  pupAt,
   streetSchedule,
   tenantAt,
   tenantRoute,
   tileXRange,
   walkerAt,
+  type DogFamily as Family,
   type Leg,
+  type PupAct,
   type WalkerPlan,
   type WalkSpec,
 } from "./street-life";
@@ -253,60 +257,198 @@ export function TenantFigure({ slot, world, env, index, gateAt }: { slot: Buildi
   );
 }
 
-// ───────────────────────────── stray dog ─────────────────────────────
+// ───────────────────────────── the dog family ─────────────────────────────
 
-const COAT = "#c48a52";
-function dogLimbs(): Limb[] {
-  const leg = (x: number, z: number): Limb => ({ parts: [box([x, 0.55, z], [0.17, 1.0, 0.17], COAT), box([x + 0.04, 0.06, z], [0.22, 0.1, 0.2], "#8f5f33")], pivot: [x, 1.05, z], axis: [0, 0, 1] });
+const INK = "#16110d";
+
+/** The mother: a big fawn Indian street dog lying sphinx-style (legs baked folded), head up on a turning neck, tail curled
+ *  round to her right. Limbs: 0 body, 1 head (turns), 2 tail (sweeps). Model x = ahead, z = her right. */
+function motherLimbs(): Limb[] {
+  const coat = "#c78f57";
+  const saddle = "#ad7643";
+  const cream = "#eed6ad";
+  const paw = "#e0bf8c";
+  const dark = "#94612f";
+  const sph = (p: V3, sc: V3, c: string, r?: V3): Part => ({ g: "sphere", p, s: sc, c, r });
+  const across = Math.PI / 2; // a rod lying along x
   return [
-    { parts: [box([0, 1.35, 0], [1.9, 0.75, 0.62], COAT), box([0.2, 1.12, 0], [1.2, 0.3, 0.5], "#e2b98a")] },
-    leg(0.7, 0.2),
-    leg(0.7, -0.2),
-    leg(-0.7, 0.2),
-    leg(-0.7, -0.2),
-    { parts: [box([-1.27, 1.55, 0], [0.7, 0.12, 0.12], COAT)], pivot: [-0.95, 1.55, 0], axis: [0, 1, 0] },
     {
       parts: [
-        box([1.3, 1.75, 0], [0.62, 0.55, 0.5], COAT),
-        box([1.73, 1.63, 0], [0.36, 0.28, 0.32], "#a8713f"),
-        box([1.9, 1.67, 0], [0.08, 0.1, 0.12], "#1a1410"),
-        cone([1.2, 2.13, 0.16], [0.22, 0.32, 0.18], "#8f5f33"),
-        cone([1.2, 2.13, -0.16], [0.22, 0.32, 0.18], "#8f5f33"),
+        sph([0.15, 0.46, 0], [2.3, 0.86, 0.94], coat),
+        sph([0.1, 0.6, 0], [1.9, 0.62, 0.66], saddle),
+        sph([-0.8, 0.44, 0], [1.15, 0.8, 0.98], coat),
+        sph([-0.78, 0.36, 0.46], [0.95, 0.64, 0.42], coat),
+        sph([-0.78, 0.36, -0.46], [0.95, 0.64, 0.42], coat),
+        sph([-0.3, 0.08, 0.6], [0.36, 0.14, 0.2], paw),
+        sph([-0.3, 0.08, -0.6], [0.36, 0.14, 0.2], paw),
+        // forelegs stretched out in front, paws on the grass
+        rod([1.15, 0.12, 0.24], [0.22, 0.9, 0.24], coat, [0, 0, across]),
+        rod([1.15, 0.12, -0.24], [0.22, 0.9, 0.24], coat, [0, 0, across]),
+        sph([1.66, 0.09, 0.24], [0.3, 0.16, 0.26], paw),
+        sph([1.66, 0.09, -0.24], [0.3, 0.16, 0.26], paw),
+        sph([0.98, 0.5, 0], [0.62, 0.66, 0.66], cream),
+        sph([1.02, 0.92, 0], [0.56, 0.86, 0.52], coat, [0, 0, -0.5]),
       ],
-      pivot: [1.05, 1.65, 0],
-      axis: [0, 0, 1],
+    },
+    {
+      parts: [
+        sph([1.36, 1.43, 0], [0.62, 0.55, 0.56], coat),
+        box([1.78, 1.32, 0], [0.44, 0.26, 0.3], cream),
+        box([2.01, 1.37, 0], [0.09, 0.11, 0.14], INK),
+        sph([1.6, 1.5, 0.17], [0.07, 0.07, 0.07], INK),
+        sph([1.6, 1.5, -0.17], [0.07, 0.07, 0.07], INK),
+        cone([1.28, 1.8, 0.17], [0.22, 0.36, 0.15], dark, [0.25, 0, 0]),
+        cone([1.28, 1.8, -0.17], [0.22, 0.36, 0.15], dark, [-0.25, 0, 0]),
+      ],
+      pivot: [1.12, 1.2, 0],
+      axis: [0, 1, 0],
+    },
+    {
+      // the tail lies curled round to her right, a pale tip
+      parts: [rod([-1.575, 0.17, 0.225], [0.17, 0.66, 0.17], coat, [0, 0.568, across]), rod([-1.775, 0.11, 0.625], [0.15, 0.5, 0.15], coat, [0, 1.892, across]), sph([-1.69, 0.1, 0.86], [0.17, 0.14, 0.17], cream)],
+      pivot: [-1.3, 0.2, 0],
+      axis: [0, 1, 0],
     },
   ];
 }
 
-export function Dog({ layout, world, env, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; movers?: MoverRegistry }) {
-  const { geo, rig } = useRig(dogLimbs, []);
-  const g = useRef<THREE.Group>(null);
-  // napping off the front-left corner, by the wall, clear of everyone's path (street-life.ts; owner 9/10/2026)
-  const spot = useMemo(() => dogSpot(layout), [layout]);
+/** A pup standing (round belly, big head, floppy ears). Limbs: 0 body, 1–4 legs (front-right, front-left, hind-right,
+ *  hind-left), 5 tail (wags), 6 head (nods). */
+function pupLimbs(coat: string, cream: string, ears: string): () => Limb[] {
+  return () => {
+    const leg = (x: number, z: number): Limb => ({ parts: [box([x, 0.25, z], [0.15, 0.42, 0.15], coat), box([x + 0.03, 0.04, z], [0.18, 0.08, 0.17], cream)], pivot: [x, 0.46, z], axis: [0, 0, 1] });
+    return [
+      { parts: [{ g: "sphere", p: [0, 0.6, 0], s: [0.95, 0.52, 0.54], c: coat }, { g: "sphere", p: [0.3, 0.6, 0], s: [0.4, 0.42, 0.42], c: cream }] },
+      leg(0.27, 0.14),
+      leg(0.27, -0.14),
+      leg(-0.27, 0.14),
+      leg(-0.27, -0.14),
+      { parts: [box([-0.54, 0.8, 0], [0.28, 0.08, 0.08], coat, [0, 0, -0.7])], pivot: [-0.45, 0.72, 0], axis: [0, 1, 0] },
+      {
+        parts: [
+          { g: "sphere", p: [0.55, 0.96, 0], s: [0.5, 0.46, 0.48], c: coat },
+          box([0.8, 0.88, 0], [0.2, 0.15, 0.19], cream),
+          box([0.91, 0.91, 0], [0.05, 0.06, 0.08], INK),
+          { g: "sphere", p: [0.74, 1.0, 0.11], s: 0.055, c: INK },
+          { g: "sphere", p: [0.74, 1.0, -0.11], s: 0.055, c: INK },
+          box([0.5, 1.05, 0.25], [0.14, 0.2, 0.06], ears, [-0.5, 0, 0]),
+          box([0.5, 1.05, -0.25], [0.14, 0.2, 0.06], ears, [0.5, 0, 0]),
+        ],
+        pivot: [0.38, 0.8, 0],
+        axis: [0, 0, 1],
+      },
+    ];
+  };
+}
+
+/** One fawn pup like its mother, one cream pup with fawn ears. */
+const PUP_LOOKS = [pupLimbs("#d09a60", "#f0dcb4", "#a46d3c"), pupLimbs("#efe2c8", "#fbf4e4", "#c48a52")];
+
+/**
+ * The dog family on the lane side (owner, 9/10/2026): the mother lies by the banana garden — breathing, her tail
+ * sweeping, her head following whichever pup is up — and her two pups nap against her right flank, wake, play-bow, chase
+ * each other round her and flop down again (street-life.ts dogFamily / pupAt). Not clickable.
+ */
+export function DogFamily({ layout, world, env, movers }: { layout: SiteLayout; world: World; env: RefObject<Env>; movers?: MoverRegistry }) {
+  const fam = useMemo(() => dogFamily(layout), [layout]);
+  const mother = useRig(motherLimbs, []);
+  const look = useRef<number | null>(null);
   useFrame(() => {
-    if (!g.current) return;
-    const A = rig.u.uAng.value;
-    const T = env.current.t;
-    // lying down: legs folded under, slow breathing, an occasional head lift
-    A[1] = A[2] = 1.45;
-    A[3] = A[4] = -1.45;
-    A[5] = 0.15 + Math.sin(T * 0.6) * 0.1;
-    A[6] = -0.5 + Math.max(0, Math.sin(T * 0.21)) ** 8 * 0.6;
-    rig.u.uShift.value.set(0, -0.78 + Math.sin(T * 2.2) * 0.02, 0);
+    const A = mother.rig.u.uAng.value;
+    const e = env.current;
+    const T = e.t;
+    const want = motherLook(fam, T);
+    look.current = look.current === null ? want : look.current + (want - look.current) * (1 - Math.exp(-e.dt * 3));
+    A[1] = look.current;
+    const playing = pupAt(fam, 1, T).act !== "nap";
+    A[2] = playing ? Math.sin(T * 5) * 0.22 : Math.sin(T * 0.7) * 0.1;
+    mother.rig.u.uShift.value.set(0, Math.sin(T * 1.7) * 0.012, 0);
+  });
+  return (
+    <group>
+      <group
+        name="dog-family"
+        ref={(o) => movers?.set("dog", o, 1.8)}
+        position={[world.x(fam.x), 0, world.z(fam.z)]}
+        rotation={[0, Math.atan2(fam.fz, fam.fx), 0]}
+      >
+        <RigMesh geo={mother.geo} rig={mother.rig} />
+      </group>
+      <Pup fam={fam} index={0} world={world} env={env} movers={movers} />
+      <Pup fam={fam} index={1} world={world} env={env} movers={movers} />
+    </group>
+  );
+}
+
+function Pup({ fam, index, world, env, movers }: { fam: Family; index: 0 | 1; world: World; env: RefObject<Env>; movers?: MoverRegistry }) {
+  const { geo, rig } = useRig(PUP_LOOKS[index], [index]);
+  const g = useRef<THREE.Group | null>(null);
+  const heading = useRef<number | null>(null);
+  const walked = useRef(0);
+  useFrame(() => {
+    const o = g.current;
+    if (!o) return;
+    const e = env.current;
+    const T = e.t;
+    const s = pupAt(fam, index, T);
+    o.position.set(world.x(s.x), 0, world.z(s.z));
+    const want = Math.atan2(s.hz, s.hx);
+    if (heading.current === null) heading.current = want;
+    let dh = want - heading.current;
+    while (dh > Math.PI) dh -= Math.PI * 2;
+    while (dh < -Math.PI) dh += Math.PI * 2;
+    heading.current += dh * (1 - Math.exp(-e.dt * 9));
+    o.rotation.y = heading.current;
+    walked.current += s.speed * e.dt;
+    posePup(rig.u, s.act, s.k, T + index * 1.7, walked.current);
   });
   return (
     <group
       ref={(o) => {
         g.current = o;
-        movers?.set("dog", o, 1.9);
+        movers?.set(`pup${index}`, o, 0.75);
       }}
-      position={[world.x(spot.x), 0, world.z(spot.z)]}
-      rotation={[0, 0.4, 0]}
     >
       <RigMesh geo={geo} rig={rig} />
     </group>
   );
+}
+
+/** Folded legs + lowered body while napping (blended while getting up / lying down), a play-bow, a trot or a bounding run. */
+function posePup(u: RigMaterials["u"], act: PupAct, k: number, T: number, walked: number) {
+  const A = u.uAng.value;
+  const fold = act === "nap" ? 1 : act === "wake" ? 1 - smoothstep(0, 1, k) : act === "settle" ? smoothstep(0, 1, k) : 0;
+  let y = -0.3 * fold;
+  const ph = (walked / 0.45) * Math.PI;
+  if (act === "trot") {
+    const sw = Math.sin(ph) * 0.55;
+    A[1] = A[4] = sw;
+    A[2] = A[3] = -sw;
+    A[5] = Math.sin(T * 10) * 0.5;
+    A[6] = Math.sin(ph * 2) * 0.05;
+    y += Math.abs(Math.sin(ph)) * 0.04;
+  } else if (act === "run") {
+    const sw = Math.sin(ph) * 0.85;
+    A[1] = A[2] = sw;
+    A[3] = A[4] = -sw;
+    A[5] = Math.sin(T * 12) * 0.25;
+    A[6] = -0.1;
+    y += Math.max(0, Math.sin(ph)) * 0.12;
+  } else if (act === "bow") {
+    // front down, rear up, tail going like mad
+    A[1] = A[2] = 1.1;
+    A[3] = A[4] = 0;
+    A[5] = Math.sin(T * 16) * 0.7;
+    A[6] = 0.3 + Math.sin(T * 3) * 0.08;
+    y = -0.12 + Math.abs(Math.sin(T * 4)) * 0.03;
+  } else {
+    // nap / waking / lying down: front paws out in front, hind legs tucked under, head resting, tail along the side
+    A[1] = A[2] = A[3] = A[4] = 1.45 * fold;
+    A[5] = 0.6 * fold + Math.sin(T * 3) * 0.3 * (1 - fold);
+    A[6] = -0.25 * fold;
+    y += Math.sin(T * 2.6) * 0.012 * fold;
+  }
+  u.uShift.value.set(0, y, 0);
 }
 
 // ───────────────────────────── zebu cow ─────────────────────────────
