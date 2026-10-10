@@ -485,10 +485,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   expense (also in the ⌘K / 3D-window pop-ups), uploaded right after the record is saved. Full-screen viewer: ‹ › / arrow
   keys / swipe, round gold Save · Open · Delete · Close; PDFs show a card with OPEN PDF. 📎 (+ count) column before the
   amount in Data → Payments / Expenses / Property tax (phones: after the row's first line). Deleting a payment / expense /
-  tax year / lease removes its files too. DEPLOYED 10/10/2026 (owner: "DEPLOY") while the Vercel connector was down, so
-  the private Blob store was NOT created yet: until it exists (Vercel project → Storage → Blob, Private, Singapore,
-  connected to the project → BLOB_READ_WRITE_TOKEN / BLOB_STORE_ID) + a redeploy, uploads answer 503 "File storage is not
-  set up yet"; everything else works.
+  tax year / lease removes its files too. DEPLOYED 10/10/2026 (owner: "DEPLOY"; 306ab0b) + the PRIVATE Blob store
+  "pattukottai-proofs" (store_wGJkc3Lr4hRVqDuW, region sin1, access private, connected to the project for production /
+  preview / development → env BLOB_READ_WRITE_TOKEN), then redeployed so the site has the key. Hobby plan: 1 GB storage
+  + 10 GB transfer a month included, never billed (over the limit Blob pauses for 30 days).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
