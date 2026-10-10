@@ -72,7 +72,7 @@ function monthsBetween(from: string, to: string): { year: number; month: number 
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const METHODS: PaymentMethod[] = ["upi", "upi", "bank", "cash"];
+const METHODS: PaymentMethod[] = ["upi", "upi", "bank", "upi"];
 
 /** One payment per month, usually 1–6 days around the due day; late / custom months as listed. */
 function planPayments(plan: PaymentPlan) {

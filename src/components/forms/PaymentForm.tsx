@@ -1,5 +1,5 @@
 "use client";
-import { Banknote, Building, Smartphone } from "lucide-react";
+import { Building, Smartphone } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { PendingProofClip, usePendingProofs } from "@/components/proof";
 import { DateInput, Field, FormGrid, Input, NumberInput, Select, toast } from "@/components/ui";
@@ -15,7 +15,7 @@ import {
   paymentPeriodError,
   periodIndex,
   type PaymentListItem,
-  type PaymentMethodValue,
+  type ReceivedBy,
   type Period,
 } from "@/lib/schemas/payment";
 import { ChoiceGroup } from "./controls";
@@ -30,7 +30,7 @@ type Values = {
   periodYear: number | null;
   amount: number | null;
   paymentDate: string;
-  method: PaymentMethodValue;
+  method: ReceivedBy;
   notes: string;
   /** bank / UPI ref no. (UTR) — the box shows for UPI / Bank only */
   reference: string;
@@ -97,7 +97,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
       periodYear: defaults?.periodYear ?? null,
       amount: defaults?.amount ?? null,
       paymentDate: toInputDate(todayIST()),
-      method: defaults?.method ?? "cash",
+      method: defaults?.method ?? "upi",
       notes: "",
       reference: "",
     },
@@ -105,7 +105,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
     rules,
     aliases: { periodYear: "periodMonth" },
     // a ref no. typed before switching to Cash is not kept
-    submit: (body) => api<PaymentListItem>("/api/payments", { method: "POST", body: { ...body, reference: body.method === "cash" ? null : body.reference } }),
+    submit: (body) => api<PaymentListItem>("/api/payments", { method: "POST", body }),
     success: () => null,
     onSaved: (p) => {
       toast.coin(`Rent collected · ${p.lease.unit.name}`, {
@@ -243,35 +243,30 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
           <DateInput {...form.date("paymentDate")} max={toInputDate(todayIST())} />
         </Field>
 
-        {/* the clip (owner, 10/10/2026: no files showing): inside the Ref no. box for UPI / Bank, beside the choices for cash */}
+        {/* UPI or bank only (owner, 10/10/2026: "will never receive cash") */}
         <Field label="Paid by" span="full" error={form.error("method")}>
-          <div className={s.payRow}>
-            <ChoiceGroup
-              name="method"
-              value={v.method}
-              onChange={(m) => form.set("method", m)}
-              options={[
-                { value: "cash", label: "Cash", icon: <Banknote aria-hidden /> },
-                { value: "upi", label: "UPI", icon: <Smartphone aria-hidden /> },
-                { value: "bank", label: "Bank", icon: <Building aria-hidden /> },
-              ]}
-            />
-            {v.method === "cash" && <PendingProofClip pending={pending} />}
-          </div>
+          <ChoiceGroup
+            name="method"
+            value={v.method}
+            onChange={(m) => form.set("method", m)}
+            options={[
+              { value: "upi", label: "UPI", icon: <Smartphone aria-hidden /> },
+              { value: "bank", label: "Bank", icon: <Building aria-hidden /> },
+            ]}
+          />
         </Field>
-        {v.method !== "cash" && (
-          <Field label="Ref no. (UTR)" span="full" error={form.error("reference")}>
-            <Input
-              {...form.text("reference")}
-              className={s.refInput}
-              maxLength={60}
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              suffix={<PendingProofClip pending={pending} />}
-            />
-          </Field>
-        )}
+        {/* the clip (owner, 10/10/2026: no files showing) at the right end of the Ref no. box */}
+        <Field label="Ref no. (UTR)" span="full" error={form.error("reference")}>
+          <Input
+            {...form.text("reference")}
+            className={s.refInput}
+            maxLength={60}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            suffix={<PendingProofClip pending={pending} />}
+          />
+        </Field>
       </FormGrid>
     </FormBody>
   );

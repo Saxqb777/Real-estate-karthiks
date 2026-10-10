@@ -9,7 +9,10 @@ import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
 
 export const PAYMENT_METHODS = ["cash", "bank", "upi", "other"] as const;
+/** How new rent can be received (owner, 10/10/2026: "will never receive cash") — older payments keep their method. */
+export const RECEIVED_BY = ["upi", "bank"] as const;
 export type PaymentMethodValue = (typeof PAYMENT_METHODS)[number];
+export type ReceivedBy = (typeof RECEIVED_BY)[number];
 
 export { MONTH_NAMES, periodLabel } from "@/lib/dates";
 
@@ -25,7 +28,7 @@ export const paymentCreateSchema = z.object({
   periodYear: zRequired(zInt(2000, 2100)),
   method: z.preprocess(
     (v) => (typeof v === "string" ? blankToUndefined(v.trim().toLowerCase()) : blankToUndefined(v)),
-    z.enum(PAYMENT_METHODS, { message: "must be cash, bank, upi or other" }).default("cash"),
+    z.enum(RECEIVED_BY, { message: "must be UPI or bank" }).default("upi"),
   ),
   notes: zText(1000),
   /** bank / UPI ref no. (UTR) */

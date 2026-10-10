@@ -509,6 +509,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   deposit ref no. in the lease drawer. Every ATTACHMENT / Deposit attachment section and thumbnail row is gone —
   ProofStrip / PendingProofStrip deleted; components/proof/ProofClip.tsx holds ProofClip, PendingProofClip,
   usePendingProofs, ProofMark, ProofHead, proofCount. (Photos still get their 360 px preview stored; nothing shows it now.)
+- 10/10/2026: NO CASH (owner: "REMOVE CASH IN PAYMENTS, WILL NEVER RECEIVE CASH" → "DEPLOY THAT"): Record rent offers
+  UPI · BANK only (UPI picked by default) and the Ref no. (UTR) box + its clip always show. The API refuses new cash
+  (and "other") payments: paymentCreateSchema method = RECEIVED_BY ["upi", "bank"], default "upi" (tested). Prod had
+  no cash payments (27 UPI, 1 bank); PAYMENT_METHODS / the DB enum / METHOD_LABEL / the receipt's cash revenue-stamp rule
+  are kept so any old cash record still shows. Demo seed no longer makes cash payments.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

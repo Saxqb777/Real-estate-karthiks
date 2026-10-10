@@ -41,3 +41,19 @@ describe("payment ref no. (UTR)", () => {
     expect(paymentReferenceSchema.safeParse({ reference: "X".repeat(41) }).success).toBe(false);
   });
 });
+
+describe("how rent is received (owner, 10/10/2026: never cash)", () => {
+  const withMethod = (method: unknown) => paymentCreateSchema.safeParse({ ...rent, method });
+  it("takes UPI or bank", () => {
+    expect(withMethod("upi").data?.method).toBe("upi");
+    expect(withMethod("Bank").data?.method).toBe("bank");
+  });
+  it("refuses cash (and anything else)", () => {
+    expect(withMethod("cash").success).toBe(false);
+    expect(withMethod("other").success).toBe(false);
+  });
+  it("is UPI when not given", () => {
+    expect(withMethod(undefined).data?.method).toBe("upi");
+    expect(withMethod("").data?.method).toBe("upi");
+  });
+});
