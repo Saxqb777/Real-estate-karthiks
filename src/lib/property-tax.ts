@@ -4,7 +4,9 @@
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { ApiError, conflict, notFound } from "@/lib/api";
+import { fileKeysOf } from "@/lib/attachments";
 import { prisma } from "@/lib/db";
+import { removeFiles } from "@/lib/files";
 import { PROPERTY_TAX_CATEGORY } from "@/lib/schemas/expense-category";
 import {
   propertyTaxExistsMessage,
@@ -21,6 +23,7 @@ type Tx = Prisma.TransactionClient;
 export const propertyTaxInclude = {
   unit: { select: { id: true, name: true } },
   expense: { select: { id: true } },
+  _count: { select: { attachments: true } },
 } satisfies Prisma.PropertyTaxInclude;
 
 interface TaxState {
@@ -159,11 +162,13 @@ export async function updatePropertyTax(id: string, input: PropertyTaxUpdate) {
   });
 }
 
-/** Deletes the tax row and its linked expense (if any). */
+/** Deletes the tax row, its linked expense (if any) and its proof files. */
 export async function deletePropertyTax(id: string) {
+  const files = await fileKeysOf({ propertyTaxId: id });
   await prisma.$transaction(async (tx) => {
     await lockTax(tx, id);
     const { expenseId } = await tx.propertyTax.delete({ where: { id }, select: { expenseId: true } });
     if (expenseId) await tx.expense.deleteMany({ where: { id: expenseId } });
   });
+  await removeFiles(files);
 }

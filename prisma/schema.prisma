@@ -146,6 +146,8 @@ model Lease {
   securityDeposit       Decimal   @default(0) @map("security_deposit") @db.Decimal(14, 2)
   depositRefundedAmount Decimal?  @map("deposit_refunded_amount") @db.Decimal(14, 2)
   depositRefundDate     DateTime? @map("deposit_refund_date") @db.Date
+  /// bank / UPI ref no. (UTR) of the security deposit transfer (owner, 10/10/2026)
+  depositReference      String?   @map("deposit_reference")
   reminderEnabled       Boolean   @default(false) @map("reminder_enabled")
   /// the current rental agreement's end (e.g. an 11-month agreement); null = not recorded
   agreementEndDate      DateTime? @map("agreement_end_date") @db.Date
@@ -157,6 +159,8 @@ model Lease {
   tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   payments    Payment[]
   rentChanges LeaseRentChange[]
+  /// proof of the security deposit (transfer screenshot, statement)
+  attachments Attachment[]
 
   @@index([unitId])
   @@index([tenantId])
@@ -195,7 +199,8 @@ model Payment {
   invoiceNumber String        @unique @map("invoice_number")
   createdAt     DateTime      @default(now()) @map("created_at")
 
-  lease Lease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  lease       Lease        @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
 
   @@index([leaseId])
   @@map("payment")
@@ -229,6 +234,7 @@ model Expense {
   category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   /// Set when this expense was auto-created by a paid PropertyTax row
   propertyTax PropertyTax?
+  attachments Attachment[]
 
   @@index([unitId])
   @@index([categoryId])
@@ -248,11 +254,43 @@ model PropertyTax {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  unit    Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  expense Expense? @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+  unit        Unit         @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  expense     Expense?     @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+  attachments Attachment[]
 
   @@unique([unitId, year])
   @@map("property_tax")
+}
+
+/// A photo, screenshot or PDF kept as proof of a record (owner, 10/10/2026: bills, payment screenshots, deposit and bank
+/// statements). Exactly ONE of the four links is set (CHECK attachment_one_owner). The file itself lives in private
+/// storage (Vercel Blob in production) under fileKey; images also have a small preview under thumbKey.
+model Attachment {
+  id            String   @id @default(cuid())
+  paymentId     String?  @map("payment_id")
+  expenseId     String?  @map("expense_id")
+  /// the lease's security deposit
+  leaseId       String?  @map("lease_id")
+  propertyTaxId String?  @map("property_tax_id")
+  /// the name the file had on the owner's phone / computer
+  fileName      String   @map("file_name")
+  contentType   String   @map("content_type")
+  /// bytes
+  size          Int
+  fileKey       String   @unique @map("file_key")
+  thumbKey      String?  @map("thumb_key")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  payment     Payment?     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  expense     Expense?     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  lease       Lease?       @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  propertyTax PropertyTax? @relation(fields: [propertyTaxId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([expenseId])
+  @@index([leaseId])
+  @@index([propertyTaxId])
+  @@map("attachment")
 }
 
 model ActionItem {

@@ -4,7 +4,7 @@ import { z } from "zod";
 import "./messages";
 import { sumAmounts } from "@/lib/calculations";
 import { formatDate, periodLabel, todayIST } from "@/lib/dates";
-import { checkDateRange, zDate, zDateParam, zInt, zPositiveMoney, zText } from "@/lib/validation";
+import { checkDateRange, zDate, zDateParam, zInt, zPositiveMoney, zReference, zReferenceRequired, zText } from "@/lib/validation";
 import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
 
@@ -14,14 +14,6 @@ export type PaymentMethodValue = (typeof PAYMENT_METHODS)[number];
 export { MONTH_NAMES, periodLabel } from "@/lib/dates";
 
 const blankToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
-
-/**
- * Bank / UPI reference — the UTR (NEFT / IMPS / RTGS) or the UPI Ref No. (owner, 10/10/2026). Spaces are dropped
- * ("4123 4567 8901" → "412345678901") and letters capitalised so it matches the bank statement; blank → null.
- */
-const tidyReference = (v: string) => v.replace(/\s+/g, "").toUpperCase() || null;
-const zReferenceOut = z.string().max(40, "must be at most 40 characters").nullable();
-export const zPaymentReference = z.preprocess((v) => (typeof v === "string" ? tidyReference(v) : v === undefined ? null : v), zReferenceOut);
 
 export const paymentCreateSchema = z.object({
   leaseId: z.string({ message: "Choose a lease" }).trim().min(1, "Choose a lease"),
@@ -36,18 +28,12 @@ export const paymentCreateSchema = z.object({
     z.enum(PAYMENT_METHODS, { message: "must be cash, bank, upi or other" }).default("cash"),
   ),
   notes: zText(1000),
-  reference: zPaymentReference,
+  /** bank / UPI ref no. (UTR) */
+  reference: zReference,
 });
 
 /** PATCH /api/payments/[id] — only the ref no. can change later; everything else stays as recorded on the receipt. */
-export const paymentReferenceSchema = z.object({
-  // the key must be sent (null / "" clears it) — a body without it never wipes a saved ref no.
-  reference: z
-    .string({ error: (iss) => (iss.input === undefined ? "is required" : "must be text") })
-    .nullable()
-    .transform((v) => (v === null ? null : tidyReference(v)))
-    .pipe(zReferenceOut),
-});
+export const paymentReferenceSchema = z.object({ reference: zReferenceRequired });
 
 /**
  * GET /api/payments?leaseId=&year=&yearMode=fy|calendar&from=&to= — year or custom dates (from/to, inclusive; they win
@@ -152,6 +138,8 @@ export type PaymentDTO = Serialized<Payment>;
 /** GET /api/payments → PaymentListResponse; POST /api/payments → PaymentListItem */
 export type PaymentListItem = PaymentDTO & {
   lease: { id: string; unit: { id: string; name: string }; tenant: { id: string; name: string } };
+  /** proof files on it */
+  _count?: { attachments: number };
 };
 export interface PaymentListResponse {
   items: PaymentListItem[];

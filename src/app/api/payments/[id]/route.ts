@@ -1,6 +1,8 @@
 import { handler, json, notFound, param, parseBody } from "@/lib/api";
+import { fileKeysOf } from "@/lib/attachments";
 import { rentForMonth } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
+import { removeFiles } from "@/lib/files";
 import { paymentReferenceSchema } from "@/lib/schemas/payment";
 
 export const GET = handler(async (_req, ctx) => {
@@ -43,7 +45,9 @@ export const PATCH = handler(async (req, ctx) => {
 
 export const DELETE = handler(async (_req, ctx) => {
   const id = await param(ctx, "id");
+  const files = await fileKeysOf({ paymentId: id });
   const { count } = await prisma.payment.deleteMany({ where: { id } });
   if (!count) throw notFound("Payment");
+  await removeFiles(files);
   return json({ ok: true });
 });

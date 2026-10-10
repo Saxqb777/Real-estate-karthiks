@@ -1,7 +1,7 @@
 "use client";
 import { BellRing, CalendarPlus, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { DateInput, Field, FormGrid, NumberInput, Select, Textarea, Toggle } from "@/components/ui";
+import { DateInput, Field, FormGrid, Input, NumberInput, Select, Textarea, Toggle } from "@/components/ui";
 import { api } from "@/lib/client";
 import { formatDate, toInputDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -29,6 +29,8 @@ type Values = {
   rentTiming: "advance" | "arrears";
   rentDueDay: number | null;
   securityDeposit: number | null;
+  /** bank / UPI ref no. (UTR) of the deposit transfer */
+  depositReference: string;
   agreementEndDate: string;
   reminderEnabled: boolean;
   depositRefundedAmount: number | null;
@@ -94,6 +96,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       rentTiming: lease?.rentTiming === "arrears" ? "arrears" : "advance",
       rentDueDay: lease?.rentDueDay ?? null,
       securityDeposit: lease?.securityDeposit ?? defaults?.securityDeposit ?? prev?.securityDeposit ?? null,
+      depositReference: lease?.depositReference ?? "",
       agreementEndDate: toInputDate(lease?.agreementEndDate),
       reminderEnabled: lease?.reminderEnabled ?? true,
       depositRefundedAmount: lease?.depositRefundedAmount ?? null,
@@ -112,6 +115,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         rentTiming: v.rentTiming,
         rentDueDay: v.rentDueDay,
         securityDeposit: v.securityDeposit ?? 0,
+        depositReference: v.depositReference,
         agreementEndDate: v.agreementEndDate || null,
         reminderEnabled: v.reminderEnabled,
       };
@@ -213,6 +217,10 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
           }
         >
           <DateInput {...form.date("agreementEndDate")} />
+        </Field>
+        {/* under Security deposit in the 2-column grid */}
+        <Field label="Deposit ref no. (UTR)" error={form.error("depositReference")}>
+          <Input {...form.text("depositReference")} className={s.refInput} maxLength={60} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
         </Field>
         <Field label="Reminders">
           <div data-field="reminderEnabled">

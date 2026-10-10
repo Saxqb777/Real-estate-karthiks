@@ -1,6 +1,7 @@
 "use client";
 import { Banknote, Building, Smartphone } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { PendingProofStrip, usePendingProofs } from "@/components/proof";
 import { DateInput, Field, FormGrid, Input, NumberInput, Select, toast } from "@/components/ui";
 import { rentForMonth } from "@/lib/calculations";
 import { api } from "@/lib/client";
@@ -79,6 +80,9 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
     return items.find((l) => leasePhase(l) === "current") ?? items[0];
   }, [leases.data]);
 
+  // proof picked before saving (payment screenshot, statement) — uploaded onto the payment once it is recorded
+  const pending = usePendingProofs();
+
   const rules = (v: Values): Issue[] => {
     const lease = leaseById.get(v.leaseId);
     if (!lease || !v.periodMonth || !v.periodYear) return [];
@@ -109,6 +113,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
         description: `${periodLabel({ month: p.periodMonth, year: p.periodYear })} · ${p.lease.tenant.name} · ${p.invoiceNumber}`,
         action: { label: "Receipt", onClick: () => window.open(`/invoice/${p.id}`, "_blank", "noopener") },
       });
+      void pending.uploadTo({ paymentId: p.id });
       onSaved?.(p);
     },
   });
@@ -255,6 +260,9 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
             <Input {...form.text("reference")} className={s.refInput} maxLength={60} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
           </Field>
         )}
+        <Field label="Proof" span="full">
+          <PendingProofStrip pending={pending} />
+        </Field>
       </FormGrid>
     </FormBody>
   );
@@ -263,7 +271,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
     body,
     actions: <FormActions form={form} onCancel={onCancel} submitLabel={submitLabel ?? "Record rent"} />,
     onSubmit: form.handleSubmit,
-    dirty: form.dirty,
+    dirty: form.dirty || pending.count > 0,
     busy: form.busy,
   });
 }

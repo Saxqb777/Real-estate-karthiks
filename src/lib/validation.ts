@@ -56,6 +56,21 @@ export function checkDateRange(q: { from?: Date; to?: Date }, ctx: z.RefinementC
 /** Optional/nullable date: "", null or undefined → null. */
 export const zDateOrNull = z.preprocess((v) => (v === "" || v === undefined ? null : v), zDate.nullable());
 
+/**
+ * Bank / UPI reference — the UTR (NEFT / IMPS / RTGS) or the UPI Ref No. (owner, 10/10/2026; rent payments and the
+ * security deposit). Spaces are dropped ("4123 4567 8901" → "412345678901") and letters capitalised so it matches the
+ * bank statement; blank → null.
+ */
+export const tidyReference = (v: string) => v.replace(/\s+/g, "").toUpperCase() || null;
+const zReferenceOut = z.string().max(40, "must be at most 40 characters").nullable();
+export const zReference = z.preprocess((v) => (typeof v === "string" ? tidyReference(v) : v === undefined ? null : v), zReferenceOut);
+/** The same, but the key must be sent (null / "" clears it) — a change without it never wipes a saved ref no. */
+export const zReferenceRequired = z
+  .string({ error: (iss) => (iss.input === undefined ? "is required" : "must be text") })
+  .nullable()
+  .transform((v) => (v === null ? null : tidyReference(v)))
+  .pipe(zReferenceOut);
+
 /** Trimmed optional text: "" / whitespace / undefined → null. */
 export const zText = (max = 2000) =>
   z.preprocess(

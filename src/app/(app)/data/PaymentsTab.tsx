@@ -20,11 +20,12 @@ import {
   yearOf,
   type PeriodPick,
 } from "@/components/forms";
+import { ProofHead, ProofMark, ProofStrip, proofCount } from "@/components/proof";
 import { api, useApi, useMutation } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import type { PaymentDetail, PaymentListItem } from "@/lib/schemas/payment";
-import { DataPanel, DeleteButton, DrawerLoading, DetailHero, RecordDrawer, Spacer, Stack2, TotalLabel, shortPeriod, useCreate, useNarrow, useNewSignal, useSelection } from "./shared";
+import { DataPanel, DeleteButton, DetailSection, DrawerLoading, DetailHero, RecordDrawer, Spacer, Stack2, TotalLabel, shortPeriod, useCreate, useNarrow, useNewSignal, useSelection } from "./shared";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
@@ -78,7 +79,11 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
           header: "Payment", wrap: true,
           cell: (p) => (
             <Stack2
-              top={`${shortPeriod(p)} · ${p.lease.tenant.name}`}
+              top={
+                <>
+                  {shortPeriod(p)} · {p.lease.tenant.name} <ProofMark count={proofCount(p)} />
+                </>
+              }
               bottom={`${p.lease.unit.name} · ${formatDate(p.paymentDate)} · ${METHOD_LABEL[p.method]}${p.reference ? ` ${p.reference}` : ""}`}
             />
           ),
@@ -102,6 +107,7 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
         },
         { key: "ref", header: "Ref no.", cell: (p) => (p.reference ? <span className="num">{p.reference}</span> : <span className="faint">—</span>) },
         { key: "receipt", header: "Receipt", cell: receipt },
+        { key: "proof", header: <ProofHead />, align: "center", width: 44, cell: (p) => <ProofMark count={proofCount(p)} /> },
         { key: "amount", header: "Amount", numeric: true, sortValue: (p) => p.amount, cell: (p) => <span className="pos">{money(p.amount)}</span>, footer: footerTotal },
       ];
 
@@ -215,6 +221,9 @@ function PaymentDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
           p.notes ? { label: "Note", value: p.notes } : null,
         ]}
       />
+      <DetailSection title="Proof">
+        <ProofStrip owner={{ paymentId: p.id }} />
+      </DetailSection>
     </div>
   ) : (
     <DrawerLoading error={detail.error?.message} />

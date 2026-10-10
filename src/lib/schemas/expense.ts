@@ -66,6 +66,8 @@ export type ExpenseDTO = Serialized<Expense> & {
   category: { id: string; name: string; color: string };
   unit: { id: string; name: string } | null;
   propertyTaxId: string | null;
+  /** proof files on it */
+  _count?: { attachments: number };
 };
 
 /** GET /api/expenses → total is sumAmounts() over the filtered items. */
@@ -80,6 +82,7 @@ export const expenseInclude = {
   category: { select: { id: true, name: true, color: true } },
   unit: { select: { id: true, name: true } },
   propertyTax: { select: { id: true } },
+  _count: { select: { attachments: true } },
 } satisfies Prisma.ExpenseInclude;
 
 /** Flatten the linked property-tax row to propertyTaxId (null when entered by hand). */

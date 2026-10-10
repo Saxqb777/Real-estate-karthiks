@@ -3,11 +3,27 @@ import { CircleCheck, Landmark, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button, EmptyState, StatusPill, Table, type Column } from "@/components/ui";
 import { ChoiceGroup, Facts, PropertyTaxForm, drawerFrame, quickAdd, usePropertyTax } from "@/components/forms";
+import { ProofHead, ProofMark, ProofStrip, proofCount } from "@/components/proof";
 import { sumAmounts } from "@/lib/calculations";
 import { formatDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import type { PropertyTaxDTO } from "@/lib/schemas/property-tax";
-import { DataPanel, DeleteButton, DrawerLoading, DetailHero, EditButton, RecordDrawer, Spacer, Stack2, editInDrawer, useCreate, useNarrow, useNewSignal, useSelection } from "./shared";
+import {
+  DataPanel,
+  DeleteButton,
+  DetailSection,
+  DrawerLoading,
+  DetailHero,
+  EditButton,
+  RecordDrawer,
+  Spacer,
+  Stack2,
+  editInDrawer,
+  useCreate,
+  useNarrow,
+  useNewSignal,
+  useSelection,
+} from "./shared";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
@@ -66,7 +82,22 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
 
   const columns: Column<PropertyTaxDTO>[] = narrow
     ? [
-        { key: "what", header: "Tax", wrap: true, cell: (t) => <Stack2 top={`${t.year} · ${t.unit.name}`} bottom={t.paymentDate ? `Paid ${formatDate(t.paymentDate)}` : "Not paid yet"} />, footer },
+        {
+          key: "what",
+          header: "Tax",
+          wrap: true,
+          cell: (t) => (
+            <Stack2
+              top={
+                <>
+                  {t.year} · {t.unit.name} <ProofMark count={proofCount(t)} />
+                </>
+              }
+              bottom={t.paymentDate ? `Paid ${formatDate(t.paymentDate)}` : "Not paid yet"}
+            />
+          ),
+          footer,
+        },
         // phones: amount with the Mark paid button / Paid pill under it — two columns, nothing runs off the screen
         {
           key: "amount",
@@ -86,6 +117,7 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
         { key: "amount", header: "Amount", numeric: true, sortValue: (t) => t.amount, cell: (t) => <span className="neg">{money(t.amount)}</span> },
         { key: "status", header: "Status", sortValue: (t) => t.status, cell: (t) => <StatusPill status={t.status === "Paid" ? "paid" : "due"} size="sm" /> },
         { key: "paid", header: "Paid on", sortValue: (t) => t.paymentDate ?? "", cell: (t) => (t.paymentDate ? <span className="num">{formatDate(t.paymentDate)}</span> : <span className="faint">—</span>) },
+        { key: "proof", header: <ProofHead />, align: "center", width: 44, cell: (t) => <ProofMark count={proofCount(t)} /> },
         { key: "action", header: "", align: "right", cell: action },
       ];
 
@@ -182,6 +214,9 @@ function TaxDrawer({ sel, goto, items }: { sel: ReturnType<typeof useSelection>;
           },
         ]}
       />
+      <DetailSection title="Proof">
+        <ProofStrip owner={{ propertyTaxId: t.id }} />
+      </DetailSection>
     </div>
   ) : (
     <DrawerLoading />

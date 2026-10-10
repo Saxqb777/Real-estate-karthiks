@@ -19,6 +19,7 @@ import {
   yearOf,
   type PeriodPick,
 } from "@/components/forms";
+import { ProofHead, ProofMark, ProofStrip, proofCount } from "@/components/proof";
 import { useApi } from "@/lib/client";
 import { formatDate } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -27,6 +28,7 @@ import {
   BlockedNote,
   DataPanel,
   DeleteButton,
+  DetailSection,
   DrawerLoading,
   DetailHero,
   EditButton,
@@ -102,7 +104,16 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
         {
           key: "what",
           header: "Expense", wrap: true,
-          cell: (e) => <Stack2 top={category(e)} bottom={`${formatDate(e.expenseDate)} · ${e.unit?.name ?? "Whole plot"}${e.description ? ` · ${e.description}` : ""}`} />,
+          cell: (e) => (
+            <Stack2
+              top={
+                <>
+                  {category(e)} <ProofMark count={proofCount(e)} />
+                </>
+              }
+              bottom={`${formatDate(e.expenseDate)} · ${e.unit?.name ?? "Whole plot"}${e.description ? ` · ${e.description}` : ""}`}
+            />
+          ),
           footer: footerLabel,
         },
         { key: "amount", header: "Amount", numeric: true, cell: (e) => <span className="neg">{money(e.amount)}</span>, footer: footerTotal },
@@ -112,6 +123,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
         { key: "category", header: "Category", sortValue: (e) => e.category.name, cell: category },
         { key: "unit", header: "For", sortValue: (e) => e.unit?.name ?? "", cell: (e) => e.unit?.name ?? <span className="dim">Whole plot</span> },
         { key: "desc", header: "What for", wrap: true, cell: what },
+        { key: "proof", header: <ProofHead />, align: "center", width: 44, cell: (e) => <ProofMark count={proofCount(e)} /> },
         { key: "amount", header: "Amount", numeric: true, sortValue: (e) => e.amount, cell: (e) => <span className="neg">{money(e.amount)}</span>, footer: footerTotal },
       ];
 
@@ -242,6 +254,11 @@ function ExpenseDrawer({ sel, goto }: { sel: ReturnType<typeof useSelection>; go
           { label: "What for", value: e.description ?? <span className="faint">—</span> },
         ]}
       />
+      {!linked && (
+        <DetailSection title="Proof">
+          <ProofStrip owner={{ expenseId: e.id }} />
+        </DetailSection>
+      )}
       {linked && (
         <BlockedNote>
           Added automatically when property tax was marked Paid, so it can only be changed there.{" "}

@@ -1,0 +1,303 @@
+/* Proof files (owner, 10/10/2026): thumbnail row, the 📎 mark in lists, and the full-screen view. */
+
+/* ---- thumbnail row */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-radius: 10px;
+}
+.strip[data-over] {
+  outline: 2px dashed #c9922e;
+  outline-offset: 4px;
+}
+.tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg-3);
+  color: var(--text-dim);
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+button.tile {
+  cursor: pointer;
+}
+button.tile:hover,
+button.tile:focus-visible {
+  border-color: #c9922e;
+  transform: translateY(-1px);
+}
+.tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.doc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--ff-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+}
+.doc svg {
+  width: 24px;
+  height: 24px;
+  color: #c9922e;
+}
+.add {
+  border: 1.5px dashed rgba(201, 146, 46, 0.6);
+  background: transparent;
+  color: #c9922e;
+}
+.add:hover,
+.add:focus-visible {
+  border-color: #c9922e;
+  background: rgba(201, 146, 46, 0.08);
+}
+.add svg {
+  width: 24px;
+  height: 24px;
+}
+.busy img {
+  opacity: 0.4;
+}
+.spin {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 24px;
+  height: 24px;
+  color: #ffcf7a;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(201, 146, 46, 0.6);
+  border-radius: 50%;
+  background: rgba(14, 13, 11, 0.85);
+  color: var(--text);
+  cursor: pointer;
+}
+.remove:hover {
+  border-color: #c9922e;
+}
+.remove svg {
+  width: 12px;
+  height: 12px;
+}
+.input {
+  display: none;
+}
+
+/* ---- 📎 on list rows (and the column's header) */
+.head {
+  display: inline-flex;
+  vertical-align: -2px;
+}
+.head svg {
+  width: 14px;
+  height: 14px;
+}
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: #c9922e;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  vertical-align: -2px;
+}
+.mark svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---- full-screen view (same layer as drawers; opened later, so it sits on top — and a confirm opened from it on top of it) */
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: rgba(10, 8, 6, 0.97);
+  color: var(--text);
+  outline: none;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+}
+.title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.count {
+  flex: none;
+  font-family: var(--ff-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #c9922e;
+}
+.name {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.tools {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+.round {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(201, 146, 46, 0.55);
+  border-radius: 50%;
+  background: rgba(22, 17, 12, 0.88);
+  color: var(--text);
+  cursor: pointer;
+}
+.round:hover:not(:disabled),
+.round:focus-visible {
+  border-color: #c9922e;
+  background: rgba(40, 30, 18, 0.95);
+}
+.round:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.round svg {
+  width: 18px;
+  height: 18px;
+}
+/* flex (not grid): the photo's max-height: 100% needs a box of known height to measure against */
+.stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 4px 72px 28px;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+}
+.photo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.photo[data-loaded] {
+  opacity: 1;
+}
+.pdf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 360px;
+  padding: 30px 28px;
+  border: 2px solid #c9922e;
+  border-radius: 10px;
+  background: var(--bg-2);
+  text-align: center;
+}
+.pdf > svg {
+  width: 48px;
+  height: 48px;
+  color: #c9922e;
+}
+.pdfName {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.pdfSize {
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.prev {
+  left: 16px;
+}
+.next {
+  right: 16px;
+}
+
+@media (max-width: 640px) {
+  .tile {
+    width: 64px;
+    height: 64px;
+  }
+  .bar {
+    padding: 10px 12px;
+  }
+  .tools {
+    gap: 6px;
+  }
+  .round {
+    width: 38px;
+    height: 38px;
+  }
+  .stage {
+    padding: 4px 8px 20px;
+  }
+  /* phones swipe between files; the arrows sit low over the edges of the photo */
+  .nav {
+    top: auto;
+    bottom: 28px;
+    transform: none;
+  }
+  .prev {
+    left: 14px;
+  }
+  .next {
+    right: 14px;
+  }
+}

@@ -14,6 +14,8 @@ const paymentInclude = {
       tenant: { select: { id: true, name: true } },
     },
   },
+  // how many proof files it has (📎 in the list)
+  _count: { select: { attachments: true } },
 } as const;
 
 /** Payments, newest first (optionally for one lease and/or one FY / calendar year by the day received), with count and total. */

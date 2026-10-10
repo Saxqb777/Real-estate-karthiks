@@ -68,6 +68,8 @@ export type PropertyTaxCreateInput = z.input<typeof propertyTaxCreateSchema>;
 export type PropertyTaxDTO = Serialized<PropertyTax> & {
   unit: { id: string; name: string };
   expense: { id: string } | null;
+  /** proof files on it */
+  _count?: { attachments: number };
 };
 
 export const propertyTaxExistsMessage = (year: number, unitName: string) =>

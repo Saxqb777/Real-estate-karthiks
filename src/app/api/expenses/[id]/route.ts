@@ -2,7 +2,9 @@
 import type { Prisma } from "@prisma/client";
 import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
+import { fileKeysOf } from "@/lib/attachments";
 import { prisma } from "@/lib/db";
+import { removeFiles } from "@/lib/files";
 import { expenseInclude, expenseUpdateSchema, linkedExpenseMessage, toExpenseDTO } from "@/lib/schemas/expense";
 
 async function loadOne(id: string) {
@@ -41,9 +43,11 @@ export const PUT = handler(async (req, ctx) => {
 
 export const DELETE = handler(async (_req, ctx) => {
   const id = await param(ctx, "id");
+  const files = await fileKeysOf({ expenseId: id });
   await prisma.$transaction(async (tx) => {
     await assertEditable(tx, id);
     await tx.expense.delete({ where: { id } });
   });
+  await removeFiles(files);
   return json({ ok: true });
 });

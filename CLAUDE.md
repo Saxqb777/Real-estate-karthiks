@@ -469,6 +469,26 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   "Add" — edited in place (PATCH /api/payments/[id] {reference}: the ONLY part of a payment that can change later; the
   old "Payments can't be edited…" note removed). Receipt: "Ref no. …" under PAID BY (InvoiceData.reference). The owner
   fills in the old payments himself. No search box (kept clean).
+- 10/10/2026: PROOF FILES (owner: "upload real expense bill, payment ss and deposit ref no statement, and bank statements
+  attach to the transaction … basically attach images with transactions"; plan approved with "go"). Table attachment
+  (exactly one of payment / expense / lease = its security deposit / property tax — CHECK attachment_one_owner; migration
+  20261010120000) + Lease.depositReference ("Deposit ref no. (UTR)" in the lease form under Security deposit, a fact in
+  the lease drawer; tidied like the payment ref — zReference in validation.ts). Files live in a PRIVATE Vercel Blob store
+  (lib/files.ts: BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID; dev/tests → .data/files, gitignored; on Vercel with no store →
+  503) and reach only the signed-in owner via GET /api/attachments/[id] (?v=thumb preview, ?dl=1 save; private long cache,
+  nosniff). POST /api/attachments (multipart, ≤ 4 MB, ≤ 20 per record): the first bytes decide — JPEG / PNG / WebP / PDF
+  only; names cleaned, random storage keys (attachment-rules.ts, tested). Photos are redrawn in the browser to a JPEG of
+  ≤ ~4.2 MP + a 360 px preview (proof/prepare.ts + image-fit.ts, tested — right way up, location data dropped).
+  UI (components/proof): PROOF row = thumbnails + dashed "+" tile (phone: camera / photos / files; desktop: drop files) in
+  the payment, expense, property tax drawers and DEPOSIT PROOF in the lease drawer (deposit > 0); the automatic
+  property-tax expense has none (its proof goes on the tax entry — API refuses it). "Proof" picker in Record rent + Add
+  expense (also in the ⌘K / 3D-window pop-ups), uploaded right after the record is saved. Full-screen viewer: ‹ › / arrow
+  keys / swipe, round gold Save · Open · Delete · Close; PDFs show a card with OPEN PDF. 📎 (+ count) column before the
+  amount in Data → Payments / Expenses / Property tax (phones: after the row's first line). Deleting a payment / expense /
+  tax year / lease removes its files too. DEPLOYED 10/10/2026 (owner: "DEPLOY") while the Vercel connector was down, so
+  the private Blob store was NOT created yet: until it exists (Vercel project → Storage → Blob, Private, Singapore,
+  connected to the project → BLOB_READ_WRITE_TOKEN / BLOB_STORE_ID) + a redeploy, uploads answer 503 "File storage is not
+  set up yet"; everything else works.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

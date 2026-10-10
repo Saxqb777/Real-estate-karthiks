@@ -1,5 +1,6 @@
 "use client";
 import { Landmark, Lock } from "lucide-react";
+import { PendingProofStrip, usePendingProofs } from "@/components/proof";
 import { Button, DateInput, Field, FormGrid, NumberInput, Select, Textarea } from "@/components/ui";
 import { api } from "@/lib/client";
 import { toInputDate, todayIST } from "@/lib/dates";
@@ -25,6 +26,8 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
   const linked = Boolean(expense?.propertyTaxId);
   const units = useUnits();
   const cats = useCategories();
+  // the bill picked while adding (a saved expense shows its own proof row in its details)
+  const pending = usePendingProofs();
   const form = useForm<Values, ExpenseDTO>({
     initial: {
       expenseDate: toInputDate(expense?.expenseDate) || defaults?.expenseDate || toInputDate(todayIST()),
@@ -38,7 +41,10 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
     submit: (body) =>
       expense ? api<ExpenseDTO>(`/api/expenses/${expense.id}`, { method: "PUT", body }) : api<ExpenseDTO>("/api/expenses", { method: "POST", body }),
     success: (r) => (editing ? "Expense saved" : `Expense added · ${formatINR(r.amount, r.amount % 1 !== 0)} ${r.category.name}`),
-    onSaved,
+    onSaved: (r) => {
+      if (!editing) void pending.uploadTo({ expenseId: r.id });
+      onSaved?.(r);
+    },
   });
   const v = form.values;
   const category = cats.data?.items.find((c) => c.id === v.categoryId);
@@ -73,6 +79,11 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
           <Field label="What was it for?" aside="optional" span="full" error={form.error("description")}>
             <Textarea {...form.text("description")} placeholder="e.g. Plumber — kitchen tap and tank float valve" />
           </Field>
+          {!editing && (
+            <Field label="Proof" span="full">
+              <PendingProofStrip pending={pending} />
+            </Field>
+          )}
         </FormGrid>
       </fieldset>
       {isTaxCategory && !linked && (
@@ -95,7 +106,7 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
       <FormActions form={form} onCancel={onCancel} submitLabel={submitLabel ?? (editing ? "Save expense" : "Add expense")} />
     ),
     onSubmit: linked ? (e) => e?.preventDefault() : form.handleSubmit,
-    dirty: form.dirty,
+    dirty: form.dirty || pending.count > 0,
     busy: form.busy,
   });
 }

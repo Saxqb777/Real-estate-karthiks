@@ -2,7 +2,9 @@ import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
+import { fileKeysOf } from "@/lib/attachments";
 import { prisma } from "@/lib/db";
+import { removeFiles } from "@/lib/files";
 import {
   leaseConflictMessage,
   leaseDeleteBlockedMessage,
@@ -110,6 +112,7 @@ export const PUT = handler(async (req, ctx) => {
 /** Remove a lease entered by mistake. Refused while it has payments (they'd vanish with it — and their invoices). */
 export const DELETE = handler(async (_req, ctx) => {
   const id = await param(ctx, "id");
+  const files = await fileKeysOf({ leaseId: id }); // the deposit proof (payments block the delete, so none of theirs)
   await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT 1 FROM lease WHERE id = ${id} FOR UPDATE`; // no payment can be added mid-check
     const lease = await tx.lease.findUnique({
@@ -121,5 +124,6 @@ export const DELETE = handler(async (_req, ctx) => {
     if (blocked) throw conflict(blocked);
     await tx.lease.delete({ where: { id } });
   });
+  await removeFiles(files);
   return json({ ok: true });
 });

@@ -9,7 +9,7 @@ import { rentOn } from "@/lib/calculations";
 import type { LeaseState } from "@/lib/dashboard-types";
 import { addDays, formatDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
-import { zBool, zDate, zDateOrNull, zInt, zMoney, zPositiveMoney, zText } from "@/lib/validation";
+import { zBool, zDate, zDateOrNull, zInt, zMoney, zPositiveMoney, zReference, zText } from "@/lib/validation";
 import type { PaymentStats } from "./payment";
 import type { Serialized } from "@/lib/types";
 import { zRequired } from "@/lib/validation";
@@ -148,6 +148,8 @@ const leaseFields = {
   /** day of the month rent is due for this lease; empty = the Settings default */
   rentDueDay: z.preprocess((v) => (v === "" || v === undefined ? null : v), zInt(1, 31).nullable()),
   securityDeposit: zMoney,
+  /** bank / UPI ref no. (UTR) of the deposit transfer */
+  depositReference: zReference,
   depositRefundedAmount: zMoneyOrNull,
   depositRefundDate: zRefundDate,
   reminderEnabled: zBool,

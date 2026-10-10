@@ -16,6 +16,7 @@ import {
   useLeases,
   type LeasePhase,
 } from "@/components/forms";
+import { ProofStrip } from "@/components/proof";
 import { useApi } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -259,10 +260,19 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
                   ? "Held for the tenant — not income"
                   : undefined,
           },
+          (l.securityDeposit > 0 || Boolean(l.depositReference)) && {
+            label: "Deposit ref no.",
+            value: l.depositReference ? <span className="num">{l.depositReference}</span> : <span className="faint">—</span>,
+          },
           { label: "Rent reminders", value: l.reminderEnabled ? "On" : "Off" },
           l.moveOutNotes ? { label: "Move-out notes", value: l.moveOutNotes } : null,
         ]}
       />
+      {l.securityDeposit > 0 && (
+        <DetailSection title="Deposit proof">
+          <ProofStrip owner={{ leaseId: l.id }} />
+        </DetailSection>
+      )}
       <RentChanges lease={l} />
       <DetailSection title="Payments" aside={<span className="faint">{l.payments.length ? "newest first" : null}</span>}>
         {l.payments.length ? (

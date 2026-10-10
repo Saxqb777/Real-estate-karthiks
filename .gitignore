@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# proof files saved locally in development (production keeps them in a private Vercel Blob store)
+/.data/
