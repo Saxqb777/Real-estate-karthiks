@@ -494,6 +494,16 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   lease's is "Deposit attachment"; the dashed "+" image tile is replaced by a clean gold PAPERCLIP button (44 px, no
   border, soft gold tile on hover — proof.module.css .attach), centred on the thumbnails; with no files yet the clip lines
   up exactly with the heading. Thumbnails now load at once (no lazy loading inside drawers).
+- 10/10/2026: PAYMENTS = CLIP ONLY (owner: "dont like this design" → "would the clip near next to the ref no. look
+  good?" → "CAN WE PLACE THE CLIP WITHOUT THE PDF FILE BEING VISIBLE" → "DEPLOY"): no ATTACHMENT section and NO
+  thumbnails on payments — just the gold 📎 (proof.module.css .clip, + .clipCount): Record rent = inside the Ref no.
+  (UTR) box at its right end (Input suffix) for UPI / Bank, beside CASH · UPI · BANK for cash; payment drawer = after
+  the ref no. + pencil (or "Add"), on the Paid by line for cash without a ref. No files → tap opens the picker; files →
+  the clip shows the count ("📎 2") and opens the full-screen viewer, which now has an ATTACH MORE button (round 📎)
+  and works for files picked before saving too (local object URLs; ✕ removes without asking). Components ProofClip
+  {owner} / PendingProofClip {pending}; ProofViewer takes ViewItem[] (viewItem(dto)) + onDelete / onAttach.
+  Expenses, property tax and the lease deposit still use the ATTACHMENT section (ProofStrip) — offered the same clip-only
+  look there (deposit: in the Deposit ref no. box; expenses: beside "What for"; tax: on the "Paid on" line), not built.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
