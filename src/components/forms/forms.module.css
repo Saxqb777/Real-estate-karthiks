@@ -399,6 +399,11 @@
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: var(--s-2);
 }
+/* ref no. (UTR): shown in capitals as typed, exactly as it is saved */
+.refInput input {
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
 .quick {
   display: flex;
   flex-wrap: wrap;

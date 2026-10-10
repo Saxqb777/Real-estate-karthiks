@@ -227,6 +227,18 @@
 .rcKpis b.rcBig {
   font-size: 26px;
 }
+/* "Paid by" + the bank / UPI ref no. (UTR) under it */
+.rcPay {
+  display: block;
+  min-width: 0;
+}
+.rcRef {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--mute);
+  overflow-wrap: anywhere;
+}
 .rcH {
   margin-top: 36px;
 }
@@ -330,6 +342,12 @@
   .rcKpis b.rcBig {
     margin-top: 0;
     font-size: 18px;
+  }
+  .rcPay {
+    text-align: right;
+  }
+  .rcRef {
+    margin-top: 2px;
   }
   .rcSum > div {
     padding: 12px 14px;

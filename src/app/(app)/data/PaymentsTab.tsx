@@ -1,7 +1,7 @@
 "use client";
-import { Coins, ExternalLink, Plus, ReceiptText } from "lucide-react";
+import { Coins, ExternalLink, Pencil, Plus, ReceiptText, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge, Button, EmptyState, LinkButton, Select, Table, type Column } from "@/components/ui";
+import { Badge, Button, EmptyState, Input, LinkButton, Select, Table, cx, toast, type Column } from "@/components/ui";
 import {
   ChoiceGroup,
   Facts,
@@ -20,7 +20,7 @@ import {
   yearOf,
   type PeriodPick,
 } from "@/components/forms";
-import { useApi } from "@/lib/client";
+import { api, useApi, useMutation } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import type { PaymentDetail, PaymentListItem } from "@/lib/schemas/payment";
@@ -76,7 +76,12 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
         {
           key: "what",
           header: "Payment", wrap: true,
-          cell: (p) => <Stack2 top={`${shortPeriod(p)} · ${p.lease.tenant.name}`} bottom={`${p.lease.unit.name} · ${formatDate(p.paymentDate)} · ${METHOD_LABEL[p.method]}`} />,
+          cell: (p) => (
+            <Stack2
+              top={`${shortPeriod(p)} · ${p.lease.tenant.name}`}
+              bottom={`${p.lease.unit.name} · ${formatDate(p.paymentDate)} · ${METHOD_LABEL[p.method]}${p.reference ? ` ${p.reference}` : ""}`}
+            />
+          ),
           footer: footerLabel,
         },
         { key: "amount", header: "Amount", numeric: true, cell: (p) => <span className="pos">{money(p.amount)}</span>, footer: footerTotal },
@@ -95,6 +100,7 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
             </Badge>
           ),
         },
+        { key: "ref", header: "Ref no.", cell: (p) => (p.reference ? <span className="num">{p.reference}</span> : <span className="faint">—</span>) },
         { key: "receipt", header: "Receipt", cell: receipt },
         { key: "amount", header: "Amount", numeric: true, sortValue: (p) => p.amount, cell: (p) => <span className="pos">{money(p.amount)}</span>, footer: footerTotal },
       ];
@@ -203,15 +209,12 @@ function PaymentDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
           { label: "Rent for", value: periodLabel({ month: p.periodMonth, year: p.periodYear }) },
           { label: "Received on", value: formatDate(p.paymentDate), num: true },
           { label: "Paid by", value: METHOD_LABEL[p.method] },
+          p.method !== "cash" || p.reference ? { label: "Ref no.", value: <RefNo key={p.id} payment={p} /> } : null,
           { label: "Receipt no.", value: p.invoiceNumber, num: true },
           { label: "Lease rent", value: formatINR(p.lease.monthlyRent), num: true, hint: `Lease ${leaseSpan(p.lease)}` },
           p.notes ? { label: "Note", value: p.notes } : null,
         ]}
       />
-      <p className={s.quiet}>
-        Payments can&rsquo;t be edited, so receipts always match what was recorded. If something is wrong, delete it and record it again — the
-        receipt number is not reused.
-      </p>
     </div>
   ) : (
     <DrawerLoading error={detail.error?.message} />
@@ -243,5 +246,70 @@ function PaymentDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
         )
       }
     />
+  );
+}
+
+/**
+ * The bank / UPI ref no. (UTR) in the payment drawer (owner, 10/10/2026): the number with a pencil, or "Add" when there
+ * is none; both open a small box in place. The only part of a payment that can change after it is recorded.
+ */
+function RefNo({ payment: p }: { payment: PaymentDetail }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const save = useMutation(
+    () => api<{ reference: string | null }>(`/api/payments/${p.id}`, { method: "PATCH", body: { reference: value } }),
+    {
+      success: (r) => (r.reference ? "Ref no. saved" : "Ref no. removed"),
+      onSuccess: () => setEditing(false),
+      toastError: false,
+      onError: (e) => toast.error(e.fieldErrors.reference ? `Ref no. ${e.fieldErrors.reference}` : e.message),
+    },
+  );
+  const start = () => {
+    setValue(p.reference ?? "");
+    setEditing(true);
+  };
+
+  if (!editing) {
+    return p.reference ? (
+      <span className={s.refView}>
+        <span className={cx("num", s.refNum)}>{p.reference}</span>
+        <button type="button" className={s.iconLink} aria-label="Change the ref no." onClick={start}>
+          <Pencil aria-hidden />
+        </button>
+      </span>
+    ) : (
+      <button type="button" className={s.inlineLink} onClick={start}>
+        Add
+      </button>
+    );
+  }
+  return (
+    <form
+      className={s.refEdit}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save.run();
+      }}
+    >
+      <Input
+        compact
+        autoFocus
+        aria-label="Ref no. (UTR)"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className={s.refBox}
+        maxLength={60}
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+      />
+      <Button type="submit" size="sm" variant="primary" loading={save.loading}>
+        Save
+      </Button>
+      <button type="button" className={s.iconLink} aria-label="Cancel" onClick={() => setEditing(false)}>
+        <X aria-hidden />
+      </button>
+    </form>
   );
 }

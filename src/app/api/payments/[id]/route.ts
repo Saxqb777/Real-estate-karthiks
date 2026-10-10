@@ -1,6 +1,7 @@
-import { handler, json, notFound, param } from "@/lib/api";
+import { handler, json, notFound, param, parseBody } from "@/lib/api";
 import { rentForMonth } from "@/lib/calculations";
 import { prisma } from "@/lib/db";
+import { paymentReferenceSchema } from "@/lib/schemas/payment";
 
 export const GET = handler(async (_req, ctx) => {
   const id = await param(ctx, "id");
@@ -29,6 +30,15 @@ export const GET = handler(async (_req, ctx) => {
     payment.periodMonth,
   );
   return json({ ...payment, lease: { ...lease, monthlyRent } });
+});
+
+/** Add or change the bank / UPI ref no. (UTR) — the only part of a payment that can change after it is recorded. */
+export const PATCH = handler(async (req, ctx) => {
+  const id = await param(ctx, "id");
+  const { reference } = await parseBody(req, paymentReferenceSchema);
+  const { count } = await prisma.payment.updateMany({ where: { id }, data: { reference } });
+  if (!count) throw notFound("Payment");
+  return json({ ok: true, reference });
 });
 
 export const DELETE = handler(async (_req, ctx) => {

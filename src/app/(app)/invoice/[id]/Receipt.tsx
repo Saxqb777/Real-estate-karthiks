@@ -1,7 +1,8 @@
 // A rent receipt, design D "modern" (owner picked D, 9/10/2026 — no footer, no town under the heading): the brand in
 // small gold capitals, "Rent receipt" + its number, AMOUNT PAID · DATE PAID · PAID BY, a summary of the rent month (its
 // rent, anything paid for it earlier, this payment, the balance left — calculations receiptMonthFor), the amount in
-// words, who paid + the property, and the owner's signature. A ₹1 revenue-stamp box appears only for cash above ₹5,000
+// words, who paid + the property, and the owner's signature. A bank / UPI ref no. (UTR) sits under "Paid by" (owner,
+// 10/10/2026). A ₹1 revenue-stamp box appears only for cash above ₹5,000
 // (Indian Stamp Act). Light paper on screen and in print. Every value comes from /api/payments/[id]/invoice.
 import { cx } from "@/components/ui";
 import { inr, phoneText } from "@/components/hud/format";
@@ -37,7 +38,10 @@ export function Receipt({ inv, print = false }: { inv: InvoiceData; print?: bool
         </div>
         <div>
           <span className={s.rcLbl}>Paid by</span>
-          <b>{PAID_BY[inv.method]}</b>
+          <span className={s.rcPay}>
+            <b>{PAID_BY[inv.method]}</b>
+            {inv.reference && <span className={cx(s.rcRef, s.rcNum)}>Ref no. {inv.reference}</span>}
+          </span>
         </div>
       </div>
 

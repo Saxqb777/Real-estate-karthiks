@@ -86,6 +86,7 @@ export async function buildInvoice(paymentId: string): Promise<InvoiceData | nul
     amount,
     amountInWords: amountInWords(amount),
     method: payment.method,
+    reference: payment.reference,
     notes: payment.notes,
     lease: {
       id: lease.id,

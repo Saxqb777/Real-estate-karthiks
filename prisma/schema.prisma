@@ -187,6 +187,8 @@ model Payment {
   periodYear    Int           @map("period_year")
   method        PaymentMethod @default(cash)
   notes         String?
+  /// Bank / UPI reference (UTR or UPI Ref No.): no spaces, capitals; editable later (owner, 10/10/2026)
+  reference     String?
   /// Monotonic counter used to build invoiceNumber
   invoiceSeq    Int           @unique @default(autoincrement()) @map("invoice_seq")
   /// Auto generated, e.g. PE-2026-0007

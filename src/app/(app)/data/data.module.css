@@ -352,6 +352,32 @@ button.miniRow:hover {
   color: var(--marigold);
   background: var(--marigold-a08);
 }
+/* payment drawer: the ref no. (UTR) with its pencil, and the box it is changed in */
+.refView {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: -4px 0;
+}
+.refNum {
+  font-size: 17px;
+}
+.refEdit {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: -5px 0;
+}
+.refBox {
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 240px;
+}
+.refBox input {
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
 .quiet {
   font-size: var(--fs-sm);
   color: var(--text-faint);

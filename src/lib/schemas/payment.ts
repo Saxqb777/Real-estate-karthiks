@@ -15,6 +15,14 @@ export { MONTH_NAMES, periodLabel } from "@/lib/dates";
 
 const blankToUndefined = (v: unknown) => (v === "" || v === null ? undefined : v);
 
+/**
+ * Bank / UPI reference — the UTR (NEFT / IMPS / RTGS) or the UPI Ref No. (owner, 10/10/2026). Spaces are dropped
+ * ("4123 4567 8901" → "412345678901") and letters capitalised so it matches the bank statement; blank → null.
+ */
+const tidyReference = (v: string) => v.replace(/\s+/g, "").toUpperCase() || null;
+const zReferenceOut = z.string().max(40, "must be at most 40 characters").nullable();
+export const zPaymentReference = z.preprocess((v) => (typeof v === "string" ? tidyReference(v) : v === undefined ? null : v), zReferenceOut);
+
 export const paymentCreateSchema = z.object({
   leaseId: z.string({ message: "Choose a lease" }).trim().min(1, "Choose a lease"),
   amount: zRequired(zPositiveMoney),
@@ -28,6 +36,17 @@ export const paymentCreateSchema = z.object({
     z.enum(PAYMENT_METHODS, { message: "must be cash, bank, upi or other" }).default("cash"),
   ),
   notes: zText(1000),
+  reference: zPaymentReference,
+});
+
+/** PATCH /api/payments/[id] — only the ref no. can change later; everything else stays as recorded on the receipt. */
+export const paymentReferenceSchema = z.object({
+  // the key must be sent (null / "" clears it) — a body without it never wipes a saved ref no.
+  reference: z
+    .string({ error: (iss) => (iss.input === undefined ? "is required" : "must be text") })
+    .nullable()
+    .transform((v) => (v === null ? null : tidyReference(v)))
+    .pipe(zReferenceOut),
 });
 
 /**
@@ -166,6 +185,8 @@ export interface InvoiceData {
   amount: number;
   amountInWords: string;
   method: PaymentMethodValue;
+  /** bank / UPI ref no. (UTR), shown under "Paid by" */
+  reference: string | null;
   notes: string | null;
   lease: { id: string; startDate: string; endDate: string | null; monthlyRent: number; securityDeposit: number };
   /** the receipt's rent month: its rent, paid towards it before this payment, and the balance after it (calculations

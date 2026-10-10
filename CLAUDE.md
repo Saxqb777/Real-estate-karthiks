@@ -461,6 +461,14 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     half-widths 1.7 / 2.3 / 3.4 / 4.9 + oriented-box checks; packed a little tighter) — tested in
     login/__tests__/town-data.test.ts.
   • Unused Noto Sans Tamil web font no longer downloaded (layout.tsx).
+- 10/10/2026: PAYMENT REF NO. (UTR) (owner: "add a section from now on to record ref no. or UTR number … in a clean
+  manner"; "it should show up in the receipt as well"; "deploy it"). Payment.reference (nullable, migration
+  20261010090000): spaces dropped + capitals (zPaymentReference, ≤ 40 chars, tested). Record rent form: "Ref no. (UTR)"
+  box only when UPI / Bank is picked (not kept for Cash). Data → Payments: "Ref no." column after Paid by (faint — when
+  none; phones add it after the method on the row's 2nd line); payment drawer "Ref no." row — the number + pencil, or
+  "Add" — edited in place (PATCH /api/payments/[id] {reference}: the ONLY part of a payment that can change later; the
+  old "Payments can't be edited…" note removed). Receipt: "Ref no. …" under PAID BY (InvoiceData.reference). The owner
+  fills in the old payments himself. No search box (kept clean).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

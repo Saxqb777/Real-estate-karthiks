@@ -1,7 +1,7 @@
 "use client";
 import { Banknote, Building, Smartphone } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { DateInput, Field, FormGrid, NumberInput, Select, toast } from "@/components/ui";
+import { DateInput, Field, FormGrid, Input, NumberInput, Select, toast } from "@/components/ui";
 import { rentForMonth } from "@/lib/calculations";
 import { api } from "@/lib/client";
 import type { NextPayment } from "@/lib/dashboard-types";
@@ -31,6 +31,8 @@ type Values = {
   paymentDate: string;
   method: PaymentMethodValue;
   notes: string;
+  /** bank / UPI ref no. (UTR) — the box shows for UPI / Bank only */
+  reference: string;
 };
 
 export interface PaymentFormProps extends BaseFormProps<PaymentListItem> {
@@ -93,11 +95,13 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
       paymentDate: toInputDate(todayIST()),
       method: defaults?.method ?? "cash",
       notes: "",
+      reference: "",
     },
     schema: paymentCreateSchema,
     rules,
     aliases: { periodYear: "periodMonth" },
-    submit: (body) => api<PaymentListItem>("/api/payments", { method: "POST", body }),
+    // a ref no. typed before switching to Cash is not kept
+    submit: (body) => api<PaymentListItem>("/api/payments", { method: "POST", body: { ...body, reference: body.method === "cash" ? null : body.reference } }),
     success: () => null,
     onSaved: (p) => {
       toast.coin(`Rent collected · ${p.lease.unit.name}`, {
@@ -246,6 +250,11 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
             ]}
           />
         </Field>
+        {v.method !== "cash" && (
+          <Field label="Ref no. (UTR)" span="full" error={form.error("reference")}>
+            <Input {...form.text("reference")} className={s.refInput} maxLength={60} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+          </Field>
+        )}
       </FormGrid>
     </FormBody>
   );
