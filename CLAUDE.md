@@ -502,8 +502,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   the clip shows the count ("📎 2") and opens the full-screen viewer, which now has an ATTACH MORE button (round 📎)
   and works for files picked before saving too (local object URLs; ✕ removes without asking). Components ProofClip
   {owner} / PendingProofClip {pending}; ProofViewer takes ViewItem[] (viewItem(dto)) + onDelete / onAttach.
-  Expenses, property tax and the lease deposit still use the ATTACHMENT section (ProofStrip) — offered the same clip-only
-  look there (deposit: in the Deposit ref no. box; expenses: beside "What for"; tax: on the "Paid on" line), not built.
+- 10/10/2026: CLIP ONLY EVERYWHERE (owner: "OK" → "DEPLOY"): expenses = the clip in the bottom-right corner of the
+  "What was it for?" box (Textarea `suffix` prop, add + edit; none on the automatic tax expense) and after "What for" in
+  the expense drawer; property tax = after the paid date ("Paid on") in its drawer; deposit = inside the "Deposit ref
+  no. (UTR)" box in the lease form (sign: picked files upload after saving; edit: uploads straight away) and after the
+  deposit ref no. in the lease drawer. Every ATTACHMENT / Deposit attachment section and thumbnail row is gone —
+  ProofStrip / PendingProofStrip deleted; components/proof/ProofClip.tsx holds ProofClip, PendingProofClip,
+  usePendingProofs, ProofMark, ProofHead, proofCount. (Photos still get their 360 px preview stored; nothing shows it now.)
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
