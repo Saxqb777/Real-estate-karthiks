@@ -514,6 +514,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   (and "other") payments: paymentCreateSchema method = RECEIVED_BY ["upi", "bank"], default "upi" (tested). Prod had
   no cash payments (27 UPI, 1 bank); PAYMENT_METHODS / the DB enum / METHOD_LABEL / the receipt's cash revenue-stamp rule
   are kept so any old cash record still shows. Demo seed no longer makes cash payments.
+- 11/10/2026: UNIFORM REPORT TABLES (owner, Occupancy & vacancy screenshot: "why does the columns and rows not uniform,
+  recheck also the font size … neat n clean" → "DEPLOY"): every report table (rlib .table) = table-layout FIXED with
+  planned widths — equal columns, or TableBox `cols` weights (rent roll, forecast rent by unit, tenant statement
+  receipt, yields, deposits); EVERY cell body font 14px weight 400 (bold only in tfoot totals; the bold first column
+  `.strong` is gone), cell children inherit the font, row height 44px, head 38px; status words = plain coloured words
+  in the row's font (the Rajdhani `.status` class is gone); rent roll "ends in N days" sits on the date's line; the
+  small gold labels (figure-box label, section title, column head) are all 11px / 0.18em. Phones keep the card rows.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
