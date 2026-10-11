@@ -150,9 +150,9 @@
 }
 .kpiLabel {
   font-family: var(--ff-display);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #c9922e;
 }
@@ -191,33 +191,53 @@
 .sectionTitle {
   margin-bottom: 8px;
   font-family: var(--ff-display);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #c9922e;
 }
+/* every report table alike (owner 11/10/2026: "columns and rows not uniform … font size"): planned column widths
+   (fixed layout — equal, or the TableBox `cols` weights), ONE cell font / size / weight (the body font, figures
+   tabular), one row height, one head style; only the total row is bold */
 .table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 14px;
 }
 .table th {
-  padding: 9px 10px;
+  height: 38px;
+  padding: 0 12px;
   text-align: left;
+  vertical-align: middle;
   font-family: var(--ff-display);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #c9922e;
   border-bottom: 1px solid rgba(201, 146, 46, 0.4);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .table td {
-  padding: 10px;
+  height: 44px;
+  padding: 0 12px;
+  vertical-align: middle;
+  font-family: var(--ff-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.table td * {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
 }
 .table tfoot td {
   font-weight: 700;
@@ -226,9 +246,6 @@
 }
 .r {
   text-align: right !important;
-}
-.strong {
-  font-weight: 600;
 }
 .dim {
   color: var(--text-dim);
@@ -288,21 +305,8 @@
   font-size: 16px;
   color: var(--text);
 }
-.status {
-  font-family: var(--ff-display);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
 .st-paid {
   color: var(--teal);
-}
-/* "ends in 12 days" under an agreement end date (rent roll) */
-.renew {
-  display: block;
-  margin-top: 2px;
-  font-size: 10.5px;
 }
 /* a section after a plain table (value report → rental yield) */
 .tableBox + .section {
@@ -503,6 +507,7 @@
     justify-content: space-between;
     align-items: baseline;
     gap: 12px;
+    height: auto;
     padding: 5px 0;
     text-align: right !important;
     font-size: 13px;

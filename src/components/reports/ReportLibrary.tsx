@@ -447,7 +447,7 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
           { label: "Deposits held", value: inr(d.kpis.securityDepositsHeld), tone: s.mari },
         ]}
       />
-      <TableBox>
+      <TableBox cols={[0.8, 1.5, 1.3, 1, 1.9, 1, 1.4, 1, 1]}>
         <thead>
           <tr>
             <th>Unit</th>
@@ -469,20 +469,20 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
             const renew = l ? d.renewals.find((r) => r.leaseId === l.id) : undefined;
             return (
               <tr key={u.id}>
-                <td className={s.strong}>{u.name}</td>
+                <td>{u.name}</td>
                 <td>{l?.tenantName ?? "—"}</td>
                 <td>{l?.tenantPhone ?? "—"}</td>
                 <td>{l ? formatDate(l.startDate) : "—"}</td>
                 <td>
                   {l?.agreementEndDate ? formatDate(l.agreementEndDate) : "—"}
-                  {renew && <span className={cx(s.status, s.renew, renew.state === "expired" ? s.red : s.mari)}>{agreementText(renew.daysLeft)}</span>}
+                  {renew && <span className={renew.state === "expired" ? s.red : s.mari}> · {agreementText(renew.daysLeft)}</span>}
                 </td>
                 <td className={s.r}>{l ? inr(l.monthlyRent) : "—"}</td>
                 <td>{l ? `${extra?.rentTiming === "arrears" ? "IN ARREARS" : "IN ADVANCE"} · day ${due}` : "—"}</td>
                 <td className={s.r}>{l ? inr(l.securityDeposit) : "—"}</td>
                 <td>
                   {/* plain status words like every other report (no screen badge) */}
-                  <span className={cx(s.status, u.status === "occupied" ? s["st-paid"] : u.status === "incoming" ? s["st-advance"] : s["st-not-due"])}>
+                  <span className={u.status === "occupied" ? s["st-paid"] : u.status === "incoming" ? s["st-advance"] : s["st-not-due"]}>
                     {u.status === "occupied" ? "Occupied" : u.status === "incoming" ? "Incoming" : "Vacant"}
                   </span>
                 </td>
@@ -558,7 +558,7 @@ function Forecast({ d }: { d: DashboardData }) {
         </Section>
         <div>
           <Section title="Rent by unit">
-            <TableBox>
+            <TableBox cols={[0.8, 1.5, 1, 1, 1]}>
               <thead>
                 <tr>
                   <th>Unit</th>
@@ -571,7 +571,7 @@ function Forecast({ d }: { d: DashboardData }) {
               <tbody>
                 {f.units.map((u) => (
                   <tr key={u.unitId}>
-                    <td className={s.strong}>{u.unitName}</td>
+                    <td>{u.unitName}</td>
                     <td>{u.tenantName ?? "—"}</td>
                     <td className={s.r}>{inr(u.rentNow)}</td>
                     <td className={s.r}>{u.months || "—"}</td>
@@ -732,7 +732,7 @@ function Occupancy({ a }: { a: AnnualReport }) {
             <tbody>
               {a.occupancy.map((o) => (
                 <tr key={o.unitId}>
-                  <td className={s.strong}>{o.unitName}</td>
+                  <td>{o.unitName}</td>
                   <td className={s.r}>{o.daysInYear}</td>
                   <td className={s.r}>{o.daysOccupied}</td>
                   <td className={s.r}>{o.vacantDays}</td>
@@ -806,7 +806,7 @@ function TenantStatement({ l }: { l: RentLedger }) {
           { label: "Balance", value: inr(l.totals.outstanding), tone: l.totals.outstanding > 0 ? s.red : undefined },
         ]}
       />
-      <TableBox>
+      <TableBox cols={[1, 1, 1, 1, 1.5, 1, 1]}>
         <thead>
           <tr>
             <th>Month</th>
@@ -827,7 +827,7 @@ function TenantStatement({ l }: { l: RentLedger }) {
               <td className={cx(s.r, s.teal)}>{dash(r.paid)}</td>
               <td className={s.dim}>{r.payments.map((p) => p.invoiceNumber).join(", ") || "—"}</td>
               <td className={cx(s.r, r.runningBalance > 0 ? s.red : undefined)}>{inr(r.runningBalance)}</td>
-              <td className={cx(s.status, s[`st-${r.status}`])}>{label[r.status] ?? r.status}</td>
+              <td className={s[`st-${r.status}`]}>{label[r.status] ?? r.status}</td>
             </tr>
           ))}
         </tbody>
@@ -868,7 +868,7 @@ function Value({ d }: { d: DashboardData }) {
         <tbody>
           {rows.map((u) => (
             <tr key={u.id}>
-              <td className={s.strong}>{u.name}</td>
+              <td>{u.name}</td>
               <td>{formatDate(u.purchaseDate)}</td>
               <td className={s.r}>{inr(u.purchasePrice)}</td>
               <td className={cx(s.r, s.teal)}>{inr(u.valuation)}</td>
@@ -904,7 +904,7 @@ function Yields({ d }: { d: DashboardData }) {
   const y = d.yields;
   const row = (r: DashboardData["yields"]["property"], total?: boolean) => (
     <>
-      <td className={total ? undefined : s.strong}>{total ? "Property" : r.name}</td>
+      <td>{total ? "Property" : r.name}</td>
       <td className={cx(s.r, s.teal)}>{dash(r.rent)}</td>
       <td className={cx(s.r, s.red)}>{dash(r.expenses)}</td>
       <td className={cx(s.r, netTone(r.net))}>{inr(r.net)}</td>
@@ -916,7 +916,7 @@ function Yields({ d }: { d: DashboardData }) {
   );
   return (
     <Section title={`Rental yield · ${y.label.toLowerCase()}`}>
-      <TableBox>
+      <TableBox cols={[0.7, 1, 1, 1, 1, 1, 1, 1]}>
         <thead>
           <tr>
             <th>Unit</th>
@@ -981,7 +981,7 @@ function Tax({ items }: { items: { id: string; year: number; amount: number; sta
               const lastPaid = rows.map((t) => t.paymentDate).filter(Boolean).sort().pop();
               return (
                 <tr key={y}>
-                  <td className={s.strong}>{y}</td>
+                  <td>{y}</td>
                   {unitNames.map((n) => {
                     const t = rows.find((x) => x.unit.name === n);
                     return (
@@ -991,7 +991,7 @@ function Tax({ items }: { items: { id: string; year: number; amount: number; sta
                     );
                   })}
                   <td className={s.r}>{inr(sumAmounts(rows))}</td>
-                  <td className={cx(s.status, allPaid ? s["st-paid"] : s["st-unpaid"])}>{allPaid ? `Paid${lastPaid ? ` ${formatDate(lastPaid)}` : ""}` : "Due"}</td>
+                  <td className={allPaid ? s["st-paid"] : s["st-unpaid"]}>{allPaid ? `Paid${lastPaid ? ` ${formatDate(lastPaid)}` : ""}` : "Due"}</td>
                 </tr>
               );
             })}
@@ -1028,7 +1028,7 @@ function Deposits({ d }: { d: DashboardData }) {
           { label: "Kept back", value: inr(dl.kept) },
         ]}
       />
-      <TableBox>
+      <TableBox cols={[1.5, 1, 1, 1, 1, 1, 1]}>
         <thead>
           <tr>
             <th>Tenant</th>
@@ -1043,7 +1043,7 @@ function Deposits({ d }: { d: DashboardData }) {
         <tbody>
           {dl.rows.map((r) => (
             <tr key={r.leaseId}>
-              <td className={s.strong}>{r.tenantName}</td>
+              <td>{r.tenantName}</td>
               <td>{r.unitName}</td>
               <td>{formatDate(r.receivedDate)}</td>
               <td className={s.r}>{inr(r.deposit)}</td>
@@ -1071,7 +1071,11 @@ function Deposits({ d }: { d: DashboardData }) {
 
 /** A report table. On phones every row becomes a small card (column name left, value right): each cell gets its
  *  column's header text as data-label, read from the table's own header row. */
-function TableBox({ children }: { children: ReactNode }) {
+/**
+ * A report table. Columns get planned widths (owner 11/10/2026: "columns and rows not uniform"): equal by default, or
+ * the relative weights in `cols` (a name / phone / note column a little wider), so every table lines up neatly.
+ */
+function TableBox({ cols, children }: { cols?: number[]; children: ReactNode }) {
   const ref = useRef<HTMLTableElement>(null);
   useLayoutEffect(() => {
     const table = ref.current;
@@ -1098,6 +1102,13 @@ function TableBox({ children }: { children: ReactNode }) {
   return (
     <div className={s.tableBox}>
       <table ref={ref} className={s.table}>
+        {cols && (
+          <colgroup>
+            {cols.map((w, i) => (
+              <col key={i} style={{ width: `${(w / cols.reduce((a, b) => a + b, 0)) * 100}%` }} />
+            ))}
+          </colgroup>
+        )}
         {children}
       </table>
     </div>
