@@ -537,9 +537,14 @@
     grid-template-columns: 68px repeat(3, 1fr);
     height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
-    background: linear-gradient(180deg, #1b1814, #12100e);
-    border-top: 1px solid var(--line-strong);
-    box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.45);
+    /* glass (owner 31/10/2026) */
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border-top: 1px solid var(--glass-edge);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 -12px 30px rgba(0, 0, 0, 0.4);
   }
   .tab {
     position: relative;
@@ -555,10 +560,22 @@
     text-transform: uppercase;
     color: var(--text-faint);
     border-radius: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color var(--dur-2) var(--ease-out),
+      transform 180ms var(--press);
+  }
+  .tab > * {
+    position: relative;
+  }
+  .tab:active {
+    transform: scale(0.94);
+    transition-duration: 70ms;
   }
   .tab svg {
     width: 20px;
     height: 20px;
+    transition: color var(--dur-2) var(--ease-out);
   }
   .tab[aria-current="page"] {
     color: var(--text);
@@ -577,13 +594,16 @@
     color: var(--marigold);
     background: rgba(255, 181, 71, 0.08);
   }
+  /* the chosen tab: a soft gold-glass pill that slides between tabs */
   .tabMarker {
-    position: absolute;
-    top: -1px;
-    left: 30%;
-    right: 30%;
-    height: 3px;
-    background: var(--marigold);
+    position: absolute !important;
+    inset: 7px 10px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 216, 145, 0.2), rgba(240, 150, 46, 0.1));
+    border: 1px solid rgba(255, 200, 120, 0.32);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 4px 14px rgba(240, 150, 46, 0.14);
   }
 }
 @media (max-width: 340px) {
@@ -616,11 +636,13 @@
   display: flex;
   gap: 2px;
   padding: 4px;
-  /* solid, no backdrop blur: it floats over the live 3D canvas (a blur there is recomputed every frame) */
-  background: rgba(22, 17, 12, 0.94);
-  border: 1px solid var(--line-strong);
+  /* glass (owner 31/10/2026); a small strip, so the live blur over the 3D world stays cheap */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
   border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--glass-shine), var(--glass-shadow);
 }
 .floatLink {
   position: relative;
@@ -637,22 +659,35 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-dim);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   border-radius: 7px;
-  transition: color var(--dur-1) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    transform 180ms var(--press);
 }
 .floatLink > * {
   position: relative;
 }
 .floatLink:hover {
   color: var(--text);
+  background-color: var(--glass-hover);
+}
+/* a soft press, then it springs back */
+.floatLink:active {
+  transform: scale(0.95);
+  transition-duration: 70ms;
 }
 .floatLink[aria-current="page"] {
   color: #2a1405;
+  text-shadow: none;
 }
 .floatPlate {
   position: absolute !important;
   inset: 0;
-  background: linear-gradient(180deg, #ffd27a, #f0962e);
+  background: var(--glass-gold);
+  box-shadow: var(--glass-gold-shine);
   border-radius: 7px;
 }
 .floatIcon {

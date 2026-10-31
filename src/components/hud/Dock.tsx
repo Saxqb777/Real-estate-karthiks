@@ -194,7 +194,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
                 onClick={() => toggle(d.id)}
                 title={`${labelOf(d)} (${i + 1})`}
               >
-                {on && <motion.span layoutId={`${uid}-plate`} className={s.tabPlate} transition={{ type: "spring", stiffness: 520, damping: 44 }} />}
+                {on && <motion.span layoutId={`${uid}-plate`} className={s.tabPlate} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
                 <span className={s.tabIcon}>{d.icon}</span>
                 <span className={s.tabLabel}>{labelOf(d)}</span>
                 <span className={s.tabShort}>{d.short}</span>

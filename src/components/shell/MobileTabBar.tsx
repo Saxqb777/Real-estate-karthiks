@@ -43,7 +43,7 @@ export function MobileTabBar() {
             aria-current={active ? "page" : undefined}
             onClick={() => chartMenu.set(false)}
           >
-            {active && <motion.span layoutId="tabbar-marker" className={styles.tabMarker} transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+            {active && <motion.span layoutId="tabbar-marker" className={styles.tabMarker} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
             <Icon aria-hidden />
             <span>{item.label}</span>
           </Link>

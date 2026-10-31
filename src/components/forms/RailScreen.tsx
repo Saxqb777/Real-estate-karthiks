@@ -2,7 +2,8 @@
 // One-screen frame for Data and Config ("option C", owner): chunky game buttons for the sections across the top, one
 // gold-bordered panel below, all over a blurred picture of the estate.
 // Number keys 1–9 switch tabs and N runs the active tab's "add" action (ignored while typing or in a dialog).
-import { useEffect, useRef, type ReactNode } from "react";
+import { motion } from "motion/react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { cx, isFocusTrapActive } from "@/components/ui";
 import s from "./RailScreen.module.css";
 
@@ -83,6 +84,7 @@ export function RailScreen({ eyebrow, title, items, value, onChange, onNew, chil
     requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>(`[data-id="${next.id}"]`)?.focus());
   };
 
+  const plateId = useId();
   return (
     <div className={s.screen}>
       <div className={s.backdrop} aria-hidden />
@@ -104,6 +106,8 @@ export function RailScreen({ eyebrow, title, items, value, onChange, onNew, chil
                 className={cx(s.item, it.divider && s.divider)}
                 onClick={() => onChange(it.id)}
               >
+                {/* the chosen section: a gold-glass plate that slides to the button you pick (owner 31/10/2026) */}
+                {on && <motion.span layoutId={`rail-plate-${plateId}`} className={s.plate} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
                 <span className={s.index}>{String(i + 1).padStart(2, "0")}</span>
                 {it.icon && <span className={s.icon}>{it.icon}</span>}
                 <span className={s.text}>

@@ -25,7 +25,7 @@ export function HudBar() {
         const Icon = item.icon;
         return (
           <Link key={item.href} href={item.href} className={styles.floatLink} aria-current={active ? "page" : undefined}>
-            {active && <motion.span layoutId="hud-nav-plate" className={styles.floatPlate} transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+            {active && <motion.span layoutId="hud-nav-plate" className={styles.floatPlate} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
             <Icon className={styles.floatIcon} aria-hidden />
             <span>{item.label}</span>
           </Link>

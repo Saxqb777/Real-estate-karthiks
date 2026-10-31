@@ -6,13 +6,20 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  /* solid, no backdrop blur: it sits on the live 3D canvas, where a blur is recomputed every frame */
-  background: rgba(24, 21, 18, 0.95);
-  border: 1px solid var(--line-strong);
+  /* glass (owner 31/10/2026): see-through over a soft blur of the world; a deeper tint while a chart is open so the
+     chart stays easy to read */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius-sm);
   box-shadow:
-    var(--inner-hi),
-    0 -8px 34px rgba(0, 0, 0, 0.35);
+    var(--glass-shine),
+    0 -8px 34px rgba(0, 0, 0, 0.3);
+  transition: background-color var(--dur-3) var(--ease-out);
+}
+.dockOpen {
+  background: linear-gradient(180deg, rgba(255, 246, 230, 0.07), rgba(255, 246, 230, 0.02)), rgba(16, 12, 9, 0.84);
 }
 .dock::before {
   content: "";
@@ -96,23 +103,35 @@
   color: var(--text-dim);
   border-radius: var(--radius-xs);
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  -webkit-tap-highlight-color: transparent;
   transition:
-    color var(--dur-1) var(--ease-out),
-    background var(--dur-1) var(--ease-out);
+    color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    transform 180ms var(--press);
 }
 .tab:hover {
   color: var(--text);
-  background: rgba(243, 233, 216, 0.04);
+  background-color: var(--glass-hover);
+}
+/* a soft press, then it springs back */
+.tab:active {
+  transform: scale(0.96);
+  transition-duration: 70ms;
 }
 .tabOn {
   color: var(--text);
 }
+/* the open chart's tab: a soft gold-glass plate that slides between tabs */
 .tabPlate {
   position: absolute;
   inset: 0;
   border-radius: var(--radius-xs);
-  background: rgba(255, 181, 71, 0.1);
-  box-shadow: inset 0 -2px 0 var(--marigold);
+  background: linear-gradient(180deg, rgba(255, 216, 145, 0.2), rgba(240, 150, 46, 0.1));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 200, 120, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -2px 0 var(--marigold);
 }
 .tabKey {
   position: relative;

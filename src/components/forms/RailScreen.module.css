@@ -57,22 +57,34 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: #d9cdb9;
-  background: rgba(22, 17, 12, 0.92);
-  border: 1px solid #5a4632;
+  color: #e4d8c4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  /* glass (owner 31/10/2026): see-through tint over a soft blur of the estate picture, light top edge, soft shadow */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
   border-radius: 8px;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: var(--glass-shine), 0 6px 18px rgba(0, 0, 0, 0.28);
+  -webkit-tap-highlight-color: transparent;
   transition:
-    color var(--dur-1) var(--ease-out),
-    border-color var(--dur-1) var(--ease-out),
-    transform 0.08s ease-out;
+    color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    transform 180ms var(--press);
+}
+.item > * {
+  position: relative;
 }
 .item:hover {
   color: #fff6e6;
-  border-color: #c9922e;
+  border-color: rgba(255, 210, 140, 0.45);
+  background-color: var(--glass-hover);
 }
+/* a soft press, then it springs back */
 .item:active {
-  transform: translateY(2px);
+  transform: scale(0.96);
+  transition-duration: 70ms;
 }
 .item:focus-visible {
   outline: 2px solid #fff6e6;
@@ -80,9 +92,16 @@
 }
 .item[aria-selected="true"] {
   color: #2a1405;
-  background: linear-gradient(180deg, #ffd27a, #f0962e);
+  text-shadow: none;
   border-color: transparent;
-  box-shadow: 0 4px 0 #8a4a12;
+}
+/* the gold-glass plate under the chosen section (slides between buttons) */
+.plate {
+  position: absolute !important;
+  inset: -1px;
+  border-radius: 8px;
+  background: var(--glass-gold);
+  box-shadow: var(--glass-gold-shine);
 }
 .index,
 .note,
@@ -112,14 +131,15 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #f3e9d8;
-  background: #0c0906;
-  border: 1px solid #5a4632;
+  background: rgba(8, 6, 4, 0.55);
+  border: 1px solid rgba(255, 244, 225, 0.16);
   border-radius: 5px;
 }
 .item[aria-selected="true"] .count {
   color: #ffd27a;
   background: #2a1405;
   border-color: #2a1405;
+  transition: color var(--dur-2) var(--ease-out);
 }
 .countAlert,
 .item[aria-selected="true"] .countAlert {
