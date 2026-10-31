@@ -19,7 +19,7 @@
   transition: background-color var(--dur-3) var(--ease-out);
 }
 .dockOpen {
-  background: linear-gradient(180deg, rgba(255, 246, 230, 0.07), rgba(255, 246, 230, 0.02)), rgba(16, 12, 9, 0.84);
+  background: var(--glass-deep-bg);
 }
 .dock::before {
   content: "";

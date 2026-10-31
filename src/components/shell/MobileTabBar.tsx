@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { chartMenu, useChartMenu } from "./chart-menu";
 import { isActive, NAV } from "./nav";
+import { useSmoothNav } from "./smooth-nav";
 import styles from "./Shell.module.css";
 
 /** Bottom tab bar for phones (< 768px): ☰ (charts menu) · Overview · Data · Config. */
@@ -13,6 +14,7 @@ export function MobileTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const menuOpen = useChartMenu();
+  const go = useSmoothNav();
   return (
     <nav className={styles.tabbar} aria-label="Main" data-print-hide>
       <button
@@ -41,7 +43,10 @@ export function MobileTabBar() {
             href={item.href}
             className={styles.tab}
             aria-current={active ? "page" : undefined}
-            onClick={() => chartMenu.set(false)}
+            onClick={(e) => {
+              chartMenu.set(false);
+              go(item.href, e);
+            }}
           >
             {active && <motion.span layoutId="tabbar-marker" className={styles.tabMarker} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
             <Icon aria-hidden />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useApi } from "@/lib/client";
 import { isActive, NAV } from "./nav";
+import { useSmoothNav } from "./smooth-nav";
 import styles from "./Shell.module.css";
 
 export function useBrandName(): string {
@@ -18,13 +19,20 @@ export function useBrandName(): string {
  */
 export function HudBar() {
   const pathname = usePathname();
+  const go = useSmoothNav();
   return (
     <nav className={styles.floatNav} aria-label="Main" data-print-hide>
       {NAV.map((item) => {
         const active = isActive(pathname, item.href);
         const Icon = item.icon;
         return (
-          <Link key={item.href} href={item.href} className={styles.floatLink} aria-current={active ? "page" : undefined}>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={styles.floatLink}
+            aria-current={active ? "page" : undefined}
+            onClick={(e) => go(item.href, e)}
+          >
             {active && <motion.span layoutId="hud-nav-plate" className={styles.floatPlate} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
             <Icon className={styles.floatIcon} aria-hidden />
             <span>{item.label}</span>

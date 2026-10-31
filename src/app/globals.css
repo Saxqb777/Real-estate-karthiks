@@ -127,6 +127,13 @@
   --glass-gold-shine:
     inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(120, 60, 10, 0.32), 0 4px 16px rgba(240, 150, 46, 0.28);
   --press: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* glass SECTIONS (owner 31/10/2026: "make all sections glass … see the background at all times"): panels, cards,
+     drawers and windows — a deeper tint than the buttons so text stays easy to read, the same soft blur */
+  --glass-panel-tint: rgba(15, 11, 8, 0.64);
+  --glass-panel-bg: linear-gradient(180deg, rgba(255, 246, 230, 0.07), rgba(255, 246, 230, 0.015) 160px), var(--glass-panel-tint);
+  --glass-deep-tint: rgba(15, 11, 8, 0.76);
+  --glass-deep-bg: linear-gradient(180deg, rgba(255, 246, 230, 0.06), rgba(255, 246, 230, 0.01) 160px), var(--glass-deep-tint);
+  --glass-panel-blur: blur(22px) saturate(140%);
 
   /* Layers */
   --z-bar: 50;
@@ -323,12 +330,40 @@ hr {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root {
     --glass-tint: rgba(20, 16, 12, 0.92);
+    --glass-panel-tint: rgba(20, 16, 12, 0.93);
+    --glass-deep-tint: rgba(20, 16, 12, 0.95);
   }
 }
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --glass-tint: rgba(20, 16, 12, 0.94);
     --glass-blur: none;
+    --glass-panel-tint: rgba(20, 16, 12, 0.95);
+    --glass-deep-tint: rgba(20, 16, 12, 0.96);
+    --glass-panel-blur: none;
+  }
+}
+
+/* ---------- Page motion (owner 31/10/2026: smooth like the video) ---------- */
+/* the page on screen dissolves away over the world … */
+@keyframes pe-dissolve {
+  to {
+    opacity: 0;
+    filter: blur(8px);
+    transform: scale(0.99);
+  }
+}
+/* … and the next page's sections fade in from a soft blur, a beat apart */
+@keyframes pe-materialize {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
   }
 }
 

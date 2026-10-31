@@ -29,6 +29,7 @@ import {
   type PanelTarget,
 } from "@/components/hud";
 import { chartMenu, useChartMenu } from "@/components/shell/chart-menu";
+import { worldState } from "@/components/shell/world-state";
 import { logout } from "@/lib/client";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
@@ -47,6 +48,11 @@ import s from "./overview.module.css";
 export interface OverviewProps {
   /** "immersive" (default): world behind the HUD, camera framed into the free area. "framed": world boxed between the panels. */
   layout?: "immersive" | "framed";
+  /**
+   * false while Data / Config sit on top (owner, 31/10/2026: the world stays behind every page — no loading screen on
+   * the way back): the HUD steps away, keys and commands rest, and the world holds still once it has been drawn.
+   */
+  active?: boolean;
 }
 
 /** Owner, 5/10/2026: hover = name tag only; a click opens the object's window STRAIGHT AWAY — no gold card, phone + desktop.
@@ -54,7 +60,7 @@ export interface OverviewProps {
 const DIRECT: SceneObjectKind[] = ["unit", "tenant", "tolet", "mailbox", "noticeboard", "pole", "taxstamp", "plot", "photographer"];
 const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
-export function Overview({ layout = "immersive" }: OverviewProps) {
+export function Overview({ layout = "immersive", active = true }: OverviewProps) {
   const isClient = useIsClient();
   const [asOf, setAsOf] = useState<string | null>(null);
   const dash = useHudDashboard(asOf);
@@ -78,7 +84,10 @@ export function Overview({ layout = "immersive" }: OverviewProps) {
     const t = window.setTimeout(() => setArrived(true), loadFailed ? 0 : 250);
     return () => window.clearTimeout(t);
   }, [sceneReady, loadFailed]);
-  const onSceneReady = useCallback(() => setSceneReady(true), []);
+  const onSceneReady = useCallback(() => {
+    setSceneReady(true);
+    worldState.setReady(true);
+  }, []);
   useEffect(() => {
     if (!failedAsOf) return;
     toast.error("Couldn't show that date", { description: failedAsOf });
@@ -98,10 +107,13 @@ export function Overview({ layout = "immersive" }: OverviewProps) {
           retry={dash.reload}
           layout={layout}
           onSceneReady={onSceneReady}
+          active={active}
+          paused={!active && sceneReady}
         />
       )}
       <AnimatePresence>
-        {!arrived && (
+        {/* the arrival screen only on the overview itself; behind Data / Config the world just loads quietly */}
+        {!arrived && active && (
           <motion.div key="arrival" className={s.arrival} role="status" exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
             <span className={s.arrivalText}>Arriving at your estate…</span>
             <span className={s.arrivalBar}>
@@ -125,9 +137,13 @@ interface GameProps {
   retry: () => void;
   layout: "immersive" | "framed";
   onSceneReady: () => void;
+  /** the overview is the page on screen (not the world behind Data / Config) */
+  active: boolean;
+  /** hold the world still */
+  paused: boolean;
 }
 
-function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady }: GameProps) {
+function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady, active, paused }: GameProps) {
   const mobile = useMediaQuery(MOBILE_QUERY);
   const narrow = useMediaQuery("(max-width: 1179px)");
   const [period, setPeriod] = usePeriod();
@@ -234,7 +250,23 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
     }
   };
 
-  // pinned windows no longer reopen on page load (owner, 5/10/2026): the overview always starts on the clean 3D world
+  // pinned windows no longer reopen on page load (owner, 5/10/2026): the overview always starts on the clean 3D world —
+  // and leaving it for Data / Config closes what was open, so coming back shows the clean world again
+  const wasActive = useRef(active);
+  useEffect(() => {
+    if (wasActive.current && !active) {
+      closeCard();
+      closePanel();
+      setPropertyOpen(false);
+      propDrill.reset();
+      setTab(null);
+      setTimeOpen(false);
+      setAskLeave(false);
+      setHelpOpen(false);
+      setHudHidden(false);
+    }
+    wasActive.current = active;
+  }, [active, closeCard, closePanel, setPropertyOpen, propDrill]);
 
   // a panel whose unit doesn't exist on the as-of date closes
   useEffect(() => {
@@ -297,7 +329,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       f: () => setHudHidden((h) => !h),
       "?": () => setHelpOpen((o) => !o),
     },
-    !tourOpen && !helpOpen && !mobile,
+    active && !tourOpen && !helpOpen && !mobile,
   );
   const backToToday = useCallback(() => setAsOf(null), [setAsOf]);
   useOverviewCommands({
@@ -325,6 +357,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       setTourOpen(true);
     },
     backToToday: asOf ? backToToday : null,
+    enabled: active,
   });
 
   // ---------------------------------------------------------------- first-run tour (desktop, once there is a house)
@@ -395,10 +428,14 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const [topEl] = useState<HTMLDivElement | null>(null);
   const [leftEl, setLeftEl] = useState<HTMLDivElement | null>(null);
   const [bottomEl, setBottomEl] = useState<HTMLDivElement | null>(null);
-  const insets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, bottom: bottomEl });
+  const liveInsets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, bottom: bottomEl });
+  // the HUD steps away behind Data / Config: keep the camera's framing as it was, so nothing moves on the way back
+  const keptInsets = useRef(liveInsets);
+  if (active) keptInsets.current = liveInsets;
+  const insets = active ? liveInsets : keptInsets.current;
 
   const selected = panel?.kind === "unit" || panel?.kind === "tenant" ? panel.unitId : null;
-  const dimmed = !mobile && !hudHidden && !tourOpen && (Boolean(tab) || Boolean(panel) || propertyOpen);
+  const dimmed = active && !mobile && !hudHidden && !tourOpen && (Boolean(tab) || Boolean(panel) || propertyOpen);
   const getObjectScreen = useCallback((fn: ObjectScreenFn | null) => {
     setLocate(() => fn);
     // test handle (dev builds only): lets browser checks find a house on screen
@@ -426,8 +463,9 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       hintObjects={hintObjects}
       getObjectScreen={getObjectScreen}
       cues={cues}
-      hud={!mobile}
+      hud={!mobile && active}
       onFirstFrame={onSceneReady}
+      paused={paused}
     />
   );
 
@@ -527,7 +565,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       </div>
 
       <AnimatePresence>
-        {!hudHidden && (
+        {active && !hudHidden && (
           <motion.div
             key="hud"
             className={s.hud}
@@ -611,7 +649,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
                     onDrill={onDrill}
                     onOpenUnit={openUnit}
                     hints={dockHints}
-                    hotkeys={!tourOpen && !helpOpen}
+                    hotkeys={active && !tourOpen && !helpOpen}
                   />
                 </div>
               </motion.div>
@@ -620,13 +658,13 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
         )}
       </AnimatePresence>
 
-      {hudHidden && (
+      {active && hudHidden && (
         <button type="button" className={s.showHud} onClick={() => setHudHidden(false)}>
           <Eye aria-hidden /> Show the HUD <Kbd>F</Kbd>
         </button>
       )}
 
-      {error && !data && (
+      {active && error && !data && (
         <div className={s.error}>
           <EmptyState
             title="Couldn't load your figures"
@@ -640,7 +678,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
         </div>
       )}
 
-      {mobile && data && hasUnits && (
+      {active && mobile && data && hasUnits && (
         <>
           <ChartMenu
             open={menuOpen}
@@ -673,11 +711,15 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
           </AnimatePresence>
         </>
       )}
-      {overlay}
-      {leaveEl}
-      {skyEl}
-      {tourEl}
-      {helpEl}
+      {active && (
+        <>
+          {overlay}
+          {leaveEl}
+          {skyEl}
+          {tourEl}
+          {helpEl}
+        </>
+      )}
     </div>
   );
 }

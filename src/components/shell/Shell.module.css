@@ -22,14 +22,54 @@
   flex-direction: column;
   overflow: hidden;
 }
+/* the page area: the 3D world (when on) underneath, the page on top */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.world {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  /* behind Data / Config the world is only a picture: no hover, no clicks */
+  pointer-events: none;
+}
+.world[data-active] {
+  pointer-events: auto;
+}
+.world[hidden] {
+  display: none;
+}
 .main {
   position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: auto;
   outline: none;
+}
+/* on the overview the page itself is empty — clicks go through to the world */
+.mainWorld {
+  pointer-events: none;
+}
+/* a main tab was clicked: the page dissolves over the world before the switch */
+.main[data-leaving] > * {
+  pointer-events: none;
+  animation: pe-dissolve 170ms var(--ease-in-out) forwards;
+}
+/* behind Data / Config the held-still world sits a little darker, so the glass reads clearly */
+.world :global(canvas) {
+  transition: filter 0.5s var(--ease-out);
+}
+.world:not([data-active]) :global(canvas) {
+  filter: brightness(0.82) saturate(0.92);
 }
 
 /* ---------- HUD bar ---------- */

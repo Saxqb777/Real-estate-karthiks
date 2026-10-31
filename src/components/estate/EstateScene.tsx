@@ -65,6 +65,8 @@ export interface EstateSceneProps {
   intro?: boolean;
   /** Called once the scene has drawn its first few frames (shaders warmed up) — or straight away when the 2D fallback shows. */
   onFirstFrame?: () => void;
+  /** Hold the world still (no frames drawn — the last one stays on screen): the world behind Data / Config. */
+  paused?: boolean;
   /** Override the default camera angle: theta (azimuth, rad, 0 = straight from the street), phi (from vertical), fit (zoom multiplier). */
   cameraView?: { theta?: number; phi?: number; fit?: number };
   /** Show fps / draw calls / triangles (for performance checks). */
@@ -329,7 +331,7 @@ export default function EstateScene(props: EstateSceneProps) {
   }, [maxDpr]);
   const life = props.life ?? lifeState ?? !reduced;
   const hud = props.hud ?? mode === "hero";
-  const active = onScreen && pageVisible;
+  const active = onScreen && pageVisible && !props.paused;
   const fallbackLayout = useMemo(() => (webgl ? null : computeSiteLayout(plot, units)), [webgl, plot, units]);
 
   // click on empty space (not a drag) → deselect

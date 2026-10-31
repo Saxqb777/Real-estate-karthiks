@@ -34,6 +34,8 @@ export interface OverviewCommandOptions {
   openHelp: () => void;
   replayTour: () => void;
   backToToday: (() => void) | null;
+  /** false while another page sits on the world (Data / Config): the game-screen commands step aside */
+  enabled?: boolean;
 }
 
 const GO: { id: string; title: string; href: string; subtitle: string; keywords: string[]; icon: "data" | "config" }[] = [
@@ -189,5 +191,7 @@ export function useOverviewCommands(o: OverviewCommandOptions) {
       });
     return list;
   }, [data, o]);
-  useRegisterCommands(commands);
+  useRegisterCommands(o.enabled === false ? NONE : commands);
 }
+
+const NONE: Command[] = [];

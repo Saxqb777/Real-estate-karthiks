@@ -3,8 +3,9 @@
 // gold-bordered panel below, all over a blurred picture of the estate.
 // Number keys 1–9 switch tabs and N runs the active tab's "add" action (ignored while typing or in a dialog).
 import { motion } from "motion/react";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { cx, isFocusTrapActive } from "@/components/ui";
+import { useWorldReady } from "@/components/shell/world-state";
 import s from "./RailScreen.module.css";
 
 export interface RailItem {
@@ -85,9 +86,11 @@ export function RailScreen({ eyebrow, title, items, value, onChange, onNew, chil
   };
 
   const plateId = useId();
+  const worldReady = useWorldReady();
   return (
     <div className={s.screen}>
-      <div className={s.backdrop} aria-hidden />
+      {/* a stand-in picture of the estate until the live world behind has drawn — then the world itself shows through */}
+      <div className={s.backdrop} data-world={worldReady || undefined} aria-hidden />
       <nav className={s.rail} aria-label={label}>
         <h1 className={s.srOnly}>
           {title} · {eyebrow}
@@ -104,6 +107,7 @@ export function RailScreen({ eyebrow, title, items, value, onChange, onNew, chil
                 aria-selected={on}
                 tabIndex={on ? 0 : -1}
                 className={cx(s.item, it.divider && s.divider)}
+                style={{ "--i": i } as CSSProperties}
                 onClick={() => onChange(it.id)}
               >
                 {/* the chosen section: a gold-glass plate that slides to the button you pick (owner 31/10/2026) */}

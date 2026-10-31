@@ -32,9 +32,10 @@
   flex-direction: column;
   width: 100%;
   max-height: calc(100dvh - max(8vh, 24px) - 24px);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 140px),
-    var(--panel-strong);
+  /* glass (owner 31/10/2026) */
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-pop);
@@ -168,9 +169,10 @@
   flex-direction: column;
   width: min(var(--drawer-w, 520px), 100vw);
   height: 100dvh;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 160px),
-    var(--panel-strong);
+  /* glass (owner 31/10/2026) */
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
   border-left: 1px solid var(--line-strong);
   box-shadow: -30px 0 80px rgba(0, 0, 0, 0.55);
   outline: none;

@@ -347,11 +347,10 @@
   max-height: 100%;
   min-height: 0;
   min-width: 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 140px),
-    rgba(27, 23, 19, 0.94);
-  -webkit-backdrop-filter: blur(8px) saturate(115%);
-  backdrop-filter: blur(8px) saturate(115%);
+  /* glass (owner 31/10/2026) */
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   box-shadow:
