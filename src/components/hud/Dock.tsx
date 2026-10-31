@@ -47,8 +47,10 @@ export interface DockProps {
   hotkeys?: boolean;
   /** phones: no tab bar — the open chart shows as a sheet with an ✕ (picked from the ☰ menu) */
   sheet?: boolean;
-  /** desktop: the tabs as an icon column on the left side (the reel); the tray stays along the bottom */
+  /** desktop: the tabs as an icon column on the left side (the reel); the chart slides out beside it */
   side?: boolean;
+  /** side mode: the chart panel's element (the overview keeps the camera clear of it) */
+  trayRef?: (el: HTMLElement | null) => void;
   className?: string;
 }
 
@@ -59,7 +61,7 @@ export function dockTabLabel(data: DashboardData, id: DockTab): string {
   return named.length >= 2 ? named.join(" vs ") : (named[0] ?? "Units");
 }
 
-export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, side = false, className }: DockProps) {
+export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, side = false, trayRef, className }: DockProps) {
   const uid = useId();
   const [inner, setInner] = useState<DockTab | null>(defaultTab);
   const tab = controlled === undefined ? inner : controlled;
@@ -162,9 +164,9 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         <motion.div
           key="tray"
           className={s.tray}
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
+          initial={side ? { x: -16, opacity: 0 } : { height: 0, opacity: 0 }}
+          animate={side ? { x: 0, opacity: 1 } : { height: "auto", opacity: 1 }}
+          exit={side ? { x: -16, opacity: 0 } : { height: 0, opacity: 0 }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className={s.trayInner}>
@@ -213,7 +215,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             );
           })}
         </nav>
-        <section className={cx(s.dock, s.sideTray, tab && s.dockOpen, !tab && s.sideTrayClosed, className)} aria-label="Chart">
+        <section ref={trayRef} className={cx(s.dock, s.sideTray, tab && s.dockOpen, !tab && s.sideTrayClosed, className)} aria-label="Chart">
           {tray}
           {forms.element}
         </section>

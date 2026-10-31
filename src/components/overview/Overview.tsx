@@ -428,7 +428,9 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const [topEl] = useState<HTMLDivElement | null>(null);
   const [leftEl, setLeftEl] = useState<HTMLDivElement | null>(null);
   const [bottomEl, setBottomEl] = useState<HTMLDivElement | null>(null);
-  const liveInsets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl, bottom: bottomEl });
+  // the chart panel beside the icon column counts as the left inset (the quest log wins when it is open)
+  const [sideEl, setSideEl] = useState<HTMLElement | null>(null);
+  const liveInsets = useInsets(rootEl, hudHidden ? {} : { top: topEl, left: leftEl ?? sideEl, bottom: bottomEl });
   // the HUD steps away behind Data / Config: keep the camera's framing as it was, so nothing moves on the way back
   const keptInsets = useRef(liveInsets);
   if (active) keptInsets.current = liveInsets;
@@ -643,6 +645,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
                 <div data-help="Charts (keys 1–6)">
                   <Dock
                     side
+                    trayRef={setSideEl}
                     className={s.dock}
                     data={data}
                     period={period}

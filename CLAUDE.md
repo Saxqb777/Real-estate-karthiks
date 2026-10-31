@@ -567,10 +567,14 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     Window shade lighter (.28) + world dim softer so the world shows through the glass.
   • CHART DOCK → LEFT ICON COLUMN (owner: "place the bottom section on the side like the video … just use icons"):
     Dock `side` prop — a vertical glass pill of 6 ICONS at the left middle (hud/dock.module.css .rail*; chosen = white
-    circle that slides, name in a dark glass tag on hover / focus), the chart opens as a glass tray along the bottom
-    right of the column (.sideTray, margin-left 64px); the old labelled bottom bar is gone on desktop. The column is
-    position:absolute against the HUD, so the .bottom motion.div animates OPACITY only (a transform would trap it).
-    Phones unchanged (☰ menu → chart sheet).
+    circle that slides, name in a dark glass tag on hover / focus, none on the open one). Then (owner: "the side bar
+    should pop up the charts in a way that suits the side bar"): the chart SLIDES OUT BESIDE the column as a glass
+    panel (.sideTray: absolute, left 82px, centred on the column, width clamp(480px, 42vw, 620px), chart height
+    clamp(340px, 52vh, 520px), body scrolls; x −16 → 0 fade) and counts as the overview's LEFT inset (Dock `trayRef`
+    → Overview sideEl → useInsets left, quest log wins) so the camera frames the plot to its right; the charts' own
+    @container dock ≤ 680px rules stack them for the narrow panel. The old labelled bottom bar is gone on desktop. The
+    column + panel are position:absolute against the HUD, so the .bottom motion.div animates OPACITY only (a transform
+    would trap them). Phones unchanged (☰ menu → chart sheet).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

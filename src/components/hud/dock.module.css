@@ -374,11 +374,26 @@
   opacity: 1;
   translate: 0 -50%;
 }
-/* the chart itself: a glass tray along the bottom, to the right of the icon column; nothing shows while it's shut */
+/* the open chart's icon needs no tag — its panel sits right there */
+.railOn .railTag {
+  display: none;
+}
+/* the chart itself (owner: "pop up the charts in a way that suits the side bar"): a glass panel that slides out
+   BESIDE the icon column, centred on it; the camera frames the plot in the space to its right (the panel is the
+   overview's left inset). Nothing shows while it's shut. */
 .sideTray {
-  margin-left: 64px;
+  --tray-h: clamp(340px, 52vh, 520px);
+  position: absolute;
+  z-index: 3;
+  left: 82px;
+  top: 50%;
+  translate: 0 -50%;
+  width: clamp(480px, 42vw, 620px);
+  max-height: calc(100% - 96px);
+  pointer-events: auto;
 }
 .sideTrayClosed {
+  width: 0;
   background: none;
   border-color: transparent;
   box-shadow: none;
@@ -387,5 +402,14 @@
   pointer-events: none;
 }
 .sideTray .trayInner {
+  padding: 14px 18px 14px;
   border-bottom: 0;
+}
+.sideTray .trayBody {
+  overflow: auto;
+}
+@media (max-height: 760px) {
+  .sideTray {
+    --tray-h: clamp(300px, 50vh, 420px);
+  }
 }
