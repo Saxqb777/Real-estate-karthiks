@@ -521,6 +521,28 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   `.strong` is gone), cell children inherit the font, row height 44px, head 38px; status words = plain coloured words
   in the row's font (the Rajdhani `.status` class is gone); rent roll "ends in N days" sits on the date's line; the
   small gold labels (figure-box label, section title, column head) are all 11px / 0.18em. Phones keep the card rows.
+- 31/10/2026: GLASS + ONE LIVING WORLD (owner: reel "Glassy Dashboard V5" — "buttons … glass … very smooth", "i dont
+  want to change the current layout", then a video: "make all sections glass and so we can see the background at all
+  times even the overview to data, back to overview rn theres a loading screen" → "deploy"). Layout unchanged.
+  • GLASS tokens in globals.css: buttons --glass-bg / -edge / -blur(16px) / -shine / -shadow, chosen = --glass-gold
+    (gold kept, not white); sections --glass-panel-bg (tint .64) and --glass-deep-bg (.76) with --glass-panel-blur
+    (22px); solid tints when backdrop-filter is unsupported or prefers-reduced-transparency. Applied to: float nav
+    pill, Data/Config section buttons (RailScreen .item + count badges), chart dock + tabs (deep glass while a chart is
+    open), Life button, phone bottom bar (its chosen tab = a sliding gold-glass pill instead of the top line), the
+    Data/Config game panel ([data-game-main]), tenant/lease cards, Modal dialogs + side drawers, overview windows (hud
+    .panel). Buttons press to scale .95–.96 and spring back (--press); every sliding highlight = one spring (380/34/.9),
+    the Data/Config sections got a sliding gold plate too (RailScreen .plate, layoutId).
+  • ONE WORLD: AppShell mounts <Overview> once (first visit to /, /data or /config) in a .world layer under <main>
+    (.stage); "/" page renders null. Overview `active` = on "/" (and not mid-exit): inactive → HUD / windows / sky /
+    tour / help / leave prompt / phone chart menu unmounted, hotkeys + ⌘K commands (useOverviewCommands enabled) +
+    dock keys off, windows reset (comes back clean), camera insets frozen, scene `paused` (new EstateScene prop → the
+    Pacer stops; the last frame stays) once its first frames are drawn, layer pointer-events none, canvas brightness
+    .82. Arrival cover only when active (first load). world-state.ts: worldState (ready → RailScreen's stand-in
+    estate picture fades out), isWorldRoute, pageExit. Other routes (invoice, lab …) hide the layer.
+  • MOTION: main tabs (HudBar + MobileTabBar → smooth-nav.ts useSmoothNav) dissolve the page (pe-dissolve 170ms:
+    fade + blur 8px + scale .99) then router.push; Data/Config section buttons and the section panel fade in from a
+    blur (pe-materialize, 30 ms apart, panel +80 ms, replays on section switch), cards a beat apart; fill-mode
+    backwards so press / fixed children still work. Reduced motion → instant.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
