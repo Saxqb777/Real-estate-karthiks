@@ -7,7 +7,7 @@
 .hex {
   --size: 64px;
   --tier: var(--plaster);
-  --tier-dark: #8d8576;
+  --tier-dark: #84858a;
   position: relative;
   flex: none;
   width: var(--size);
@@ -64,8 +64,8 @@
 .lvl {
   font-family: var(--ff-display);
   font-size: calc(var(--size) * 0.14);
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--tier);
   margin-bottom: 2px;
   padding-left: 0.16em;
@@ -73,7 +73,7 @@
 .val {
   font-family: var(--ff-display);
   font-size: calc(var(--size) * 0.3);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -93,8 +93,8 @@
   --tier-dark: #8a3c1d;
 }
 .silver .hex {
-  --tier: #ece4d6;
-  --tier-dark: #8a8274;
+  --tier: #e3e4e9;
+  --tier-dark: #818287;
 }
 .gold .hex {
   --tier: #ffd27f;
@@ -110,16 +110,15 @@
 .title {
   font-family: var(--ff-display);
   font-size: var(--fs-md);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.15;
 }
 .tierName {
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
 }
 .loss .tierName {
   color: var(--coral);
@@ -128,7 +127,7 @@
   color: #e08a5d;
 }
 .silver .tierName {
-  color: #ece4d6;
+  color: #e3e4e9;
 }
 .gold .tierName {
   color: var(--marigold);

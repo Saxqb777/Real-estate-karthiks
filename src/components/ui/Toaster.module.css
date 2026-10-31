@@ -110,7 +110,7 @@
   display: block;
   font-family: var(--ff-display);
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.05;
   color: var(--marigold);
   margin-bottom: 1px;
@@ -118,10 +118,9 @@
 .actionBtn {
   margin-top: 8px;
   font-family: var(--ff-display);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   color: var(--marigold);
 }
 .actionBtn:hover {
@@ -139,7 +138,7 @@
 }
 .close:hover {
   color: var(--text);
-  background: rgba(243, 233, 216, 0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 .close svg {
   width: 15px;

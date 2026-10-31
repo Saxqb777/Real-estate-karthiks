@@ -3,9 +3,9 @@
   margin-left: auto;
   font-family: var(--ff-display);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-dim);
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 .count b {
   color: var(--marigold);
@@ -49,8 +49,8 @@
   border-left: 1px dashed var(--line-strong);
 }
 .current {
-  background: linear-gradient(90deg, rgba(255, 181, 71, 0.1), rgba(255, 181, 71, 0.02));
-  border-color: rgba(255, 181, 71, 0.28);
+  background: linear-gradient(90deg, rgba(76, 141, 255, 0.1), rgba(76, 141, 255, 0.02));
+  border-color: rgba(76, 141, 255, 0.28);
 }
 .mark {
   display: grid;
@@ -58,7 +58,7 @@
   width: 30px;
   height: 30px;
   color: var(--text-dim);
-  background: rgba(243, 233, 216, 0.04);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
 }
@@ -69,7 +69,7 @@
 .current .mark {
   color: var(--marigold-ink);
   background: var(--marigold-bevel);
-  border-color: #ffc76e;
+  border-color: #ffffff;
 }
 .done .mark {
   color: var(--teal);
@@ -93,14 +93,14 @@
 .step {
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
 }
 .title {
   font-family: var(--ff-display);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text);
   line-height: 1.15;

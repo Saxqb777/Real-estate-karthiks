@@ -543,6 +543,34 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     fade + blur 8px + scale .99) then router.push; Data/Config section buttons and the section panel fade in from a
     blur (pe-materialize, 30 ms apart, panel +80 ms, replays on section switch), cards a beat apart; fill-mode
     backwards so press / fixed children still work. Reduced motion → instant.
+- 31/10/2026 (later): GLASS V2 = COPY THE REEL EVERYWHERE (owner: "the opacity and glass look hasnt been matched to the
+  video … go for the same look without the orange borders", "copy the video for the tabs and button", "copy that design
+  for everything and everywhere"; answers: main buttons BLUE like the reel, lettering = the reel's plain modern font in
+  normal letters). Layout unchanged except the chart dock (below). Preview branch pending/glass-v2.
+  • TOKENS (globals.css): neutral charcoal surfaces (no warm tint), white hairlines, --marigold is now the reel's BLUE
+    #4c8dff (name kept so every accent followed), --marigold-ink white, --marigold-bevel / --accent-bg = blue pill,
+    --pill-on white + --pill-on-ink dark (chosen tab / section / segment), --glass-* = clear smoky tint .3 / blur 20px,
+    --glass-panel-* / --glass-deep-* .34 / .52 + blur 28px, --glass-card-*, --glass-radius 22px, --radius 18/12/8 +
+    --radius-pill. NO gold frames anywhere (#c9922e / 2px borders / corner brackets / grain / Chettinad pip gone).
+  • FONT: Plus Jakarta Sans (next/font --font-ui) for --ff-display AND --ff-body — looks like the reel's font and keeps
+    even-width figures (Poppins didn't: money columns wobbled). NO capitals / letter tracking anywhere (sweep removed
+    every text-transform: uppercase + letter-spacing ≥ .03em in the CSS modules; "IN ADVANCE" → "In advance" etc.).
+    Rajdhani stays only for signs painted in the 3D world; the printed receipt keeps Manrope (.rc overrides --ff-body).
+  • APPLIED: float nav + phone bar (glass pill, chosen = white pill), Data/Config section pills + count badges, Button
+    (primary blue pill / secondary glass pill / danger red glass), Panel + [data-game-main] (one big glass pane), Data
+    cards (glass panes, blue initials circle, pill tags), HUD windows (glass pane, inner rows = lighter glass panes,
+    blue avatars; PeriodSwitch = white-pill segment), chart dock, world name tags + sun/moon tag (dark glass pills),
+    Leave prompt (glass pane; Stay glass / Drive off blue), time-travel panel, phone ☰ menu, Modal/Drawer (drawer now a
+    floating glass pane inset 12px), Tabs (white pill both variants), inputs (glass fields), Toggle (round, blue when
+    on), ChoiceGroup / Stepper (pill track), Badge/Delta pills (the "marigold" badge tone = amber warning now), login
+    (white title, glass "Press any key" pill, glass sign-in bar with glass fields + blue Enter, pin tag = dark pill).
+    Window shade lighter (.28) + world dim softer so the world shows through the glass.
+  • CHART DOCK → LEFT ICON COLUMN (owner: "place the bottom section on the side like the video … just use icons"):
+    Dock `side` prop — a vertical glass pill of 6 ICONS at the left middle (hud/dock.module.css .rail*; chosen = white
+    circle that slides, name in a dark glass tag on hover / focus), the chart opens as a glass tray along the bottom
+    right of the column (.sideTray, margin-left 64px); the old labelled bottom bar is gone on desktop. The column is
+    position:absolute against the HUD, so the .bottom motion.div animates OPACITY only (a transform would trap it).
+    Phones unchanged (☰ menu → chart sheet).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

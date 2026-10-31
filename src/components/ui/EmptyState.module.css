@@ -4,10 +4,10 @@
   align-items: center;
   gap: var(--s-5);
   padding: var(--s-5) var(--s-6);
-  border: 1px dashed rgba(243, 233, 216, 0.16);
+  border: 1px dashed rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-sm);
   background:
-    repeating-linear-gradient(135deg, rgba(243, 233, 216, 0.018) 0 6px, transparent 6px 12px),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 6px, transparent 6px 12px),
     rgba(0, 0, 0, 0.12);
 }
 .art {
@@ -27,7 +27,7 @@
 .title {
   font-family: var(--ff-display);
   font-size: var(--fs-lg);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.2;
   color: var(--text);

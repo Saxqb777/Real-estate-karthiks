@@ -109,9 +109,8 @@
   padding: 10px 12px 6px;
   font-family: var(--ff-display);
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 .groupLabel::after {
@@ -133,7 +132,7 @@
   color: var(--text);
 }
 .active {
-  background: rgba(255, 181, 71, 0.08);
+  background: rgba(76, 141, 255, 0.08);
 }
 .rail {
   position: absolute;
@@ -160,7 +159,7 @@
 }
 .active .itemIcon {
   color: var(--marigold);
-  border-color: rgba(255, 181, 71, 0.4);
+  border-color: rgba(76, 141, 255, 0.4);
 }
 .itemText {
   display: flex;
@@ -231,9 +230,8 @@
 .count {
   margin-left: auto;
   font-family: var(--ff-display);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 @media (max-width: 639px) {
   .layer {

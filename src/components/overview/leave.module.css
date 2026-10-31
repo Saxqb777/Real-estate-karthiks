@@ -6,33 +6,33 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  background: radial-gradient(ellipse at center, rgba(14, 11, 8, 0.35), rgba(14, 11, 8, 0.7));
+  background: radial-gradient(ellipse at center, rgba(12, 13, 17, 0.2), rgba(12, 13, 17, 0.55));
 }
+/* the reel (owner 31/10/2026): a pane of clear frosted glass; Stay = a glass pill, Drive off = the blue pill */
 .box {
-  width: min(460px, 100%);
-  padding: 30px 28px 26px;
+  width: min(440px, 100%);
+  padding: 30px 26px 24px;
   text-align: center;
-  color: #f3e9d8;
-  background: rgba(22, 17, 12, 0.96);
-  border: 2px solid #c9922e;
-  border-radius: 10px;
-  box-shadow:
-    0 0 0 5px rgba(201, 146, 46, 0.15),
-    0 24px 70px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: 26px;
+  box-shadow: var(--glass-panel-shadow);
 }
 .title {
   font-family: var(--ff-display);
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #ffcf87;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+  color: #fff;
 }
 .actions {
   display: flex;
-  gap: 14px;
-  margin-top: 26px;
+  gap: 12px;
+  margin-top: 24px;
 }
 .stay,
 .go {
@@ -40,57 +40,52 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  height: 54px;
-  font-family: var(--ff-display);
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  border-radius: 8px;
+  gap: 8px;
+  height: 48px;
+  font-family: var(--ff-body);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  border-radius: 999px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition:
-    transform 0.08s ease-out,
-    box-shadow 0.08s ease-out,
-    filter 0.15s,
+    transform 180ms var(--press),
+    background-color 0.15s,
     border-color 0.15s;
 }
 .stay {
-  color: #f3e9d8;
-  background: #0c0906;
-  border: 1px solid #5a4632;
-  box-shadow: 0 5px 0 #2a1f15;
+  color: #fff;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shine);
 }
 .stay:hover {
-  border-color: #c9922e;
+  background-color: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 .go {
-  color: #2a1405;
-  background: linear-gradient(180deg, #ffd27a, #f0962e);
+  color: #fff;
+  background: var(--accent-bg);
   border: 0;
-  box-shadow: 0 5px 0 #8a4a12;
+  box-shadow: var(--accent-glow);
 }
 .go:hover {
-  filter: brightness(1.06);
+  background: var(--accent-hover);
 }
 .go svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   fill: currentColor;
 }
 .stay:active,
 .go:active {
-  transform: translateY(3px);
-}
-.stay:active {
-  box-shadow: 0 2px 0 #2a1f15;
-}
-.go:active {
-  box-shadow: 0 2px 0 #8a4a12;
+  transform: scale(0.96);
+  transition-duration: 70ms;
 }
 .stay:focus-visible,
 .go:focus-visible {
-  outline: 2px solid #fff6e6;
+  outline: 2px solid #fff;
   outline-offset: 3px;
 }
 @media (max-width: 480px) {

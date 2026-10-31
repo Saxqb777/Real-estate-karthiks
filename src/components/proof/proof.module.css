@@ -15,7 +15,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #c9922e;
+  color: var(--text-dim);
   vertical-align: middle;
   cursor: pointer;
   transition:
@@ -24,7 +24,7 @@
 }
 .clip:hover,
 .clip:focus-visible {
-  background: rgba(201, 146, 46, 0.14);
+  background: rgba(255, 255, 255, 0.056);
   color: #ffcf7a;
 }
 .clip svg {
@@ -34,7 +34,7 @@
 .clipCount {
   font-family: var(--ff-display);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -63,7 +63,7 @@
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  color: #c9922e;
+  color: var(--text-dim);
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -82,7 +82,7 @@
   z-index: var(--z-overlay);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  background: rgba(10, 8, 6, 0.97);
+  background: rgba(22, 23, 29, 0.97);
   color: var(--text);
   outline: none;
 }
@@ -103,9 +103,9 @@
   flex: none;
   font-family: var(--ff-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: #c9922e;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-dim);
 }
 .name {
   overflow: hidden;
@@ -125,16 +125,16 @@
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid rgba(201, 146, 46, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 50%;
-  background: rgba(22, 17, 12, 0.88);
+  background: rgba(16, 17, 22, 0.88);
   color: var(--text);
   cursor: pointer;
 }
 .round:hover:not(:disabled),
 .round:focus-visible {
-  border-color: #c9922e;
-  background: rgba(40, 30, 18, 0.95);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(30, 31, 36, 0.95);
 }
 .round:disabled {
   opacity: 0.5;
@@ -184,15 +184,17 @@
   gap: 10px;
   max-width: 360px;
   padding: 30px 28px;
-  border: 2px solid #c9922e;
-  border-radius: 10px;
-  background: var(--bg-2);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: var(--glass-radius);
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
   text-align: center;
 }
 .pdf > svg {
   width: 48px;
   height: 48px;
-  color: #c9922e;
+  color: var(--text-dim);
 }
 .pdfName {
   font-weight: 700;

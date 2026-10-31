@@ -22,9 +22,8 @@
 .kicker {
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--marigold);
 }
 .h1 {
@@ -43,9 +42,8 @@
   padding: 1px 11px 0;
   font-family: var(--ff-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
   border-radius: var(--radius-xs);
   white-space: nowrap;
@@ -55,7 +53,7 @@
 }
 .stageOn {
   color: var(--text);
-  background: rgba(255, 181, 71, 0.1);
+  background: rgba(76, 141, 255, 0.1);
   box-shadow: inset 0 -2px 0 var(--marigold);
 }
 .stage {
@@ -173,11 +171,10 @@
   padding: 0 8px 0 10px;
   font-family: var(--ff-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text);
-  background: rgba(27, 23, 19, 0.88);
+  background: rgba(22, 23, 28, 0.88);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid var(--line-strong);
@@ -196,8 +193,8 @@
   font-size: 10.5px;
 }
 .propChipOn {
-  border-color: rgba(255, 181, 71, 0.5);
-  background: rgba(46, 36, 22, 0.92);
+  border-color: rgba(76, 141, 255, 0.5);
+  background: rgba(35, 36, 41, 0.92);
 }
 
 /* ---------------- sketch backdrop */
@@ -206,7 +203,7 @@
   inset: 0;
   background:
     radial-gradient(90% 70% at 50% 45%, rgba(181, 83, 46, 0.12), transparent 70%),
-    radial-gradient(120% 90% at 50% 20%, #221b15 0%, var(--bg-0) 75%);
+    radial-gradient(120% 90% at 50% 20%, #1a1b20 0%, var(--bg-0) 75%);
 }
 .sketchSvg {
   position: absolute;
@@ -216,7 +213,7 @@
   max-width: none;
 }
 .road {
-  fill: rgba(243, 233, 216, 0.04);
+  fill: rgba(255, 255, 255, 0.04);
 }
 .plotShape {
   fill: rgba(181, 83, 46, 0.14);
@@ -225,8 +222,8 @@
   stroke-dasharray: 0.8 0.5;
 }
 .house {
-  fill: rgba(243, 233, 216, 0.08);
-  stroke: rgba(243, 233, 216, 0.4);
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 255, 255, 0.4);
   stroke-width: 0.25;
 }
 .house[data-tone="teal"] {
@@ -242,7 +239,7 @@
   fill: rgba(96, 165, 250, 0.05);
 }
 .wall {
-  stroke: rgba(243, 233, 216, 0.4);
+  stroke: rgba(255, 255, 255, 0.4);
   stroke-width: 0.5;
 }
 .spot {
@@ -258,7 +255,7 @@
   width: 12px;
   height: 12px;
   border: 2px solid var(--marigold);
-  background: rgba(255, 181, 71, 0.18);
+  background: rgba(76, 141, 255, 0.18);
   transform: rotate(45deg);
   transition: transform var(--dur-1) var(--ease-out);
 }
@@ -269,9 +266,8 @@
 .spotLabel {
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
   white-space: nowrap;
 }
@@ -356,12 +352,12 @@
 }
 .keyBtn:hover {
   color: var(--text);
-  background: rgba(243, 233, 216, 0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 .keyOn {
   color: var(--text);
   border-left-color: var(--marigold);
-  background: rgba(255, 181, 71, 0.06);
+  background: rgba(76, 141, 255, 0.06);
 }
 .keyScope {
   font-size: 11px;
@@ -440,9 +436,8 @@
 .tileTitle {
   font-family: var(--ff-display);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
 }
 .tileNote {

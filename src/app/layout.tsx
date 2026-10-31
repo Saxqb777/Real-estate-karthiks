@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, Rajdhani } from "next/font/google";
+import { Manrope, Plus_Jakarta_Sans, Rajdhani } from "next/font/google";
 import "./globals.css";
 
 const display = Rajdhani({
@@ -15,6 +15,16 @@ const body = Manrope({
   display: "swap",
 });
 
+// the UI lettering (owner 31/10/2026: "copy that design for everything and everywhere" — the reel's plain modern font in
+// normal letters; Plus Jakarta Sans looks like it and keeps even-width figures for money columns). Rajdhani stays only
+// for the signs painted in the 3D world; Manrope for the printed receipt.
+const ui = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ui",
+  display: "swap",
+});
+
 // (no Tamil font: nothing on the site is in Tamil any more — owner, 5/10/2026 — so it is no longer downloaded)
 
 export const metadata: Metadata = {
@@ -24,7 +34,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#151310",
+  themeColor: "#121317",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -33,7 +43,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable} ${ui.variable}`}>
       <body>{children}</body>
     </html>
   );

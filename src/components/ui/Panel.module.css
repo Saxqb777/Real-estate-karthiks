@@ -1,17 +1,16 @@
 .panel {
-  --bracket: rgba(243, 233, 216, 0.34);
+  --bracket: rgba(255, 255, 255, 0.34);
   --bracket-len: 10px;
   --pad: var(--s-4);
   position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 120px),
-    var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--inner-hi), var(--shadow-1);
+  /* the reel (owner 31/10/2026): a pane of clear glass with a white hairline — no grain, no corner brackets */
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-card-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shine), 0 10px 30px rgba(0, 0, 0, 0.18);
   transition:
     border-color var(--dur-2) var(--ease-out),
     transform var(--dur-2) var(--ease-out);
@@ -25,7 +24,7 @@
   border-radius: inherit;
   pointer-events: none;
   background: var(--noise);
-  opacity: 0.22;
+  opacity: 0;
   z-index: 0;
 }
 
@@ -49,6 +48,7 @@
     linear-gradient(var(--c) 0 0) bottom right / var(--l) var(--w) no-repeat,
     linear-gradient(var(--c) 0 0) bottom right / var(--w) var(--l) no-repeat;
   transition: opacity var(--dur-2) var(--ease-out);
+  display: none;
 }
 
 .accent-marigold {
@@ -65,23 +65,22 @@
 }
 
 .strong {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 120px),
-    var(--panel-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05)), rgba(30, 31, 37, 0.3);
   border-color: var(--line-strong);
 }
 .sunken {
   background: var(--sunken);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
 }
 .sunken::after {
   opacity: 0.25;
 }
 /* Only for HUD overlays floating on the 3D scene. */
 .glass {
-  background: var(--panel-glass);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
-  backdrop-filter: blur(12px) saturate(120%);
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border-color: var(--glass-panel-edge);
 }
 .glass::after {
   opacity: 0.2;
@@ -141,7 +140,7 @@
   right: var(--pad);
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, var(--marigold) 0 22px, transparent 22px 26px, var(--line) 26px);
+  background: var(--line);
 }
 .titles {
   display: flex;
@@ -157,22 +156,17 @@
   font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
 }
 .pip {
-  width: 5px;
-  height: 5px;
-  background: var(--marigold);
-  transform: rotate(45deg);
-  flex: none;
+  display: none;
 }
 .title {
   font-family: var(--ff-display);
   font-size: var(--fs-xl);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
   color: var(--text);
 }
 .actions {
@@ -223,31 +217,22 @@
   }
 }
 
-/* Data / Config ("option C", owner): the page panel sits on the estate backdrop in the game style — gold border with a
-   soft glow, title in the display face. Applied to the panel directly inside a RailScreen main area. */
+/* Data / Config: the page panel = one big pane of the reel's clear glass over the world (owner 31/10/2026) */
 :global([data-game-main]) .panel:not(.panel .panel) {
-  /* glass (owner 31/10/2026): the estate shows softly through; the world behind is held still, so the blur is cheap */
   background: var(--glass-panel-bg);
   -webkit-backdrop-filter: var(--glass-panel-blur);
   backdrop-filter: var(--glass-panel-blur);
-  border: 2px solid #c9922e;
-  border-radius: 10px;
-  box-shadow:
-    0 0 0 5px rgba(201, 146, 46, 0.15),
-    0 24px 70px rgba(0, 0, 0, 0.55);
-}
-:global([data-game-main]) .panel.brackets:not(.panel .panel)::before {
-  display: none;
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-panel-shadow);
 }
 :global([data-game-main]) .panel:not(.panel .panel) > .head .title {
-  font-size: 28px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #fff6e6;
-  text-shadow: 0 2px 0 #7a3418;
+  font-size: 26px;
+  font-weight: 600;
+  color: #fff;
 }
 :global([data-game-main]) .panel:not(.panel .panel) > .head .eyebrow {
-  color: #c9922e;
+  color: var(--text-dim);
 }
 
 /* phones: a panel marked data-wrap-head (reports) puts its header controls on their own row under the title */

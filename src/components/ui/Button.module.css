@@ -1,3 +1,5 @@
+/* Buttons = the reel (owner 31/10/2026): round pills — the main one solid blue, the others clear glass with a white
+   hairline; a soft press, then they spring back. */
 .btn {
   position: relative;
   display: inline-flex;
@@ -5,29 +7,30 @@
   justify-content: center;
   gap: 8px;
   height: 36px;
-  padding: 0 14px;
+  padding: 0 16px;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  font-family: var(--ff-display);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  font-family: var(--ff-body);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
   line-height: 1;
   white-space: nowrap;
   user-select: none;
   overflow: hidden;
   isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
   transition:
     background-color var(--dur-1) var(--ease-out),
     border-color var(--dur-1) var(--ease-out),
     color var(--dur-1) var(--ease-out),
     filter var(--dur-1) var(--ease-out),
-    transform var(--dur-1) var(--ease-out),
+    transform 180ms var(--press),
     box-shadow var(--dur-1) var(--ease-out);
 }
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: scale(0.96);
+  transition-duration: 70ms;
 }
 .btn:disabled {
   opacity: 0.45;
@@ -44,52 +47,30 @@
 .label {
   display: inline-flex;
   align-items: center;
-  padding-top: 1px; /* Rajdhani sits high */
 }
 
-/* primary — bevelled marigold, like a physical game button */
+/* primary — the reel's blue pill */
 .primary {
-  background: var(--marigold-bevel);
-  color: var(--marigold-ink);
-  border-color: #ffcf85;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 0 rgba(122, 58, 0, 0.35),
-    0 1px 0 rgba(0, 0, 0, 0.5);
-}
-.primary::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
-  transform: translateX(-120%);
-}
-.primary:hover:not(:disabled)::after {
-  transform: translateX(120%);
-  transition: transform 700ms var(--ease-out);
+  background: var(--accent-bg);
+  color: #fff;
+  box-shadow: var(--accent-glow);
 }
 .primary:hover:not(:disabled) {
-  filter: brightness(1.05);
-}
-.primary:active:not(:disabled) {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -1px 0 rgba(122, 58, 0, 0.35);
+  background: var(--accent-hover);
 }
 
-/* secondary — raised charcoal plate */
+/* secondary — clear glass pill */
 .secondary {
-  background: linear-gradient(180deg, #2b2620, #221e19);
-  border-color: var(--line-strong);
-  color: var(--text);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 1px 0 rgba(0, 0, 0, 0.5);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-color: var(--glass-edge);
+  color: #fff;
+  box-shadow: var(--glass-shine);
 }
 .secondary:hover:not(:disabled) {
-  border-color: rgba(255, 181, 71, 0.55);
-  color: #fff6e6;
+  background-color: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 /* ghost — text only until hovered */
@@ -98,25 +79,25 @@
   color: var(--text-dim);
 }
 .ghost:hover:not(:disabled) {
-  background: rgba(243, 233, 216, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text);
 }
 
-/* danger — coral outline that fills on hover */
+/* danger — red glass that fills on hover */
 .danger {
-  background: var(--coral-a12);
-  border-color: rgba(240, 82, 82, 0.45);
-  color: #ff8a9b;
+  background: rgba(240, 82, 82, 0.14);
+  border-color: rgba(240, 82, 82, 0.4);
+  color: #ff9aa6;
 }
 .danger:hover:not(:disabled) {
   background: var(--coral);
   border-color: var(--coral);
-  color: #1f0508;
+  color: #fff;
 }
 
 .sm {
   height: 30px;
-  padding: 0 10px;
+  padding: 0 12px;
   font-size: 13px;
   gap: 6px;
 }
@@ -126,8 +107,8 @@
 }
 .lg {
   height: 44px;
-  padding: 0 20px;
-  font-size: 17px;
+  padding: 0 22px;
+  font-size: 15px;
 }
 .lg svg {
   width: 18px;

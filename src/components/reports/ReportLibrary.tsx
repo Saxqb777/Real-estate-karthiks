@@ -478,7 +478,7 @@ function RentRoll({ d, leases }: { d: DashboardData; leases: { id: string; rentT
                   {renew && <span className={renew.state === "expired" ? s.red : s.mari}> · {agreementText(renew.daysLeft)}</span>}
                 </td>
                 <td className={s.r}>{l ? inr(l.monthlyRent) : "—"}</td>
-                <td>{l ? `${extra?.rentTiming === "arrears" ? "IN ARREARS" : "IN ADVANCE"} · day ${due}` : "—"}</td>
+                <td>{l ? `${extra?.rentTiming === "arrears" ? "In arrears" : "In advance"} · day ${due}` : "—"}</td>
                 <td className={s.r}>{l ? inr(l.securityDeposit) : "—"}</td>
                 <td>
                   {/* plain status words like every other report (no screen badge) */}

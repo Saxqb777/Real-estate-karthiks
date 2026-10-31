@@ -24,7 +24,7 @@
 }
 /* focus dimming, softened: the scene's own dim (brightness .6) turns the night world nearly black */
 .world[data-dim] canvas {
-  filter: saturate(0.72) brightness(0.8) sepia(0.08) !important;
+  filter: saturate(0.85) brightness(0.92) !important;
 }
 /* option B: the world boxed between the HUD pieces (resizes in one step — a WebGL canvas shouldn't animate its size) */
 .framed .world {
@@ -119,7 +119,7 @@
   display: flex;
   gap: 4px;
   padding: 3px;
-  background: rgba(27, 23, 19, 0.9);
+  background: rgba(22, 23, 28, 0.9);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid var(--line-strong);
@@ -134,7 +134,7 @@
   background: transparent !important;
 }
 .tools button:hover {
-  background: rgba(243, 233, 216, 0.06) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 .tools svg {
   width: 15px;
@@ -151,11 +151,10 @@
   flex: none;
   font-family: var(--ff-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text);
-  background: rgba(27, 23, 19, 0.9);
+  background: rgba(22, 23, 28, 0.9);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid var(--line-strong);
@@ -181,14 +180,14 @@
   font-size: 10.5px;
 }
 .chipBtnOn {
-  border-color: rgba(255, 181, 71, 0.55);
-  background: rgba(46, 36, 22, 0.94);
+  border-color: rgba(76, 141, 255, 0.55);
+  background: rgba(35, 36, 41, 0.94);
 }
 .questBtn b {
   font-family: var(--ff-display);
   font-size: 14px;
   color: var(--marigold);
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 .dot {
   position: absolute;
@@ -203,9 +202,8 @@
 .loadingNote {
   font-family: var(--ff-display);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-faint);
   padding: 0 6px;
 }
@@ -219,10 +217,10 @@
   padding: 0 4px 0 10px;
   font-size: 13px;
   color: var(--text);
-  background: rgba(46, 36, 22, 0.94);
+  background: rgba(35, 36, 41, 0.94);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 181, 71, 0.55);
+  border: 1px solid rgba(76, 141, 255, 0.55);
   border-radius: var(--radius-xs);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
   flex: none;
@@ -235,15 +233,14 @@
 .asOfText {
   font-family: var(--ff-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--marigold);
   white-space: nowrap;
 }
 .asOfText b {
   color: var(--text);
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   font-size: 14px;
 }
 .asOfLive {
@@ -254,9 +251,8 @@
   padding: 1px 7px 0;
   font-family: var(--ff-display);
   font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--marigold-ink);
   background: var(--marigold);
   border-radius: 3px;
@@ -300,10 +296,10 @@
   position: relative;
   min-width: 0;
   margin-top: -1px;
-  background: rgba(20, 18, 15, 0.92);
-  -webkit-backdrop-filter: blur(10px) saturate(115%);
-  backdrop-filter: blur(10px) saturate(115%);
-  border: 1px solid var(--line-strong);
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-edge);
   border-top-color: var(--line);
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
@@ -323,11 +319,10 @@
   padding: 1px 8px 0 12px;
   font-family: var(--ff-display);
   font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
-  background: rgba(20, 18, 15, 0.7);
+  background: rgba(16, 17, 22, 0.7);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
   opacity: 0.55;
@@ -360,7 +355,7 @@
   z-index: 3;
   width: min(420px, calc(100% - 32px));
   padding: 8px;
-  background: rgba(24, 21, 18, 0.94);
+  background: rgba(20, 21, 26, 0.94);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
 }
@@ -438,7 +433,7 @@
 }
 .mHelp {
   flex: none;
-  background: rgba(27, 23, 19, 0.88) !important;
+  background: rgba(22, 23, 28, 0.88) !important;
 }
 .mScrub {
   position: absolute;
@@ -446,10 +441,10 @@
   right: 8px;
   bottom: 18px;
   z-index: 2;
-  background: rgba(20, 18, 15, 0.9);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--line-strong);
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius-sm);
 }
 .mSheetLoading {
@@ -457,7 +452,7 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  background: #1a1713;
+  background: #15161b;
   border-top: 1px solid var(--line-strong);
 }
 .mobile .asOf {
@@ -477,9 +472,8 @@
   background: var(--bg-0);
   font-family: var(--ff-display);
   font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--marigold);
 }
 
@@ -498,16 +492,15 @@
 .arrivalText {
   font-family: var(--ff-display);
   font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--marigold);
 }
 .arrivalBar {
   width: 220px;
   height: 4px;
   overflow: hidden;
-  background: rgba(243, 233, 216, 0.12);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 2px;
 }
 .arrivalBar i {
@@ -533,12 +526,12 @@
   position: fixed;
   inset: 0;
   z-index: 44;
-  background: rgba(8, 6, 4, 0.55);
+  background: rgba(8, 9, 14, 0.28);
   pointer-events: auto;
 }
 /* the photographer's photos float with no window (design D) — a deeper shade keeps the busy world out of the way */
 .centreShadeDeep {
-  background: rgba(8, 6, 4, 0.8);
+  background: rgba(4, 5, 10, 0.8);
 }
 .centre {
   position: fixed;
@@ -573,12 +566,13 @@
   right: 12px;
   bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px);
   padding: 6px 0;
-  background: rgba(22, 17, 12, 0.97);
-  border: 2px solid #c9922e;
-  border-radius: 10px;
-  box-shadow:
-    0 0 24px rgba(201, 146, 46, 0.25),
-    0 20px 40px rgba(0, 0, 0, 0.6);
+  /* the reel (owner 31/10/2026): clear frosted glass */
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: 24px;
+  box-shadow: var(--glass-panel-shadow);
 }
 .menuTitle {
   margin: 0;
@@ -586,10 +580,9 @@
   border-bottom: 1px solid var(--line);
   font-family: var(--ff-display);
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--marigold);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #fff;
 }
 .menuRow {
   display: flex;
@@ -597,7 +590,7 @@
   gap: 14px;
   width: 100%;
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(243, 233, 216, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   text-align: left;
   color: var(--text);
 }
@@ -605,7 +598,7 @@
   border-bottom: 0;
 }
 .menuRow:active {
-  background: rgba(255, 181, 71, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 .menuIcon {
   display: inline-grid;
@@ -619,9 +612,8 @@
   flex: 1;
   font-family: var(--ff-display);
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 .menuChev {
   width: 18px;

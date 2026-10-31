@@ -51,15 +51,15 @@
 
 /* axes */
 .grid {
-  stroke: rgba(243, 233, 216, 0.07);
+  stroke: rgba(255, 255, 255, 0.07);
   stroke-width: 1;
 }
 .zero {
-  stroke: rgba(243, 233, 216, 0.28);
+  stroke: rgba(255, 255, 255, 0.28);
   stroke-width: 1;
 }
 .track {
-  stroke: rgba(243, 233, 216, 0.06);
+  stroke: rgba(255, 255, 255, 0.06);
   stroke-width: 1;
 }
 .yLabel,
@@ -74,16 +74,16 @@
   fill: var(--text-dim);
 }
 .xFuture {
-  fill: rgba(243, 233, 216, 0.22);
+  fill: rgba(255, 255, 255, 0.22);
 }
 .endLabel {
   font-family: var(--ff-display);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   fill: var(--text);
 }
 .hoverBand {
-  fill: rgba(243, 233, 216, 0.045);
+  fill: rgba(255, 255, 255, 0.045);
 }
 
 /* marks */
@@ -112,7 +112,7 @@
 }
 .netDot {
   fill: var(--plaster);
-  stroke: #1b1713;
+  stroke: #16171c;
   stroke-width: 2;
   pointer-events: none;
 }
@@ -144,8 +144,8 @@
   border-radius: 1px;
 }
 .legendHatch {
-  background: repeating-linear-gradient(45deg, rgba(243, 233, 216, 0.35) 0 1.5px, transparent 1.5px 4px);
-  border: 1px solid rgba(243, 233, 216, 0.3);
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 1.5px, transparent 1.5px 4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 .stepper {
   display: inline-flex;
@@ -177,8 +177,8 @@
   text-align: center;
   font-family: var(--ff-display);
   font-size: 13.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
   border-left: 1px solid var(--line);
   border-right: 1px solid var(--line);
@@ -189,9 +189,8 @@
   padding: 1px 10px 0;
   font-family: var(--ff-display);
   font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
   border-right: 1px solid var(--line);
 }
@@ -216,7 +215,7 @@
   cursor: pointer;
 }
 .totalBtn:hover {
-  background: rgba(243, 233, 216, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 .totalLabel {
@@ -240,7 +239,7 @@
   color: var(--text-dim);
 }
 .paperNum {
-  text-decoration: underline dotted rgba(255, 181, 71, 0.7);
+  text-decoration: underline dotted rgba(76, 141, 255, 0.7);
   text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
 }
@@ -252,7 +251,7 @@
   width: 210px;
   pointer-events: none;
   padding: 8px 10px;
-  background: rgba(37, 33, 28, 0.97);
+  background: rgba(32, 33, 38, 0.97);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
@@ -261,8 +260,8 @@
   margin-bottom: 4px;
   font-family: var(--ff-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text);
 }
 .tipRow {
@@ -347,9 +346,8 @@
 .donutSub {
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
 }
 .catList {
@@ -379,7 +377,7 @@
 }
 .catOn,
 .cat:not(:disabled):hover {
-  background: rgba(243, 233, 216, 0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 .catSw {
   width: 10px;
@@ -396,7 +394,7 @@
 .catBar {
   height: 6px;
   border-radius: 3px;
-  background: rgba(243, 233, 216, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   overflow: hidden;
 }
 .catBar > span {
@@ -443,17 +441,15 @@
 .cmpTitle {
   font-family: var(--ff-display);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
 }
 .cmpScope {
   margin-left: auto;
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
   white-space: nowrap;
 }
@@ -473,9 +469,8 @@
 .cmpTable thead th {
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
   border-bottom: 1px solid var(--line);
 }
@@ -490,7 +485,7 @@
   text-overflow: ellipsis;
 }
 .cmpTable tbody tr + tr > * {
-  border-top: 1px dashed rgba(243, 233, 216, 0.06);
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
 }
 .cmpNote {
   margin-top: auto;
@@ -503,7 +498,7 @@
 }
 .cmpTotalHead,
 .cmpTotal {
-  background: rgba(243, 233, 216, 0.025);
+  background: rgba(255, 255, 255, 0.025);
 }
 .cmpUnit {
   font: inherit;
@@ -525,7 +520,7 @@
   border-radius: 3px;
 }
 .cmpBtn:hover {
-  background: rgba(243, 233, 216, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 .cmpNum {
@@ -555,7 +550,7 @@
   text-align: left;
   font-family: var(--ff-display);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.05;
   color: var(--text);
 }
@@ -567,8 +562,7 @@
 }
 .ganttPos {
   font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   color: var(--text-faint);
 }
 .purchase {
@@ -576,16 +570,16 @@
   stroke-width: 2;
 }
 .vacant {
-  stroke: rgba(243, 233, 216, 0.22);
+  stroke: rgba(255, 255, 255, 0.22);
   stroke-width: 1;
 }
 .vacantLabel {
   font-family: var(--ff-display);
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
   fill: var(--text-dim);
   paint-order: stroke;
-  stroke: #1b1713;
+  stroke: #16171c;
   stroke-width: 3px;
 }
 .lease {
@@ -608,7 +602,7 @@
 .leaseLabel {
   font-family: var(--ff-display);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   fill: #0d1726;
   pointer-events: none;
 }
@@ -653,7 +647,7 @@
   color: var(--text);
 }
 .growthTotal:not(:disabled):hover {
-  background: rgba(243, 233, 216, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 .sqft {
@@ -705,7 +699,7 @@ button.sqftBar:hover .sqftVal {
   border-radius: 0 3px 3px 0;
 }
 .sqftPaid {
-  background: rgba(243, 233, 216, 0.28);
+  background: rgba(255, 255, 255, 0.28);
 }
 .sqftNow {
   background: var(--marigold);
@@ -744,11 +738,10 @@ button.sqftBar:hover .sqftVal {
   text-align: left;
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
-  background: #1f1b17;
+  background: #1a1b20;
   border-bottom: 1px solid var(--line);
 }
 .payTable td {
@@ -797,9 +790,8 @@ button.sqftBar:hover .sqftVal {
 .payAsideLabel {
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 .payAsideValue {

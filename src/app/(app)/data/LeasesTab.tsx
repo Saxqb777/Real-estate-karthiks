@@ -248,7 +248,7 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
             ),
           },
           { label: "Monthly rent", value: formatINR(l.monthlyRent), num: true },
-          { label: "Rent billing", value: l.rentTiming === "arrears" ? "IN ARREARS" : "IN ADVANCE" },
+          { label: "Rent billing", value: l.rentTiming === "arrears" ? "In arrears" : "In advance" },
           {
             label: "Security deposit",
             value: l.securityDeposit ? formatINR(l.securityDeposit) : <span className="faint">none</span>,

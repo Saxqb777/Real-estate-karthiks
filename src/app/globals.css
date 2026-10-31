@@ -21,29 +21,33 @@
 :root {
   color-scheme: dark;
 
-  /* Surfaces — warm charcoal, darkest → raised */
-  --bg-0: #0e0d0b;
-  --bg-1: #151310;
-  --bg-2: #1c1915;
-  --bg-3: #25211c;
-  --panel: #181512;
-  --panel-strong: #201c18;
-  --panel-glass: rgba(22, 19, 16, 0.74); /* only over the 3D scene */
-  --sunken: rgba(0, 0, 0, 0.28); /* input wells, tracks */
+  /* LOOK = the owner's reel (31/10/2026: "copy that design for everything and everywhere"): clear frosted glass over
+     the world, white hairline edges, round pills, the chosen tab a solid WHITE pill, main buttons BLUE, plain modern
+     lettering (Poppins) in normal letters, white text. Neutral greys — no warm tint, no gold frames. */
 
-  /* Hairlines (lime-plaster tinted) */
-  --line: rgba(243, 233, 216, 0.09);
-  --line-strong: rgba(243, 233, 216, 0.18);
-  --line-bright: rgba(243, 233, 216, 0.32);
+  /* Surfaces — neutral charcoal, darkest → raised */
+  --bg-0: #0c0d10;
+  --bg-1: #121317;
+  --bg-2: #18191e;
+  --bg-3: #202127;
+  --panel: #16171b;
+  --panel-strong: #1c1d22;
+  --panel-glass: rgba(24, 25, 30, 0.5); /* only over the 3D scene */
+  --sunken: rgba(255, 255, 255, 0.06); /* input wells, tracks (glass) */
+
+  /* Hairlines (white) */
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --line-bright: rgba(255, 255, 255, 0.28);
 
   /* Text */
-  --text: #f2eadd;
-  --text-dim: #a89e8f;
-  --text-faint: #6f675c;
+  --text: #f6f6f8;
+  --text-dim: #b3b5bd;
+  --text-faint: #7c7e88;
 
-  /* Brand + meaning */
-  --marigold: #ffb547; /* brand / primary / focus */
-  --saffron: #ff8a3d;
+  /* Brand + meaning — the accent is the reel's BLUE (the name "marigold" is kept so every accent follows) */
+  --marigold: #4c8dff; /* accent / primary / focus */
+  --saffron: #2f6fe8;
   --teal: #4ade80; /* GREEN: income, money in, positive, occupied, paid (owner 7/10: income green) */
   --coral: #f05252; /* RED: expense, money out, negative, overdue (owner 7/10: expenses red) */
   --sky: #60a5fa; /* info, vacant blueprint */
@@ -56,22 +60,23 @@
   --plaster: #f3e9d8;
 
   /* Tints for fills behind meaning colours */
-  --marigold-ink: #1d1404; /* text on marigold */
-  --marigold-a08: rgba(255, 181, 71, 0.08);
-  --marigold-a16: rgba(255, 181, 71, 0.16);
+  --marigold-ink: #ffffff; /* text on the accent */
+  --marigold-a08: rgba(76, 141, 255, 0.1);
+  --marigold-a16: rgba(76, 141, 255, 0.2);
   --teal-a12: rgba(74, 222, 128, 0.12);
   --coral-a12: rgba(240, 82, 82, 0.12);
   --sky-a12: rgba(96, 165, 250, 0.12);
   --laterite-a20: rgba(181, 83, 46, 0.2);
 
-  --brand-gradient: linear-gradient(135deg, var(--marigold), var(--saffron));
-  /* Physical, bevelled marigold (primary buttons, active markers) */
-  --marigold-bevel: linear-gradient(180deg, #ffc76e 0%, #ffb547 48%, #f59a36 100%);
+  --brand-gradient: linear-gradient(135deg, #5b9bff, #3a7bf0);
+  /* the main button (the reel's "Add link"): a blue pill */
+  --marigold-bevel: linear-gradient(180deg, #5d9bff 0%, #3f80f5 100%);
 
-  /* Shape */
-  --radius: 10px;
-  --radius-sm: 6px;
-  --radius-xs: 4px;
+  /* Shape — big soft radii, round pills */
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --radius-pill: 999px;
 
   /* Depth */
   --glow: 0 0 0 1px var(--line-strong), 0 8px 30px rgba(0, 0, 0, 0.45);
@@ -80,8 +85,8 @@
   --inner-hi: inset 0 1px 0 rgba(255, 255, 255, 0.045);
 
   /* Type (font variables come from next/font on <html>) */
-  --ff-display: var(--font-display), "Rajdhani", "Arial Narrow", system-ui, sans-serif;
-  --ff-body: var(--font-body), "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ff-display: var(--font-ui), "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ff-body: var(--font-ui), "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --ff-tamil: var(--font-tamil), "Noto Sans Tamil", "Latha", sans-serif;
   --fs-2xs: 11px;
   --fs-xs: 12px;
@@ -93,7 +98,7 @@
   --fs-2xl: 28px;
   --fs-3xl: 36px;
   --fs-4xl: 52px;
-  --tracking-label: 0.14em;
+  --tracking-label: 0;
 
   /* Spacing scale (4px base) */
   --s-1: 4px;
@@ -113,27 +118,36 @@
   --dur-2: 200ms;
   --dur-3: 320ms;
 
-  /* Glass (owner 31/10/2026: "glass look … smooth clicking and transition", layout unchanged) — the buttons at the
-     top and bottom: a see-through warm tint over a soft blur, a light top edge, a soft shadow; the chosen one is gold
-     glass. Small surfaces only, so the live blur stays cheap. */
-  --glass-tint: rgba(16, 12, 9, 0.5);
-  --glass-bg: linear-gradient(180deg, rgba(255, 246, 230, 0.12), rgba(255, 246, 230, 0.03)), var(--glass-tint);
-  --glass-hover: rgba(255, 246, 230, 0.08);
-  --glass-edge: rgba(255, 244, 225, 0.17);
-  --glass-blur: blur(16px) saturate(150%);
-  --glass-shine: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 -1px 0 rgba(0, 0, 0, 0.24);
-  --glass-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
-  --glass-gold: linear-gradient(180deg, rgba(255, 216, 145, 0.97), rgba(240, 150, 46, 0.92));
-  --glass-gold-shine:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(120, 60, 10, 0.32), 0 4px 16px rgba(240, 150, 46, 0.28);
+  /* GLASS (the owner's reel, 31/10/2026) — buttons and tabs: a clear smoky tint over a strong blur, a white hairline
+     edge, a soft top light and shadow. */
+  --glass-tint: rgba(30, 31, 37, 0.3);
+  --glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04)), var(--glass-tint);
+  --glass-hover: rgba(255, 255, 255, 0.09);
+  --glass-edge: rgba(255, 255, 255, 0.16);
+  --glass-blur: blur(20px) saturate(160%);
+  --glass-shine: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  /* the chosen tab / section / segment: a solid white pill with dark letters */
+  --pill-on: #ffffff;
+  --pill-on-ink: #15161b;
+  --pill-on-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+  /* the main button: a blue pill with a soft glow */
+  --accent-bg: linear-gradient(180deg, #5d9bff, #3f80f5);
+  --accent-hover: linear-gradient(180deg, #6ea6ff, #4b89f7);
+  --accent-glow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 20px rgba(63, 128, 245, 0.38);
   --press: cubic-bezier(0.2, 0.8, 0.2, 1);
-  /* glass SECTIONS (owner 31/10/2026: "make all sections glass … see the background at all times"): panels, cards,
-     drawers and windows — a deeper tint than the buttons so text stays easy to read, the same soft blur */
-  --glass-panel-tint: rgba(15, 11, 8, 0.64);
-  --glass-panel-bg: linear-gradient(180deg, rgba(255, 246, 230, 0.07), rgba(255, 246, 230, 0.015) 160px), var(--glass-panel-tint);
-  --glass-deep-tint: rgba(15, 11, 8, 0.76);
-  --glass-deep-bg: linear-gradient(180deg, rgba(255, 246, 230, 0.06), rgba(255, 246, 230, 0.01) 160px), var(--glass-deep-tint);
-  --glass-panel-blur: blur(22px) saturate(140%);
+  /* SECTIONS (panels, cards, windows, drawers): the same clear glass, a little deeper so the writing stays easy to read */
+  --glass-panel-tint: rgba(26, 27, 33, 0.34);
+  --glass-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03) 240px), var(--glass-panel-tint);
+  --glass-deep-tint: rgba(22, 23, 29, 0.52);
+  --glass-deep-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025) 240px), var(--glass-deep-tint);
+  --glass-panel-blur: blur(28px) saturate(160%);
+  --glass-panel-edge: rgba(255, 255, 255, 0.14);
+  --glass-panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 20px 50px rgba(0, 0, 0, 0.28);
+  /* cards inside a section: a lighter pane of the same glass */
+  --glass-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)), rgba(30, 31, 37, 0.22);
+  --glass-card-edge: rgba(255, 255, 255, 0.13);
+  --glass-radius: 22px;
 
   /* Layers */
   --z-bar: 50;
@@ -220,9 +234,9 @@ h2,
 h3,
 h4 {
   font-family: var(--ff-display);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0;
 }
 table {
   border-collapse: collapse;
@@ -236,7 +250,7 @@ body {
   line-height: 1.5;
   color: var(--text);
   /* Propagates to the canvas; the fixed pseudo-elements below sit on top of it at z-index -1. */
-  background: linear-gradient(180deg, #14120f 0px, var(--bg-0) 560px) var(--bg-0);
+  background: linear-gradient(180deg, #131419 0px, var(--bg-0) 560px) var(--bg-0);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -250,10 +264,10 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(243, 233, 216, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(243, 233, 216, 0.04) 1px, transparent 1px),
-    linear-gradient(to right, rgba(243, 233, 216, 0.018) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(243, 233, 216, 0.018) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.016) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
   background-size:
     120px 120px,
     120px 120px,
@@ -278,8 +292,8 @@ body::after {
 }
 
 ::selection {
-  background: rgba(255, 181, 71, 0.32);
-  color: #fff8ec;
+  background: rgba(76, 141, 255, 0.4);
+  color: #fff;
 }
 
 :focus {
@@ -294,7 +308,7 @@ body::after {
 /* Scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(243, 233, 216, 0.18) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -304,13 +318,13 @@ body::after {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(243, 233, 216, 0.16);
+  background: rgba(255, 255, 255, 0.18);
   border: 3px solid transparent;
   border-radius: 10px;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 181, 71, 0.45);
+  background-color: rgba(255, 255, 255, 0.32);
 }
 
 /* Native form controls in dark mode */
@@ -329,17 +343,17 @@ hr {
 /* ---------- Glass fallbacks: no blur support, or the viewer asked for less see-through UI → a solid tint ---------- */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root {
-    --glass-tint: rgba(20, 16, 12, 0.92);
-    --glass-panel-tint: rgba(20, 16, 12, 0.93);
-    --glass-deep-tint: rgba(20, 16, 12, 0.95);
+    --glass-tint: rgba(28, 29, 35, 0.92);
+    --glass-panel-tint: rgba(24, 25, 31, 0.93);
+    --glass-deep-tint: rgba(22, 23, 29, 0.95);
   }
 }
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --glass-tint: rgba(20, 16, 12, 0.94);
+    --glass-tint: rgba(28, 29, 35, 0.94);
     --glass-blur: none;
-    --glass-panel-tint: rgba(20, 16, 12, 0.95);
-    --glass-deep-tint: rgba(20, 16, 12, 0.96);
+    --glass-panel-tint: rgba(24, 25, 31, 0.95);
+    --glass-deep-tint: rgba(22, 23, 29, 0.96);
     --glass-panel-blur: none;
   }
 }
@@ -394,8 +408,8 @@ hr {
 
 /* ---------- Global utilities (keep this list short) ----------
  * .sr-only    visually hidden, readable by screen readers
- * .num        Rajdhani tabular numerals (money, counts, dates in tables)
- * .eyebrow    tracked uppercase display label
+ * .num        tabular numerals (money, counts, dates in tables)
+ * .eyebrow    small grey label
  * .tamil      Tamil script accent
  * .dim/.faint secondary / tertiary text colour
  * .pos/.neg   teal / coral meaning colours (income vs expense)
@@ -418,14 +432,13 @@ hr {
   font-family: var(--ff-display);
   font-variant-numeric: tabular-nums lining-nums;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 .eyebrow {
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0;
   color: var(--text-dim);
   line-height: 1.2;
 }

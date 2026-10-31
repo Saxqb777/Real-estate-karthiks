@@ -31,9 +31,8 @@
   min-width: 0;
   font-family: var(--ff-display);
   font-size: var(--fs-2xs);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -87,7 +86,7 @@
   transition: background var(--dur-1) var(--ease-out);
 }
 .row:hover {
-  background: rgba(255, 181, 71, 0.06);
+  background: rgba(76, 141, 255, 0.06);
 }
 .row:hover .rowIcon {
   color: var(--marigold);
@@ -163,9 +162,8 @@
 .facts dt {
   font-family: var(--ff-display);
   font-size: var(--fs-2xs);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 .facts dd {

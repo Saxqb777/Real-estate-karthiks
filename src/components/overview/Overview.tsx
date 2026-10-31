@@ -3,7 +3,7 @@
 //   top strip  — Property (P) · setup quests · up to 3 status chips · as-of chip · period control · ? · F
 //   left       — Property panel (P / chip / a chart drill-down) or the Quest log while setup is incomplete
 //   right      — the panel of whatever was clicked in the world (house, mailbox, notice board, pole, tax stamp)
-//   bottom     — dock (charts, keys 1–6) + time scrubber (as-of date)
+//   bottom     — the open chart (keys 1–6); its tabs are an icon column on the left side (the reel, 31/10/2026)
 // Clicking the ground / Esc / ✕ closes panels (📌 keeps them); the camera reframes the plot into the free area
 // (insets) and the world dims while numbers are being read. Phones: only the world + the bottom bar (☰ → charts menu → chart sheet).
 // Every figure comes from /api/dashboard (src/lib/calculations.ts) — nothing here does maths.
@@ -631,16 +631,18 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
                 ref={setBottomEl}
                 className={s.bottom}
                 data-tour="bottom"
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 transition={{
                   duration: 0.45,
                   delay: 0.25,
                   ease: [0.22, 1, 0.36, 1],
                 }}
               >
+                {/* opacity only: a moved box would trap the icon column, which is placed against the whole HUD */}
                 <div data-help="Charts (keys 1–6)">
                   <Dock
+                    side
                     className={s.dock}
                     data={data}
                     period={period}

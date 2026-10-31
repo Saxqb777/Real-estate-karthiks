@@ -30,7 +30,7 @@
   inset: -2px;
   pointer-events: none;
   z-index: 2;
-  --c: rgba(243, 233, 216, 0.34);
+  --c: rgba(255, 255, 255, 0.34);
   --l: 8px;
   --w: 2px;
   background:
@@ -91,9 +91,8 @@
   gap: 6px;
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
   line-height: 1.2;
 }
@@ -112,7 +111,7 @@
 }
 .value {
   font-family: var(--ff-display);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.005em;
   color: var(--tone, var(--text));
@@ -152,7 +151,7 @@
   gap: 2px;
   font-family: var(--ff-display);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }

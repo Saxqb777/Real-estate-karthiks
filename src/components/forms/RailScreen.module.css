@@ -12,7 +12,7 @@
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(180deg, rgba(14, 11, 8, 0.55), rgba(14, 11, 8, 0.75)),
+    linear-gradient(180deg, rgba(12, 13, 17, 0.35), rgba(12, 13, 17, 0.55)),
     url("/estate-backdrop.jpg") center / cover no-repeat,
     var(--bg-0);
   transition: opacity 0.6s var(--ease-out);
@@ -53,23 +53,21 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 42px;
+  height: 40px;
   padding: 0 16px;
-  font-family: var(--ff-display);
+  font-family: var(--ff-body);
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-weight: 500;
   white-space: nowrap;
-  color: #e4d8c4;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-  /* glass (owner 31/10/2026): see-through tint over a soft blur of the estate picture, light top edge, soft shadow */
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  /* the reel (owner 31/10/2026): each section a clear glass pill; the chosen one a solid white pill */
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-edge);
-  border-radius: 8px;
-  box-shadow: var(--glass-shine), 0 6px 18px rgba(0, 0, 0, 0.28);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--glass-shine), var(--glass-shadow);
   -webkit-tap-highlight-color: transparent;
   transition:
     color var(--dur-2) var(--ease-out),
@@ -89,8 +87,8 @@
   animation: pe-materialize 0.5s var(--ease-out) 0.08s backwards;
 }
 .item:hover {
-  color: #fff6e6;
-  border-color: rgba(255, 210, 140, 0.45);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
   background-color: var(--glass-hover);
 }
 /* a soft press, then it springs back */
@@ -99,21 +97,21 @@
   transition-duration: 70ms;
 }
 .item:focus-visible {
-  outline: 2px solid #fff6e6;
+  outline: 2px solid #fff;
   outline-offset: 2px;
 }
 .item[aria-selected="true"] {
-  color: #2a1405;
+  color: var(--pill-on-ink);
   text-shadow: none;
   border-color: transparent;
 }
-/* the gold-glass plate under the chosen section (slides between buttons) */
+/* the white pill under the chosen section (slides between buttons) */
 .plate {
   position: absolute !important;
   inset: -1px;
-  border-radius: 8px;
-  background: var(--glass-gold);
-  box-shadow: var(--glass-gold-shine);
+  border-radius: var(--radius-pill);
+  background: var(--pill-on);
+  box-shadow: var(--pill-on-shadow);
 }
 .index,
 .note,
@@ -135,29 +133,25 @@
 .count {
   min-width: 22px;
   height: 20px;
-  padding: 1px 6px 0;
+  padding: 0 7px;
   display: inline-grid;
   place-items: center;
-  font-family: var(--ff-display);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #f3e9d8;
-  background: rgba(8, 6, 4, 0.55);
-  border: 1px solid rgba(255, 244, 225, 0.16);
-  border-radius: 5px;
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
 }
 .item[aria-selected="true"] .count {
-  color: #ffd27a;
-  background: #2a1405;
-  border-color: #2a1405;
+  color: #fff;
+  background: var(--pill-on-ink);
   transition: color var(--dur-2) var(--ease-out);
 }
 .countAlert,
 .item[aria-selected="true"] .countAlert {
-  color: #ff97a6;
-  background: rgba(40, 14, 16, 0.94);
-  border-color: rgba(240, 82, 82, 0.55);
+  color: #fff;
+  background: var(--coral);
 }
 
 /* phones: the buttons scroll sideways in one row */

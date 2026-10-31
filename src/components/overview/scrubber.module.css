@@ -24,7 +24,7 @@
   color: var(--text-dim);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
-  background: rgba(243, 233, 216, 0.03);
+  background: rgba(255, 255, 255, 0.03);
   transition:
     color var(--dur-1) var(--ease-out),
     border-color var(--dur-1) var(--ease-out),
@@ -41,7 +41,7 @@
 }
 .playOn {
   color: var(--marigold);
-  border-color: rgba(255, 181, 71, 0.55);
+  border-color: rgba(76, 141, 255, 0.55);
   background: var(--marigold-a08);
 }
 
@@ -57,15 +57,14 @@
 .readKind {
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--accent);
 }
 .readDate {
   font-family: var(--ff-display);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text);
   transition: opacity var(--dur-2) var(--ease-out);
@@ -96,7 +95,7 @@
   background: var(--line-strong);
 }
 .track:focus-visible .knob {
-  box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.45);
+  box-shadow: 0 0 0 3px rgba(76, 141, 255, 0.45);
 }
 .dragging {
   cursor: grabbing;
@@ -134,7 +133,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: linear-gradient(180deg, var(--line-strong), rgba(243, 233, 216, 0.04));
+  background: linear-gradient(180deg, var(--line-strong), rgba(255, 255, 255, 0.04));
   pointer-events: none;
 }
 .tickLabel {
@@ -143,9 +142,8 @@
   left: 4px;
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
   white-space: nowrap;
 }
@@ -173,7 +171,7 @@
   width: 9px;
   height: 9px;
   background: var(--marigold);
-  box-shadow: 0 0 0 2px rgba(20, 17, 14, 0.9);
+  box-shadow: 0 0 0 2px rgba(16, 17, 22, 0.9);
 }
 .marker[data-kind="lease-start"] {
   width: 3px;
@@ -184,7 +182,7 @@
 .marker[data-kind="lease-end"] {
   width: 3px;
   height: 11px;
-  background: rgba(243, 233, 216, 0.45);
+  background: rgba(255, 255, 255, 0.45);
   border-radius: 1px;
 }
 .marker[data-kind="offer"] {
@@ -228,14 +226,14 @@
   translate: -50% 0;
   rotate: 45deg;
   background: var(--accent);
-  border: 2px solid #14110e;
+  border: 2px solid #101116;
 }
 .ghost {
   position: absolute;
   top: 2px;
   bottom: 2px;
   width: 1px;
-  background: rgba(243, 233, 216, 0.35);
+  background: rgba(255, 255, 255, 0.35);
   pointer-events: none;
 }
 .flag {
@@ -246,14 +244,16 @@
   padding: 3px 7px 2px;
   font-family: var(--ff-display);
   font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   color: var(--text);
-  background: rgba(20, 17, 14, 0.96);
-  border: 1px solid var(--line-bright);
-  border-radius: var(--radius-xs);
+  background: rgba(20, 21, 26, 0.62);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-pill);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
   pointer-events: none;
   z-index: 2;
@@ -274,10 +274,9 @@
 }
 .flagMarker b {
   font-family: var(--ff-display);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 11px;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
   margin-right: 2px;
 }
@@ -302,14 +301,13 @@
   padding: 1px 10px 0;
   font-family: var(--ff-display);
   font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--marigold-ink);
   background: var(--marigold-bevel);
-  border: 1px solid #ffc76e;
+  border: 1px solid #ffffff;
   border-radius: var(--radius-xs);
-  box-shadow: 0 4px 14px rgba(255, 181, 71, 0.22);
+  box-shadow: 0 4px 14px rgba(76, 141, 255, 0.22);
   transition:
     filter var(--dur-1) var(--ease-out),
     background var(--dur-1) var(--ease-out);
@@ -356,7 +354,7 @@
 }
 .compact .live {
   padding: 1px 8px 0;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

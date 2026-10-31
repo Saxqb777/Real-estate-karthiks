@@ -2,14 +2,14 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  background: rgba(7, 6, 5, 0.72);
+  background: rgba(8, 9, 12, 0.5);
 }
 .backdrop::after {
   content: "";
   position: absolute;
   inset: 0;
   background: var(--noise);
-  opacity: 0.35;
+  opacity: 0;
   pointer-events: none;
 }
 
@@ -32,13 +32,13 @@
   flex-direction: column;
   width: 100%;
   max-height: calc(100dvh - max(8vh, 24px) - 24px);
-  /* glass (owner 31/10/2026) */
+  /* the reel (owner 31/10/2026): clear frosted glass, a white hairline, big soft corners */
   background: var(--glass-deep-bg);
   -webkit-backdrop-filter: var(--glass-panel-blur);
   backdrop-filter: var(--glass-panel-blur);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-pop);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-panel-shadow);
   outline: none;
 }
 .sm {
@@ -54,9 +54,10 @@
   max-width: 1040px;
 }
 
-/* corner brackets */
+/* (the old corner brackets — gone in the reel look) */
 .dialog::before,
 .drawer::before {
+  display: none;
   content: "";
   position: absolute;
   inset: -2px;
@@ -82,7 +83,7 @@
   inset: 0;
   pointer-events: none;
   background: var(--noise);
-  opacity: 0.2;
+  opacity: 0;
   border-radius: inherit;
 }
 
@@ -104,6 +105,7 @@
   width: 28px;
   height: 1px;
   background: var(--marigold);
+  display: none;
 }
 .titles {
   display: flex;
@@ -115,15 +117,15 @@
 .eyebrow {
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--marigold);
+  font-weight: 600;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: var(--text-dim);
 }
 .title {
   font-family: var(--ff-display);
   font-size: var(--fs-xl);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.15;
 }
 .desc {
@@ -148,8 +150,8 @@
   gap: var(--s-2);
   padding: 12px 20px;
   border-top: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.16);
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 0 0 var(--glass-radius) var(--glass-radius);
 }
 
 /* drawer */
@@ -167,14 +169,17 @@
   pointer-events: auto;
   display: flex;
   flex-direction: column;
-  width: min(var(--drawer-w, 520px), 100vw);
-  height: 100dvh;
-  /* glass (owner 31/10/2026) */
+  /* the reel: a floating pane of clear glass, a little in from the edges */
+  width: min(var(--drawer-w, 520px), calc(100vw - 24px));
+  height: calc(100dvh - 24px);
+  margin: 12px;
   background: var(--glass-deep-bg);
   -webkit-backdrop-filter: var(--glass-panel-blur);
   backdrop-filter: var(--glass-panel-blur);
-  border-left: 1px solid var(--line-strong);
-  box-shadow: -30px 0 80px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-panel-shadow), -20px 0 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
   outline: none;
 }
 .drawer::before {
@@ -183,7 +188,7 @@
   background: linear-gradient(180deg, var(--marigold) 0 48px, transparent 48px calc(100% - 48px), var(--marigold) calc(100% - 48px));
 }
 .drawer .foot {
-  border-radius: 0;
+  border-radius: 0 0 var(--glass-radius) var(--glass-radius);
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
@@ -195,7 +200,7 @@
   .dialog {
     max-width: none;
     max-height: calc(100dvh - 12px);
-    border-radius: var(--radius) var(--radius) 0 0;
+    border-radius: 26px 26px 0 0;
     border-bottom: 0;
   }
   .foot {

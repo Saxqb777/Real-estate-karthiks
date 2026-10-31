@@ -146,6 +146,8 @@
    paper, the brand in small gold capitals, AMOUNT PAID · DATE PAID · PAID BY, a summary of the rent month, from /
    property, the owner's signature. Light paper on screen and in print. */
 .rc {
+  /* the paper keeps its own typeface (Manrope) — the app's lettering changed to the reel's (31/10/2026) */
+  --ff-body: var(--font-body), "Manrope", system-ui, sans-serif;
   --ink: #1d1a16;
   --mute: #6b645a;
   --faint: #9a9287;

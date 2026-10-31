@@ -35,15 +35,14 @@
 .label {
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
 }
 .value {
   font-family: var(--ff-display);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -54,7 +53,7 @@
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
   gap: 3px;
   padding: 3px;
-  background: #0c0b09;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--line);
   border-radius: 3px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -62,7 +61,7 @@
 .seg {
   position: relative;
   height: var(--seg-h);
-  background: rgba(243, 233, 216, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 1px;
   overflow: hidden;
 }
@@ -90,7 +89,7 @@
   font-family: var(--ff-display);
   font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   color: var(--text-faint);
   padding: 0 3px;
 }

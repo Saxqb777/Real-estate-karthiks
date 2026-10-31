@@ -194,25 +194,26 @@
 .questTag {
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
 }
+/* the reel's tag (owner 31/10/2026): a dark glass pill with white letters */
 .questBox {
-  fill: #1c1813;
-  stroke: #ffb547;
-  stroke-width: 1.2px;
+  fill: rgba(20, 21, 26, 0.86);
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 1px;
 }
 .questKicker,
 .questName {
   stroke: none !important;
-  font-family: var(--ff-display) !important;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-family: var(--ff-body) !important;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 .questKicker {
   font-size: 10.5px;
-  fill: #ffb547;
+  fill: #fff;
 }
 .questName {
   font-size: 14px;
-  fill: #f3e9d8;
+  fill: #fff;
 }
 @keyframes pulse {
   0% {
@@ -281,15 +282,15 @@
   background:
     linear-gradient(
       0deg,
-      rgba(14, 13, 11, 0.95) 0%,
-      rgba(14, 13, 11, 0.86) 30%,
-      rgba(14, 13, 11, 0.5) 46%,
-      rgba(14, 13, 11, 0) 60%
+      rgba(12, 13, 17, 0.92) 0%,
+      rgba(12, 13, 17, 0.8) 30%,
+      rgba(12, 13, 17, 0.45) 46%,
+      rgba(12, 13, 17, 0) 60%
     ),
     radial-gradient(
       ellipse 80% 70% at 50% 40%,
-      rgba(14, 13, 11, 0) 60%,
-      rgba(14, 13, 11, 0.35) 100%
+      rgba(12, 13, 17, 0) 60%,
+      rgba(12, 13, 17, 0.3) 100%
     );
 }
 .titleBlock {
@@ -299,32 +300,31 @@
   align-items: center;
   text-align: center;
 }
+/* the reel's lettering (owner 31/10/2026): plain modern font in normal letters, white */
 .titleName {
   font-family: var(--ff-display);
-  font-size: clamp(34px, 6.4vw, 76px);
+  font-size: clamp(34px, 6vw, 72px);
   font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #fff6e6;
-  text-shadow:
-    0 2px 0 #7a3418,
-    0 4px 0 rgba(0, 0, 0, 0.5),
-    0 10px 40px rgba(255, 181, 71, 0.35);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
 }
+/* "Press any key" — a clear glass pill, softly breathing */
 .press {
   margin-top: clamp(22px, 4vh, 40px);
-  padding: 9px 22px;
-  font-family: var(--ff-display);
-  font-size: clamp(15px, 1.7vw, 19px);
-  font-weight: 700;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: #1a1206;
-  background: linear-gradient(180deg, #ffd27a, #f0962e);
-  border-radius: 6px;
-  box-shadow: 0 4px 0 #8a4a12;
-  animation: blink 1.4s ease-in-out infinite;
+  padding: 11px 26px;
+  font-family: var(--ff-body);
+  font-size: clamp(14px, 1.4vw, 16px);
+  font-weight: 500;
+  color: #fff;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  box-shadow: var(--glass-shine), var(--glass-shadow);
+  animation: blink 1.6s ease-in-out infinite;
 }
 .pressTap {
   display: none;
@@ -351,12 +351,10 @@
   align-items: baseline;
   gap: 8px;
   margin-top: 16px;
-  font-family: var(--ff-display);
-  font-size: clamp(15px, 1.6vw, 19px);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--plaster);
+  font-family: var(--ff-body);
+  font-size: clamp(14px, 1.4vw, 16px);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 /* ---------- sign-in bar ---------- */
@@ -377,21 +375,22 @@
   bottom: 0;
   height: 300px;
   pointer-events: none;
-  background: linear-gradient(0deg, rgba(14, 11, 8, 0.85), rgba(14, 11, 8, 0));
+  background: linear-gradient(0deg, rgba(12, 13, 17, 0.75), rgba(12, 13, 17, 0));
 }
+/* the sign-in bar = the reel (owner 31/10/2026): one pane of clear frosted glass, glass fields, the blue Enter pill */
 .bar {
   display: flex;
   align-items: center;
   gap: 22px;
-  min-height: 104px;
-  padding: 14px 22px 14px 30px;
-  color: #f3e9d8;
-  background: rgba(22, 17, 12, 0.94);
-  border: 2px solid #c9922e;
-  border-radius: 10px;
-  box-shadow:
-    0 0 0 5px rgba(201, 146, 46, 0.15),
-    0 20px 60px rgba(0, 0, 0, 0.5);
+  min-height: 100px;
+  padding: 16px 20px 16px 28px;
+  color: #fff;
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: 28px;
+  box-shadow: var(--glass-panel-shadow);
 }
 .barTitle {
   flex: none;
@@ -399,73 +398,69 @@
 }
 .barName {
   font-family: var(--ff-display);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   white-space: nowrap;
-  color: #ffcf87;
+  color: #fff;
 }
 .barTime {
   margin-top: 4px;
-  font-family: var(--ff-display);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(243, 233, 216, 0.75);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.68);
 }
 .sep {
   margin: 0 7px;
   opacity: 0.6;
 }
 .barTime :global(.num) {
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
+  font-weight: 500;
 }
 .barSep {
   flex: none;
   width: 1px;
   height: 58px;
-  background: #5a4632;
+  background: rgba(255, 255, 255, 0.14);
 }
 .form {
   flex: 1;
   display: flex;
   align-items: flex-end;
-  gap: 22px;
+  gap: 18px;
   min-width: 0;
 }
 .field {
   flex: 1;
   min-width: 0;
-  gap: 5px !important;
+  gap: 6px !important;
 }
 .field label {
-  font-family: var(--ff-display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: #c9922e;
+  font-family: var(--ff-body);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
 }
 .input {
   height: 46px;
-  background: #0c0906 !important;
-  border: 1px solid #5a4632 !important;
-  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid var(--glass-edge) !important;
+  border-radius: 14px !important;
   box-shadow: none !important;
 }
 .input:focus-within {
-  border-color: #ffb547 !important;
-  box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.15) !important;
+  border-color: var(--marigold) !important;
+  box-shadow: 0 0 0 3px rgba(76, 141, 255, 0.22) !important;
 }
 .input[data-invalid="true"] {
   border-color: var(--coral) !important;
 }
 .input input {
   font-size: 15px;
-  color: #f3e9d8;
+  color: #fff;
 }
 .eye {
   display: grid;
@@ -473,68 +468,63 @@
   width: 32px;
   height: 32px;
   margin-right: -6px;
-  color: #8a7a62;
-  border-radius: var(--radius-xs);
+  color: rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
   transition: color var(--dur-1) var(--ease-out);
 }
 .eye:hover {
-  color: #f3e9d8;
+  color: #fff;
 }
 .eye svg {
   width: 17px;
   height: 17px;
 }
 .caps {
-  font-family: var(--ff-display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--marigold);
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: #9cc0ff;
 }
 .enter {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  width: 200px;
-  height: 62px;
+  gap: 10px;
+  width: 170px;
+  height: 52px;
   align-self: center;
-  margin-top: -5px; /* the 5px pressed-edge shadow below counts toward the visual centre */
-  font-family: var(--ff-display);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: #2a1405;
-  background: linear-gradient(180deg, #ffd27a, #f0962e);
+  font-family: var(--ff-body);
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent-bg);
   border: 0;
-  border-radius: 8px;
-  box-shadow: 0 5px 0 #8a4a12;
+  border-radius: 999px;
+  box-shadow: var(--accent-glow);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition:
-    transform 0.08s ease-out,
-    box-shadow 0.08s ease-out,
-    filter 0.15s;
+    transform 180ms var(--press),
+    background 0.15s;
 }
 .enter:hover:not(:disabled) {
-  filter: brightness(1.06);
+  background: var(--accent-hover);
 }
 .enter:active:not(:disabled) {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 #8a4a12;
+  transform: scale(0.96);
+  transition-duration: 70ms;
 }
 .enter:disabled {
   cursor: default;
 }
 .enter:focus-visible {
-  outline: 2px solid #fff6e6;
+  outline: 2px solid #fff;
   outline-offset: 3px;
 }
 .enter svg {
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
 }
 .play {
   fill: currentColor;
@@ -548,9 +538,9 @@
   }
 }
 .enterDone {
-  background: linear-gradient(180deg, #4fe3cf, var(--teal));
-  box-shadow: 0 5px 0 #0f6b5f;
-  color: #04201c;
+  background: linear-gradient(180deg, #5eea95, #22c55e);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35);
+  color: #fff;
 }
 .error {
   display: flex;
@@ -641,18 +631,16 @@
   background: var(--bg-0);
 }
 .travelText {
-  font-family: var(--ff-display);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--marigold);
+  font-family: var(--ff-body);
+  font-size: 17px;
+  font-weight: 500;
+  color: #fff;
 }
 .travelBar {
   width: 220px;
   height: 4px;
   overflow: hidden;
-  background: rgba(243, 233, 216, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 2px;
 }
 .travelBar i {

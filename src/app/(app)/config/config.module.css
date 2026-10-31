@@ -80,9 +80,8 @@
   padding: 1px 9px 0;
   font-family: var(--ff-display);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   border-radius: 3px;
   background: var(--panel-glass);
   -webkit-backdrop-filter: blur(8px);
@@ -107,7 +106,7 @@
 }
 .unsavedChip {
   color: var(--marigold);
-  border-color: rgba(255, 181, 71, 0.45);
+  border-color: rgba(76, 141, 255, 0.45);
 }
 .previewHint {
   margin-left: auto;
@@ -138,9 +137,8 @@
 .hintKey {
   font-family: var(--ff-display);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--marigold);
 }
 
@@ -178,10 +176,10 @@
   transform: translateY(-1px);
 }
 .slot[aria-pressed="true"] {
-  border-color: rgba(255, 181, 71, 0.55);
+  border-color: rgba(76, 141, 255, 0.55);
   box-shadow:
     var(--inner-hi),
-    0 0 0 1px rgba(255, 181, 71, 0.2),
+    0 0 0 1px rgba(76, 141, 255, 0.2),
     0 8px 22px rgba(0, 0, 0, 0.35);
 }
 .slot[aria-pressed="true"]::after {
@@ -196,9 +194,8 @@
 .slotLabel {
   font-family: var(--ff-display);
   font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 .slotName {
@@ -208,7 +205,7 @@
   gap: 8px;
   font-family: var(--ff-display);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.1;
   color: var(--text);
 }
@@ -225,7 +222,7 @@
 }
 .paper b {
   color: #ffc978;
-  text-decoration: underline dotted rgba(255, 181, 71, 0.6);
+  text-decoration: underline dotted rgba(76, 141, 255, 0.6);
   text-underline-offset: 3px;
 }
 .slotEmpty {
@@ -246,9 +243,8 @@
   gap: 6px;
   font-family: var(--ff-display);
   font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--sky);
 }
 .buildCta svg {
@@ -269,9 +265,8 @@
 .othersLabel {
   font-family: var(--ff-display);
   font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
   margin-right: 4px;
 }
@@ -283,13 +278,13 @@
   padding: 0 6px 0 10px;
   font-size: var(--fs-sm);
   color: var(--text-dim);
-  background: rgba(243, 233, 216, 0.03);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
 }
 .otherChip[aria-pressed="true"] {
   color: var(--text);
-  border-color: rgba(255, 181, 71, 0.5);
+  border-color: rgba(76, 141, 255, 0.5);
 }
 .textBtn {
   display: inline-flex;
@@ -297,9 +292,8 @@
   gap: 6px;
   font-family: var(--ff-display);
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
   border-radius: var(--radius-xs);
 }
@@ -346,9 +340,8 @@
 .vLabel {
   font-family: var(--ff-display);
   font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 .vSub {
@@ -361,7 +354,7 @@
 .valueStrip b.paperNum,
 .paperNum {
   color: #ffc978;
-  text-decoration: underline dotted rgba(255, 181, 71, 0.55);
+  text-decoration: underline dotted rgba(76, 141, 255, 0.55);
   text-underline-offset: 4px;
   text-decoration-thickness: 1.5px;
 }
@@ -392,12 +385,12 @@
     border-color var(--dur-1) var(--ease-out);
 }
 .offerRow:hover {
-  background: rgba(243, 233, 216, 0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-color: var(--line);
 }
 .offerBest {
-  background: linear-gradient(90deg, rgba(255, 181, 71, 0.1), rgba(255, 181, 71, 0.02) 70%);
-  border-color: rgba(255, 181, 71, 0.25);
+  background: linear-gradient(90deg, rgba(76, 141, 255, 0.1), rgba(76, 141, 255, 0.02) 70%);
+  border-color: rgba(76, 141, 255, 0.25);
 }
 .offerBest::before {
   content: "";
@@ -416,12 +409,12 @@
 .offerAmt {
   font-size: 20px;
   color: var(--text);
-  text-decoration: underline dotted rgba(243, 233, 216, 0.35);
+  text-decoration: underline dotted rgba(255, 255, 255, 0.35);
   text-underline-offset: 4px;
 }
 .offerBest .offerAmt {
   color: #ffc978;
-  text-decoration-color: rgba(255, 181, 71, 0.6);
+  text-decoration-color: rgba(76, 141, 255, 0.6);
 }
 .listHint {
   padding: 10px 12px 0;
@@ -469,7 +462,7 @@
 }
 .hex {
   color: var(--text-faint);
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 .footLabel {
   display: inline-flex;
@@ -477,9 +470,8 @@
   gap: 10px;
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 

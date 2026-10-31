@@ -1,6 +1,6 @@
 /*
- * HUD building blocks (game screen). Warm-dark, near-solid panels over the 3D world; one accent per panel;
- * colour = meaning (cash teal/coral · paper value marigold · occupancy sky); Rajdhani numerals.
+ * HUD building blocks (game screen) in the owner's reel look (31/10/2026): clear frosted glass over the 3D world,
+ * white hairlines, round pills, white chosen states; colour = meaning (cash green/red · occupancy sky).
  */
 
 /* =========================================================== figures */
@@ -9,7 +9,7 @@
   align-items: baseline;
   gap: 5px;
   font-family: var(--ff-display);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   color: var(--text);
   white-space: nowrap;
@@ -44,7 +44,7 @@
   color: var(--coral);
 }
 .tValue {
-  color: #ffd08a;
+  color: #fff;
 }
 .tOcc {
   color: #9cc8fc;
@@ -54,7 +54,7 @@
 }
 /* paper value: dotted marigold underline — never looks like cash */
 .paper > span:not(.paperTag):not(.figSign) {
-  text-decoration: underline dotted rgba(255, 181, 71, 0.75);
+  text-decoration: underline dotted rgba(76, 141, 255, 0.75);
   text-decoration-thickness: 2px;
   text-underline-offset: 0.18em;
 }
@@ -66,12 +66,12 @@
   padding: 1px 4px 0;
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #ffc978;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #c9dbff;
   background: var(--marigold-a08);
-  border: 1px dashed rgba(255, 181, 71, 0.5);
-  border-radius: 3px;
+  border: 1px dashed rgba(76, 141, 255, 0.5);
+  border-radius: 6px;
   text-decoration: none;
 }
 .fig-hero .paperTag {
@@ -95,7 +95,7 @@
     transform var(--dur-1) var(--ease-out);
 }
 .figBtn:hover {
-  background: rgba(243, 233, 216, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   box-shadow: inset 0 0 0 1px var(--line-strong);
   transform: translateY(-1px);
 }
@@ -128,7 +128,7 @@
     box-shadow var(--dur-1) var(--ease-out);
 }
 .lineBtn:hover {
-  background: rgba(243, 233, 216, 0.045);
+  background: rgba(255, 255, 255, 0.045);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 .lineBtn:hover .lineChevron {
@@ -222,15 +222,14 @@
   flex: none;
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1;
   white-space: nowrap;
   color: var(--text-dim);
   border: 1px solid var(--line-strong);
-  border-radius: 3px;
-  background: rgba(243, 233, 216, 0.03);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.05);
 }
 .scope svg {
   width: 11px;
@@ -239,50 +238,55 @@
   color: var(--text-faint);
 }
 .scopePast {
-  color: #ffc978;
-  border-color: rgba(255, 181, 71, 0.45);
+  color: #c9dbff;
+  border-color: rgba(76, 141, 255, 0.45);
   background: var(--marigold-a08);
 }
 .scopePast svg {
   color: var(--marigold);
 }
 
-/* period switch (PeriodSwitch): the scope chip of cash figures, made choosable — ALL TIME · FY · MONTH (owner 8/10) */
+/* period switch (PeriodSwitch): ALL TIME · FY · MONTH (owner 8/10) as the reel's segmented pill — a clear glass
+   track, the chosen one a solid white pill */
 .pswitch {
   display: inline-flex;
   align-items: stretch;
   flex: none;
-  height: 20px;
-  border: 1px solid var(--line-strong);
-  border-radius: 3px;
-  background: rgba(243, 233, 216, 0.03);
-  overflow: hidden;
+  height: 28px;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.07);
 }
 .pswitchBtn {
   display: inline-flex;
   align-items: center;
-  padding: 1px 7px 0;
-  font-family: var(--ff-display);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding: 0 11px;
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
   white-space: nowrap;
-  color: var(--text-faint);
-}
-.pswitchBtn + .pswitchBtn {
-  border-left: 1px solid var(--line);
+  color: var(--text-dim);
+  border-radius: var(--radius-pill);
+  transition:
+    color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out),
+    transform 180ms var(--press);
 }
 .pswitchBtn:hover {
-  color: var(--text);
+  color: #fff;
 }
-.pswitchBtn[aria-checked="true"] {
-  color: var(--marigold);
-  background: var(--marigold-a08);
+.pswitchBtn:active {
+  transform: scale(0.95);
+  transition-duration: 70ms;
 }
+.pswitchBtn[aria-checked="true"],
 .pswitchPast .pswitchBtn[aria-checked="true"] {
-  color: #ffc978;
+  color: var(--pill-on-ink);
+  background: var(--pill-on);
+  box-shadow: var(--pill-on-shadow);
 }
 
 .bucketHead {
@@ -310,7 +314,7 @@
   color: var(--b);
   background: color-mix(in srgb, var(--b) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--b) 40%, transparent);
-  border-radius: 3px;
+  border-radius: 6px;
 }
 .bucketHead .bucketChip {
   --b: inherit;
@@ -322,9 +326,8 @@
 .bucketLabel {
   font-family: var(--ff-display);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text);
   white-space: nowrap;
 }
@@ -347,17 +350,16 @@
   max-height: 100%;
   min-height: 0;
   min-width: 0;
-  /* glass (owner 31/10/2026) */
+  /* the reel (owner 31/10/2026): one pane of clear frosted glass, a white hairline, big soft corners */
   background: var(--glass-deep-bg);
   -webkit-backdrop-filter: var(--glass-panel-blur);
   backdrop-filter: var(--glass-panel-blur);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  box-shadow:
-    var(--inner-hi),
-    0 18px 48px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-panel-shadow);
 }
 .panel::before {
+  display: none;
   content: "";
   position: absolute;
   inset: -2px;
@@ -383,7 +385,7 @@
   pointer-events: none;
   border-radius: inherit;
   background: var(--noise);
-  opacity: 0.16;
+  opacity: 0;
 }
 .accent-teal {
   --bracket: var(--teal);
@@ -405,10 +407,11 @@
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 8px;
-  padding: 13px 8px 11px 16px;
+  padding: 16px 12px 12px 20px;
   border-bottom: 1px solid var(--line);
 }
 .panelHead::after {
+  display: none;
   content: "";
   position: absolute;
   left: 16px;
@@ -429,13 +432,13 @@
   align-items: center;
   gap: 7px;
   font-family: var(--ff-display);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 .pip {
+  display: none;
   width: 5px;
   height: 5px;
   flex: none;
@@ -450,8 +453,10 @@
   min-width: 0;
 }
 .panelTitle {
-  font-size: 21px;
-  line-height: 1.1;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
   min-width: 0;
 }
 .panelTools {
@@ -476,8 +481,8 @@
   transform: rotate(35deg);
 }
 .pinOn {
-  color: var(--marigold) !important;
-  background: var(--marigold-a08) !important;
+  color: var(--pill-on-ink) !important;
+  background: var(--pill-on) !important;
 }
 
 /* breadcrumb */
@@ -512,14 +517,14 @@
   flex: none;
   color: var(--text-dim);
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-xs);
+  border-radius: 50%;
   transition:
     color var(--dur-1) var(--ease-out),
     border-color var(--dur-1) var(--ease-out);
 }
 .crumbBack:hover {
   color: var(--text);
-  border-color: var(--marigold);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 .crumbBack svg {
   width: 15px;
@@ -535,8 +540,8 @@
 .crumb {
   font-family: var(--ff-display);
   font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -660,7 +665,7 @@
   flex-direction: column;
 }
 .lines > * + * {
-  border-top: 1px dashed rgba(243, 233, 216, 0.06);
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
 }
 .calm {
   display: flex;
@@ -698,14 +703,14 @@
   min-width: 0;
   padding: 8px 9px 9px;
   text-align: left;
-  background: rgba(22, 19, 16, 0.96);
+  background: rgba(22, 23, 29, 0.96);
 }
 button.mini {
   cursor: pointer;
   transition: background var(--dur-1) var(--ease-out);
 }
 button.mini:hover {
-  background: #221d18;
+  background: #1c1d22;
 }
 /* figure, then its ▲ / ▼ chip on the line under it (same place in every cell) */
 .miniValue {
@@ -731,34 +736,7 @@ button.mini:hover {
   color: var(--text-faint);
 }
 .noteValue {
-  color: #f0dcc0;
-}
-
-/* POP-UP SYSTEM (owner chose option D): every world object goes tag → card → panel, and the card (ui/InspectCard)
-   and this side panel share ONE gold game frame — 2px gold border, rounded, soft glow, uppercase display titles. */
-.panel {
-  background: rgba(22, 17, 12, 0.95);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  border: 2px solid #c9922e;
-  border-radius: 10px;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.6),
-    0 0 24px rgba(201, 146, 46, 0.22),
-    0 18px 40px rgba(0, 0, 0, 0.5);
-}
-.panel::before {
-  display: none;
-}
-.panelHead {
-  border-bottom-color: rgba(201, 146, 46, 0.35);
-}
-.panelTitle {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-.panelEyebrow {
-  color: #c9922e;
+  color: #fff;
 }
 
 /* centre game menu: the wide window lays its sections out in columns instead of one long scroll */
@@ -797,19 +775,20 @@ button.mini:hover {
 .panelBare .panelTools button {
   width: 38px;
   height: 38px;
-  border: 1px solid rgba(201, 146, 46, 0.55);
+  border: 1px solid var(--glass-edge);
   border-radius: 50%;
-  background: rgba(22, 17, 12, 0.88);
-  color: var(--text);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  color: #fff;
 }
 .panelBare .panelTools button:hover:not(:disabled) {
-  border-color: #c9922e;
-  background: rgba(40, 30, 18, 0.95);
-  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--glass-hover);
+  color: #fff;
 }
 .panelBare .pinOn {
-  border-color: #c9922e;
-  background: rgba(40, 30, 18, 0.95) !important;
+  border-color: transparent;
 }
 .panelBare .panelBody,
 :global([data-centre-panel]) .panelBare .panelBody:not(.panelBodyFlush) {

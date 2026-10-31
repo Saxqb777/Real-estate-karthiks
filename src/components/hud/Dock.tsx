@@ -1,6 +1,8 @@
 "use client";
-// Bottom tray: a slim tab bar (keys 1–6) that slides one chart up at a time; click the tab again or Esc to close.
+// The charts (keys 1–6), one at a time; click the tab again or Esc to close.
 //   1 Income vs expenses · 2 Where money went · 3 <unit> vs <unit> · 4 Occupancy · 5 Growth · 6 Payments
+// Desktop (owner 31/10/2026, the reel): the tabs are a slim column of ICONS on the left side (the chosen one a white
+// circle, the name in a small tag on hover) and the chart opens as a glass tray along the bottom, right of the column.
 import { BarChart3, CalendarRange, Columns2, PieChart, ReceiptText, TrendingUp, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
@@ -45,6 +47,8 @@ export interface DockProps {
   hotkeys?: boolean;
   /** phones: no tab bar — the open chart shows as a sheet with an ✕ (picked from the ☰ menu) */
   sheet?: boolean;
+  /** desktop: the tabs as an icon column on the left side (the reel); the tray stays along the bottom */
+  side?: boolean;
   className?: string;
 }
 
@@ -55,7 +59,7 @@ export function dockTabLabel(data: DashboardData, id: DockTab): string {
   return named.length >= 2 ? named.join(" vs ") : (named[0] ?? "Units");
 }
 
-export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, className }: DockProps) {
+export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, side = false, className }: DockProps) {
   const uid = useId();
   const [inner, setInner] = useState<DockTab | null>(defaultTab);
   const tab = controlled === undefined ? inner : controlled;
@@ -152,33 +156,74 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
   const labelOf = (d: (typeof DOCK_TABS)[number]) => dockTabLabel(data, d.id);
   const active = DOCK_TABS.find((d) => d.id === tab);
 
+  const tray = (
+    <AnimatePresence initial={false}>
+      {tab && (
+        <motion.div
+          key="tray"
+          className={s.tray}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className={s.trayInner}>
+            <header className={s.trayHead}>
+              <span className={s.trayTitle}>{active ? labelOf(active) : null}</span>
+              {sheet && <IconButton size="sm" label="Close" icon={<X />} onClick={() => setTab(null)} />}
+              {scope[tab]}
+              <span className={s.trayRule} aria-hidden />
+              {(tab === "units" || tab === "income") && <LedgerBadge checks={data.checks} onClick={onDrill ? () => onDrill({ kind: "checks" }) : undefined} />}
+            </header>
+            <motion.div key={tab} className={s.trayBody} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
+              {content(tab)}
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  if (side) {
+    // the icon column sits outside the tray's glass (a blurred box would trap a fixed / absolute child)
+    return (
+      <>
+        <nav className={s.rail} role="tablist" aria-label="Charts" aria-orientation="vertical">
+          {DOCK_TABS.map((d) => {
+            const on = d.id === tab;
+            const label = labelOf(d);
+            return (
+              <button
+                key={d.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                aria-expanded={on}
+                aria-label={label}
+                className={cx(s.railBtn, on && s.railOn)}
+                onClick={() => toggle(d.id)}
+              >
+                {on && <motion.span layoutId={`${uid}-dot`} className={s.railPlate} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
+                <span className={s.railIcon}>{d.icon}</span>
+                <span className={s.railTag} aria-hidden>
+                  {label}
+                </span>
+                {hintSet.has(d.id) && !on && <span className={s.hintDot} aria-label="not opened yet" />}
+              </button>
+            );
+          })}
+        </nav>
+        <section className={cx(s.dock, s.sideTray, tab && s.dockOpen, !tab && s.sideTrayClosed, className)} aria-label="Chart">
+          {tray}
+          {forms.element}
+        </section>
+      </>
+    );
+  }
+
   return (
     <section className={cx(s.dock, tab && s.dockOpen, sheet && s.sheet, className)} aria-label="Charts">
-      <AnimatePresence initial={false}>
-        {tab && (
-          <motion.div
-            key="tray"
-            className={s.tray}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className={s.trayInner}>
-              <header className={s.trayHead}>
-                <span className={s.trayTitle}>{active ? labelOf(active) : null}</span>
-                {sheet && <IconButton size="sm" label="Close" icon={<X />} onClick={() => setTab(null)} />}
-                {scope[tab]}
-                <span className={s.trayRule} aria-hidden />
-                {(tab === "units" || tab === "income") && <LedgerBadge checks={data.checks} onClick={onDrill ? () => onDrill({ kind: "checks" }) : undefined} />}
-              </header>
-              <motion.div key={tab} className={s.trayBody} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
-                {content(tab)}
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {tray}
       {!sheet && (
         <div className={s.bar} role="tablist" aria-label="Charts">
           {DOCK_TABS.map((d, i) => {

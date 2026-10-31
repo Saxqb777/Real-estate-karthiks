@@ -29,9 +29,8 @@
   border-bottom: 1px solid var(--line-strong);
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
   text-align: left;
   white-space: nowrap;
@@ -117,10 +116,10 @@
   transition: background-color var(--dur-1) var(--ease-out);
 }
 .row:nth-child(even) {
-  background: rgba(243, 233, 216, 0.018);
+  background: rgba(255, 255, 255, 0.018);
 }
 .row:hover {
-  background: linear-gradient(90deg, rgba(255, 181, 71, 0.09), rgba(255, 181, 71, 0.03) 40%, rgba(255, 181, 71, 0.015));
+  background: linear-gradient(90deg, rgba(76, 141, 255, 0.09), rgba(76, 141, 255, 0.03) 40%, rgba(76, 141, 255, 0.015));
 }
 .row:hover > .td:first-child {
   box-shadow: inset 2px 0 0 var(--marigold);
@@ -160,7 +159,7 @@
 .skel {
   height: 12px;
   border-radius: 3px;
-  background: linear-gradient(90deg, rgba(243, 233, 216, 0.05), rgba(243, 233, 216, 0.11), rgba(243, 233, 216, 0.05));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }

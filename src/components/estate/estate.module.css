@@ -7,7 +7,7 @@
   min-height: 260px;
   overflow: hidden;
   isolation: isolate;
-  background: radial-gradient(120% 90% at 50% 20%, #2a2119 0%, var(--bg-0, #0e0d0b) 70%);
+  background: radial-gradient(120% 90% at 50% 20%, #212227 0%, var(--bg-0, #0e0d0b) 70%);
   border-radius: inherit;
   user-select: none;
   -webkit-user-select: none;
@@ -94,7 +94,7 @@
   --tone: var(--teal, #4ade80);
 }
 .toneMarigold {
-  --tone: var(--marigold, #ffb547);
+  --tone: var(--marigold, #4c8dff);
 }
 .toneCoral {
   --tone: var(--coral, #f05252);
@@ -103,7 +103,7 @@
   --tone: var(--sky, #60a5fa);
 }
 .toneFaint {
-  --tone: var(--text-faint, #6f675c);
+  --tone: var(--text-faint, #66676c);
 }
 
 .dot {
@@ -130,14 +130,14 @@
   position: relative;
   min-width: 188px;
   padding: 9px 11px 8px;
-  color: var(--text, #f2eadd);
+  color: var(--text, #e9eaef);
   font-family: var(--font-body, system-ui, sans-serif);
   font-size: 12px;
   line-height: 1.35;
-  background: var(--panel-glass, rgba(22, 19, 16, 0.8));
+  background: var(--panel-glass, rgba(22, 23, 29, 0.8));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--line-strong, rgba(243, 233, 216, 0.18));
+  border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
   border-top: 2px solid var(--tone);
   border-radius: 6px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
@@ -178,16 +178,14 @@
   font-family: var(--font-display, sans-serif);
   font-weight: 600;
   font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-faint, #6f675c);
+  letter-spacing: 0;
+  color: var(--text-faint, #66676c);
 }
 .cardName {
   font-family: var(--font-display, sans-serif);
   font-weight: 700;
   font-size: 16px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 .cardStatus {
   display: flex;
@@ -198,8 +196,7 @@
   font-family: var(--font-display, sans-serif);
   font-weight: 600;
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 .cardRow {
   display: flex;
@@ -207,11 +204,11 @@
   gap: 14px;
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid var(--line, rgba(243, 233, 216, 0.09));
-  color: var(--text-dim, #a89e8f);
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  color: var(--text-dim, #9d9ea3);
 }
 .cardRow b {
-  color: var(--text, #f2eadd);
+  color: var(--text, #e9eaef);
   font-family: var(--font-display, sans-serif);
   font-weight: 700;
   font-size: 14px;
@@ -219,7 +216,7 @@
 }
 .cardMeta {
   margin-top: 4px;
-  color: var(--text-faint, #6f675c);
+  color: var(--text-faint, #66676c);
   font-size: 11px;
 }
 
@@ -227,8 +224,8 @@
 .cardHint {
   margin-top: 6px;
   padding-top: 5px;
-  border-top: 1px solid var(--line, rgba(243, 233, 216, 0.09));
-  color: var(--text-faint, #6f675c);
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  color: var(--text-faint, #66676c);
   font-size: 10.5px;
   letter-spacing: 0.02em;
   animation: hintIn 220ms ease-out 320ms both;
@@ -245,14 +242,14 @@
   position: relative;
   min-width: 132px;
   padding: 7px 10px 7px;
-  color: var(--text, #f2eadd);
+  color: var(--text, #e9eaef);
   font-family: var(--font-body, system-ui, sans-serif);
   font-size: 12px;
   line-height: 1.3;
-  background: var(--panel-glass, rgba(22, 19, 16, 0.86));
+  background: var(--panel-glass, rgba(22, 23, 29, 0.86));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--line-strong, rgba(243, 233, 216, 0.18));
+  border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
   border-left: 2px solid var(--tone);
   border-radius: 5px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -263,12 +260,11 @@
   font-family: var(--font-display, sans-serif);
   font-weight: 700;
   font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 .tipSub {
   margin-top: 1px;
-  color: var(--text-dim, #a89e8f);
+  color: var(--text-dim, #9d9ea3);
 }
 
 /* ── "unexplored" marker: a small marigold diamond above objects never opened yet ── */
@@ -277,17 +273,17 @@
   display: block;
   width: 9px;
   height: 9px;
-  background: var(--marigold, #ffb547);
-  border: 1.5px solid #1d1404;
+  background: var(--marigold, #4c8dff);
+  border: 1.5px solid #131419;
   border-radius: 2px;
   transform: rotate(45deg);
-  box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.22);
+  box-shadow: 0 0 0 3px rgba(76, 141, 255, 0.22);
 }
 .unexplored::after {
   content: "";
   position: absolute;
   inset: -6px;
-  border: 1px solid rgba(255, 181, 71, 0.55);
+  border: 1px solid rgba(76, 141, 255, 0.55);
   border-radius: 3px;
   animation: ping 3.2s ease-out infinite;
 }
@@ -312,11 +308,10 @@
   font-family: var(--font-display, sans-serif);
   font-weight: 600;
   font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text, #f2eadd);
+  letter-spacing: 0;
+  color: var(--text, #e9eaef);
   background: rgba(14, 13, 11, 0.74);
-  border: 1px solid var(--line-strong, rgba(243, 233, 216, 0.18));
+  border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
   border-left: 2px solid var(--tone);
   border-radius: 3px;
   white-space: nowrap;
@@ -332,11 +327,10 @@
   font-family: var(--font-display, sans-serif);
   font-weight: 700;
   font-size: 13px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--marigold, #ffb547);
-  background: rgba(29, 20, 4, 0.78);
-  border: 1px solid var(--marigold, #ffb547);
+  letter-spacing: 0;
+  color: var(--marigold, #4c8dff);
+  background: rgba(19, 20, 25, 0.78);
+  border: 1px solid var(--marigold, #4c8dff);
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
@@ -347,12 +341,12 @@
 }
 .build:hover,
 .buildHot {
-  background: var(--marigold, #ffb547);
-  color: var(--marigold-ink, #1d1404);
+  background: var(--marigold, #4c8dff);
+  color: var(--marigold-ink, #131419);
   transform: translateY(-1px);
 }
 .build:focus-visible {
-  outline: 2px solid var(--marigold, #ffb547);
+  outline: 2px solid var(--marigold, #4c8dff);
   outline-offset: 3px;
 }
 .buildPlus {
@@ -366,19 +360,19 @@
   font-family: var(--font-display, sans-serif);
   font-weight: 700;
   font-size: 13px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  color: #f3ead9;
+  color: #e9eaef;
   background: rgba(14, 13, 11, 0.74);
-  border: 1px solid rgba(243, 233, 216, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.26);
   border-radius: 3px;
   white-space: nowrap;
   text-align: center;
 }
 .dimHot {
-  color: var(--marigold-ink, #1d1404);
-  background: var(--marigold, #ffb547);
-  border-color: var(--marigold, #ffb547);
+  color: var(--marigold-ink, #131419);
+  background: var(--marigold, #4c8dff);
+  border-color: var(--marigold, #4c8dff);
   font-size: 15px;
   padding: 2px 8px 1px;
   animation: dimPulse 1.2s ease-in-out infinite;
@@ -386,16 +380,15 @@
 .dimCaption {
   display: block;
   font-size: 9px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   opacity: 0.75;
   line-height: 1.1;
 }
 @keyframes dimPulse {
   50% {
     box-shadow:
-      0 0 0 4px rgba(255, 181, 71, 0.22),
-      0 0 22px rgba(255, 181, 71, 0.55);
+      0 0 0 4px rgba(76, 141, 255, 0.22),
+      0 0 22px rgba(76, 141, 255, 0.55);
   }
 }
 
@@ -412,21 +405,21 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 9px;
-  font-family: var(--font-display, sans-serif);
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim, #a89e8f);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-  /* glass (owner 31/10/2026) */
-  background: var(--glass-bg, rgba(22, 19, 16, 0.9));
+  height: 32px;
+  padding: 0 14px;
+  font-family: var(--ff-body, sans-serif);
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  /* the reel (owner 31/10/2026): a clear glass pill; on = a solid white pill */
+  background: var(--glass-bg, rgba(22, 23, 29, 0.9));
   -webkit-backdrop-filter: var(--glass-blur, none);
   backdrop-filter: var(--glass-blur, none);
-  border: 1px solid var(--glass-edge, rgba(243, 233, 216, 0.18));
-  border-radius: 6px;
-  box-shadow: var(--glass-shine, none), 0 6px 18px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--glass-edge, rgba(255, 255, 255, 0.18));
+  border-radius: 999px;
+  box-shadow: var(--glass-shine, none), 0 6px 18px rgba(0, 0, 0, 0.24);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -436,7 +429,7 @@
     transform 180ms var(--press, ease-out);
 }
 .hudBtn:hover {
-  color: var(--text, #f3e9d8);
+  color: #fff;
   background-color: var(--glass-hover, transparent);
 }
 .hudBtn:active {
@@ -444,11 +437,14 @@
   transition-duration: 70ms;
 }
 .hudBtn[aria-pressed="true"] {
-  color: var(--marigold, #ffb547);
-  border-color: rgba(255, 200, 120, 0.42);
+  color: var(--pill-on-ink, #15161b);
+  text-shadow: none;
+  background: var(--pill-on, #fff);
+  border-color: transparent;
+  box-shadow: var(--pill-on-shadow, none);
 }
 .hudBtn:focus-visible {
-  outline: 2px solid var(--marigold, #ffb547);
+  outline: 2px solid #fff;
   outline-offset: 2px;
 }
 
@@ -461,9 +457,9 @@
   padding: 6px 9px;
   font-size: 11.5px;
   line-height: 1.4;
-  color: var(--marigold, #ffb547);
-  background: rgba(29, 20, 4, 0.82);
-  border: 1px solid rgba(255, 181, 71, 0.35);
+  color: var(--marigold, #4c8dff);
+  background: rgba(19, 20, 25, 0.82);
+  border: 1px solid rgba(76, 141, 255, 0.35);
   border-radius: 4px;
 }
 
@@ -489,9 +485,9 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: radial-gradient(120% 90% at 50% 20%, #2a2119 0%, var(--bg-0, #0e0d0b) 70%);
+  background: radial-gradient(120% 90% at 50% 20%, #212227 0%, var(--bg-0, #0e0d0b) 70%);
   border-radius: inherit;
-  color: var(--text-faint, #6f675c);
+  color: var(--text-faint, #66676c);
 }
 .skeletonInner {
   display: grid;
@@ -506,14 +502,14 @@
 .skeletonPlan path,
 .skeletonPlan rect {
   fill: none;
-  stroke: var(--marigold, #ffb547);
+  stroke: var(--marigold, #4c8dff);
   stroke-width: 1.4;
   stroke-dasharray: 340;
   stroke-dashoffset: 340;
   animation: draw 2.2s ease-in-out infinite;
 }
 .skeletonPlan rect {
-  stroke: var(--line-bright, rgba(243, 233, 216, 0.32));
+  stroke: var(--line-bright, rgba(255, 255, 255, 0.32));
   animation-delay: 0.35s;
 }
 @keyframes draw {
@@ -526,8 +522,7 @@
   font-family: var(--font-display, sans-serif);
   font-weight: 600;
   font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 /* ── WebGL fallback ── */
@@ -538,14 +533,14 @@
   grid-template-rows: auto 1fr;
   gap: 8px;
   padding: 14px;
-  background: var(--bg-1, #151310);
-  color: var(--text-dim, #a89e8f);
+  background: var(--bg-1, #111217);
+  color: var(--text-dim, #9d9ea3);
 }
 .fallbackNote {
   font-size: 12.5px;
 }
 .fallbackNote b {
-  color: var(--text, #f2eadd);
+  color: var(--text, #e9eaef);
   font-weight: 600;
 }
 .fallbackSvg {

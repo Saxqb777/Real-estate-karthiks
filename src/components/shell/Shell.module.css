@@ -77,7 +77,7 @@
   position: relative;
   flex: none;
   z-index: var(--z-bar);
-  background: linear-gradient(180deg, #1b1814 0%, #141210 100%);
+  background: linear-gradient(180deg, #16171c 0%, #101116 100%);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.38);
 }
 .bar::before {
@@ -140,9 +140,8 @@
 .brandName {
   font-family: var(--ff-display);
   font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text);
   white-space: nowrap;
 }
@@ -162,7 +161,7 @@
   font-family: var(--ff-display);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   color: var(--text-faint);
 }
 
@@ -180,9 +179,8 @@
   padding: 0 14px;
   font-family: var(--ff-display);
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-dim);
   border-radius: 0;
   transition:
@@ -191,7 +189,7 @@
 }
 .navLink:hover {
   color: var(--text);
-  background: rgba(243, 233, 216, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 .navLink[aria-current="page"] {
   color: var(--text);
@@ -202,7 +200,7 @@
 .navIndex {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   color: var(--text-faint);
   margin-right: -2px;
 }
@@ -233,7 +231,7 @@
   right: -12px;
   bottom: 3px;
   height: 30px;
-  background: radial-gradient(50% 100% at 50% 100%, rgba(255, 181, 71, 0.13), rgba(255, 181, 71, 0) 100%);
+  background: radial-gradient(50% 100% at 50% 100%, rgba(76, 141, 255, 0.13), rgba(76, 141, 255, 0) 100%);
   pointer-events: none;
 }
 .navMarker::after {
@@ -307,7 +305,7 @@
   fill: var(--phase);
 }
 .moon .moonCut {
-  fill: #181512;
+  fill: #14151a;
 }
 .clockText {
   display: flex;
@@ -331,7 +329,7 @@
 .time {
   font-family: var(--ff-display);
   font-size: 19px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 0.9;
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -348,7 +346,7 @@
 .ampm {
   margin-left: 3px;
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   color: var(--text-dim);
 }
 .date {
@@ -357,9 +355,8 @@
   gap: 6px;
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
   line-height: 1;
   white-space: nowrap;
@@ -373,7 +370,7 @@
 .tz {
   padding: 2px 3px 1px;
   font-size: 9.5px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   color: var(--text-dim);
   border: 1px solid var(--line-strong);
   border-radius: 2px;
@@ -394,7 +391,7 @@
 .homeTime {
   font-family: var(--ff-display);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 0.9;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
@@ -405,9 +402,8 @@
   gap: 6px;
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
 }
 .homeMini {
@@ -416,8 +412,8 @@
   gap: 5px;
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
   white-space: nowrap;
@@ -431,7 +427,7 @@
   height: 34px;
   min-width: 200px;
   padding: 0 7px 0 11px;
-  background: #0c0b09;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
@@ -442,7 +438,7 @@
     color var(--dur-1) var(--ease-out);
 }
 .cmdk:hover {
-  border-color: rgba(255, 181, 71, 0.5);
+  border-color: rgba(76, 141, 255, 0.5);
   color: var(--text-dim);
 }
 .cmdk > svg {
@@ -524,7 +520,7 @@
   }
   .brandName {
     font-size: 14px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0;
   }
   .brandSub :global(.tamil) {
     font-size: 11px;
@@ -595,9 +591,8 @@
     gap: 4px;
     font-family: var(--ff-display);
     font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0;
     color: var(--text-faint);
     border-radius: 0;
     -webkit-tap-highlight-color: transparent;
@@ -617,11 +612,9 @@
     height: 20px;
     transition: color var(--dur-2) var(--ease-out);
   }
-  .tab[aria-current="page"] {
-    color: var(--text);
-  }
+  .tab[aria-current="page"],
   .tab[aria-current="page"] svg {
-    color: var(--marigold);
+    color: var(--pill-on-ink);
   }
   .tab:focus-visible {
     outline-offset: -4px;
@@ -631,19 +624,16 @@
     border-right: 1px solid var(--line);
   }
   .tab[data-open] {
-    color: var(--marigold);
-    background: rgba(255, 181, 71, 0.08);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
   }
-  /* the chosen tab: a soft gold-glass pill that slides between tabs */
+  /* the chosen tab: a solid white pill that slides between tabs (the reel) */
   .tabMarker {
     position: absolute !important;
-    inset: 7px 10px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgba(255, 216, 145, 0.2), rgba(240, 150, 46, 0.1));
-    border: 1px solid rgba(255, 200, 120, 0.32);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.14),
-      0 4px 14px rgba(240, 150, 46, 0.14);
+    inset: 7px 8px;
+    border-radius: 16px;
+    background: var(--pill-on);
+    box-shadow: var(--pill-on-shadow);
   }
 }
 @media (max-width: 340px) {
@@ -654,7 +644,7 @@
 @media (max-width: 400px) {
   .brandName {
     font-size: 13px;
-    letter-spacing: 0.06em;
+    letter-spacing: 0;
   }
   .clock {
     padding-right: 2px;
@@ -667,6 +657,7 @@
 }
 
 /* ---------- floating tabs (the top bar is gone — owner) ---------- */
+/* the reel (owner 31/10/2026): one clear glass pill, the chosen tab a solid white pill that slides between them */
 .floatNav {
   position: fixed;
   z-index: var(--z-bar);
@@ -675,13 +666,12 @@
   translate: -50% 0;
   display: flex;
   gap: 2px;
-  padding: 4px;
-  /* glass (owner 31/10/2026); a small strip, so the live blur over the 3D world stays cheap */
+  padding: 5px;
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-edge);
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   box-shadow: var(--glass-shine), var(--glass-shadow);
 }
 .floatLink {
@@ -690,17 +680,15 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-width: 120px;
+  min-width: 112px;
   height: 36px;
-  padding: 0 16px;
-  font-family: var(--ff-display);
+  padding: 0 18px;
+  font-family: var(--ff-body);
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-  border-radius: 7px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-pill);
   -webkit-tap-highlight-color: transparent;
   transition:
     color var(--dur-2) var(--ease-out),
@@ -711,7 +699,7 @@
   position: relative;
 }
 .floatLink:hover {
-  color: var(--text);
+  color: #fff;
   background-color: var(--glass-hover);
 }
 /* a soft press, then it springs back */
@@ -720,15 +708,16 @@
   transition-duration: 70ms;
 }
 .floatLink[aria-current="page"] {
-  color: #2a1405;
+  color: var(--pill-on-ink);
   text-shadow: none;
+  background-color: transparent;
 }
 .floatPlate {
   position: absolute !important;
   inset: 0;
-  background: var(--glass-gold);
-  box-shadow: var(--glass-gold-shine);
-  border-radius: 7px;
+  background: var(--pill-on);
+  box-shadow: var(--pill-on-shadow);
+  border-radius: var(--radius-pill);
 }
 .floatIcon {
   width: 16px;

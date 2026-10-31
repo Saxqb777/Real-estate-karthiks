@@ -341,10 +341,9 @@ function TownMapImpl({
             <circle cy="-31" r="5.6" fill="#7d1d16" />
           </g>
           <g className={s.questTag} transform="translate(22 -44)">
-            <rect width="200" height="34" rx="7" className={s.questBox} />
-            <rect x="0" y="0" width="4" height="34" rx="2" fill="#ffb547" />
-            <text x="14" y="22" className={s.questName}>
-              PATTUKKOTTAI ESTATE
+            <rect width="176" height="34" rx="17" className={s.questBox} />
+            <text x="16" y="22" className={s.questName}>
+              Pattukkottai Estate
             </text>
           </g>
         </g>

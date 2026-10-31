@@ -29,9 +29,8 @@
   flex: 1;
   font-family: var(--ff-display);
   font-size: var(--fs-2xs);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
 }
 .titleRow {
@@ -65,7 +64,7 @@
   flex: none;
   font-family: var(--ff-display);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-dim);
   border: 1px solid var(--line-strong);
   border-radius: 3px;
@@ -74,9 +73,8 @@
 .layerTitle {
   font-family: var(--ff-display);
   font-size: var(--fs-2xs);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-dim);
 }
 .layerAside {
@@ -150,7 +148,7 @@
   transition: background var(--dur-1) var(--ease-out);
 }
 .stepBtn:hover {
-  background: rgba(243, 233, 216, 0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 .stepBtn:hover .stepLabel {
   color: var(--text);
@@ -188,7 +186,7 @@
 }
 .stepFinal .stepBody,
 .stepFinal .stepBtn {
-  background: linear-gradient(90deg, rgba(243, 233, 216, 0.06), rgba(243, 233, 216, 0.015));
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
   border-top: 1px solid var(--line-strong);
   border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
 }
@@ -263,7 +261,7 @@
   transition: background var(--dur-1) var(--ease-out);
 }
 .inputBtn:hover {
-  background: rgba(255, 181, 71, 0.06);
+  background: rgba(76, 141, 255, 0.06);
 }
 .inputBtn:hover .inChev {
   color: var(--marigold);
@@ -277,9 +275,8 @@
   padding: 1px 4px 0;
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--text-faint);
   border: 1px solid var(--line);
   border-radius: 3px;
@@ -323,7 +320,7 @@
   margin-left: 25px;
   padding: 8px 10px 8px 12px;
   background: var(--marigold-a08);
-  border: 1px solid rgba(255, 181, 71, 0.24);
+  border: 1px solid rgba(76, 141, 255, 0.24);
   border-left: 2px solid var(--marigold);
   border-radius: var(--radius-xs);
 }
@@ -332,9 +329,8 @@
   margin-bottom: 3px;
   font-family: var(--ff-display);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--marigold);
 }
 .notes ul {
