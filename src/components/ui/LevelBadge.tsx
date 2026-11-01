@@ -16,9 +16,9 @@ export function tierFor(multiplier: number | null | undefined): Tier {
 const TIER_LABEL: Record<Tier, string> = { loss: "Below cost", bronze: "Bronze", silver: "Silver", gold: "Gold" };
 
 export interface LevelBadgeProps {
-  /** Number shown in the hex (e.g. capital multiplier 1.42). */
+  /** Number shown in the badge (e.g. capital multiplier 1.42). */
   value: number | string | null | undefined;
-  /** Tiny text above the value inside the hex (default "LVL"). */
+  /** Small text above the value (default "Level"). */
   label?: string;
   /** Decimals when value is a number (default 2). */
   decimals?: number;
@@ -33,10 +33,10 @@ export interface LevelBadgeProps {
   className?: string;
 }
 
-/** Hexagonal "level" badge — used for the capital multiplier. */
+/** "Level" badge — a small glass chip with the capital multiplier. */
 export function LevelBadge({
   value,
-  label = "LVL",
+  label = "Level",
   decimals = 2,
   suffix = "×",
   tier,

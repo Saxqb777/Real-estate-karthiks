@@ -2,8 +2,8 @@
 import { Check, ListTodo, Mail, Plus, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Badge, Button, EmptyState, Modal, StatusPill, Table, toast, type BadgeTone, type Column } from "@/components/ui";
-import { ActionForm, ChoiceGroup, Facts, drawerFrame, useActions } from "@/components/forms";
+import { Badge, Button, EmptyState, Modal, Select, StatusPill, Table, toast, type BadgeTone, type Column } from "@/components/ui";
+import { ActionForm, Facts, drawerFrame, useActions } from "@/components/forms";
 import { api, useApi, useMutation, type ApiClientError } from "@/lib/client";
 import { daysBetween, formatDate, todayIST } from "@/lib/dates";
 import type { ActionDTO, PriorityValue } from "@/lib/schemas/action";
@@ -120,16 +120,17 @@ export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
         title="To-dos"
         actions={
           <>
-            <ChoiceGroup
-              name="todoFilter"
+            {/* a glass dropdown, not pills (owner 1/11/2026: "makes these into a drop down") */}
+            <Select
+              compact
               aria-label="Show"
-              size="sm"
               value={status}
-              onChange={setStatus}
+              onChange={(e) => setStatus(e.target.value as Status)}
+              className={s.filterSelect}
               options={[
-                { value: "pending", label: `To do ${pendingCount}` },
+                { value: "pending", label: "To do" },
                 { value: "done", label: "Done" },
-                { value: "all", label: "All" },
+                { value: "all", label: "All to-dos" },
               ]}
             />
             <Button size="sm" variant="secondary" icon={<Mail />} loading={email.loading} onClick={() => void email.run()} title="Email your pending to-dos to the address in Settings">

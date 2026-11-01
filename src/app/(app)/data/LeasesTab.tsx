@@ -1,9 +1,8 @@
 "use client";
 import { Coins, DoorOpen, FileSignature, Plus, ReceiptText } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge, Button, EmptyState, StatusPill } from "@/components/ui";
+import { Badge, Button, EmptyState, Select, StatusPill } from "@/components/ui";
 import {
-  ChoiceGroup,
   Facts,
   LeaseForm,
   RenewAgreementButton,
@@ -64,11 +63,6 @@ export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
   const [filter, setFilter] = useState<Filter>("current");
 
   const all = leases.data?.items;
-  const counts = useMemo(() => {
-    const c = { current: 0, incoming: 0, past: 0 };
-    for (const l of all ?? []) c[leasePhase(l)]++;
-    return c;
-  }, [all]);
   const rows = useMemo(() => (all ? all.filter((l) => filter === "all" || leasePhase(l) === filter) : undefined), [all, filter]);
 
 
@@ -86,17 +80,18 @@ export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
         title="Leases"
         actions={
           <>
-            <ChoiceGroup
-              name="leaseFilter"
-              aria-label="Show leases"
-              size="sm"
+            {/* a glass dropdown, not pills (owner 1/11/2026: "makes these into a drop down") */}
+            <Select
+              compact
+              aria-label="Show"
               value={filter}
-              onChange={setFilter}
+              onChange={(e) => setFilter(e.target.value as typeof filter)}
+              className={s.filterSelect}
               options={[
-                { value: "current", label: `Current ${counts.current}` },
-                { value: "incoming", label: `Incoming ${counts.incoming}` },
-                { value: "past", label: `Past ${counts.past}` },
-                { value: "all", label: "All" },
+                { value: "current", label: "Current" },
+                { value: "incoming", label: "Incoming" },
+                { value: "past", label: "Past" },
+                { value: "all", label: "All leases" },
               ]}
             />
             <Button variant="primary" size="sm" icon={<Plus />} onClick={create.start}>

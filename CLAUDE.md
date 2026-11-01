@@ -652,6 +652,19 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   • NO dotted underlines or dashed lines anywhere in the UI (faint solid hairlines); green / red money gets a soft text shadow.
   • FORMS: no example placeholders ("e.g. …", sample names, phones, emails, amounts, addresses); "Choose a unit" prompts and
     "0" defaults stay.
+- 1/11/2026 (later): owner round → "deploy all these changes mentioned":
+  • "Where money went?" (heading now with the question mark): the side chart puts the ring on the LEFT and the category
+    list on the RIGHT (no dead space at the sides); the ring grows with the panel (clamp 168–210 px via cqi); it only
+    stacks (ring above list) when the chart is ≤ 460px wide (phone sheet).
+  • FILTER PILLS → DROPDOWNS (owner: "makes these into a drop down"): Data → Leases (Current · Incoming · Past · All leases),
+    Property tax (All years · Due · Paid), To-dos (To do · Done · All to-dos) use the glass Select; the counts left the
+    labels (the section buttons already show counts). FY / Calendar stays a two-way switch.
+  • DROPDOWN LISTS STAY INSIDE THE PAGE (owner: "dont let me go outside the page"): SelectMenu bounds = the nearest
+    [data-menu-bounds] / dialog / [data-game-main] / [data-centre-panel] (HudPanel + the side chart carry data-menu-bounds);
+    the list lines up with the field's left edge, or its right edge when that would cross the panel, is never wider than
+    the panel, and opens upward when there's more room above inside the panel.
+  • LEVEL BADGE (owner: "re design this to fit the website layout"): no metal hexagon / moving shine — a small frosted
+    rounded box (ui/LevelBadge: "Level" in grey, the multiplier in white, red when below cost).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

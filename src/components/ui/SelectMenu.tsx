@@ -53,6 +53,16 @@ export interface SelectMenuProps {
 const GAP = 6;
 const EDGE = 8;
 
+/** The page panel / window / dialog the field sits in (the list stays inside it), else the screen. */
+const PANEL = '[data-menu-bounds], [role="dialog"], [role="alertdialog"], [data-game-main], [data-centre-panel]';
+function boundsOf(field: HTMLElement): { left: number; right: number; top: number; bottom: number } {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const p = field.closest<HTMLElement>(PANEL)?.getBoundingClientRect();
+  if (!p) return { left: 0, right: vw, top: 0, bottom: vh };
+  return { left: Math.max(0, p.left), right: Math.min(vw, p.right), top: Math.max(0, p.top), bottom: Math.min(vh, p.bottom) };
+}
+
 export function SelectMenu({ anchor, entries, value, onPick, onClose }: SelectMenuProps) {
   const opts = entries.filter((e): e is Opt => e.kind === "option");
   const firstOn = opts.findIndex((o) => !o.disabled);
@@ -65,26 +75,30 @@ export function SelectMenu({ anchor, entries, value, onPick, onClose }: SelectMe
     live.current = { active, opts, onPick, onClose };
   });
 
-  // place it under the field (above when there's more room there), never past the screen edges
+  // place it under the field (above when there's more room there), INSIDE the page panel it belongs to (owner 1/11/2026:
+  // "dont let me go outside the page, cleanly sit in the page"): it lines up with the field's left edge, or with its
+  // right edge when that would run past the panel, and never crosses the panel (or the screen) edges
   useLayoutEffect(() => {
     const place = () => {
       const box = anchor.current;
       const menu = menuRef.current;
       if (!box || !menu) return;
       const r = box.getBoundingClientRect();
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const below = vh - r.bottom - GAP - EDGE;
-      const above = r.top - GAP - EDGE;
-      menu.style.minWidth = `${Math.round(r.width)}px`;
-      menu.style.maxWidth = `${vw - EDGE * 2}px`;
+      const b = boundsOf(box);
+      const below = b.bottom - r.bottom - GAP - EDGE;
+      const above = r.top - b.top - GAP - EDGE;
+      menu.style.minWidth = `${Math.round(Math.min(r.width, b.right - b.left - EDGE * 2))}px`;
+      menu.style.maxWidth = `${Math.round(b.right - b.left - EDGE * 2)}px`;
       const natural = menu.scrollHeight;
       const up = below < Math.min(natural, 220) && above > below;
       menu.style.maxHeight = `${Math.max(120, Math.min(360, up ? above : below))}px`;
       menu.style.top = up ? "" : `${Math.round(r.bottom + GAP)}px`;
-      menu.style.bottom = up ? `${Math.round(vh - r.top + GAP)}px` : "";
+      menu.style.bottom = up ? `${Math.round(window.innerHeight - r.top + GAP)}px` : "";
       const w = menu.offsetWidth;
-      menu.style.left = `${Math.round(Math.min(Math.max(EDGE, r.left), vw - EDGE - w))}px`;
+      const lo = b.left + EDGE;
+      const hi = b.right - EDGE;
+      const left = r.left + w <= hi ? r.left : r.right - w; // field's left edge, else its right edge
+      menu.style.left = `${Math.round(Math.max(lo, Math.min(left, hi - w)))}px`;
       menu.dataset.up = up ? "true" : "false";
       menu.style.visibility = "visible";
     };

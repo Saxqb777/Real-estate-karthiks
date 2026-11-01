@@ -75,6 +75,7 @@ export function HudPanel({
 
   return (
     <motion.aside
+      data-menu-bounds
       className={cx(s.panel, s[`accent-${accent}`], side === "inline" && s.panelInline, bare && s.panelBare, className)}
       style={width ? { width } : undefined}
       initial={{ opacity: 0, x: dx }}

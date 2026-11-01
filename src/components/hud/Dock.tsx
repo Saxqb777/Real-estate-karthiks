@@ -23,7 +23,7 @@ import s from "./dock.module.css";
 
 export const DOCK_TABS: { id: DockTab; label: string; short: string; icon: ReactNode }[] = [
   { id: "income", label: "Income vs expenses", short: "Income", icon: <BarChart3 aria-hidden /> },
-  { id: "spending", label: "Where money went", short: "Spending", icon: <PieChart aria-hidden /> },
+  { id: "spending", label: "Where money went?", short: "Spending", icon: <PieChart aria-hidden /> },
   { id: "units", label: "Units", short: "Units", icon: <Columns2 aria-hidden /> },
   { id: "occupancy", label: "Occupancy", short: "Occupancy", icon: <CalendarRange aria-hidden /> },
   { id: "growth", label: "Growth", short: "Growth", icon: <TrendingUp aria-hidden /> },
@@ -231,7 +231,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             </button>
           )}
         </nav>
-        <section className={cx(s.sideTray, !tab && s.sideTrayClosed, className)} aria-label="Chart">
+        <section className={cx(s.sideTray, !tab && s.sideTrayClosed, className)} aria-label="Chart" data-menu-bounds>
           {tray}
           {forms.element}
         </section>

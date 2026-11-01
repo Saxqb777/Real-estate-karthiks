@@ -312,8 +312,14 @@
 }
 .donut {
   position: relative;
-  width: 168px;
-  height: 168px;
+  /* grows with the panel (168 → 210 px) so the ring and the list share the width evenly */
+  width: clamp(168px, 34cqi, 210px);
+  aspect-ratio: 1;
+}
+.donut svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .seg {
   transition:
@@ -815,13 +821,13 @@ button.sqftBar:hover .sqftVal {
   .payAside {
     display: none;
   }
+  /* the side chart (owner 1/11/2026: "no deadspace on the sides"): the donut on the left, the list fills the right */
   .donutWrap {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-    overflow-y: auto;
+    gap: 28px;
   }
   .cat {
-    grid-template-columns: 10px minmax(80px, 1fr) 46px 84px;
+    grid-template-columns: 10px minmax(80px, 1fr) 52px 92px;
+    padding: 7px 10px;
   }
   .catBar {
     display: none;
@@ -841,6 +847,18 @@ button.sqftBar:hover .sqftVal {
   }
   .growthCol .plot {
     min-height: 150px;
+  }
+}
+
+@container dock (max-width: 460px) {
+  .donutWrap {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    overflow-y: auto;
+  }
+  .cat {
+    grid-template-columns: 10px minmax(80px, 1fr) 46px 84px;
+    padding: 4px 8px;
   }
 }
 

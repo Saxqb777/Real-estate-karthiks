@@ -1,8 +1,8 @@
 "use client";
 import { CircleCheck, Landmark, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Button, EmptyState, StatusPill, Table, type Column } from "@/components/ui";
-import { ChoiceGroup, Facts, PropertyTaxForm, drawerFrame, quickAdd, usePropertyTax } from "@/components/forms";
+import { Button, EmptyState, Select, StatusPill, Table, type Column } from "@/components/ui";
+import { Facts, PropertyTaxForm, drawerFrame, quickAdd, usePropertyTax } from "@/components/forms";
 import { ProofClip, ProofHead, ProofMark, proofCount } from "@/components/proof";
 import { sumAmounts } from "@/lib/calculations";
 import { formatDate, todayIST } from "@/lib/dates";
@@ -130,15 +130,16 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
         title="Property tax"
         actions={
           <>
-            <ChoiceGroup
-              name="taxFilter"
+            {/* a glass dropdown, not pills (owner 1/11/2026: "makes these into a drop down") */}
+            <Select
+              compact
               aria-label="Show"
-              size="sm"
               value={filter}
-              onChange={setFilter}
+              onChange={(e) => setFilter(e.target.value as Filter)}
+              className={s.filterSelect}
               options={[
-                { value: "all", label: "All" },
-                { value: "Due", label: `Due ${due.length}` },
+                { value: "all", label: "All years" },
+                { value: "Due", label: "Due" },
                 { value: "Paid", label: "Paid" },
               ]}
             />
