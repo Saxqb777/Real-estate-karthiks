@@ -2,7 +2,7 @@
 // Dock tab 5 — Growth, as two separate charts (never one dual-axis chart):
 //   left  CASH: running net cash at each year end (data.cumulativeNetByYear)
 //   right PAPER VALUE: price per sqft — what you paid vs what it's worth now (est. / offer), per unit and overall
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { cx } from "@/components/ui";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { BucketIcon, PaperTag } from "../Figure";
@@ -75,7 +75,7 @@ function CumulativeNet({ data, onDrill }: { data: DashboardData; onDrill?: (key:
                   return (
                     <g key={p.year} onMouseEnter={() => setHover(i)}>
                       <rect x={M.l + band * i} y={M.t} width={band} height={ph} fill="transparent" />
-                      <path d={barPath(x0, y(0), y(p.cumulative), bw)} className={cx(s.bar, p.cumulative < 0 ? s.barNeg : s.barPos, hover === i && s.barHover)} />
+                      <path d={barPath(x0, y(0), y(p.cumulative), bw)} className={cx(s.bar, p.cumulative < 0 ? s.barNeg : s.barPos, hover === i && s.barHover)} style={{ "--i": i } as CSSProperties} />
                       <text x={x0 + bw / 2} y={H - 5} className={s.xLabel} textAnchor="middle">
                         {short(p.label)}
                       </text>

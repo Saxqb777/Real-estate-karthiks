@@ -697,6 +697,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   static clears with a quick soft flash, scan lines fade a beat later and the picture warms from black-and-white into
   colour (a saturation-blend overlay fading out — no filter on the canvas). Replays on every Units / Plot visit; reduced
   motion = no line / static. Preview branch pending/cctv.
+- 1/11/2026: CHART OPENING ANIMATIONS (owner: "when any charts like the bar graph or pie chart open make have an
+  animation"), CSS only in charts.module.css: bars grow from the zero line one after another (.bar, --i stagger 32ms;
+  negative bars grow down), the income net line draws itself (pathLength 1 dash) and its dots pop in, the "Where money
+  went?" ring is revealed by one clockwise sweep (SVG mask circle, stroke-dashoffset 100 → 0) with the centre fading and
+  the list rows rising in, occupancy timelines grow left → right, payments / compare table rows rise a beat apart. Each
+  chart remounts when its tab opens; picking another year replays it (svg keyed by year). Reduced motion = none.
+  Preview branch pending/chart-anim (carries the CCTV preview too).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

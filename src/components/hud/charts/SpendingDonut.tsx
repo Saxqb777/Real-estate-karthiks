@@ -1,7 +1,7 @@
 "use client";
 // Dock tab 2 — Where money went: expenses by category for the active scope (data.expenseComposition), each category
 // in its own colour everywhere; the centre shows the scope's Expenses figure (the same number as the HUD).
-import { useState } from "react";
+import { useId, useState, type CSSProperties } from "react";
 import { cx } from "@/components/ui";
 import type { ExpenseSlice } from "@/lib/dashboard-types";
 import { formatPercent } from "@/lib/format";
@@ -27,6 +27,7 @@ function arc(cx: number, cy: number, r0: number, r1: number, a0: number, a1: num
 
 export function SpendingDonut({ slices, total, scopeLabel, onCategory, className }: SpendingDonutProps) {
   const [hover, setHover] = useState<string | null>(null);
+  const maskId = `sweep${useId().replace(/:/g, "")}`;
   if (slices.length === 0 || total === 0)
     return <div className={cx(s.empty, className)}>No expenses in {scopeLabel} — nothing spent yet.</div>;
 
@@ -46,24 +47,32 @@ export function SpendingDonut({ slices, total, scopeLabel, onCategory, className
   return (
     <div className={cx(s.donutWrap, className)}>
       <div className={s.donut}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Expenses by category, ${scopeLabel}`}>
-          {segs.map(({ sl, a0, a1 }) =>
-            slices.length === 1 ? (
-              <circle key={sl.categoryId} cx={c} cy={c} r={(r0 + r1) / 2} fill="none" stroke={sl.color} strokeWidth={r1 - r0} />
-            ) : (
-              <path
-                key={sl.categoryId}
-                d={arc(c, c, hover === sl.categoryId ? r0 - 2 : r0, hover === sl.categoryId ? r1 + 1 : r1, a0, a1)}
-                fill={sl.color}
-                opacity={hover && hover !== sl.categoryId ? 0.35 : 1}
-                className={s.seg}
-                onMouseEnter={() => setHover(sl.categoryId)}
-                onMouseLeave={() => setHover(null)}
-                onClick={onCategory ? () => onCategory(sl) : undefined}
-                style={{ cursor: onCategory ? "pointer" : undefined }}
-              />
-            ),
-          )}
+        {/* opening animation (owner 1/11/2026): the ring is revealed by one clockwise sweep — replays for another year */}
+        <svg key={`${scopeLabel}:${total}`} width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Expenses by category, ${scopeLabel}`}>
+          <defs>
+            <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={size} height={size}>
+              <circle cx={c} cy={c} r={(r0 + r1) / 2} fill="none" stroke="#fff" strokeWidth={r1 - r0 + 8} pathLength={100} transform={`rotate(-90 ${c} ${c})`} className={s.sweep} />
+            </mask>
+          </defs>
+          <g mask={`url(#${maskId})`}>
+            {segs.map(({ sl, a0, a1 }) =>
+              slices.length === 1 ? (
+                <circle key={sl.categoryId} cx={c} cy={c} r={(r0 + r1) / 2} fill="none" stroke={sl.color} strokeWidth={r1 - r0} />
+              ) : (
+                <path
+                  key={sl.categoryId}
+                  d={arc(c, c, hover === sl.categoryId ? r0 - 2 : r0, hover === sl.categoryId ? r1 + 1 : r1, a0, a1)}
+                  fill={sl.color}
+                  opacity={hover && hover !== sl.categoryId ? 0.35 : 1}
+                  className={s.seg}
+                  onMouseEnter={() => setHover(sl.categoryId)}
+                  onMouseLeave={() => setHover(null)}
+                  onClick={onCategory ? () => onCategory(sl) : undefined}
+                  style={{ cursor: onCategory ? "pointer" : undefined }}
+                />
+              ),
+            )}
+          </g>
         </svg>
         <div className={s.donutCenter}>
           <span className={s.donutLabel}>{hs ? hs.name : "Expenses"}</span>
@@ -72,8 +81,8 @@ export function SpendingDonut({ slices, total, scopeLabel, onCategory, className
         </div>
       </div>
       <ul className={s.catList}>
-        {slices.map((sl) => (
-          <li key={sl.categoryId}>
+        {slices.map((sl, i) => (
+          <li key={sl.categoryId} style={{ "--i": i } as CSSProperties}>
             <button
               type="button"
               className={cx(s.cat, hover === sl.categoryId && s.catOn)}

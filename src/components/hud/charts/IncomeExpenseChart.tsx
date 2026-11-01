@@ -3,7 +3,7 @@
 // one FY / calendar year month by month (data.monthlyByYear), or ALL TIME year by year (owner 8/10) with the totals
 // from data.periods.allTime and the running net from data.cumulativeNetByYear (grouped by the API — the UI never regroups).
 import { useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Select, cx } from "@/components/ui";
 import { changeOf } from "@/lib/calculations";
 import type { CashComparison, YearSeries } from "@/lib/dashboard-types";
@@ -145,7 +145,7 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
       </div>
       <div ref={box} className={s.plot} onMouseLeave={() => setHover(null)}>
         {size.w > 0 && (
-          <svg width={W} height={H} role="img" aria-label={all ? "Rent collected and expenses by year, all time" : `Rent collected and expenses by month, ${ys.label}`}>
+          <svg key={ys.year} width={W} height={H} role="img" aria-label={all ? "Rent collected and expenses by year, all time" : `Rent collected and expenses by month, ${ys.label}`}>
             {ticks.map((t) => (
               <g key={t}>
                 <line x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} className={t === 0 ? s.zero : s.grid} />
@@ -159,8 +159,8 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
                 {hover === i && <rect x={M.l + band * i + 2} y={M.t} width={band - 4} height={ph} className={s.hoverBand} />}
                 {!m.isFuture && (
                   <>
-                    <path d={barPath(cx0(i) - bw - 1, y(0), y(m.income), bw)} fill={C.income} className={s.bar} />
-                    <path d={barPath(cx0(i) + 1, y(0), y(m.expenses), bw)} fill={C.expense} className={s.bar} />
+                    <path d={barPath(cx0(i) - bw - 1, y(0), y(m.income), bw)} fill={C.income} className={s.bar} style={{ "--i": i } as CSSProperties} />
+                    <path d={barPath(cx0(i) + 1, y(0), y(m.expenses), bw)} fill={C.expense} className={s.bar} style={{ "--i": i } as CSSProperties} />
                   </>
                 )}
                 <text x={cx0(i)} y={H - 6} className={cx(s.xLabel, m.isFuture && s.xFuture)} textAnchor="middle">
@@ -179,9 +179,9 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
                 />
               </g>
             ))}
-            {past.length > 1 && <polyline points={linePts} className={s.netLine} />}
+            {past.length > 1 && <polyline points={linePts} pathLength={1} className={s.netLine} />}
             {past.map(({ m, i }) => (
-              <circle key={m.key} cx={cx0(i)} cy={y(m.net)} r={hover === i ? 4.5 : 3.5} className={s.netDot} />
+              <circle key={m.key} cx={cx0(i)} cy={y(m.net)} r={hover === i ? 4.5 : 3.5} className={s.netDot} style={{ "--i": i } as CSSProperties} />
             ))}
           </svg>
         )}
