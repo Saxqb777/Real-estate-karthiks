@@ -674,7 +674,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     circle; the name is the button's aria-label + hover tooltip; no words, no count badges.
 - 1/11/2026: NO "optional" LABELS (owner: "only remove optional label keep the other one"): every Field aside="optional"
   removed (expense / offer / tenant / settings / lease / move-out / to-do / unit forms); required fields keep their blue ✱.
-  The ▲ / ▼ % vs-last-year chips STAY (owner). Preview branch pending/no-optional.
+  The ▲ / ▼ % vs-last-year chips STAY (owner). DEPLOYED 1/11/2026 (f58806e).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
