@@ -502,7 +502,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
           transition={{ delay: 0.1, duration: 0.9, ease: "easeIn" }}
           role="status"
         >
-          <span>Leaving the estate…</span>
+          <span className="pe-spinner" aria-label="Signing out" />
         </motion.div>
       )}
     </>
