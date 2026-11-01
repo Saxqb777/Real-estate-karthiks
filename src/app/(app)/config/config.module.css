@@ -60,6 +60,146 @@
   position: absolute !important;
   inset: 0;
 }
+/* ---------- CCTV power-on (owner 1/11/2026): black → a white line across → it opens into static → on the scene's
+   first frame the static clears (scan lines linger a beat) and the picture warms from black-and-white into colour */
+.cctv {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  background: #050607;
+  transition: background-color 0.45s ease-out 0.05s;
+}
+.cctv > i {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.cctvNoise {
+  opacity: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.88  0 0 0 0 0.86  0 0 0 1.6 -0.35'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 180px 180px;
+  mix-blend-mode: screen;
+  animation:
+    cctv-noise-in 0.25s ease-out 0.32s forwards,
+    cctv-static 0.36s steps(6) infinite;
+  transition: opacity 0.5s ease-out;
+}
+.cctvScan {
+  opacity: 0.55;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px);
+  transition: opacity 1.4s ease-out 0.3s;
+}
+.cctvRoll {
+  opacity: 0;
+  height: 30%;
+  inset: auto 0 auto 0 !important;
+  top: -30%;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.07) 45%, rgba(255, 255, 255, 0.11) 50%, transparent);
+  animation:
+    cctv-noise-in 0.2s ease-out 0.4s forwards,
+    cctv-roll 2.2s linear 0.4s infinite;
+  transition: opacity 0.4s ease-out;
+}
+.cctvLine {
+  top: 50% !important;
+  bottom: auto !important;
+  height: 2px;
+  background: #f4f7f5;
+  box-shadow: 0 0 14px 3px rgba(220, 240, 230, 0.55);
+  transform: scaleX(0);
+  animation: cctv-line 0.62s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s forwards;
+}
+/* the first frame is in: the black and the static clear, a quick flash, scan lines fade a beat later */
+.cctvLive {
+  background-color: transparent;
+}
+.cctvLive .cctvNoise,
+.cctvLive .cctvRoll {
+  animation-play-state: paused;
+  opacity: 0 !important;
+}
+.cctvLive .cctvScan {
+  opacity: 0;
+}
+.cctvLive::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: cctv-flash 0.42s ease-out;
+}
+/* black-and-white first, colour a moment later (a saturation blend — no filter on the 3D canvas) */
+.cctvTint {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: #7d8580;
+  mix-blend-mode: saturation;
+  opacity: 1;
+  transition: opacity 1.2s ease-in-out 0.35s;
+}
+.cctvTintOff {
+  opacity: 0;
+}
+@keyframes cctv-line {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  40% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  75% {
+    transform: scaleX(1) scaleY(60);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scaleX(1) scaleY(260);
+    opacity: 0;
+  }
+}
+@keyframes cctv-noise-in {
+  to {
+    opacity: 0.5;
+  }
+}
+@keyframes cctv-static {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 173px -97px;
+  }
+}
+@keyframes cctv-roll {
+  to {
+    transform: translateY(460%);
+  }
+}
+@keyframes cctv-flash {
+  0% {
+    opacity: 0.22;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cctvNoise,
+  .cctvRoll,
+  .cctvLine {
+    display: none !important;
+  }
+  .cctvLive::after {
+    animation: none;
+  }
+}
+
 .previewTop {
   position: absolute;
   top: 12px;

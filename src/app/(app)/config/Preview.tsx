@@ -1,6 +1,6 @@
 "use client";
 // Live 3D preview for the Plot and Units forms: draws the UNSAVED values and lights up the dimension of the focused field.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import EstateSceneLazy, { type EstateSceneProps } from "@/components/estate/EstateSceneLazy";
 import { cx } from "@/components/ui";
 import s from "./config.module.css";
@@ -27,6 +27,11 @@ export function LivePreview({ plot, units, highlight, focusLabel, dirty, selecte
     const t = setTimeout(() => setReady(true), 380);
     return () => clearTimeout(t);
   }, []);
+  // CCTV power-on (owner 1/11/2026: "when the live preview load make it look like a cctv is turning on"): a white line
+  // opens into static until the scene's first frame is drawn, then the static clears and the picture warms from black
+  // and white into colour. Plays each time the preview mounts (Units / Plot).
+  const [live, setLive] = useState(false);
+  const onFirstFrame = useCallback(() => setLive(true), []);
   return (
     <section className={cx(s.preview, className)} aria-label="Live 3D preview">
       {ready && (
@@ -45,8 +50,16 @@ export function LivePreview({ plot, units, highlight, focusLabel, dirty, selecte
           hud={false}
           quality="low"
           life={false}
+          onFirstFrame={onFirstFrame}
         />
       )}
+      <div className={cx(s.cctvTint, live && s.cctvTintOff)} aria-hidden />
+      <div className={cx(s.cctv, live && s.cctvLive)} aria-hidden>
+        <i className={s.cctvNoise} />
+        <i className={s.cctvScan} />
+        <i className={s.cctvRoll} />
+        <i className={s.cctvLine} />
+      </div>
       <div className={s.previewTop}>
         <span className={s.liveChip}>
           <span className={s.liveDot} aria-hidden />

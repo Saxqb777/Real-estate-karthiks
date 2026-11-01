@@ -37,11 +37,12 @@
     ".next-me/types/**/*.ts",
     ".next-ovempty/types/**/*.ts",
     ".next-overview/types/**/*.ts",
+    ".next-prod/types/**/*.ts",
     ".next-reports-login/types/**/*.ts",
     ".next-world-v2/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-prod/types/**/*.ts"
+    ".next-cc/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

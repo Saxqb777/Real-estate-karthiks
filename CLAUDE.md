@@ -691,6 +691,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   sign-out) gets .pe-loadbg (globals.css) — the estate picture (public/estate-backdrop.jpg) blurred 26px, dimmed .62,
   slowly drifting (14 s; still for reduced motion) behind the ring; the ring's track is white .22 + a soft shadow.
   DEPLOYED 1/11/2026.
+- 1/11/2026: CONFIG LIVE PREVIEW turns on like a CCTV camera (owner: "when both the live preview load make it look like a
+  cctv is turning on"): Preview.tsx overlays (.cctv* in config.module.css) — black, a white line across the middle that
+  opens into grey static (moving noise tile + scan lines + a rolling light bar) until EstateScene's onFirstFrame, then the
+  static clears with a quick soft flash, scan lines fade a beat later and the picture warms from black-and-white into
+  colour (a saturation-blend overlay fading out — no filter on the canvas). Replays on every Units / Plot visit; reduced
+  motion = no line / static. Preview branch pending/cctv.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
