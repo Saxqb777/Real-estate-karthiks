@@ -340,53 +340,12 @@
   right: 6px;
   margin: 0;
 }
-/* the name, in the reel's small dark glass tag, to the right of the icon while hovered */
-.railTag {
-  position: absolute;
-  left: calc(100% + 14px);
-  top: 50%;
-  translate: -4px -50%;
-  padding: 7px 13px;
-  white-space: nowrap;
-  pointer-events: none;
-  font-family: var(--ff-body);
-  font-size: 13px;
-  font-weight: 500;
-  color: #fff;
-  background: rgba(20, 21, 26, 0.62);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-edge);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--glass-shine), 0 8px 22px rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transition:
-    opacity 0.16s var(--ease-out),
-    translate 0.16s var(--ease-out);
-}
-@media (hover: hover) {
-  .railBtn:hover .railTag {
-    opacity: 1;
-    translate: 0 -50%;
-  }
-}
-.railBtn:focus-visible .railTag {
-  opacity: 1;
-  translate: 0 -50%;
-}
-/* the open chart's icon needs no tag — its panel sits right there */
-.railOn .railTag {
-  display: none;
-}
-/* the LIFE switch at the end of the column (owner): a hairline above it; lit (white) while life is on, tag always */
+/* the LIFE switch at the end of the column (owner): a hairline above it; lit (white) while life is on */
 .railSep {
   width: 24px;
   height: 1px;
   margin: 3px auto;
   background: rgba(255, 255, 255, 0.22);
-}
-.railLife .railTag {
-  display: block;
 }
 /* the chart beside the icon column (owner: "pop up the charts in a way that suits the side bar" → "not a square box …
    like the reel"): NO container box — the title floats as text and the chart sits on one light frosted card, arriving

@@ -602,6 +602,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   • Last dark boxes lightened too: Config → Units slot cards (glass card, white ring when chosen), house window cash cells
     (.mini → rgba(255,255,255,.05)), Data table header + total band (rgba(62,64,74,.82–.86) + blur 16px), --panel-glass
     (3D labels / preview chips) rgba(56,58,68,.62).
+- 1/11/2026: side bar icons have NO hover name tags any more (owner: "remove these guide" → "deploy"): .railTag spans +
+  styles deleted from Dock / dock.module.css; each icon keeps its name as aria-label only.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

@@ -2,7 +2,7 @@
 // The charts (keys 1–6), one at a time; click the tab again or Esc to close.
 //   1 Income vs expenses · 2 Where money went · 3 <unit> vs <unit> · 4 Occupancy · 5 Growth · 6 Payments
 // Desktop (owner 31/10/2026, the reel): the tabs are a slim column of ICONS on the left side (the chosen one a white
-// circle, the name in a small tag on hover) and the chart opens as a glass tray along the bottom, right of the column.
+// circle; no name tags — owner 1/11/2026) and the chart opens beside the column.
 import { BarChart3, CalendarRange, Columns2, LogOut, PersonStanding, PieChart, ReceiptText, TrendingUp, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
@@ -214,9 +214,6 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
               >
                 {on && <motion.span layoutId={`${uid}-dot`} className={s.railPlate} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
                 <span className={s.railIcon}>{d.icon}</span>
-                <span className={s.railTag} aria-hidden>
-                  {label}
-                </span>
                 {hintSet.has(d.id) && !on && <span className={s.hintDot} aria-label="not opened yet" />}
               </button>
             );
@@ -233,17 +230,11 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             <span className={s.railIcon}>
               <PersonStanding aria-hidden />
             </span>
-            <span className={s.railTag} aria-hidden>
-              {life ? "Life on" : "Life off"}
-            </span>
           </button>
           {onLeave && (
             <button type="button" className={cx(s.railBtn, s.railLife)} aria-label="Sign out" onClick={onLeave}>
               <span className={s.railIcon}>
                 <LogOut aria-hidden />
-              </span>
-              <span className={s.railTag} aria-hidden>
-                Sign out
               </span>
             </button>
           )}
