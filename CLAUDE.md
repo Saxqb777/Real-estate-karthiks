@@ -675,6 +675,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 1/11/2026: NO "optional" LABELS (owner: "only remove optional label keep the other one"): every Field aside="optional"
   removed (expense / offer / tenant / settings / lease / move-out / to-do / unit forms); required fields keep their blue ✱.
   The ▲ / ▼ % vs-last-year chips STAY (owner). DEPLOYED 1/11/2026 (f58806e).
+- 1/11/2026: PROPERTY TAX filter = Due · Paid only (owner: "just show paid and dues not all years"); "All years" removed.
+  It opens on Due when any year is due, else on Paid. Preview branch pending/tax-due-paid.
+- 1/11/2026: LOADING SCREEN options shown to the owner (mocks, not built): A frosted glass card over the blurred estate
+  (name + IST day/time + thin white line) · B the site plan draws itself in blue lines (plot, both houses, gates,
+  23′3″ / 22′3″) · C the floating island at the hour (sky gradient, sun, clouds, island bobbing, name + line) · D minimal
+  white ring around a house icon (name + IST time). Waiting for the owner's pick.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

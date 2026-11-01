@@ -26,7 +26,7 @@ import {
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
-type Filter = "all" | "Due" | "Paid";
+type Filter = "Due" | "Paid";
 const money = (n: number) => formatINR(n, n % 1 !== 0);
 
 export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) {
@@ -35,11 +35,13 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
   const sel = useSelection(openId, onOpened);
   const create = useCreate();
   useNewSignal(newSignal, create.start);
-  const [filter, setFilter] = useState<Filter>("all");
+  // Due or Paid only (owner 1/11/2026: "just show paid and dues not all years"); opens on Due when something is due
+  const [picked, setFilter] = useState<Filter | null>(null);
 
   const all = taxes.data?.items;
-  const rows = useMemo(() => all?.filter((t) => filter === "all" || t.status === filter), [all, filter]);
   const due = useMemo(() => (all ?? []).filter((t) => t.status === "Due"), [all]);
+  const filter: Filter = picked ?? (due.length > 0 ? "Due" : "Paid");
+  const rows = useMemo(() => all?.filter((t) => t.status === filter), [all, filter]);
   const shownPaid = sumAmounts((rows ?? []).filter((t) => t.status === "Paid"));
   const shownDue = sumAmounts((rows ?? []).filter((t) => t.status === "Due"));
 
@@ -138,7 +140,6 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
               onChange={(e) => setFilter(e.target.value as Filter)}
               className={s.filterSelect}
               options={[
-                { value: "all", label: "All years" },
                 { value: "Due", label: "Due" },
                 { value: "Paid", label: "Paid" },
               ]}
