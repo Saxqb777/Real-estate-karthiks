@@ -2,7 +2,7 @@
 import { Check, ListTodo, Mail, Plus, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Badge, Button, EmptyState, Modal, Select, StatusPill, Table, toast, type BadgeTone, type Column } from "@/components/ui";
+import { Badge, Button, EmptyState, Modal, StatusPill, Table, toast, type BadgeTone, type Column } from "@/components/ui";
 import { ActionForm, Facts, drawerFrame, useActions } from "@/components/forms";
 import { api, useApi, useMutation, type ApiClientError } from "@/lib/client";
 import { daysBetween, formatDate, todayIST } from "@/lib/dates";
@@ -11,7 +11,6 @@ import { DataPanel, DeleteButton, DrawerLoading, DetailHero, EditButton, RecordD
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
-type Status = "pending" | "done" | "all";
 const PRIORITY_TONE: Record<PriorityValue, BadgeTone> = { High: "coral", Medium: "marigold", Low: "grey" };
 
 type EmailResult = { sent: true; id: string } | { sent: false; skipped: true; reason: string; preview: { to: string; subject: string; text: string } };
@@ -54,8 +53,9 @@ function DoneToggle({ a }: { a: ActionDTO }) {
 }
 
 export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
-  const [status, setStatus] = useState<Status>("pending");
-  const actions = useActions(status);
+  // every to-do at once, the ones still to do on top (owner 1/11/2026: "remove this dropdown … show at all times all to
+  // dos but keep the pending ones on top always") — the list arrives in that order and the table keeps it when sorting
+  const actions = useActions("all");
   const pending = useActions("pending");
   const narrow = useNarrow();
   const sel = useSelection(openId, onOpened);
@@ -94,8 +94,8 @@ export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
   );
   const footer = rows?.length ? (
     <span className={s.totalLabel}>
-      {rows.length} {status === "done" ? "done" : status === "pending" ? "to do" : rows.length === 1 ? "to-do" : "to-dos"}
-      {status !== "done" && overdue > 0 && <span className="neg"> · {overdue} late</span>}
+      {pendingCount} to do
+      {overdue > 0 && <span className="neg"> · {overdue} late</span>}
     </span>
   ) : undefined;
 
@@ -120,19 +120,6 @@ export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
         title="To-dos"
         actions={
           <>
-            {/* a glass dropdown, not pills (owner 1/11/2026: "makes these into a drop down") */}
-            <Select
-              compact
-              aria-label="Show"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as Status)}
-              className={s.filterSelect}
-              options={[
-                { value: "pending", label: "To do" },
-                { value: "done", label: "Done" },
-                { value: "all", label: "All to-dos" },
-              ]}
-            />
             <Button size="sm" variant="secondary" icon={<Mail />} loading={email.loading} onClick={() => void email.run()} title="Email your pending to-dos to the address in Settings">
               Email me
             </Button>
@@ -148,13 +135,13 @@ export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
           rows={rows}
           loading={actions.loading}
           rowKey={(a) => a.id}
+          group={(a) => (a.isDone ? 1 : 0)}
           onRowClick={(a) => sel.select(a.id)}
           selectedKey={sel.selected}
           caption="To-dos"
           empty={
             <EmptyState
-              compact={status !== "pending"}
-              title={status === "pending" ? "Nothing to do — all clear" : status === "done" ? "Nothing finished yet" : "No to-dos yet"}
+              title="No to-dos yet"
               action={
                 <Button size="sm" variant="primary" icon={<ListTodo />} onClick={create.start}>
                   Add to-do

@@ -52,9 +52,12 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  height: 40px;
-  padding: 0 16px;
+  /* icons only (owner 1/11/2026): a round glass button per section */
+  width: 44px;
+  height: 44px;
+  padding: 0;
   font-family: var(--ff-body);
   font-size: 14px;
   font-weight: 500;
@@ -123,8 +126,8 @@
   place-items: center;
 }
 .icon svg {
-  width: 16px;
-  height: 16px;
+  width: 19px;
+  height: 19px;
 }
 .text,
 .label {
@@ -168,8 +171,11 @@
   }
   .item {
     flex: none;
-    height: 38px;
-    padding: 0 12px;
+    width: 40px;
+    height: 40px;
     font-size: 13px;
+  }
+  .list {
+    justify-content: center;
   }
 }

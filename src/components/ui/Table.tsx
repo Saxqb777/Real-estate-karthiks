@@ -41,6 +41,8 @@ export interface TableProps<T> {
   hideFooter?: boolean;
   /** Fill the parent flex column (e.g. a <Panel fill padding="none">) and scroll inside with a sticky header. */
   fill?: boolean;
+  /** Rows keep this order of groups whatever column is sorted (lower first) — e.g. to-dos still pending stay on top. */
+  group?: (row: T) => number;
   className?: string;
 }
 
@@ -61,16 +63,20 @@ export function Table<T>({
   defaultSort,
   hideFooter,
   fill,
+  group,
   className,
 }: TableProps<T>) {
   const [sort, setSort] = useState<Sort>(defaultSort ?? null);
 
   const sorted = useMemo(() => {
-    if (!rows || !sort) return rows;
-    const col = columns.find((c) => c.key === sort.key);
-    if (!col?.sortValue) return rows;
-    const get = col.sortValue;
+    if (!rows) return rows;
+    const col = sort ? columns.find((c) => c.key === sort.key) : undefined;
+    const get = col?.sortValue;
+    if (!get && !group) return rows;
     const out = [...rows].sort((a, b) => {
+      const g = group ? group(a) - group(b) : 0;
+      if (g !== 0) return g;
+      if (!get || !sort) return 0;
       const va = get(a);
       const vb = get(b);
       if (va === vb) return 0;
@@ -80,7 +86,7 @@ export function Table<T>({
       return sort.dir === "asc" ? r : -r;
     });
     return out;
-  }, [rows, sort, columns]);
+  }, [rows, sort, columns, group]);
 
   const toggleSort = (key: string) =>
     setSort((s) => (s?.key !== key ? { key, dir: "desc" } : s.dir === "desc" ? { key, dir: "asc" } : null));

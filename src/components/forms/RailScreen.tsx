@@ -108,17 +108,15 @@ export function RailScreen({ eyebrow, title, items, value, onChange, onNew, chil
                 tabIndex={on ? 0 : -1}
                 className={cx(s.item, it.divider && s.divider)}
                 style={{ "--i": i } as CSSProperties}
+                aria-label={it.label}
+                title={it.label}
                 onClick={() => onChange(it.id)}
               >
                 {/* the chosen section: a gold-glass plate that slides to the button you pick (owner 31/10/2026) */}
                 {on && <motion.span layoutId={`rail-plate-${plateId}`} className={s.plate} transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.9 }} />}
                 <span className={s.index}>{String(i + 1).padStart(2, "0")}</span>
-                {it.icon && <span className={s.icon}>{it.icon}</span>}
-                <span className={s.text}>
-                  <span className={s.label}>{it.label}</span>
-                  {it.note && <span className={s.note}>{it.note}</span>}
-                </span>
-                {it.count !== undefined && it.count > 0 && <span className={cx(s.count, "num", it.alert && s.countAlert)}>{it.count}</span>}
+                {/* icons only (owner 1/11/2026: "over here just keep icons") — the name is the button's label / tooltip */}
+                {it.icon ? <span className={s.icon}>{it.icon}</span> : <span className={s.label}>{it.label}</span>}
               </button>
             );
           })}

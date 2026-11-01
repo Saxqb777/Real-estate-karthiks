@@ -665,6 +665,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     the panel, and opens upward when there's more room above inside the panel.
   • LEVEL BADGE (owner: "re design this to fit the website layout"): no metal hexagon / moving shine — a small frosted
     rounded box (ui/LevelBadge: "Level" in grey, the multiplier in white, red when below cost).
+- 1/11/2026 (later still): TO-DOS + ICON BUTTONS (owner: "remove this dropdown … show at all times all to dos but keep the
+  pending ones on top always"; "over here just keep icons" + "also for config"). Preview branch pending/todos-all.
+  • Data → To-dos: no filter dropdown; the list always shows every to-do — the ones still to do first (by due date, then
+    priority), done ones after — and stays that way when a column is sorted (ui/Table `group` prop: rows keep the group
+    order, the column sort applies inside each group). Footer "N to do · M late".
+  • Data + Config section buttons (RailScreen) = ICONS ONLY: round 44px glass buttons (40px on phones), chosen = white
+    circle; the name is the button's aria-label + hover tooltip; no words, no count badges.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
