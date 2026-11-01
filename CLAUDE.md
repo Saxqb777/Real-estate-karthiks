@@ -666,7 +666,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   • LEVEL BADGE (owner: "re design this to fit the website layout"): no metal hexagon / moving shine — a small frosted
     rounded box (ui/LevelBadge: "Level" in grey, the multiplier in white, red when below cost).
 - 1/11/2026 (later still): TO-DOS + ICON BUTTONS (owner: "remove this dropdown … show at all times all to dos but keep the
-  pending ones on top always"; "over here just keep icons" + "also for config"). Preview branch pending/todos-all.
+  pending ones on top always"; "over here just keep icons" + "also for config"). DEPLOYED 1/11/2026 (2886bc4).
   • Data → To-dos: no filter dropdown; the list always shows every to-do — the ones still to do first (by due date, then
     priority), done ones after — and stays that way when a column is sorted (ui/Table `group` prop: rows keep the group
     order, the column sort applies inside each group). Footer "N to do · M late".
