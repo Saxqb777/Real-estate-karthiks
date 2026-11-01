@@ -690,7 +690,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   background like this not black screen", pointing at mock A): every loading cover (overview arrival, sign-in hand-over,
   sign-out) gets .pe-loadbg (globals.css) — the estate picture (public/estate-backdrop.jpg) blurred 26px, dimmed .62,
   slowly drifting (14 s; still for reduced motion) behind the ring; the ring's track is white .22 + a soft shadow.
-  Preview branch pending/leave-ring.
+  DEPLOYED 1/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
