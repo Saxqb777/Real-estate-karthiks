@@ -310,7 +310,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 11px 12px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
 }
@@ -418,11 +418,11 @@
   border: 1px solid var(--line);
   border-left: 2px solid var(--teal);
   border-radius: var(--radius-xs);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
 .rentOverdue {
   border-left-color: var(--coral);
-  background: linear-gradient(90deg, rgba(240, 82, 82, 0.08), rgba(0, 0, 0, 0.12) 70%);
+  background: linear-gradient(90deg, rgba(240, 82, 82, 0.08), rgba(255, 255, 255, 0.05) 70%);
 }
 .rentLine {
   display: flex;
@@ -451,7 +451,7 @@
   padding: 9px 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
 .elecCompact {
   padding: 7px 9px;
@@ -525,7 +525,7 @@
   border: 1px solid var(--line);
   border-left: 2px solid var(--teal);
   border-radius: var(--radius-xs);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
 .payerLate {
   border-left-color: var(--coral);
@@ -578,7 +578,7 @@
   min-width: 0;
   padding: 7px 8px 7px 10px;
   text-align: left;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   transition: background var(--dur-1) var(--ease-out);
 }
 .receiptMain:hover {
@@ -607,7 +607,7 @@
   flex: none;
   color: var(--text-faint);
   border-left: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   transition: color var(--dur-1) var(--ease-out);
 }
 .receiptLink svg {
@@ -843,7 +843,7 @@
   color: var(--text-dim);
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
 .cardStatBad {
   border-left: 2px solid var(--coral);
@@ -1266,11 +1266,11 @@ button.cTenant:hover .cTenantGo {
   padding: 12px 14px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.05);
 }
 .tdDue {
   border-color: rgba(76, 141, 255, 0.45);
-  background: linear-gradient(90deg, rgba(76, 141, 255, 0.08), rgba(0, 0, 0, 0.16) 60%);
+  background: linear-gradient(90deg, rgba(76, 141, 255, 0.08), rgba(255, 255, 255, 0.05) 60%);
 }
 .tdName {
   font-family: var(--ff-display);
@@ -1457,7 +1457,7 @@ button.cTenant:hover .cTenantGo {
   padding: 16px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.18));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.05));
 }
 .mHead {
   display: flex;
@@ -1551,7 +1551,7 @@ button.cTenant:hover .cTenantGo {
   text-align: left;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.05);
 }
 button.mStat {
   cursor: pointer;

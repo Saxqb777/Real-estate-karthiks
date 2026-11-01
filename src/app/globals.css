@@ -41,9 +41,9 @@
   --line-bright: rgba(255, 255, 255, 0.28);
 
   /* Text */
-  --text: #f6f6f8;
-  --text-dim: #b3b5bd;
-  --text-faint: #7c7e88;
+  --text: #ffffff;
+  --text-dim: #e1e3e8; /* light glass (owner 1/11: "text … almost not visible") — secondary text stays bright */
+  --text-faint: #c2c5cd;
 
   /* Brand + meaning — the accent is the reel's BLUE (the name "marigold" is kept so every accent follows) */
   --marigold: #4c8dff; /* accent / primary / focus */
@@ -306,14 +306,14 @@ body::after {
   border-radius: var(--radius-xs);
 }
 
-/* Scrollbars */
+/* Scrollbars — hidden everywhere (owner 1/11/2026: "remove scrolling bar"); wheel / touch / keys still scroll */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-width: none;
 }
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

@@ -23,7 +23,7 @@
   gap: var(--s-2);
   padding: 12px var(--s-4);
   border-top: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.16);
+  background: rgba(255, 255, 255, 0.05);
 }
 .inlineActions[data-dirty]::before {
   content: "Unsaved changes";

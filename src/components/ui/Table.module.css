@@ -20,14 +20,10 @@
 }
 
 .th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  position: relative;
   height: 36px;
   padding: 0 12px;
-  background: rgba(62, 64, 74, 0.82);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: transparent;
   border-bottom: 1px solid var(--line-strong);
   font-family: var(--ff-display);
   font-size: var(--fs-xs);
@@ -144,12 +140,8 @@
 }
 
 .tfoot .td {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  background: rgba(62, 64, 74, 0.86);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  position: relative;
+  background: transparent;
   height: 44px;
   border-top: 1px solid var(--line-strong);
   border-bottom: 0;

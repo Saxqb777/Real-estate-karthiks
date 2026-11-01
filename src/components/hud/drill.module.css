@@ -81,7 +81,7 @@
   width: 100%;
   padding: 8px 10px;
   text-align: left;
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: background var(--dur-1) var(--ease-out);
 }

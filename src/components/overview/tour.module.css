@@ -34,6 +34,7 @@
     0 24px 60px rgba(0, 0, 0, 0.6);
 }
 .card::before {
+  display: none;
   content: "";
   position: absolute;
   inset: -2px;

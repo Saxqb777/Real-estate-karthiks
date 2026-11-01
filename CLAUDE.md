@@ -604,6 +604,19 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     (3D labels / preview chips) rgba(56,58,68,.62).
 - 1/11/2026: side bar icons have NO hover name tags any more (owner: "remove these guide" → "deploy"): .railTag spans +
   styles deleted from Dock / dock.module.css; each icon keeps its name as aria-label only.
+- 1/11/2026 CLEAN-UP (owner: "remove those blue edges looks broken, fix that black bars - remove them, remove scrolling
+  bar, and those dark grey bar on the tables looks broken and the colors on text is almost not visible" → "deploy these";
+  + "press any key to start bar should be shaped like this instead of a pill"):
+  • blue corner marks gone (Config live-preview frame ::before, help / tour card ::before); preview frame = glass edge +
+    radius 22.
+  • every dark rgba(0,0,0,.05–.24) BACKGROUND in the UI modules (form action strip .inlineActions — the bar under "Save
+    unit" —, window wells, drill/explain rows, chart rows, Modal foot, ⌘K foot …) → rgba(255,255,255,.05).
+  • NO SCROLL BARS anywhere (globals: scrollbar-width none + ::-webkit-scrollbar display none); scrolling still works.
+  • tables: header + total row are plain transparent rows with a hairline that scroll with the list (no sticky bands — a
+    clear sticky row let rows show through).
+  • text tokens brighter for the light glass: --text #fff, --text-dim #e1e3e8, --text-faint #c2c5cd (hex codes, zeros,
+    eyebrows readable).
+  • login "Press any key to start" = the sign-in bar's pane (glass-deep, panel edge, radius 28, padding 20/44) — not a pill.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

@@ -29,14 +29,15 @@
 .preview {
   position: relative;
   min-height: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: var(--glass-radius);
   overflow: hidden;
   background: var(--bg-0);
   box-shadow: var(--shadow-1);
 }
 .preview::before {
-  /* game frame corners */
+  /* (the old game-frame corners — owner 1/11: "remove those blue edges") */
+  display: none;
   content: "";
   position: absolute;
   inset: 0;
@@ -321,7 +322,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-bottom: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
 .valueStrip > div {
   display: flex;
@@ -436,7 +437,7 @@
   font-size: var(--fs-sm);
   color: var(--text-dim);
   border-bottom: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.05);
 }
 .panelNote svg {
   flex: none;

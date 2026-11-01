@@ -431,7 +431,7 @@
   padding: 7px 10px 5px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
 .cmpHead {
   display: flex;
@@ -785,7 +785,7 @@ button.sqftBar:hover .sqftVal {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
-  background: rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
 .payAsideLabel {
   font-family: var(--ff-display);

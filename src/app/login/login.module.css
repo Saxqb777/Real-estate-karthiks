@@ -310,20 +310,21 @@
   color: #fff;
   text-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
 }
-/* "Press any key" — a clear glass pill, softly breathing */
+/* "Press any key" — the same pane as the sign-in bar (owner 1/11: "shaped like this instead of a pill"): frosted glass,
+   a white hairline, big soft corners; it breathes softly */
 .press {
   margin-top: clamp(22px, 4vh, 40px);
-  padding: 11px 26px;
+  padding: 20px 44px;
   font-family: var(--ff-body);
-  font-size: clamp(14px, 1.4vw, 16px);
+  font-size: clamp(15px, 1.5vw, 17px);
   font-weight: 500;
   color: #fff;
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-edge);
-  border-radius: 999px;
-  box-shadow: var(--glass-shine), var(--glass-shadow);
+  background: var(--glass-deep-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: 28px;
+  box-shadow: var(--glass-panel-shadow);
   animation: blink 1.6s ease-in-out infinite;
 }
 .pressTap {
