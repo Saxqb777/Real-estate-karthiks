@@ -2,7 +2,7 @@
 // from DashboardData (src/lib/dashboard-types.ts), produced by src/lib/calculations.ts.
 
 /** 3D SCENE CONTRACT v2 — mirrored here so the HUD doesn't depend on the scene module being loaded. */
-export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot" | "car" | "photographer";
+export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot" | "photographer";
 
 export interface SceneObject {
   kind: SceneObjectKind;

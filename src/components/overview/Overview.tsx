@@ -56,7 +56,7 @@ export interface OverviewProps {
 }
 
 /** Owner, 5/10/2026: hover = name tag only; a click opens the object's window STRAIGHT AWAY — no gold card, phone + desktop.
- *  (The car keeps its leave prompt; the sun / moon opens time travel.) */
+ *  (Sign out = the side bar's last icon → the leave prompt; the sun / moon opens time travel.) */
 const DIRECT: SceneObjectKind[] = ["unit", "tenant", "tolet", "mailbox", "noticeboard", "pole", "taxstamp", "plot", "photographer"];
 const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
@@ -161,7 +161,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   }, [menuOpen]);
   useEffect(() => () => chartMenu.set(false), []);
   const [hudHidden, setHudHidden] = useState(false);
-  // sign out = drive off in the owner's car (click it): it backs out and leaves while the screen fades to the title screen
+  // sign out = the side bar's last icon (owner 31/10/2026: the car is gone): "Leave?" → the screen fades to the title screen
   const [leaving, setLeaving] = useState(false);
   const [askLeave, setAskLeave] = useState(false);
   // the sun / moon opens TIME TRAVEL (as-of timeline + FY/calendar period)
@@ -170,8 +170,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
   const driveOff = useCallback(() => {
     setAskLeave(false);
     setLeaving(true);
-    window.dispatchEvent(new Event("estate:leave"));
-    window.setTimeout(() => void logout(), 4600);
+    window.setTimeout(() => void logout(), 1400);
   }, []);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
@@ -285,16 +284,10 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   const onObjectClick = useCallback(
     (obj: SceneObject) => {
-      // the car keeps its own exit (owner): click → "Leave Pattukkottai Estates?" straight away, no card
-      if (obj.kind === "car") {
-        closeCard();
-        setAskLeave(true);
-        return;
-      }
       setHudHidden(false);
       inspect.onObjectClick(obj);
     },
-    [inspect, closeCard],
+    [inspect],
   );
 
   // hover hint after a short beat (the outline is instant) so sweeping the mouse across the world stays calm
@@ -465,7 +458,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       hintObjects={hintObjects}
       getObjectScreen={getObjectScreen}
       cues={cues}
-      hud={!mobile && active}
+      hud={false} /* the Life switch lives in the side bar (hud/Dock) */
       onFirstFrame={onSceneReady}
       paused={paused}
     />
@@ -508,7 +501,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
           className={s.leaving}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 3, duration: 1.2, ease: "easeIn" }}
+          transition={{ delay: 0.1, duration: 0.9, ease: "easeIn" }}
           role="status"
         >
           <span>Leaving the estate…</span>
@@ -536,10 +529,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
         data={data}
         inspect={inspect}
         locate={locate ?? undefined}
-        onLeave={() => {
-          closeCard();
-          setAskLeave(true);
-        }}
       />
       {forms.element}
     </>
@@ -646,6 +635,10 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
                   <Dock
                     side
                     trayRef={setSideEl}
+                    onLeave={() => {
+                      closeCard();
+                      setAskLeave(true);
+                    }}
                     className={s.dock}
                     data={data}
                     period={period}

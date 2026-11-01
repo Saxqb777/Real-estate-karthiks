@@ -1,7 +1,7 @@
 "use client";
-// Game-style "leave?" prompt shown when the owner clicks his car (sign out = drive off). Same look as the login bar:
-// dark panel, gold border, chunky pressed buttons. Enter / Y = drive off, Esc / N = stay.
-import { Play } from "lucide-react";
+// "Leave?" prompt = sign out (the side bar's last icon; the car that used to do this is gone — owner 31/10/2026).
+// A pane of the reel's glass: Stay (glass) / Sign out (blue). Enter / Y = sign out, Esc / N = stay.
+import { LogOut } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -52,8 +52,8 @@ export function LeavePrompt({ open, onStay, onLeave }: { open: boolean; onStay: 
                 Stay
               </button>
               <button ref={goRef} type="button" className={s.go} onClick={onLeave}>
-                Drive off
-                <Play aria-hidden />
+                Sign out
+                <LogOut aria-hidden />
               </button>
             </div>
           </motion.section>

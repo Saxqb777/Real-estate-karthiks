@@ -161,12 +161,12 @@
   min-height: 104px;
   padding: 10px 12px 11px;
   text-align: left;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 80px),
-    var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--inner-hi);
+  background: var(--glass-card-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-card-edge);
+  border-radius: 18px;
+  box-shadow: var(--glass-shine);
   transition:
     border-color var(--dur-1) var(--ease-out),
     transform var(--dur-1) var(--ease-out);
@@ -176,13 +176,14 @@
   transform: translateY(-1px);
 }
 .slot[aria-pressed="true"] {
-  border-color: rgba(76, 141, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.55);
   box-shadow:
-    var(--inner-hi),
-    0 0 0 1px rgba(76, 141, 255, 0.2),
-    0 8px 22px rgba(0, 0, 0, 0.35);
+    var(--glass-shine),
+    0 0 0 3px rgba(255, 255, 255, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.22);
 }
 .slot[aria-pressed="true"]::after {
+  display: none;
   content: "";
   position: absolute;
   left: 12px;

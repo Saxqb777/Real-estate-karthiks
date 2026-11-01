@@ -575,6 +575,33 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     @container dock ≤ 680px rules stack them for the narrow panel. The old labelled bottom bar is gone on desktop. The
     column + panel are position:absolute against the HUD, so the .bottom motion.div animates OPACITY only (a transform
     would trap them). Phones unchanged (☰ menu → chart sheet).
+- 1/11/2026: GLASS V3 + CAR GONE (owner: "a lot of lag while switching to units, plot", "remove the black thing", "lets
+  not pop up a square box instead let it appear like how its in the reel", "let the life on and off button add to the
+  side bar in the end with its own icon", "remove the car model and its features", "Electricity Board - eb pole rename
+  it"). Preview branch pending/glass-v3.
+  • LIGHT GLASS (globals.css): every glass token is now a white frost over a MID-GREY scrim (--glass-tint rgba(70,72,84,
+    .26), panel rgba(74,76,88,.3), deep rgba(70,72,84,.4), card rgba(90,92,104,.18) + white gradients .12–.14) — the
+    panes read LIGHTER than the world behind them, never a black box; blur 24px. The held-still world behind Data/Config
+    no longer gets a canvas brightness filter.
+  • CHART = A REEL PAGE: beside the icon column the chart has NO container box — the title floats as text (22px) with
+    its period control, the chart sits on ONE light frosted card (radius 24), and it arrives like a reel page (fade +
+    settle y 10 → 0, scale .985 → 1; dock.module.css .sideTray*).
+  • LAG FIX: pe-dissolve / pe-materialize no longer animate filter: blur (blurring a layer that holds a WebGL canvas every
+    frame stalled the Config Units / Plot switch) — fade + settle only. Config LivePreview mounts its 3D scene 380 ms
+    AFTER the section has painted (useState ready + setTimeout) at quality "low" with life off (it only shows dimensions).
+  • LIFE SWITCH in the side bar: estate/life-state.ts (lifeSwitch store + useLifeChoice) shared by EstateScene (was local
+    state; `hud` is off on the overview) and the Dock rail — a hairline, then the PersonStanding icon (white circle while
+    on, tag "Life on / off" always on hover).
+  • CAR REMOVED: LandCruiser.tsx deleted; ParkedCar + arrival path + LEAVE_EVENT gone from Fixtures.tsx; kind "car" gone
+    from both SceneObjectKind unions, Inspect (tag, hint, card, onLeave prop), HelpOverlay, EstateScene hints. SIGN OUT =
+    the LAST icon of the side bar (LogOut, Dock `onLeave`) → the same "Leave Pattukkottai Estates?" prompt (Stay glass /
+    SIGN OUT blue, LogOut icon; Enter/Y · Esc/N) → "Leaving the estate…" fade → logout after 1.4 s (was 4.6 s for the
+    drive-off). ⌘K "Sign out" unchanged.
+  • RENAME: "EB pole" / "Electric pole" → "Electricity Board" everywhere the owner sees it (hover tag, "?" tag, window
+    eyebrow "Electricity Board · TNPDCL", hint). Code names (pole, PolePanel) unchanged.
+  • Last dark boxes lightened too: Config → Units slot cards (glass card, white ring when chosen), house window cash cells
+    (.mini → rgba(255,255,255,.05)), Data table header + total band (rgba(62,64,74,.82–.86) + blur 16px), --panel-glass
+    (3D labels / preview chips) rgba(56,58,68,.62).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

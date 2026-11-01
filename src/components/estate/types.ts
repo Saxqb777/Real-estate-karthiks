@@ -2,9 +2,9 @@
 // implements them in EstateScene.tsx. Pure types — safe to import from server or client code.
 
 /** Every interactive object in the world (DESIGN.md "World objects = data entry points"). */
-export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot" | "car" | "photographer";
+export type SceneObjectKind = "unit" | "mailbox" | "noticeboard" | "pole" | "tolet" | "tenant" | "taxstamp" | "plot" | "photographer";
 
-export const SCENE_OBJECT_KINDS: readonly SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "tolet", "tenant", "taxstamp", "plot", "car", "photographer"];
+export const SCENE_OBJECT_KINDS: readonly SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "tolet", "tenant", "taxstamp", "plot", "photographer"];
 
 /** Screen position in VIEWPORT pixels (same space as MouseEvent.clientX / clientY). */
 export interface ScreenPoint {
@@ -36,11 +36,10 @@ export const SCENE_OBJECT_INFO: Record<SceneObjectKind, { name: string; opens: s
   unit: { name: "House", opens: "Unit card" },
   mailbox: { name: "Mailbox", opens: "Payments & invoices" },
   noticeboard: { name: "Property manager", opens: "To-dos" },
-  pole: { name: "EB pole & meter", opens: "Electricity (TNPDCL)" },
+  pole: { name: "Electricity Board", opens: "Electricity (TNPDCL)" },
   tolet: { name: "TO-LET board", opens: "New lease" },
   tenant: { name: "Tenant", opens: "Tenant profile" },
   taxstamp: { name: "Revenue officer", opens: "Property tax" },
   plot: { name: "Plot marker", opens: "Plot dimensions" },
-  car: { name: "Car", opens: "Leave the estate (sign out)" },
   photographer: { name: "Photographer", opens: "Interior photos of 116/B7" },
 };

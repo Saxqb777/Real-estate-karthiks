@@ -23,6 +23,7 @@ import { Tile } from "./Island";
 import { SceneApiProvider, projectToViewport, spotKey, type SceneApi, type Spot, type V3 } from "./Interact";
 import { LabelProjector, OverlayLabels, type LabelSpec, type Tone } from "./Overlay";
 import { Life } from "./Life";
+import { lifeSwitch, useLifeChoice } from "./life-state";
 import { PlotGround } from "./PlotGround";
 import { SitePlanFallback } from "./SitePlanFallback";
 import { UnitSlot, dayMonth, slotLabels, type SceneMode } from "./UnitSlot";
@@ -233,7 +234,7 @@ export default function EstateScene(props: EstateSceneProps) {
   const [pageVisible, setPageVisible] = useState(true);
   const [reduced, setReduced] = useState(false);
   const [mobile, setMobile] = useState(false);
-  const [lifeState, setLifeState] = useState<boolean | null>(null);
+  const lifeChoice = useLifeChoice(); // shared with the overview's side bar (hud/Dock)
   const [zoomFocus, setZoomFocus] = useState(false);
   const [autoTier, setAutoTier] = useState<Tier>("high");
   // render resolution: starts at the screen's own sharpness and adapts quietly to the device (the tier — and so what
@@ -329,7 +330,7 @@ export default function EstateScene(props: EstateSceneProps) {
     }
     setDpr(Math.min(top, +(d + DPR_STEP).toFixed(2)));
   }, [maxDpr]);
-  const life = props.life ?? lifeState ?? !reduced;
+  const life = props.life ?? lifeChoice ?? !reduced;
   const hud = props.hud ?? mode === "hero";
   const active = onScreen && pageVisible && !props.paused;
   const fallbackLayout = useMemo(() => (webgl ? null : computeSiteLayout(plot, units)), [webgl, plot, units]);
@@ -429,7 +430,7 @@ export default function EstateScene(props: EstateSceneProps) {
       )}
       {hud && webgl && (
         <div className={s.hud} style={props.insets ? { right: props.insets.right + 14, bottom: props.insets.bottom + 20 } : undefined}>
-          <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => setLifeState(!life)} title="Life: people, animals, birds">
+          <button type="button" className={s.hudBtn} aria-pressed={life} onClick={() => lifeSwitch.set(!life)} title="Life: people, animals, birds">
             Life {life ? "on" : "off"}
           </button>
         </div>
@@ -489,7 +490,6 @@ const OBJECT_HINT: Record<SceneObjectKind, string> = {
   tenant: "Click for profile & call",
   taxstamp: "Click to see or mark tax paid",
   plot: "Click for plot dimensions",
-  car: "Click to drive off (sign out)",
   photographer: "Click to see the photos",
 };
 

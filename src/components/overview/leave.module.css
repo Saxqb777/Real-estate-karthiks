@@ -74,9 +74,8 @@
   background: var(--accent-hover);
 }
 .go svg {
-  width: 15px;
-  height: 15px;
-  fill: currentColor;
+  width: 16px;
+  height: 16px;
 }
 .stay:active,
 .go:active {

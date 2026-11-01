@@ -378,35 +378,70 @@
 .railOn .railTag {
   display: none;
 }
-/* the chart itself (owner: "pop up the charts in a way that suits the side bar"): a glass panel that slides out
-   BESIDE the icon column, centred on it; the camera frames the plot in the space to its right (the panel is the
-   overview's left inset). Nothing shows while it's shut. */
+/* the LIFE switch at the end of the column (owner): a hairline above it; lit (white) while life is on, tag always */
+.railSep {
+  width: 24px;
+  height: 1px;
+  margin: 3px auto;
+  background: rgba(255, 255, 255, 0.22);
+}
+.railLife .railTag {
+  display: block;
+}
+/* the chart beside the icon column (owner: "pop up the charts in a way that suits the side bar" → "not a square box …
+   like the reel"): NO container box — the title floats as text and the chart sits on one light frosted card, arriving
+   like a page in the reel (fade + settle). The whole thing is the overview's left inset, so the camera frames the plot
+   to its right. */
 .sideTray {
   --tray-h: clamp(340px, 52vh, 520px);
   position: absolute;
   z-index: 3;
-  left: 82px;
+  left: 86px;
   top: 50%;
   translate: 0 -50%;
   width: clamp(480px, 42vw, 620px);
   max-height: calc(100% - 96px);
   pointer-events: auto;
-}
-.sideTrayClosed {
-  width: 0;
   background: none;
-  border-color: transparent;
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+.sideTray.dockOpen {
+  background: none;
+}
+.sideTrayClosed {
+  width: 0;
   pointer-events: none;
 }
 .sideTray .trayInner {
-  padding: 14px 18px 14px;
+  padding: 0;
   border-bottom: 0;
+}
+.sideTray .trayHead {
+  margin: 0 0 12px 6px;
+  gap: 12px;
+}
+.sideTray .trayTitle {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+.sideTray .trayRule {
+  display: none;
 }
 .sideTray .trayBody {
   overflow: auto;
+  padding: 16px 18px;
+  background: var(--glass-panel-bg);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: 24px;
+  box-shadow: var(--glass-panel-shadow);
 }
 @media (max-height: 760px) {
   .sideTray {

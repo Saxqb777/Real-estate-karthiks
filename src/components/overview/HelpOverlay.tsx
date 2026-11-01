@@ -53,10 +53,9 @@ function worldSpots(units: UnitBreakdown[], mobile: boolean): Spot[] {
   out.push(
     { key: "mailbox", kind: "mailbox", title: "Mailbox", opens: "Record rent · receipts" },
     { key: "noticeboard", kind: "noticeboard", title: "Property manager", opens: "To-dos" },
-    { key: "pole", kind: "pole", title: "EB pole", opens: "TNPDCL numbers · pay link" },
+    { key: "pole", kind: "pole", title: "Electricity Board", opens: "TNPDCL numbers · pay link" },
     { key: "taxstamp", kind: "taxstamp", title: "Revenue officer", opens: "Property tax · mark paid" },
     { key: "plot", kind: "plot", title: "Plot marker", opens: "Plot size" },
-    { key: "car", kind: "car", title: "Car", opens: "Drive off · sign out" },
   );
   return out;
 }

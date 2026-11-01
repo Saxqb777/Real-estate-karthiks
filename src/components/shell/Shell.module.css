@@ -64,13 +64,6 @@
   pointer-events: none;
   animation: pe-dissolve 170ms var(--ease-in-out) forwards;
 }
-/* behind Data / Config the held-still world sits a little darker, so the glass reads clearly */
-.world :global(canvas) {
-  transition: filter 0.5s var(--ease-out);
-}
-.world:not([data-active]) :global(canvas) {
-  filter: brightness(0.82) saturate(0.92);
-}
 
 /* ---------- HUD bar ---------- */
 .bar {

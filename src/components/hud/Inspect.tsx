@@ -52,7 +52,6 @@ export function panelFor(obj: SceneObject): PanelTarget {
     case "taxstamp":
       return { kind: "tax" };
     case "plot":
-    case "car":
       return { kind: "property" };
     case "photographer":
       return { kind: "photos" };
@@ -240,13 +239,11 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
       return { title: "Notice board · to-dos", lines: [`${data.actions.pending.length} to do${late ? ` · ${late} late` : ""}`], tone: late ? "marigold" : "neutral", action: "Click to see the list" };
     }
     case "pole":
-      return { title: "Electric pole · TNPDCL", lines: data.units.filter((x) => x.electricityConsumerNumber).map((x) => `${x.name}: ${x.electricityConsumerNumber}`), tone: "neutral", action: "Click for consumer numbers + pay link" };
+      return { title: "Electricity Board · TNPDCL", lines: data.units.filter((x) => x.electricityConsumerNumber).map((x) => `${x.name}: ${x.electricityConsumerNumber}`), tone: "neutral", action: "Click for consumer numbers + pay link" };
     case "taxstamp":
       return { title: "Property tax", lines: ["Per year, per unit"], tone: "marigold", action: "Click to see what's due" };
     case "plot":
       return { title: `Plot · ${data.plot.areaSqft.toLocaleString("en-IN")} sqft`, lines: [`${data.plot.frontWidthFt}′ front · ${data.plot.depthFt}′ deep`], tone: "neutral", action: "Click for the plot" };
-    case "car":
-      return { title: "Land Cruiser", lines: ["Get in and drive off"], tone: "neutral", action: "Click to leave the estate (sign out)" };
     case "photographer":
       return { title: "Photographer", lines: ["Interior photos"], tone: "neutral", action: "Click to see the photos" };
   }
@@ -257,12 +254,11 @@ const TAG_NAME: Record<SceneObjectKind, string> = {
   unit: "House",
   mailbox: "Mailbox",
   noticeboard: "Property manager",
-  pole: "EB pole",
+  pole: "Electricity Board",
   tolet: "TO-LET board",
   tenant: "Tenant",
   taxstamp: "Revenue officer",
   plot: "Plot marker",
-  car: "Car",
   photographer: "Photographer",
 };
 export function WorldHint({ obj, data }: { obj: SceneObject | null; data: DashboardData }) {
@@ -303,18 +299,16 @@ export interface InspectLayerProps {
    * object while the camera glides. Without it the card stays where the object was clicked.
    */
   locate?: (kind: SceneObjectKind, unitId?: string) => { x: number; y: number } | null;
-  /** the car's card "Drive off" (sign out prompt) */
-  onLeave?: () => void;
 }
 
 /** Hover hint + the anchored inspect card. Forms open in a drawer from here. */
-export function InspectLayer({ data, inspect, locate, onLeave }: InspectLayerProps) {
+export function InspectLayer({ data, inspect, locate }: InspectLayerProps) {
   const forms = useFormDrawer();
   const { card } = inspect;
   return (
     <>
       <WorldHint obj={card || inspect.panel || inspect.propertyOpen ? null : inspect.hover} data={data} />
-      <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} locate={locate} onLeave={onLeave} />
+      <ObjectCard obj={card} data={data} onClose={inspect.closeCard} onExpand={inspect.expand} openForm={forms.open} locate={locate} />
       {forms.element}
     </>
   );
@@ -327,7 +321,6 @@ function ObjectCard({
   onExpand,
   openForm,
   locate,
-  onLeave,
 }: {
   obj: SceneObject | null;
   data: DashboardData;
@@ -335,12 +328,11 @@ function ObjectCard({
   onExpand: () => void;
   openForm: ReturnType<typeof useFormDrawer>["open"];
   locate?: InspectLayerProps["locate"];
-  onLeave?: () => void;
 }) {
   // keep the last object so the card can animate out with its content
   const [last, setLast] = useState<SceneObject | null>(obj);
   if (obj && obj !== last) setLast(obj);
-  const parts = useCardParts({ obj: last, data, openForm, onExpand, onLeave });
+  const parts = useCardParts({ obj: last, data, openForm, onExpand });
   const live = useLivePosition(obj, locate);
   const anchor = obj ? (live ?? obj.screen ?? (typeof window !== "undefined" ? { x: window.innerWidth / 2, y: window.innerHeight / 2 } : null)) : null;
   return (
@@ -400,13 +392,11 @@ function useCardParts({
   data,
   openForm,
   onExpand,
-  onLeave,
 }: {
   obj: SceneObject | null;
   data: DashboardData;
   openForm: ReturnType<typeof useFormDrawer>["open"];
   onExpand: () => void;
-  onLeave?: () => void;
 }): CardParts | null {
   const tax = usePropertyTax();
   if (!obj) return null;
@@ -598,7 +588,7 @@ function useCardParts({
       const withNo = data.units.filter((x) => x.isActive);
       const pay = withNo.find((x) => x.electricityPayUrl)?.electricityPayUrl;
       return {
-        eyebrow: "Electric pole",
+        eyebrow: "Electricity Board",
         title: "TNPDCL",
         body: (
           <div className={s.cardBody}>
@@ -670,17 +660,6 @@ function useCardParts({
             </LinkButton>
             {details}
           </>
-        ),
-      };
-    case "car":
-      return {
-        eyebrow: "Your car",
-        title: "Land Cruiser",
-        body: <p className={s.cardText}>Parked by the front gate.</p>,
-        actions: (
-          <Button size="sm" variant="primary" iconRight={<ChevronRight />} onClick={onLeave} className={s.cardOpen}>
-            Drive off
-          </Button>
         ),
       };
     case "photographer":

@@ -3,9 +3,10 @@
 //   1 Income vs expenses · 2 Where money went · 3 <unit> vs <unit> · 4 Occupancy · 5 Growth · 6 Payments
 // Desktop (owner 31/10/2026, the reel): the tabs are a slim column of ICONS on the left side (the chosen one a white
 // circle, the name in a small tag on hover) and the chart opens as a glass tray along the bottom, right of the column.
-import { BarChart3, CalendarRange, Columns2, PieChart, ReceiptText, TrendingUp, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { BarChart3, CalendarRange, Columns2, LogOut, PersonStanding, PieChart, ReceiptText, TrendingUp, X } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
+import { lifeSwitch, useLifeChoice } from "@/components/estate/life-state";
 import { IconButton, cx, isFocusTrapActive } from "@/components/ui";
 import type { DashboardData, ExpenseSlice } from "@/lib/dashboard-types";
 import { GrowthChart } from "./charts/GrowthChart";
@@ -51,6 +52,8 @@ export interface DockProps {
   side?: boolean;
   /** side mode: the chart panel's element (the overview keeps the camera clear of it) */
   trayRef?: (el: HTMLElement | null) => void;
+  /** side mode: the SIGN OUT icon at the very end of the column (owner: the car is gone) */
+  onLeave?: () => void;
   className?: string;
 }
 
@@ -61,8 +64,12 @@ export function dockTabLabel(data: DashboardData, id: DockTab): string {
   return named.length >= 2 ? named.join(" vs ") : (named[0] ?? "Units");
 }
 
-export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, side = false, trayRef, className }: DockProps) {
+export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, side = false, trayRef, onLeave, className }: DockProps) {
   const uid = useId();
+  // the LIFE switch (owner: "add to the side bar in the end with its own icon") — shared with the scene
+  const lifeChoice = useLifeChoice();
+  const reduced = useReducedMotion();
+  const life = lifeChoice ?? !reduced;
   const [inner, setInner] = useState<DockTab | null>(defaultTab);
   const tab = controlled === undefined ? inner : controlled;
   const forms = useFormDrawer();
@@ -164,10 +171,10 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         <motion.div
           key="tray"
           className={s.tray}
-          initial={side ? { x: -16, opacity: 0 } : { height: 0, opacity: 0 }}
-          animate={side ? { x: 0, opacity: 1 } : { height: "auto", opacity: 1 }}
-          exit={side ? { x: -16, opacity: 0 } : { height: 0, opacity: 0 }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          initial={side ? { y: 10, scale: 0.985, opacity: 0 } : { height: 0, opacity: 0 }}
+          animate={side ? { y: 0, scale: 1, opacity: 1 } : { height: "auto", opacity: 1 }}
+          exit={side ? { y: 6, scale: 0.99, opacity: 0 } : { height: 0, opacity: 0 }}
+          transition={{ duration: side ? 0.36 : 0.28, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className={s.trayInner}>
             <header className={s.trayHead}>
@@ -214,6 +221,32 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
               </button>
             );
           })}
+          <span className={s.railSep} aria-hidden />
+          <button
+            type="button"
+            className={cx(s.railBtn, s.railLife, life && s.railOn)}
+            aria-pressed={life}
+            aria-label={life ? "Life on" : "Life off"}
+            onClick={() => lifeSwitch.set(!life)}
+          >
+            {life && <span className={s.railPlate} />}
+            <span className={s.railIcon}>
+              <PersonStanding aria-hidden />
+            </span>
+            <span className={s.railTag} aria-hidden>
+              {life ? "Life on" : "Life off"}
+            </span>
+          </button>
+          {onLeave && (
+            <button type="button" className={cx(s.railBtn, s.railLife)} aria-label="Sign out" onClick={onLeave}>
+              <span className={s.railIcon}>
+                <LogOut aria-hidden />
+              </span>
+              <span className={s.railTag} aria-hidden>
+                Sign out
+              </span>
+            </button>
+          )}
         </nav>
         <section ref={trayRef} className={cx(s.dock, s.sideTray, tab && s.dockOpen, !tab && s.sideTrayClosed, className)} aria-label="Chart">
           {tray}
