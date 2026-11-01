@@ -627,7 +627,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   Login map pin tag: the name is centred in the pill (text-anchor middle, dominant-baseline central).
 - 1/11/2026: MINIMAL + YEARS ONLY + GLASS DROPDOWNS (owner: "keep years to select clean and simple … no need of all time and
   custom date, remove the months", "drop downs should match the website", "keep the website minimal … like the EB pole and
-  revenue officer" pop-ups, "remove the eg in notes"). Preview branch pending/years-tables.
+  revenue officer" pop-ups, "remove the eg in notes"). DEPLOYED 1/11/2026 (owner: "deploy"; 2d12099).
   • DROPDOWNS: every <Select> opens a glass list (ui/SelectMenu.tsx), never the OS menu: groups as faint headings, chosen =
     white pill + ✓, keys ↑ ↓ Home End Enter Space Esc + type-to-jump; Esc closes only the list (window-capture listener runs
     before a dialog's trap); outside tap closes. The <select> stays (value, name, label, change events) with pointer-events
