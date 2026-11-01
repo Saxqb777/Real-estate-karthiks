@@ -53,13 +53,12 @@ export function LivePreview({ plot, units, highlight, focusLabel, dirty, selecte
           Live preview
         </span>
         {dirty && <span className={s.unsavedChip}>Unsaved — not stored yet</span>}
-        <span className={s.previewHint} aria-live="polite">
+        {/* "Showing <field>" only while a field is in focus — never an empty chip (owner 1/11/2026: the grey box) */}
         {focusLabel && (
-          <>
+          <span className={s.previewHint} aria-live="polite">
             <span className={s.hintKey}>Showing</span> {focusLabel}
-          </>
+          </span>
         )}
-        </span>
       </div>
     </section>
   );

@@ -220,7 +220,7 @@ export function PaymentForm({ defaults, onSaved, onCancel, frame = inlineFrame, 
         </Field>
 
         <Field label="Amount received" required error={form.error("amount")}>
-          <NumberInput {...form.number("amount")} currency placeholder="18,000" data-autofocus />
+          <NumberInput {...form.number("amount")} currency data-autofocus />
           {lease && (
             <div className={s.quick}>
               <button type="button" className={s.quickChip} data-on={v.amount === periodRent || undefined} onClick={() => form.set("amount", periodRent)}>

@@ -7,7 +7,7 @@ import { Button, EmptyState, cx } from "@/components/ui";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
-import { Fig, PaperTag, Rupees, vsLastYear } from "./Figure";
+import { Fig, Rupees, vsLastYear } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
 import { explainKey, firstName, inr, yoyKey } from "./format";
@@ -44,9 +44,9 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, onOpenTenant, 
         drill={drill}
         rootLabel="Mailbox"
         side={side}
-        eyebrow="Mailbox · payments"
+        eyebrow="Mailbox"
         title="Rent & receipts"
-        tools={<PeriodSwitch data={data} period={period} />}
+        tools={<PeriodSwitch data={data} />}
         pinId="mailbox"
         onClose={onClose}
         onOpenUnit={onOpenUnit}
@@ -57,25 +57,20 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, onOpenTenant, 
         <div className={b.cw}>
           <div className={cx(b.cRow, b.cHero, b.cOk)}>
             <div>
-              <span className={b.cLabel}>Rent collected · {data.scopeLabels[period]}</span>
+              <span className={b.cLabel}>Rent collected</span>
               <div className={b.cBig}>
                 <Fig value={p.rentCollected} size="hero" tone="income" onClick={() => open(explainKey("rentCollected", period))} />
                 {period !== "allTime" && vsLastYear(data.comparisons[period], "rentCollected", () => open(yoyKey("rentCollected", period)))}
               </div>
               <div className={b.cSub}>
-                Overdue now{" "}
+                Overdue{" "}
                 <button type="button" className={b.cLink} onClick={() => open("overdue")}>
                   <Rupees value={k.overdueAmount} tone={k.overdueAmount > 0 ? "expense" : "neutral"} />
                 </button>
-                {" · "}rent each month{" "}
+                {" · "}Monthly rent{" "}
                 <button type="button" className={b.cLink} onClick={() => open("rentRoll")}>
                   <Rupees value={k.monthlyRentRoll} />
                 </button>
-                {" · "}next 12 months{" "}
-                <button type="button" className={b.cLink} onClick={() => open("forecast:rent")}>
-                  <Rupees value={data.forecast.rent} tone="income" />
-                </button>{" "}
-                <PaperTag kind="est." />
               </div>
             </div>
             <Button variant="primary" size="sm" icon={<ReceiptIndianRupee />} onClick={() => forms.open({ kind: "payment" })}>
@@ -87,7 +82,7 @@ export function MailboxPanel({ data, period, onClose, onOpenUnit, onOpenTenant, 
             <span>Who pays next</span>
           </div>
           {tenants.length === 0 ? (
-            <p className={s.calm}>No current tenants — nothing to collect.</p>
+            <p className={s.calm}>No current tenants</p>
           ) : (
             tenants.map((u) => {
               const np = u.nextPayment;

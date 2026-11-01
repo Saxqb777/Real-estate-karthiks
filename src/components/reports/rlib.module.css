@@ -437,11 +437,6 @@
   .controls {
     flex-wrap: wrap;
   }
-  /* custom dates: the picker takes the whole row (period above, From – To under it) */
-  .controlsDates,
-  .controlsDates .period {
-    width: 100%;
-  }
   .lease {
     min-width: 0;
     width: 100%;

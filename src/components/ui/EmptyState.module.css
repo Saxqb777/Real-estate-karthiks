@@ -4,7 +4,7 @@
   align-items: center;
   gap: var(--s-5);
   padding: var(--s-5) var(--s-6);
-  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-sm);
   background:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 6px, transparent 6px 12px),

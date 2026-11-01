@@ -988,21 +988,21 @@ describe("buildDashboard — ordering", () => {
     expect(d.kpis.pendingActions).toBe(5);
   });
 
-  it("recent payments: latest 8 by payment date, then invoice number", () => {
+  it("recent payments: latest 20 by payment date, then invoice number", () => {
     const input = scenario();
-    input.payments = Array.from({ length: 10 }, (_, i) => ({
+    input.payments = Array.from({ length: 22 }, (_, i) => ({
       id: `p${i + 1}`,
       leaseId: "L1",
       amount: 25_000,
-      // p1..p10 paid on the 1st of consecutive months, except p9 and p10 both on 1/12/2025
-      paymentDate: i >= 8 ? D("2025-12-01") : D(`2025-${String(i + 2).padStart(2, "0")}-01`),
-      periodMonth: i + 1,
-      periodYear: 2025,
+      // p1..p20 paid on the 1st of consecutive months from 1/1/2024, then p21 and p22 both on 1/12/2025
+      paymentDate: i >= 20 ? D("2025-12-01") : D(`${2024 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, "0")}-01`),
+      periodMonth: (i % 12) + 1,
+      periodYear: 2024 + Math.floor(i / 12),
       invoiceSeq: i + 1,
       invoiceNumber: `PE-2025-${String(i + 1).padStart(4, "0")}`,
     }));
     const d = build(input);
-    expect(d.recentPayments.map((p) => p.id)).toEqual(["p10", "p9", "p8", "p7", "p6", "p5", "p4", "p3"]);
+    expect(d.recentPayments.map((p) => p.id)).toEqual(["p22", "p21", ...Array.from({ length: 18 }, (_, i) => `p${20 - i}`)]);
   });
 
   it("the legacy positional form buildDashboard(input, today, now) still works", () => {

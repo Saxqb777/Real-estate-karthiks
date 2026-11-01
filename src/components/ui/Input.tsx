@@ -1,12 +1,13 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useState, type ComponentProps, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { daysBetween, formatDate, parseDateInput, todayIST } from "@/lib/dates";
 import { formatINR, formatINRCompact, formatIndianNumber } from "@/lib/format";
 import { cx } from "./cx";
 import { useField } from "./Field";
 import styles from "./Input.module.css";
+import { SelectMenu, pickValue, readEntries, type MenuEntry } from "./SelectMenu";
 
 /** Merge the surrounding <Field>'s a11y wiring into a control's props. */
 function useFieldProps(id?: string, describedBy?: string, invalid?: ComponentProps<"input">["aria-invalid"], required?: boolean) {
@@ -277,13 +278,66 @@ export interface SelectProps extends ComponentProps<"select"> {
   compact?: boolean;
 }
 
-export function Select({ options, placeholder, icon, compact, className, id, disabled, required, children, ...rest }: SelectProps) {
+export function Select({ options, placeholder, icon, compact, className, id, disabled, required, children, ref, onKeyDown, ...rest }: SelectProps) {
   const { invalid, ...a11y } = useFieldProps(id, rest["aria-describedby"], rest["aria-invalid"], required);
+  // the list is our glass menu (SelectMenu), not the browser's (owner 1/11/2026: "drop downs should match the website")
+  const boxRef = useRef<HTMLDivElement>(null);
+  const selRef = useRef<HTMLSelectElement | null>(null);
+  const pointer = useRef("mouse");
+  const [menu, setMenu] = useState<{ entries: MenuEntry[]; value: string } | null>(null);
+  const setSel = useCallback(
+    (el: HTMLSelectElement | null) => {
+      selRef.current = el;
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+    },
+    [ref],
+  );
+  const open = () => {
+    const sel = selRef.current;
+    if (sel && !sel.disabled) setMenu({ entries: readEntries(sel), value: sel.value });
+  };
+  const close = (refocus: boolean) => {
+    setMenu(null);
+    if (refocus && pointer.current !== "touch") selRef.current?.focus({ preventScroll: true });
+  };
   return (
-    <div className={cx(styles.control, compact && styles.compact, className)} data-invalid={invalid} data-disabled={disabled}>
+    <div
+      ref={boxRef}
+      className={cx(styles.control, styles.selectBox, compact && styles.compact, className)}
+      data-invalid={invalid}
+      data-disabled={disabled}
+      data-open={menu ? true : undefined}
+      onPointerDown={(e) => {
+        pointer.current = e.pointerType;
+        if (e.pointerType !== "mouse" || e.button !== 0 || disabled) return;
+        e.preventDefault(); // keep focus where it belongs: on the select
+        selRef.current?.focus({ preventScroll: true });
+      }}
+      onClick={() => (menu ? close(false) : open())}
+    >
       {icon && <span className={styles.lead}>{icon}</span>}
-      <select className={cx(styles.input, styles.select)} disabled={disabled} {...rest} {...a11y}>
-        {placeholder !== undefined && <option value="">{placeholder}</option>}
+      <select
+        ref={setSel}
+        className={cx(styles.input, styles.select)}
+        disabled={disabled}
+        {...rest}
+        {...a11y}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (e.defaultPrevented || menu) return;
+          if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            pointer.current = "keyboard";
+            open();
+          }
+        }}
+      >
+        {placeholder !== undefined && (
+          <option value="" data-placeholder="">
+            {placeholder}
+          </option>
+        )}
         {options?.map((o) => (
           <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
@@ -292,6 +346,18 @@ export function Select({ options, placeholder, icon, compact, className, id, dis
         {children}
       </select>
       <ChevronDown className={styles.chev} aria-hidden />
+      {menu && (
+        <SelectMenu
+          anchor={boxRef}
+          entries={menu.entries}
+          value={menu.value}
+          onClose={close}
+          onPick={(v) => {
+            if (selRef.current) pickValue(selRef.current, v);
+            close(true);
+          }}
+        />
+      )}
     </div>
   );
 }

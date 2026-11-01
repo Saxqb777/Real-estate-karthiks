@@ -2870,7 +2870,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
   const leaseById = ctx.leaseById;
   const recentPayments = [...payments]
     .sort((x, y) => y.paymentDate.getTime() - x.paymentDate.getTime() || y.invoiceSeq - x.invoiceSeq)
-    .slice(0, 8)
+    .slice(0, 20) // enough to fill the side chart (owner 1/11/2026: "add more payments here to fill the page")
     .map((p) => {
       const lease = leaseById.get(p.leaseId);
       return {

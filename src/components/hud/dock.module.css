@@ -66,10 +66,9 @@
   letter-spacing: 0;
   white-space: nowrap;
 }
+/* only a spacer now (owner 1/11/2026: no line in the chart's header) */
 .trayRule {
   flex: 1;
-  height: 1px;
-  background: var(--line);
 }
 .trayBody {
   flex: 1;

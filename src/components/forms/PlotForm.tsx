@@ -111,7 +111,7 @@ export function PlotForm({ plot, onSaved, onCancel, frame = inlineFrame, submitL
             <Input {...form.text("townName")} icon={<MapPinned />} autoComplete="off" />
           </Field>
           <Field label="Site plan image" aside="optional" error={form.error("sitePlanImageUrl")} hint="A https:// link or /site-plan.png">
-            <Input {...form.text("sitePlanImageUrl")} icon={<ImageIcon />} autoComplete="off" placeholder="/site-plan.png" />
+            <Input {...form.text("sitePlanImageUrl")} icon={<ImageIcon />} autoComplete="off" />
           </Field>
         </FormGrid>
       </FormSection>

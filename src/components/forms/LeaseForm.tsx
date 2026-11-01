@@ -192,7 +192,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
           error={form.error("monthlyRent")}
           hint={unitPrev && v.monthlyRent === unitPrev.monthlyRent ? `Same as ${unitPrev.tenant.name}'s rent` : dueDay ? `Due on the ${ordinal(dueDay)} of each month` : undefined}
         >
-          <NumberInput {...form.number("monthlyRent")} currency placeholder="18,000" />
+          <NumberInput {...form.number("monthlyRent")} currency />
         </Field>
         <Field label="Rent billing" error={form.error("rentTiming")}>
           <Select
@@ -261,7 +261,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
               <DateInput {...form.date("depositRefundDate")} />
             </Field>
             <Field label="Move-out notes" aside="optional" span="full" error={form.error("moveOutNotes")}>
-              <Textarea {...form.text("moveOutNotes")} placeholder="e.g. ₹3,000 kept for repainting" />
+              <Textarea {...form.text("moveOutNotes")} />
             </Field>
           </FormGrid>
         </FormSection>

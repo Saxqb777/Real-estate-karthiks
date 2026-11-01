@@ -15,10 +15,8 @@ import { OccupancyGantt } from "./charts/OccupancyGantt";
 import { PaymentsList } from "./charts/PaymentsList";
 import { SpendingDonut } from "./charts/SpendingDonut";
 import { UnitsCompare } from "./charts/UnitsCompare";
-import { ScopeChip } from "./Figure";
 import { PeriodSwitch } from "./PeriodSwitch";
 import { useFormDrawer } from "./FormDrawer";
-import { LedgerBadge } from "./LedgerBadge";
 import { isTyping, useEscape } from "./store";
 import type { DockTab, DrillView, PeriodKind } from "./types";
 import s from "./dock.module.css";
@@ -105,14 +103,12 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         ? data.expenseComposition.month
         : (data.expenseComposition.byYear.find((y) => String(y.year) === p.key)?.slices ?? []);
 
-  const scope: Record<DockTab, ReactNode> = {
-    income: <ScopeChip>{data.yearMode === "fy" ? "Financial years" : "Calendar years"}</ScopeChip>,
-    spending: <PeriodSwitch data={data} period={period} />,
-    units: <PeriodSwitch data={data} period={period} />,
-    occupancy: <ScopeChip>Purchase → today</ScopeChip>,
-    growth: <ScopeChip>{data.scopeLabels.allTime}</ScopeChip>,
-    payments: <ScopeChip>Latest {data.recentPayments.length}</ScopeChip>,
+  // the chart's header = its name (+ the year for the period charts) — no scope words, no ledger line (owner 1/11/2026)
+  const yearPick: Partial<Record<DockTab, ReactNode>> = {
+    spending: <PeriodSwitch data={data} />,
+    units: <PeriodSwitch data={data} />,
   };
+
 
   const content = (t: DockTab) => {
     switch (t) {
@@ -120,8 +116,6 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         return (
           <IncomeExpenseChart
             years={data.monthlyByYear}
-            allTime={data.periods.allTime}
-            cumulative={data.cumulativeNetByYear}
             lastYear={data.comparisons.year}
             onDrill={drillKey ? (k, scope) => drillKey(scope === "all" ? k : `year:${k}`) : undefined}
           />
@@ -178,9 +172,8 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             <header className={s.trayHead}>
               <span className={s.trayTitle}>{active ? labelOf(active) : null}</span>
               {sheet && <IconButton size="sm" label="Close" icon={<X />} onClick={() => setTab(null)} />}
-              {scope[tab]}
               <span className={s.trayRule} aria-hidden />
-              {(tab === "units" || tab === "income") && <LedgerBadge checks={data.checks} onClick={onDrill ? () => onDrill({ kind: "checks" }) : undefined} />}
+              {yearPick[tab]}
             </header>
             <motion.div key={tab} className={s.trayBody} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
               {content(tab)}

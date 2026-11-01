@@ -69,7 +69,7 @@ export function MoveOutForm({ lease, onSaved, onCancel, frame = inlineFrame, sub
           <DateInput {...form.date("depositRefundDate")} max={today} />
         </Field>
         <Field label="Notes" aside="optional" span="full" error={form.error("moveOutNotes")}>
-          <Textarea {...form.text("moveOutNotes")} placeholder="e.g. ₹3,000 kept for repainting the hall" />
+          <Textarea {...form.text("moveOutNotes")} />
         </Field>
       </FormGrid>
       <FormNote icon={<DoorOpen aria-hidden />}>

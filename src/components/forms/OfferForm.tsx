@@ -47,13 +47,13 @@ export function OfferForm({ offer, unitId, purchasePrice, onSaved, onCancel, fra
           </Field>
         )}
         <Field label="Offer amount" required error={form.error("amount")}>
-          <NumberInput {...form.number("amount")} currency placeholder="45,00,000" data-autofocus />
+          <NumberInput {...form.number("amount")} currency data-autofocus />
         </Field>
         <Field label="Offered on" required error={form.error("offerDate")}>
           <DateInput {...form.date("offerDate")} max={toInputDate(todayIST())} />
         </Field>
         <Field label="Who offered / notes" aside="optional" span="full" error={form.error("notes")}>
-          <Textarea {...form.text("notes")} placeholder="e.g. Neighbour Mr. Raman, cash buyer, valid till Diwali" />
+          <Textarea {...form.text("notes")} />
         </Field>
       </FormGrid>
       {purchasePrice ? (

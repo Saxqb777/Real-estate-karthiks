@@ -53,9 +53,10 @@ function useStored(key: string): [string | null, (v: string | null) => void] {
 // ---------------------------------------------------------------- period
 
 export const PERIOD_KEY = "pe.period";
-const PERIODS: PeriodKind[] = ["allTime", "year", "month"];
+// years only (owner 1/11/2026: "no need of all time … remove the months") — an old remembered All time / Month is ignored
+const PERIODS: PeriodKind[] = ["year"];
 
-/** [period, setPeriod] — the HUD's All time · Year · Month choice (default Year), remembered per browser. */
+/** [period, setPeriod] — the HUD's cash period: always the year (see PeriodSwitch for picking which year). */
 export function usePeriod(fallback: PeriodKind = "year"): [PeriodKind, (p: PeriodKind) => void] {
   const [raw, set] = useStored(PERIOD_KEY);
   const period = PERIODS.includes(raw as PeriodKind) ? (raw as PeriodKind) : fallback;

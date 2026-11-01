@@ -52,12 +52,7 @@
 .tDim {
   color: var(--text-dim);
 }
-/* paper value: dotted marigold underline — never looks like cash */
-.paper > span:not(.paperTag):not(.figSign) {
-  text-decoration: underline dotted rgba(76, 141, 255, 0.75);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.18em;
-}
+/* paper value: no underline any more (owner 1/11/2026: "clean up lines") — the figure itself is enough */
 .paperTag {
   align-self: center;
   display: inline-grid;
@@ -70,7 +65,7 @@
   letter-spacing: 0;
   color: #c9dbff;
   background: var(--marigold-a08);
-  border: 1px dashed rgba(76, 141, 255, 0.5);
+  border: 1px solid rgba(76, 141, 255, 0.5);
   border-radius: 6px;
   text-decoration: none;
 }
@@ -246,47 +241,26 @@
   color: var(--marigold);
 }
 
-/* period switch (PeriodSwitch): ALL TIME · FY · MONTH (owner 8/10) as the reel's segmented pill — a clear glass
-   track, the chosen one a solid white pill */
-.pswitch {
-  display: inline-flex;
-  align-items: stretch;
+/* the year picker (PeriodSwitch, owner 1/11/2026: years only) — a small glass dropdown, or plain text when there's
+   only one year */
+.pyear {
   flex: none;
-  height: 28px;
-  padding: 2px;
-  gap: 2px;
-  border: 1px solid var(--glass-edge);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.07);
-}
-.pswitchBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 11px;
-  font-family: var(--ff-body);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
   color: var(--text-dim);
+  white-space: nowrap;
+}
+.pyearSelect {
+  flex: none;
+  width: auto;
+  height: 30px;
   border-radius: var(--radius-pill);
-  transition:
-    color var(--dur-2) var(--ease-out),
-    background-color var(--dur-2) var(--ease-out),
-    transform 180ms var(--press);
 }
-.pswitchBtn:hover {
-  color: #fff;
-}
-.pswitchBtn:active {
-  transform: scale(0.95);
-  transition-duration: 70ms;
-}
-.pswitchBtn[aria-checked="true"],
-.pswitchPast .pswitchBtn[aria-checked="true"] {
-  color: var(--pill-on-ink);
-  background: var(--pill-on);
-  box-shadow: var(--pill-on-shadow);
+.pyearSelect select {
+  padding-left: 13px;
+  padding-right: 30px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .bucketHead {
@@ -665,7 +639,7 @@
   flex-direction: column;
 }
 .lines > * + * {
-  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 .calm {
   display: flex;

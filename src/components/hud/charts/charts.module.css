@@ -239,9 +239,7 @@
   color: var(--text-dim);
 }
 .paperNum {
-  text-decoration: underline dotted rgba(76, 141, 255, 0.7);
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
 
 /* tooltip */
@@ -485,7 +483,7 @@
   text-overflow: ellipsis;
 }
 .cmpTable tbody tr + tr > * {
-  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 .cmpNote {
   margin-top: auto;
@@ -505,7 +503,6 @@
   letter-spacing: inherit;
   text-transform: inherit;
   color: inherit;
-  border-bottom: 1px dotted var(--line-bright);
 }
 .cmpUnit:hover {
   color: var(--text);
@@ -766,7 +763,6 @@ button.sqftBar:hover .sqftVal {
   font-family: var(--ff-display);
   font-weight: 600;
   color: var(--text-dim);
-  border-bottom: 1px dotted var(--line-bright);
 }
 .invoice svg {
   width: 11px;
@@ -846,4 +842,18 @@ button.sqftBar:hover .sqftVal {
   .growthCol .plot {
     min-height: 150px;
   }
+}
+
+/* the income chart's year dropdown (owner 1/11/2026: the same glass dropdown as the other charts) */
+.yearSelect {
+  flex: none;
+  width: auto;
+  height: 30px;
+  border-radius: var(--radius-pill);
+}
+.yearSelect select {
+  padding-left: 13px;
+  padding-right: 30px;
+  font-size: 13px;
+  font-weight: 500;
 }

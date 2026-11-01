@@ -120,7 +120,7 @@ export function ReportLibrary() {
 
   const isYear = period.kind === "year";
   const yearControl = (
-    <div className={cx(s.controls, period.kind === "range" && s.controlsDates)}>
+    <div className={s.controls}>
       {isYear && (
         <IconButton size="sm" variant="ghost" label="Previous year" icon={<ChevronLeft />} disabled={year <= firstYear} onClick={() => setPick({ kind: "year", year: year - 1 })} />
       )}

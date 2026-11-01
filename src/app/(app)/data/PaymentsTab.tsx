@@ -33,9 +33,9 @@ const money = (n: number) => formatINR(n, n % 1 !== 0);
 
 export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
   const [leaseId, setLeaseId] = useState("");
-  // year / custom dates by the day the rent was received (cash), like Expenses; records start on All time (owner 8/10)
+  // the year, by the day the rent was received (cash), like Expenses — years only (owner 1/11/2026)
   const [mode, setMode] = useYearMode();
-  const [period, setPeriod] = useState<PeriodPick>({ kind: "all" });
+  const [period, setPeriod] = useState<PeriodPick>(() => ({ kind: "year", year: currentYear(mode) }));
   const year = period.kind === "year" ? period.year : null;
   const range = period.kind === "range" ? period : null;
   const payments = usePayments(leaseId || null, { year, yearMode: mode, from: range?.from, to: range?.to });

@@ -48,7 +48,7 @@ export function ActionForm({ action, defaults, onSaved, onCancel, frame = inline
     <FormBody form={form}>
       <FormGrid cols={2}>
         <Field label="What needs doing?" required span="full" error={form.error("title")}>
-          <Input {...form.text("title")} icon={<ListTodo />} autoComplete="off" placeholder="e.g. Fix the back unit's overhead tank float" data-autofocus />
+          <Input {...form.text("title")} icon={<ListTodo />} autoComplete="off" data-autofocus />
         </Field>
         <Field label="Due by" aside="optional" error={form.error("dueDate")}>
           <DateInput {...form.date("dueDate")} />

@@ -90,7 +90,7 @@
   --tone-text: #9cc8fc;
   --tone-bg: transparent;
   --tone-border: rgba(96, 165, 250, 0.5);
-  border-style: dashed;
+  border-style: solid;
 }
 .ghost .marker {
   background: transparent;

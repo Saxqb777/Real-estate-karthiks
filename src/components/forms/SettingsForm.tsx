@@ -82,7 +82,7 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
           {v.lateFeeEnabled && (
             <>
               <Field label="Late fee amount" error={form.error("lateFeeAmount")}>
-                <NumberInput {...form.number("lateFeeAmount")} currency placeholder="500" />
+                <NumberInput {...form.number("lateFeeAmount")} currency />
               </Field>
               <Field label="Grace days" required error={form.error("lateFeeGraceDays")} hint="Days after the due date before it applies">
                 <NumberInput {...form.number("lateFeeGraceDays")} decimals={0} min={0} max={60} suffix="days" hideHint />
@@ -106,7 +106,7 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
             <Input {...form.text("taxCollectorName")} icon={<UserRound />} autoComplete="off" />
           </Field>
           <Field label="Phone" aside="optional" error={form.error("taxCollectorPhone")}>
-            <Input {...form.text("taxCollectorPhone")} icon={<Phone />} type="tel" autoComplete="off" placeholder="+91 98765 43210" />
+            <Input {...form.text("taxCollectorPhone")} icon={<Phone />} type="tel" autoComplete="off" />
           </Field>
         </FormGrid>
       </FormSection>
@@ -114,7 +114,7 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
       <FormSection title="Email">
         <FormGrid cols={2}>
           <Field label="Your email" aside="optional" span="full" error={form.error("ownerEmail")} hint="“Email me” on the To-dos list sends your pending to-dos here">
-            <Input {...form.text("ownerEmail")} icon={<Mail />} type="email" autoComplete="email" placeholder="you@example.com" />
+            <Input {...form.text("ownerEmail")} icon={<Mail />} type="email" autoComplete="email" />
           </Field>
         </FormGrid>
       </FormSection>

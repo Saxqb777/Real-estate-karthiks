@@ -365,7 +365,6 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-dim);
-  border-bottom: 1px dotted var(--line-bright);
   padding-bottom: 1px;
   transition: color var(--dur-1) var(--ease-out);
 }

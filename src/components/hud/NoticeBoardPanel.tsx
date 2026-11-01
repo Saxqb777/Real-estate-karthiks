@@ -47,27 +47,16 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
     <>
       <HudPanel
         side={side}
-        eyebrow="Property manager · to-dos"
-        title="Things to do"
+        eyebrow="Property manager"
+        title="To-dos"
         pinId="noticeboard"
         onClose={onClose}
         className={cx(b.compactWin, className)}
         aside={
-          count > 0 ? (
-            <span className={b.pills}>
-              <Badge tone="neutral" size="sm">
-                <span className="num">{count}</span> to do
-              </Badge>
-              {late > 0 ? (
-                <Badge tone="coral" marker size="sm">
-                  {late} late
-                </Badge>
-              ) : (
-                <Badge tone="teal" marker size="sm">
-                  None late
-                </Badge>
-              )}
-            </span>
+          late > 0 ? (
+            <Badge tone="coral" marker size="sm">
+              {late} late
+            </Badge>
           ) : undefined
         }
         actions={
@@ -87,7 +76,7 @@ export function NoticeBoardPanel({ data, onClose, side = "right", className }: N
                     <span className={b.todoMeta}>
                       {r.unitName} ·{" "}
                       <span className={cx(r.state === "expired" && b.lateText)}>
-                        {agreementText(r.daysLeft)} ({formatDate(r.agreementEndDate)})
+                        {agreementText(r.daysLeft)}
                       </span>
                     </span>
                   </span>

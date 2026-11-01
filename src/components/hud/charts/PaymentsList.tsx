@@ -54,9 +54,8 @@ export function PaymentsList({ data, onRecord, onPayment, className }: PaymentsL
         )}
       </div>
       <aside className={s.payAside}>
-        <span className={s.payAsideLabel}>Overdue now</span>
+        <span className={s.payAsideLabel}>Overdue</span>
         <span className={cx("num", s.payAsideValue, data.kpis.overdueAmount > 0 && s.tExpense)}>{inr(data.kpis.overdueAmount)}</span>
-        <span className={s.payAsideNote}>{data.kpis.overdueAmount > 0 ? `${data.kpis.overdueMonths} months across ${data.kpis.overdueCount} ${data.kpis.overdueCount === 1 ? "tenant" : "tenants"}` : "Everyone is paid up"}</span>
         {onRecord && (
           <Button size="sm" variant="primary" icon={<ReceiptIndianRupee />} onClick={onRecord}>
             Record rent

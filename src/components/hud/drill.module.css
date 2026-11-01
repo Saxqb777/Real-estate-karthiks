@@ -179,7 +179,7 @@
   line-height: 1.45;
   color: var(--text-dim);
   padding: 9px 10px;
-  border: 1px dashed var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
 }
 .locked svg {

@@ -89,7 +89,7 @@ export function PropertyTaxForm({ tax, defaults, onSaved, onCancel, frame = inli
           />
         </Field>
         <Field label="Amount" required error={form.error("amount")}>
-          <NumberInput {...form.number("amount")} currency placeholder="4,820" data-autofocus />
+          <NumberInput {...form.number("amount")} currency data-autofocus />
         </Field>
         <Field label="Status" error={form.error("status")}>
           <ChoiceGroup

@@ -117,7 +117,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
         eyebrow={`${pos ? `${pos} unit` : "Unit"} · ${u.type}`}
         title={u.name}
         aside={<UnitStatusPill unit={u} />}
-        tools={<PeriodSwitch data={data} period={period} />}
+        tools={<PeriodSwitch data={data} />}
         pinId="unit"
         onClose={onClose}
         onOpenUnit={onOpenUnit}
@@ -128,7 +128,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
         <div className={b.cw}>
           {/* ---------------- WHO LIVES HERE → the tenant window (the person, next rent, what's owed) */}
           {lease ? (
-            <TenantRow name={lease.tenantName} meta={`Tenant · since ${formatDate(lease.startDate)}`} pill={<RentStatePill unit={u} />} onOpen={onOpenTenant ? () => onOpenTenant(u.id) : undefined} />
+            <TenantRow name={lease.tenantName} pill={<RentStatePill unit={u} />} onOpen={onOpenTenant ? () => onOpenTenant(u.id) : undefined} />
           ) : u.incomingLease ? (
             <div className={cx(b.cRow, b.cPerson)}>
               <span className={b.cAv} aria-hidden>
@@ -136,9 +136,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
               </span>
               <span className={b.cWho}>
                 <span className={b.cName}>{u.incomingLease.tenantName}</span>
-                <span className={b.cMeta}>
-                  moves in {formatDate(u.incomingLease.startDate)} · {inr(u.incomingLease.monthlyRent)}/month
-                </span>
+                <span className={b.cMeta}>Moves in {formatDate(u.incomingLease.startDate)}</span>
               </span>
               <ContactButtons phone={u.incomingLease.tenantPhone} name={u.incomingLease.tenantName} />
             </div>
@@ -146,15 +144,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
             <div className={cx(b.cRow, b.cHero, b.cLate)}>
               <span className={b.cWho}>
                 <span className={b.cName}>{u.status === "inactive" ? "Switched off" : "Empty"}</span>
-                <span className={b.cMeta}>
-                  {vacantNow ? (
-                    <>
-                      since {formatDate(vacantNow.start)} · <span className="num">{vacantNow.days}</span> days
-                    </>
-                  ) : (
-                    "No tenant recorded"
-                  )}
-                </span>
+                {vacantNow && <span className={b.cMeta}>Since {formatDate(vacantNow.start)}</span>}
               </span>
               {u.status !== "inactive" && (
                 <Button variant="primary" size="sm" icon={<FileSignature />} onClick={newLease}>
@@ -174,20 +164,13 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
           {/* ---------------- VALUE */}
           <div className={cx(b.cRow, b.cLines)}>
             <div className={s.lines}>
-              <FigLine label="Worth now" value={u.valuation} compact paper={u.valuationSource === "offer" ? "offer" : "est."} onClick={() => open("worthNow")} />
-              <FigLine
-                label={u.purchasePrice === null ? "Gain" : `Gain on ${inr(u.purchasePrice)} invested`}
-                value={u.appreciation}
-                compact
-                tone="value"
-                paper="est."
-                onClick={() => open("gain")}
-              />
+              <FigLine label="Worth now" value={u.valuation} compact onClick={() => open("worthNow")} />
+              <FigLine label="Gain" value={u.appreciation} compact tone="value" onClick={() => open("gain")} />
               {/* rental yield, last 12 months (owner 8/10): rent ÷ worth now; net = after this unit's expenses */}
               {yld && (
                 <>
-                  <FigLine label="Gross yield · last 12 months" value={yld.grossOnValue} format="pct" missing="No value recorded yet" onClick={yld.grossOnValue === null ? undefined : () => open("yield:grossValue")} />
-                  <FigLine label="Net yield · last 12 months" value={yld.netOnValue} format="pct" missing="No value recorded yet" onClick={yld.netOnValue === null ? undefined : () => open("yield:netValue")} />
+                  <FigLine label="Gross yield" value={yld.grossOnValue} format="pct" missing="No value recorded yet" onClick={yld.grossOnValue === null ? undefined : () => open("yield:grossValue")} />
+                  <FigLine label="Net yield" value={yld.netOnValue} format="pct" missing="No value recorded yet" onClick={yld.netOnValue === null ? undefined : () => open("yield:netValue")} />
                 </>
               )}
             </div>
@@ -195,7 +178,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
 
           {/* ---------------- OCCUPANCY (all time) */}
           <div className={cx(b.cRow, b.cOcc)}>
-            <span className={b.cLabel}>Occupancy · {data.scopeLabels.allTime}</span>
+            <span className={b.cLabel}>Occupancy</span>
             <SegmentedBar value={u.occupancyPct} tone="sky" segments={24} valueLabel={null} size="sm" aria-label="Occupancy" />
             <Fig value={u.occupancyPct} format="pct" size="md" onClick={() => open("occupancy")} />
             <span className={b.cOccSub}>
@@ -203,7 +186,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
               <button type="button" className={b.cLink} onClick={() => open("vacantDays")}>
                 <span className="num">{u.vacantDays}</span> {u.vacantDays === 1 ? "day" : "days"}
               </button>
-              {" · "}rent lost{" "}
+              {" · "}Rent lost{" "}
               <button type="button" className={b.cLink} onClick={() => open("rentLost")}>
                 <span className="num">{inr(u.unrealizedLoss)}</span>
               </button>
@@ -222,7 +205,7 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
 const initial = (name: string) => name.trim().charAt(0).toUpperCase() || "?";
 
 /** The house window's "who lives here" row: initial, name, a short line and the rent state; opens the tenant window. */
-function TenantRow({ name, meta, pill, onOpen }: { name: string; meta: string; pill: ReactNode; onOpen?: () => void }) {
+function TenantRow({ name, meta, pill, onOpen }: { name: string; meta?: string; pill: ReactNode; onOpen?: () => void }) {
   const inner = (
     <>
       <span className={b.cAv} aria-hidden>
@@ -230,7 +213,7 @@ function TenantRow({ name, meta, pill, onOpen }: { name: string; meta: string; p
       </span>
       <span className={b.cWho}>
         <span className={b.cName}>{name}</span>
-        <span className={b.cMeta}>{meta}</span>
+        {meta && <span className={b.cMeta}>{meta}</span>}
       </span>
       {pill && <span className={b.cTenantPill}>{pill}</span>}
       {onOpen && <ChevronRight className={b.cTenantGo} aria-hidden />}
@@ -304,7 +287,7 @@ export function Electricity({ unit, compact }: { unit: Pick<UnitBreakdown, "name
     <section className={cx(b.elec, compact && b.elecCompact)}>
       <Zap className={b.elecIcon} aria-hidden />
       <div className={b.elecText}>
-        <span className={b.elecLabel}>TNPDCL consumer no.</span>
+        <span className={b.elecLabel}>Consumer no.</span>
         {no ? (
           <button type="button" className={b.elecNo} onClick={copy} title="Copy the consumer number">
             <span className="num">{no}</span>

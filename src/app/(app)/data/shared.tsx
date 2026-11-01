@@ -53,14 +53,11 @@ export function DataPanel({
 }
 
 /** "TOTAL · [FY 2026-27] · 12 payments" for table footers. */
-export function TotalLabel({ scope, count, noun }: { scope: ReactNode; count: number; noun: [string, string] }) {
+export function TotalLabel({ scope, count, noun }: { scope: string; count: number; noun: [string, string] }) {
   return (
-    <span className={s.totalLabel}>
+    // just "Total" (owner 1/11/2026: minimal — the year / filter are already in the toolbar)
+    <span className={s.totalLabel} title={`${scope} · ${count} ${count === 1 ? noun[0] : noun[1]}`}>
       <span>Total</span>
-      <ScopeChip>{scope}</ScopeChip>
-      <span className={s.totalCount}>
-        {count} {count === 1 ? noun[0] : noun[1]}
-      </span>
     </span>
   );
 }

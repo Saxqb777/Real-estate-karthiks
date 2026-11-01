@@ -224,12 +224,10 @@
 }
 .paper b {
   color: #ffc978;
-  text-decoration: underline dotted rgba(76, 141, 255, 0.6);
-  text-underline-offset: 3px;
 }
 .slotEmpty {
   justify-content: space-between;
-  border-style: dashed;
+  border-style: solid;
   border-color: rgba(96, 165, 250, 0.35);
   background:
     repeating-linear-gradient(0deg, rgba(96, 165, 250, 0.05) 0 1px, transparent 1px 14px),
@@ -356,9 +354,6 @@
 .valueStrip b.paperNum,
 .paperNum {
   color: #ffc978;
-  text-decoration: underline dotted rgba(76, 141, 255, 0.55);
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1.5px;
 }
 .offerList {
   flex: 1;
@@ -411,8 +406,6 @@
 .offerAmt {
   font-size: 20px;
   color: var(--text);
-  text-decoration: underline dotted rgba(255, 255, 255, 0.35);
-  text-underline-offset: 4px;
 }
 .offerBest .offerAmt {
   color: #ffc978;

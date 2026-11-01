@@ -162,6 +162,19 @@
   cursor: pointer;
   padding-right: 34px;
 }
+/* the select only shows its value: a click anywhere on the field opens the glass list (SelectMenu) */
+.selectBox {
+  cursor: pointer;
+}
+.selectBox .select {
+  pointer-events: none;
+}
+.selectBox[data-disabled="true"] {
+  cursor: not-allowed;
+}
+.selectBox[data-open] .chev {
+  rotate: 180deg;
+}
 .chev {
   position: absolute;
   right: 10px;
@@ -171,6 +184,7 @@
   height: 16px;
   color: var(--text-dim);
   pointer-events: none;
+  transition: rotate 0.16s var(--ease-out);
 }
 
 /* textarea */

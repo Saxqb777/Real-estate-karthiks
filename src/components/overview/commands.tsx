@@ -18,14 +18,13 @@ import {
 import { useMemo } from "react";
 import { useRegisterCommands, type Command } from "@/components/ui";
 import { quickAdd, type YearMode } from "@/components/forms";
-import { DOCK_TABS, type DockTab, type PeriodKind } from "@/components/hud";
+import { DOCK_TABS, type DockTab } from "@/components/hud";
 import type { DashboardData } from "@/lib/dashboard-types";
 
 export interface OverviewCommandOptions {
   data: DashboardData | undefined;
   yearMode: YearMode;
   setYearMode: (m: YearMode) => void;
-  setPeriod: (p: PeriodKind) => void;
   openProperty: () => void;
   openUnit: (unitId: string) => void;
   openChart: (tab: DockTab) => void;
@@ -119,17 +118,6 @@ export function useOverviewCommands(o: OverviewCommandOptions) {
         perform: () => o.setYearMode(o.yearMode === "fy" ? "calendar" : "fy"),
       },
     );
-    if (data)
-      (["allTime", "year", "month"] as PeriodKind[]).forEach((p) =>
-        list.push({
-          id: `ov:period:${p}`,
-          group: "Overview",
-          title: `Cash figures for ${data.scopeLabels[p]}`,
-          keywords: ["period", "scope", "all time", "year", "month"],
-          icon: <CalendarClock />,
-          perform: () => o.setPeriod(p),
-        }),
-      );
     DOCK_TABS.forEach((t, i) =>
       list.push({
         id: `ov:chart:${t.id}`,

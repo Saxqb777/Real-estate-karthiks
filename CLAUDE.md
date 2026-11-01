@@ -625,6 +625,33 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   column); it slides out (x −12 → 0, fade, .24 s) — no scale. It is NOT an inset any more (Overview sideEl / Dock
   trayRef removed), so the camera never moves for a chart. Chart tables (payments list) have no dark sticky header band.
   Login map pin tag: the name is centred in the pill (text-anchor middle, dominant-baseline central).
+- 1/11/2026: MINIMAL + YEARS ONLY + GLASS DROPDOWNS (owner: "keep years to select clean and simple … no need of all time and
+  custom date, remove the months", "drop downs should match the website", "keep the website minimal … like the EB pole and
+  revenue officer" pop-ups, "remove the eg in notes"). Preview branch pending/years-tables.
+  • DROPDOWNS: every <Select> opens a glass list (ui/SelectMenu.tsx), never the OS menu: groups as faint headings, chosen =
+    white pill + ✓, keys ↑ ↓ Home End Enter Space Esc + type-to-jump; Esc closes only the list (window-capture listener runs
+    before a dialog's trap); outside tap closes. The <select> stays (value, name, label, change events) with pointer-events
+    none, so phones never open the OS picker; the empty "Choose a …" prompt is not listed.
+  • YEARS ONLY: PeriodSwitch = a year dropdown (windows + spending / compare charts); an earlier year shows the estate as at
+    the end of that year (the overview's as-of, AsOfContext in hud/year-jump.ts), the current year = today. usePeriod is
+    always "year" (a remembered All time / Month is ignored); ⌘K period commands removed. PeriodPicker = years only (reports,
+    Data → Payments / Expenses, which now open on the current year). Income chart: the same dropdown, no All time / stepper.
+    The APIs still accept year=all and from/to (nothing in the UI sends them).
+  • SIDE CHART: header = title (+ year dropdown on spending / compare) — no scope chip, no "Ledger balanced", no line.
+    Payments chart lists the latest 20 (calculations recentPayments); the overdue note line is gone.
+  • CONFIG PREVIEW: the empty hint chip (grey square, top-right) is gone; "Showing <field>" only while a field is focused.
+  • DATA TABLES = the report tables (owner's OK): fixed layout on wide screens, 14px / 400 cells, 44px rows, 38px head,
+    plain hairlines (no zebra, no blue rail), sorted header white; total row = "Total" + amount only (no scope chip / count);
+    Config → Categories total without "All time"; receipt links without underline.
+  • WINDOWS (EB / revenue officer are the model): tenant = house name + call / WhatsApp only (no since / rent / deposit /
+    phone line; an agreement line only when renewal is due), "Owes" / "Next rent · Month"; house = tenant name + pill,
+    Worth now / Gain / Gross yield / Net yield (no offer / est. tags, no "last 12 months"), Occupancy, Consumer no.;
+    mailbox = Rent collected + "Overdue · Monthly rent"; property = Net cash (Rent · Expenses), Worth now (Gain · Yield), Next
+    12 months (Rent · Costs · Tax), Occupancy — no est. / offer tags, no ledger badge; manager = "Property manager / To-dos"
+    with only an "N late" badge. Paper values are no longer dotted / tagged in the windows (owner's minimal call).
+  • NO dotted underlines or dashed lines anywhere in the UI (faint solid hairlines); green / red money gets a soft text shadow.
+  • FORMS: no example placeholders ("e.g. …", sample names, phones, emails, amounts, addresses); "Choose a unit" prompts and
+    "0" defaults stay.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

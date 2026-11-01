@@ -2,10 +2,9 @@
 // Dock tab 1 — Income vs expenses: rent collected (green) and expenses (red) as paired columns, net cash as a line —
 // one FY / calendar year month by month (data.monthlyByYear), or ALL TIME year by year (owner 8/10) with the totals
 // from data.periods.allTime and the running net from data.cumulativeNetByYear (grouped by the API — the UI never regroups).
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { cx } from "@/components/ui";
+import { Select, cx } from "@/components/ui";
 import { changeOf } from "@/lib/calculations";
 import type { CashComparison, YearSeries } from "@/lib/dashboard-types";
 import { vsLastYear } from "../Figure";
@@ -60,14 +59,10 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
     setInner(v);
     onYearChange?.(v);
   };
-  const setYear = (i: number) => {
-    const y = years[i];
-    if (y) pick(y.year);
-  };
   const [box, size] = useSize<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
 
-  if (!ys) return <div className={s.empty}>No money recorded yet — the months fill in as rent and expenses are added.</div>;
+  if (!ys) return <div className={s.empty}>No money recorded yet</div>;
 
   const runningNet = new Map((cumulative ?? []).map((c) => [c.year, c.cumulative]));
   const points: Point[] = all
@@ -122,22 +117,14 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
   return (
     <div className={cx(s.chart, className)}>
       <div className={s.chartBar}>
-        <div className={s.stepper}>
-          {allTime && (
-            <button type="button" className={cx(s.stepperAll, all && s.stepperOn)} aria-pressed={all} onClick={() => pick("all")}>
-              All time
-            </button>
-          )}
-          <button type="button" onClick={() => setYear(idx - 1)} disabled={idx === 0} aria-label="Previous year">
-            <ChevronLeft aria-hidden />
-          </button>
-          <button type="button" className={cx(s.stepperLabel, !all && s.stepperOn)} aria-pressed={!all} onClick={() => pick(ys.year)}>
-            {ys.label}
-          </button>
-          <button type="button" onClick={() => setYear(idx + 1)} disabled={idx === years.length - 1} aria-label="Next year">
-            <ChevronRight aria-hidden />
-          </button>
-        </div>
+        {/* the year as the same glass dropdown as everywhere else (owner 1/11/2026: years only, no All time) */}
+        <Select compact aria-label="Year" value={String(ys.year)} className={s.yearSelect} onChange={(e) => pick(Number(e.target.value))}>
+          {[...years].reverse().map((yy) => (
+            <option key={yy.year} value={yy.year}>
+              {yy.label}
+            </option>
+          ))}
+        </Select>
         <div className={s.legend}>
           <LegendKey color={C.income} label="Rent collected" />
           <LegendKey color={C.expense} label="Expenses" />

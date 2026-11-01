@@ -250,7 +250,7 @@
   font-size: 12px;
   line-height: 1.4;
   color: var(--text-faint);
-  border: 1px dashed var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-xs);
   cursor: pointer;
   transition:
@@ -693,8 +693,7 @@
   line-height: 1.3;
 }
 .todoMain:hover .todoTitle {
-  text-decoration: underline dotted var(--line-bright);
-  text-underline-offset: 3px;
+  color: #fff;
 }
 .todoMeta {
   font-size: 11.5px;
@@ -1036,7 +1035,6 @@ button.cTenant:hover .cTenantGo {
   color: var(--text);
   background: none;
   border: 0;
-  border-bottom: 1px dotted rgba(255, 255, 255, 0.35);
   cursor: pointer;
   transition:
     color 0.15s var(--ease-out),

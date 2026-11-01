@@ -1,17 +1,16 @@
 "use client";
 // The tenant window (opens on a tenant click). Owner 9/10/2026: the tenant and the house each get their own window —
-// this one holds the person (call / WhatsApp, since, rent, deposit, agreement), the next rent big with Record rent
+// this one holds the person (their house, call / WhatsApp; owner 1/11/2026: no since / rent / deposit / phone line), the next rent big with Record rent
 // beside it (or what they owe) and the month-by-month breakdown of what's owed. The house's money, value, occupancy and
 // electricity stay in the house window (UnitPanel). Every figure still drills down.
 import { ReceiptIndianRupee } from "lucide-react";
 import { Button, cx } from "@/components/ui";
 import { agreementText } from "@/components/forms";
 import type { DashboardData } from "@/lib/dashboard-types";
-import { formatDate } from "@/lib/dates";
 import { DrillPanel, useDrillStack, type DrillStack } from "./DrillDown";
 import { Fig, FigLine } from "./Figure";
 import { useFormDrawer } from "./FormDrawer";
-import { firstName, inr, monthList, phoneText } from "./format";
+import { monthList } from "./format";
 import { ContactButtons, RentStatePill, dueText } from "./UnitPanel";
 import s from "./hud.module.css";
 import b from "./bits.module.css";
@@ -85,32 +84,8 @@ function TenantPanelInner({ data, unitId, onClose, onOpenUnit, side = "right", d
                   u.name
                 )}
               </span>
-              <span className={b.cMeta}>
-                since {formatDate(lease.startDate)}
-                {lease.endDate ? ` · last day ${formatDate(lease.endDate)}` : ""}
-                {" · "}
-                <button type="button" className={b.cLink} onClick={() => open("rent")}>
-                  rent <span className="num">{inr(lease.monthlyRent)}</span>/month
-                </button>
-                {" · "}
-                <button type="button" className={b.cLink} onClick={() => open("depositHeld")} title="Deposits are the tenant's money — not income">
-                  deposit <span className="num">{inr(u.depositHeld)}</span>
-                </button>
-                {lease.agreementEndDate && (
-                  <>
-                    {" · "}
-                    <span className={cx(renew && (renew.state === "expired" ? b.lateText : b.soonText))}>
-                      agreement {renew ? agreementText(renew.daysLeft) : `to ${formatDate(lease.agreementEndDate)}`}
-                    </span>
-                  </>
-                )}
-                {lease.tenantPhone && (
-                  <>
-                    {" · "}
-                    <span className="num">{phoneText(lease.tenantPhone)}</span>
-                  </>
-                )}
-              </span>
+              {/* nothing else here (owner 1/11/2026: "no need to mention all this") — only an agreement that needs renewing */}
+              {renew && <span className={cx(b.cMeta, renew.state === "expired" ? b.lateText : b.soonText)}>Agreement {agreementText(renew.daysLeft)}</span>}
             </span>
             <ContactButtons phone={lease.tenantPhone} name={lease.tenantName} />
           </div>
@@ -119,16 +94,13 @@ function TenantPanelInner({ data, unitId, onClose, onOpenUnit, side = "right", d
           {owed ? (
             <div className={cx(b.cRow, b.cHero, b.cLate)}>
               <div>
-                <span className={b.cLabel}>
-                  {firstName(lease.tenantName)} owes · {data.scopeLabels.asOf.toLowerCase()}
-                </span>
+                <span className={b.cLabel}>Owes</span>
                 <div className={b.cBig}>
                   <Fig value={owed.totalWithFees} size="hero" tone="expense" compact={false} onClick={() => open("overdue")} />
                 </div>
                 <div className={cx(b.cSub, b.lateText)}>
                   {monthList(owed.months.map((m) => m.label))}
                   {partPaid === 1 ? " (one part-paid)" : partPaid > 1 ? ` (${partPaid} part-paid)` : ""}
-                  {owed.lateFees > 0 ? ` · incl. ${inr(owed.lateFees)} late fees` : ""}
                 </div>
               </div>
               {recordRent}
@@ -136,10 +108,7 @@ function TenantPanelInner({ data, unitId, onClose, onOpenUnit, side = "right", d
           ) : np ? (
             <div className={cx(b.cRow, b.cHero, u.rentState !== "due-soon" && b.cOk)}>
               <div>
-                <span className={b.cLabel}>
-                  Next rent · {np.label}
-                  {np.paidSoFar > 0 ? ` · ${inr(np.paidSoFar)} paid` : ""}
-                </span>
+                <span className={b.cLabel}>Next rent · {np.label}</span>
                 <div className={b.cBig}>
                   <Fig value={np.amountDue} size="hero" compact={false} onClick={() => open("rent")} />
                 </div>
@@ -157,7 +126,7 @@ function TenantPanelInner({ data, unitId, onClose, onOpenUnit, side = "right", d
                   <FigLine
                     key={m.key}
                     label={m.label}
-                    sub={m.paid > 0 ? `${days(m.daysOverdue)} · ${inr(m.paid)} of ${inr(m.due)} paid` : days(m.daysOverdue)}
+                    sub={m.paid > 0 ? `${days(m.daysOverdue)} · part-paid` : days(m.daysOverdue)}
                     value={m.outstanding}
                     tone="expense"
                     onClick={() => open("overdue")}

@@ -48,8 +48,8 @@ const money = (n: number) => formatINR(n, n % 1 !== 0);
 
 export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
   const [mode, setMode] = useYearMode();
-  // records start on All time (owner 8/10) — a year or custom dates narrow them
-  const [period, setPeriod] = useState<PeriodPick>({ kind: "all" });
+  // one year at a time (owner 1/11/2026: no All time / custom dates), the current year first
+  const [period, setPeriod] = useState<PeriodPick>(() => ({ kind: "year", year: currentYear(mode) }));
   const year = period.kind === "year" ? period.year : null;
   const range = period.kind === "range" ? period : null;
   const [unitId, setUnitId] = useState("");
@@ -74,7 +74,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
   const unitName = unitId === WHOLE_PLOT ? "Whole plot" : units.data?.items.find((u) => u.id === unitId)?.name;
   const catName = cats.data?.items.find((c) => c.id === categoryId)?.name;
   const scope = [periodText(period, mode), unitName, catName].filter(Boolean).join(" · ");
-  const filtered = period.kind !== "all" || Boolean(unitId) || Boolean(categoryId);
+  const filtered = (period.kind === "year" && period.year !== currentYear(mode)) || Boolean(unitId) || Boolean(categoryId);
 
   const data = list.data;
   const rows = data?.items;
@@ -127,7 +127,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
       ];
 
   const clear = () => {
-    setPeriod({ kind: "all" });
+    setPeriod({ kind: "year", year: currentYear(mode) });
     setUnitId("");
     setCategoryId("");
   };

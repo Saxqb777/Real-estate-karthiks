@@ -1,7 +1,7 @@
 "use client";
 import { Lock, Plus } from "lucide-react";
 import { Button, Panel, Table, Tooltip, type Column } from "@/components/ui";
-import { Dot, ScopeChip, closeQuickAdd, quickAdd, useCategories } from "@/components/forms";
+import { Dot, closeQuickAdd, quickAdd, useCategories } from "@/components/forms";
 import { sumAmounts } from "@/lib/calculations";
 import { formatINR } from "@/lib/format";
 import { categoryInUseMessage, defaultCategoryDeleteMessage, type ExpenseCategoryDTO } from "@/lib/schemas/expense-category";
@@ -45,7 +45,7 @@ export function CategoriesTab() {
       ),
       footer: items?.length ? (
         <span className={s.footLabel}>
-          Total <ScopeChip>All time</ScopeChip>
+          Total
         </span>
       ) : undefined,
     },

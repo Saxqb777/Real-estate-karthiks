@@ -34,16 +34,16 @@ export function TenantForm({ tenant, defaults, onSaved, onCancel, frame = inline
     <FormBody form={form}>
       <FormGrid cols={2}>
         <Field label="Full name" required span="full" error={form.error("name")} hint="As written on the rental agreement">
-          <Input {...form.text("name")} icon={<UserRound />} autoComplete="off" placeholder="e.g. R. Senthil Kumar" data-autofocus />
+          <Input {...form.text("name")} icon={<UserRound />} autoComplete="off" data-autofocus />
         </Field>
         <Field label="Phone" aside="optional" error={form.error("phone")} hint="Tap-to-call from the tenant card">
-          <Input {...form.text("phone")} icon={<Phone />} type="tel" inputMode="tel" autoComplete="off" placeholder="98765 43210" />
+          <Input {...form.text("phone")} icon={<Phone />} type="tel" inputMode="tel" autoComplete="off" />
         </Field>
         <Field label="Email" aside="optional" error={form.error("email")}>
-          <Input {...form.text("email")} icon={<Mail />} type="email" autoComplete="off" placeholder="name@example.com" />
+          <Input {...form.text("email")} icon={<Mail />} type="email" autoComplete="off" />
         </Field>
         <Field label="ID proof" aside="optional" span="full" error={form.error("idProofRef")} hint="Which document you hold, e.g. Aadhaar ending 4821">
-          <Input {...form.text("idProofRef")} icon={<IdCard />} autoComplete="off" placeholder="Aadhaar ••••4821" />
+          <Input {...form.text("idProofRef")} icon={<IdCard />} autoComplete="off" />
         </Field>
       </FormGrid>
     </FormBody>

@@ -28,6 +28,7 @@ import {
   type DrillView,
   type PanelTarget,
 } from "@/components/hud";
+import { AsOfContext } from "@/components/hud/year-jump";
 import { chartMenu, useChartMenu } from "@/components/shell/chart-menu";
 import { worldState } from "@/components/shell/world-state";
 import { logout } from "@/lib/client";
@@ -98,18 +99,20 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
     <Screen flush contained={false} className={s.screen}>
       <QuickAddHost />
       {isClient && (
-        <Game
-          data={data}
-          asOf={asOf}
-          setAsOf={setAsOf}
-          loading={dash.refreshing}
-          error={!data ? dash.error?.message : undefined}
-          retry={dash.reload}
-          layout={layout}
-          onSceneReady={onSceneReady}
-          active={active}
-          paused={!active && sceneReady}
-        />
+        <AsOfContext value={setAsOf}>
+          <Game
+            data={data}
+            asOf={asOf}
+            setAsOf={setAsOf}
+            loading={dash.refreshing}
+            error={!data ? dash.error?.message : undefined}
+            retry={dash.reload}
+            layout={layout}
+            onSceneReady={onSceneReady}
+            active={active}
+            paused={!active && sceneReady}
+          />
+        </AsOfContext>
       )}
       <AnimatePresence>
         {/* the arrival screen only on the overview itself; behind Data / Config the world just loads quietly */}
@@ -146,7 +149,7 @@ interface GameProps {
 function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady, active, paused }: GameProps) {
   const mobile = useMediaQuery(MOBILE_QUERY);
   const narrow = useMediaQuery("(max-width: 1179px)");
-  const [period, setPeriod] = usePeriod();
+  const [period] = usePeriod();
   const [yearMode, setYearMode] = useYearMode();
   const tax = usePropertyTax();
   const tenants = useTenants();
@@ -329,7 +332,6 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
     data,
     yearMode,
     setYearMode,
-    setPeriod,
     openProperty: () => {
       setHudHidden(false);
       openProperty();

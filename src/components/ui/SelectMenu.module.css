@@ -1,0 +1,119 @@
+/* the glass dropdown list of <Select> (owner 1/11/2026: "drop downs should match the website") */
+.menu {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 115;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 140px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  /* the site's frosted glass, a little denser than a window so the list never shows the rows behind it */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)), rgba(62, 64, 76, 0.9);
+  -webkit-backdrop-filter: var(--glass-panel-blur);
+  backdrop-filter: var(--glass-panel-blur);
+  border: 1px solid var(--glass-panel-edge);
+  border-radius: 16px;
+  box-shadow: var(--glass-panel-shadow);
+  font-family: var(--ff-body);
+  animation: pe-menu-in 0.16s var(--ease-out) both;
+}
+.menu[data-up="true"] {
+  animation-name: pe-menu-in-up;
+}
+@keyframes pe-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+}
+@keyframes pe-menu-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+}
+
+.group {
+  padding: 10px 12px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.group:first-child {
+  padding-top: 4px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.12s var(--ease-out);
+}
+.item + .item {
+  margin-top: 2px;
+}
+.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+.on {
+  background: var(--pill-on);
+  color: var(--pill-on-ink);
+  font-weight: 600;
+}
+.item[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+.placeholder {
+  color: var(--text-faint);
+}
+.on.placeholder {
+  color: var(--pill-on-ink);
+}
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.check {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+@media (hover: none) {
+  .item {
+    min-height: 42px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    animation: none;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .menu {
+    background: rgba(44, 46, 54, 0.97);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .menu {
+    background: rgba(44, 46, 54, 0.97);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

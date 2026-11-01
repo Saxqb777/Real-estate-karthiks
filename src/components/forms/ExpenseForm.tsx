@@ -60,7 +60,7 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
       <fieldset disabled={linked} className={s.fieldset}>
         <FormGrid cols={2}>
           <Field label="Amount" required error={form.error("amount")}>
-            <NumberInput {...form.number("amount")} currency placeholder="2,500" data-autofocus />
+            <NumberInput {...form.number("amount")} currency data-autofocus />
           </Field>
           <Field label="Paid on" required error={form.error("expenseDate")} hint="Planned work goes in To-dos">
             <DateInput {...form.date("expenseDate")} max={toInputDate(todayIST())} />
@@ -80,7 +80,6 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
             {/* the clip (owner, 10/10/2026: clip only, no files showing) in the corner of the "What for" box */}
             <Textarea
               {...form.text("description")}
-              placeholder="e.g. Plumber — kitchen tap and tank float valve"
               suffix={linked ? undefined : expense ? <ProofClip owner={{ expenseId: expense.id }} /> : <PendingProofClip pending={pending} />}
             />
           </Field>

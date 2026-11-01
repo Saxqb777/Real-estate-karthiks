@@ -97,7 +97,7 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
       <FormSection title="The unit">
         <FormGrid cols={2}>
           <Field label="Name" required error={form.error("name")} hint="What you call it, e.g. Unit A">
-            <Input {...form.text("name")} icon={<Building2 />} autoComplete="off" placeholder="Unit A" data-autofocus />
+            <Input {...form.text("name")} icon={<Building2 />} autoComplete="off" data-autofocus />
           </Field>
           <Field label="Type" error={form.error("type")}>
             <Input {...form.text("type")} autoComplete="off" placeholder={DEFAULT_UNIT_TYPE} list="pe-unit-types" />
@@ -109,7 +109,7 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
             </datalist>
           </Field>
           <Field label="Address" aside="optional" span="full" error={form.error("address")}>
-            <Input {...form.text("address")} icon={<MapPin />} autoComplete="off" placeholder="Door no., street, Pattukottai" />
+            <Input {...form.text("address")} icon={<MapPin />} autoComplete="off" />
           </Field>
         </FormGrid>
       </FormSection>
@@ -132,7 +132,7 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
             <Stepper name="floors" value={v.floors} onChange={(n) => form.set("floors", n)} min={1} max={10} suffix={(n) => (n === 1 ? "floor" : "floors")} />
           </Field>
           <Field label="Built-up area" required error={form.error("builtUpSqft")} hint="All floors together">
-            <NumberInput {...form.number("builtUpSqft")} suffix="sqft" decimals={2} placeholder="1,120" hideHint />
+            <NumberInput {...form.number("builtUpSqft")} suffix="sqft" decimals={2} hideHint />
           </Field>
           <Field label="Footprint width" error={form.error("footprintWidthFt")} hint={v.footprintWidthFt ? undefined : `Empty = site plan (${SITE_DEFAULTS.footprintWidthFt} ft)`}>
             <NumberInput {...form.number("footprintWidthFt")} suffix="ft" placeholder={String(SITE_DEFAULTS.footprintWidthFt)} formatHint={ftHint} />
@@ -149,7 +149,7 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
             <DateInput {...form.date("purchaseDate")} max={toInputDate(todayIST())} />
           </Field>
           <Field label="Purchase price" required error={form.error("purchasePrice")} hint="Including registration">
-            <NumberInput {...form.number("purchasePrice")} currency placeholder="38,50,000" />
+            <NumberInput {...form.number("purchasePrice")} currency />
           </Field>
           <Field
             label="Growth per year"
@@ -157,7 +157,7 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
             error={form.error("annualAppreciationRate")}
             hint="Used for “Worth now (est.)” while the unit has no offer"
           >
-            <NumberInput {...form.number("annualAppreciationRate")} suffix="% / yr" decimals={3} allowNegative min={-50} max={100} placeholder="7.5" hideHint />
+            <NumberInput {...form.number("annualAppreciationRate")} suffix="% / yr" decimals={3} allowNegative min={-50} max={100} hideHint />
           </Field>
         </FormGrid>
       </FormSection>
@@ -165,10 +165,10 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
       <FormSection title="Electricity" note="TNPDCL">
         <FormGrid cols={2}>
           <Field label="Consumer number" aside="optional" error={form.error("electricityConsumerNumber")}>
-            <Input {...form.text("electricityConsumerNumber")} icon={<Hash />} autoComplete="off" placeholder="04-123-456-789" />
+            <Input {...form.text("electricityConsumerNumber")} icon={<Hash />} autoComplete="off" />
           </Field>
           <Field label="Pay link" aside="optional" error={form.error("electricityPayUrl")} hint="Opens from the pole in the 3D view">
-            <Input {...form.text("electricityPayUrl")} icon={<Zap />} type="url" autoComplete="off" placeholder="https://www.tnebltd.gov.in/…" suffix={v.electricityPayUrl ? <ExternalLink width={14} height={14} /> : undefined} />
+            <Input {...form.text("electricityPayUrl")} icon={<Zap />} type="url" autoComplete="off" suffix={v.electricityPayUrl ? <ExternalLink width={14} height={14} /> : undefined} />
           </Field>
         </FormGrid>
       </FormSection>
