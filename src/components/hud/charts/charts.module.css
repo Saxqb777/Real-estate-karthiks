@@ -731,9 +731,7 @@ button.sqftBar:hover .sqftVal {
   font-size: 13px;
 }
 .payTable th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  position: relative;
   padding: 6px 10px;
   text-align: left;
   font-family: var(--ff-display);
@@ -741,8 +739,8 @@ button.sqftBar:hover .sqftVal {
   font-weight: 600;
   letter-spacing: 0;
   color: var(--text-dim);
-  background: #1a1b20;
-  border-bottom: 1px solid var(--line);
+  background: transparent;
+  border-bottom: 1px solid var(--line-strong);
 }
 .payTable td {
   padding: 5px 10px;

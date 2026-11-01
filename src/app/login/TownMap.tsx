@@ -342,7 +342,8 @@ function TownMapImpl({
           </g>
           <g className={s.questTag} transform="translate(22 -44)">
             <rect width="176" height="34" rx="17" className={s.questBox} />
-            <text x="16" y="22" className={s.questName}>
+            {/* the name centred in the pill (owner 1/11/2026) */}
+            <text x="88" y="17" textAnchor="middle" dominantBaseline="central" className={s.questName}>
               Pattukkottai Estate
             </text>
           </g>

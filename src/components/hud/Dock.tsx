@@ -50,8 +50,6 @@ export interface DockProps {
   sheet?: boolean;
   /** desktop: the tabs as an icon column on the left side (the reel); the chart slides out beside it */
   side?: boolean;
-  /** side mode: the chart panel's element (the overview keeps the camera clear of it) */
-  trayRef?: (el: HTMLElement | null) => void;
   /** side mode: the SIGN OUT icon at the very end of the column (owner: the car is gone) */
   onLeave?: () => void;
   className?: string;
@@ -64,7 +62,7 @@ export function dockTabLabel(data: DashboardData, id: DockTab): string {
   return named.length >= 2 ? named.join(" vs ") : (named[0] ?? "Units");
 }
 
-export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, side = false, trayRef, onLeave, className }: DockProps) {
+export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = null, onDrill, onOpenUnit, hints, hotkeys = true, sheet = false, side = false, onLeave, className }: DockProps) {
   const uid = useId();
   // the LIFE switch (owner: "add to the side bar in the end with its own icon") — shared with the scene
   const lifeChoice = useLifeChoice();
@@ -171,10 +169,10 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         <motion.div
           key="tray"
           className={s.tray}
-          initial={side ? { y: 10, scale: 0.985, opacity: 0 } : { height: 0, opacity: 0 }}
-          animate={side ? { y: 0, scale: 1, opacity: 1 } : { height: "auto", opacity: 1 }}
-          exit={side ? { y: 6, scale: 0.99, opacity: 0 } : { height: 0, opacity: 0 }}
-          transition={{ duration: side ? 0.36 : 0.28, ease: [0.22, 1, 0.36, 1] }}
+          initial={side ? { x: -12, opacity: 0 } : { height: 0, opacity: 0 }}
+          animate={side ? { x: 0, opacity: 1 } : { height: "auto", opacity: 1 }}
+          exit={side ? { x: -8, opacity: 0 } : { height: 0, opacity: 0 }}
+          transition={{ duration: side ? 0.24 : 0.28, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className={s.trayInner}>
             <header className={s.trayHead}>
@@ -194,9 +192,10 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
   );
 
   if (side) {
-    // the icon column sits outside the tray's glass (a blurred box would trap a fixed / absolute child)
+    // the icon column and the chart panel share one row at the left middle: the panel takes the column's height
+    // (owner 1/11/2026: "a rectangular bar … using the side bar as the guide for height … just pop up on the side")
     return (
-      <>
+      <div className={s.side}>
         <nav className={s.rail} role="tablist" aria-label="Charts" aria-orientation="vertical">
           {DOCK_TABS.map((d) => {
             const on = d.id === tab;
@@ -239,11 +238,11 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             </button>
           )}
         </nav>
-        <section ref={trayRef} className={cx(s.dock, s.sideTray, tab && s.dockOpen, !tab && s.sideTrayClosed, className)} aria-label="Chart">
+        <section className={cx(s.sideTray, !tab && s.sideTrayClosed, className)} aria-label="Chart">
           {tray}
           {forms.element}
         </section>
-      </>
+      </div>
     );
   }
 

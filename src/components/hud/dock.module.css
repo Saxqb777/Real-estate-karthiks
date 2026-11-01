@@ -268,12 +268,21 @@
 }
 
 /* ---------------- desktop: the charts as an icon column on the left side (owner 31/10/2026, the reel) ---------------- */
-.rail {
+/* the row at the left middle: the icon column, then the open chart at the column's height */
+.side {
   position: absolute;
   z-index: 3;
   left: 14px;
   top: 50%;
   translate: 0 -50%;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  pointer-events: none;
+}
+.rail {
+  position: relative;
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -347,63 +356,45 @@
   margin: 3px auto;
   background: rgba(255, 255, 255, 0.22);
 }
-/* the chart beside the icon column (owner: "pop up the charts in a way that suits the side bar" → "not a square box …
-   like the reel"): NO container box — the title floats as text and the chart sits on one light frosted card, arriving
-   like a page in the reel (fade + settle). The whole thing is the overview's left inset, so the camera frames the plot
-   to its right. */
+/* the chart beside the icon column (owner 1/11/2026: "a rectangular bar … using the side bar as the guide for height …
+   lets not zoom out … just pop up on the side"): ONE light frosted rectangle, exactly as tall as the column (the row
+   stretches it), title + period control inside at the top, the chart below; it slides out from the column — the camera
+   does not move. */
 .sideTray {
-  --tray-h: clamp(340px, 52vh, 520px);
-  position: absolute;
-  z-index: 3;
-  left: 86px;
-  top: 50%;
-  translate: 0 -50%;
-  width: clamp(480px, 42vw, 620px);
-  max-height: calc(100% - 96px);
+  /* the charts adapt to the panel's width (their @container dock rules) */
+  container: dock / inline-size;
+  position: relative;
+  width: clamp(520px, 44vw, 680px);
+  min-height: 0;
   pointer-events: auto;
-  background: none;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-.sideTray.dockOpen {
-  background: none;
-}
-.sideTrayClosed {
-  width: 0;
-  pointer-events: none;
-}
-.sideTray .trayInner {
-  padding: 0;
-  border-bottom: 0;
-}
-.sideTray .trayHead {
-  margin: 0 0 12px 6px;
-  gap: 12px;
-}
-.sideTray .trayTitle {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-}
-.sideTray .trayRule {
-  display: none;
-}
-.sideTray .trayBody {
-  overflow: auto;
-  padding: 16px 18px;
   background: var(--glass-panel-bg);
   -webkit-backdrop-filter: var(--glass-panel-blur);
   backdrop-filter: var(--glass-panel-blur);
   border: 1px solid var(--glass-panel-edge);
   border-radius: 24px;
   box-shadow: var(--glass-panel-shadow);
+  overflow: hidden;
 }
-@media (max-height: 760px) {
-  .sideTray {
-    --tray-h: clamp(300px, 50vh, 420px);
-  }
+.sideTrayClosed {
+  display: none;
+}
+.sideTray .tray {
+  position: absolute;
+  inset: 0;
+}
+.sideTray .trayInner {
+  height: 100%;
+  padding: 16px 20px 14px;
+  border-bottom: 0;
+}
+.sideTray .trayHead {
+  margin: 0 0 10px;
+  gap: 10px;
+}
+.sideTray .trayTitle {
+  font-size: 17px;
+  font-weight: 600;
+}
+.sideTray .trayBody {
+  overflow: auto;
 }

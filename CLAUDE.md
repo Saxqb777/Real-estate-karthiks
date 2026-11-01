@@ -617,6 +617,14 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   • text tokens brighter for the light glass: --text #fff, --text-dim #e1e3e8, --text-faint #c2c5cd (hex codes, zeros,
     eyebrows readable).
   • login "Press any key to start" = the sign-in bar's pane (glass-deep, panel edge, radius 28, padding 20/44) — not a pill.
+- 1/11/2026: SIDE CHART = ONE RECTANGLE (owner: "a rectangular bar … using the side bar as the guide for height and lets
+  not zoom out … just pop up on the side" → "deploy all of these"): Dock side mode wraps the icon column + the chart in
+  one flex row (.side, absolute at the left middle, align-items stretch, gap 12); the chart is ONE light frosted
+  rectangle (.sideTray: glass-panel, radius 24, width clamp(520px, 44vw, 680px), title + period control inside) whose
+  height = the column's (its content sits in an absolute layer, so a tall chart scrolls inside and never stretches the
+  column); it slides out (x −12 → 0, fade, .24 s) — no scale. It is NOT an inset any more (Overview sideEl / Dock
+  trayRef removed), so the camera never moves for a chart. Chart tables (payments list) have no dark sticky header band.
+  Login map pin tag: the name is centred in the pill (text-anchor middle, dominant-baseline central).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
