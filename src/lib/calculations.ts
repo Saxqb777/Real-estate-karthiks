@@ -1199,7 +1199,7 @@ export interface Ctx {
   asOfScope: string;
 }
 
-const unitNameOf = (ctx: Ctx, unitId: string | null) => (unitId === null ? "Whole plot" : (ctx.unitById.get(unitId)?.name ?? "Unknown unit"));
+const unitNameOf = (ctx: Ctx, unitId: string | null) => (unitId === null ? "Premises" : (ctx.unitById.get(unitId)?.name ?? "Unknown unit"));
 
 function paymentInputs(ctx: Ctx, payments: PaymentInput[]): { inputs: ExplainInput[]; note: string | null } {
   const sorted = [...payments].sort((x, y) => x.paymentDate.getTime() - y.paymentDate.getTime() || x.invoiceSeq - y.invoiceSeq);
@@ -1332,7 +1332,7 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
   const exp = sumSteps(expParts, "Expenses");
   const eIn = expenseInputs(ctx, expenses);
   const expNotes = ["Property tax marked Paid is included as an expense on its payment date."];
-  if (unit) expNotes.push("Only expenses tagged to this unit — whole-plot expenses (compound wall, trees, auditor…) are in the portfolio total.");
+  if (unit) expNotes.push("Only expenses tagged to this unit — premises expenses (compound wall, trees, auditor…) are in the portfolio total.");
   const expExplain = explainOf({
     key: `${prefix}expenses`,
     title: "Expenses",
@@ -1341,7 +1341,7 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
     value: exp.total,
     format: "inr",
     plain: expenses.length ? `Everything you spent on ${unit ? unit.name : "the property"} ${scopeText}.` : `Nothing was spent ${scopeText}.`,
-    formula: unit ? "Add up every expense tagged to this unit" : "Unit expenses + whole-plot expenses",
+    formula: unit ? "Add up every expense tagged to this unit" : "Unit expenses + premises expenses",
     steps: exp.steps,
     inputs: eIn.inputs,
     inputsNote: eIn.note,
@@ -1909,7 +1909,7 @@ function yieldExplains(prefix: string, r: YieldRow, scopeLabel: string, isUnit: 
       const notes = ["Rent is the cash actually received in the last 12 months, so empty months lower the yield."];
       if (basis === "Value") notes.push("Worth now is an estimate — the best offer, else your growth rate.");
       if (!r.fullYear) notes.push("Owned for less than 12 months, so this covers only the months owned.");
-      if (kind === "net" && isUnit) notes.push("Only expenses tagged to this unit — whole-plot costs are in the property's yield.");
+      if (kind === "net" && isUnit) notes.push("Only expenses tagged to this unit — premises costs are in the property's yield.");
       out.push(
         explainOf({
           key: `${prefix}yield:${kind}${basis}`,
@@ -2822,7 +2822,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
   const monthExpenses = expenses.filter((e) => inDayScope(scopes.month, dayNum(e.expenseDate)));
   const byUnit = [
     ...[...owned].sort(compareUnits).map((u) => ({ unitId: u.id as string | null, unitName: u.name, rows: expensesByUnit.get(u.id) ?? [] })),
-    { unitId: null, unitName: "Whole plot", rows: expenses.filter((e) => e.unitId === null) },
+    { unitId: null, unitName: "Premises", rows: expenses.filter((e) => e.unitId === null) },
   ].map(({ unitId, unitName, rows }) => ({ unitId, unitName, amount: sumAmounts(rows), slices: expenseSlices(rows, input.categories) }));
   const expenseComposition = {
     allTime: expenseSlices(expenses, input.categories),
@@ -2836,7 +2836,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
   const checks = reconciliation([
     recon(
       "expensesByUnit",
-      "Unit expenses + whole-plot expenses = total expenses",
+      "Unit expenses + premises expenses = total expenses",
       totalExpenses,
       sum2([...units.map((u) => u.expenses), wholePlotExpenses]),
     ),
@@ -3006,7 +3006,7 @@ export function buildTimeline(input: DashboardInput, today: Date, mode: YearMode
       date: iso(e.expenseDate),
       kind: "expense",
       unitId: e.unitId,
-      label: `${e.description ?? cats.get(e.categoryId) ?? "Expense"} · ${e.unitId ? (unitById.get(e.unitId)?.name ?? "unit") : "Whole plot"}`,
+      label: `${e.description ?? cats.get(e.categoryId) ?? "Expense"} · ${e.unitId ? (unitById.get(e.unitId)?.name ?? "unit") : "Premises"}`,
       amount: round2(e.amount),
       refId: e.id,
     });

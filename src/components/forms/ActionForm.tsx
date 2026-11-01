@@ -54,7 +54,7 @@ export function ActionForm({ action, defaults, onSaved, onCancel, frame = inline
           <DateInput {...form.date("dueDate")} />
         </Field>
         <Field label="For" error={form.error("unitId")}>
-          <Select {...form.select("unitId")} options={[{ value: "", label: "Whole property" }, ...unitOptions(units.data?.items, { keepId: action?.unitId })]} />
+          <Select {...form.select("unitId")} options={[{ value: "", label: "Premises" }, ...unitOptions(units.data?.items, { keepId: action?.unitId })]} />
         </Field>
         <Field label="Priority" error={form.error("priority")}>
           <ChoiceGroup

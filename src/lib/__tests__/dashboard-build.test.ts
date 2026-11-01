@@ -484,7 +484,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
     expect(d.expenseComposition.byUnit.map((u) => [u.unitName, u.amount])).toEqual([
       ["Front House", 12_500.5],
       ["Back House", 4_320.25],
-      ["Whole plot", 0],
+      ["Premises", 0],
     ]);
   });
 
@@ -820,7 +820,7 @@ describe("buildDashboard — reconciliation", () => {
       "deposits",
       "arrears",
     ]);
-    expect(d.checks.items[0]).toEqual({ key: "expensesByUnit", label: "Unit expenses + whole-plot expenses = total expenses", expected: 16_820.75, actual: 16_820.75, ok: true });
+    expect(d.checks.items[0]).toEqual({ key: "expensesByUnit", label: "Unit expenses + premises expenses = total expenses", expected: 16_820.75, actual: 16_820.75, ok: true });
   });
 
   it("an expense tagged to a unit that isn't on the dashboard shows as not balanced", () => {
@@ -1061,7 +1061,7 @@ describe("buildDashboard — empty database", () => {
       allTime: [],
       byYear: [{ year: 2026, label: "FY 2026-27", slices: [] }],
       month: [],
-      byUnit: [{ unitId: null, unitName: "Whole plot", amount: 0, slices: [] }],
+      byUnit: [{ unitId: null, unitName: "Premises", amount: 0, slices: [] }],
     });
     expect(d.plot.usingDefaults).toBe(true);
     expect(d.checks.ledgerBalanced).toBe(true);

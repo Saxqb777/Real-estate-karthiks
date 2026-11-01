@@ -102,13 +102,13 @@ export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
   const columns: Column<ActionDTO>[] = narrow
     ? [
         { key: "check", header: "", width: 44, cell: (a) => <DoneToggle a={a} /> },
-        { key: "title", header: "To-do", wrap: true, cell: (a) => <Stack2 top={<span className={a.isDone ? s.doneText : s.strong}>{a.title}</span>} bottom={[a.unit?.name ?? "Whole property", dueText(a)?.text].filter(Boolean).join(" · ")} />, footer },
+        { key: "title", header: "To-do", wrap: true, cell: (a) => <Stack2 top={<span className={a.isDone ? s.doneText : s.strong}>{a.title}</span>} bottom={[a.unit?.name ?? "Premises", dueText(a)?.text].filter(Boolean).join(" · ")} />, footer },
         { key: "prio", header: "", align: "right", cell: priority },
       ]
     : [
         { key: "check", header: "", width: 48, cell: (a) => <DoneToggle a={a} /> },
         { key: "title", header: "To-do", wrap: true, cell: titleCell, footer },
-        { key: "unit", header: "For", sortValue: (a) => a.unit?.name ?? "", cell: (a) => a.unit?.name ?? <span className="dim">Whole property</span> },
+        { key: "unit", header: "For", sortValue: (a) => a.unit?.name ?? "", cell: (a) => a.unit?.name ?? <span className="dim">Premises</span> },
         { key: "due", header: "Due", sortValue: (a) => a.dueDate ?? "9999", cell: due },
         { key: "prio", header: "Priority", sortValue: (a) => ({ High: 0, Medium: 1, Low: 2 })[a.priority], cell: priority },
       ];
@@ -207,7 +207,7 @@ function TodoDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
       />
       <Facts
         items={[
-          { label: "For", value: a.unit?.name ?? "Whole property" },
+          { label: "For", value: a.unit?.name ?? "Premises" },
           { label: "Due", value: a.dueDate ? formatDate(a.dueDate) : <span className="faint">no date</span>, num: Boolean(a.dueDate) },
           {
             label: "Priority",

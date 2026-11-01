@@ -223,7 +223,7 @@ describe("annual statement", () => {
     expect(r.units).toEqual([
       { unitId: "A", unitName: "Unit A", rentCollected: 150_000, rentExpected: 150_000, collectionPct: 1, expenses: 4_200, net: 145_800 },
       { unitId: "B", unitName: "Unit B", rentCollected: 11_000, rentExpected: 11_000, collectionPct: 1, expenses: 54_380.5, net: -43_380.5 },
-      { unitId: null, unitName: "Whole plot", rentCollected: 0, rentExpected: 0, collectionPct: null, expenses: 5_800, net: -5_800 },
+      { unitId: null, unitName: "Premises", rentCollected: 0, rentExpected: 0, collectionPct: null, expenses: 5_800, net: -5_800 },
     ]);
     expect(r.expensesByCategory.map((c) => [c.name, c.amount])).toEqual([
       ["Renovation", 54_000],
@@ -255,7 +255,7 @@ describe("annual statement", () => {
   it("a year before anything was bought is empty but valid", () => {
     const r = buildAnnualReport(fixture(), { ...opts(), year: 2015 });
     expect(r.totals).toMatchObject({ rentCollected: 0, expenses: 0, net: 0, collectionPct: null });
-    expect(r.units).toEqual([{ unitId: null, unitName: "Whole plot", rentCollected: 0, rentExpected: 0, collectionPct: null, expenses: 0, net: 0 }]);
+    expect(r.units).toEqual([{ unitId: null, unitName: "Premises", rentCollected: 0, rentExpected: 0, collectionPct: null, expenses: 0, net: 0 }]);
     expect(r.reconciliation.ledgerBalanced).toBe(true);
   });
 });

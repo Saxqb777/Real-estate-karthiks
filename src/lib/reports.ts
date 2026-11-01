@@ -160,7 +160,7 @@ function cashDataAt(input: DashboardInput, asOf: Date, unitId?: string): CashDat
 
 const unitNameIn = (input: DashboardInput) => {
   const m = new Map(input.units.map((u) => [u.id, u.name]));
-  return (id: string | null) => (id === null ? "Whole plot" : (m.get(id) ?? "Unknown unit"));
+  return (id: string | null) => (id === null ? "Premises" : (m.get(id) ?? "Unknown unit"));
 };
 
 // ───────────────────────────── annual statement ─────────────────────────────
@@ -279,7 +279,7 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
   const wholePlot = sumAmounts(yearExpenses.filter((x) => x.unitId === null));
   unitRows.push({
     unitId: null,
-    unitName: "Whole plot",
+    unitName: "Premises",
     rentCollected: orphanRent,
     rentExpected: 0,
     collectionPct: null,
@@ -366,7 +366,7 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
     recon(`${byYear ? "years" : "months"}Expenses`, `Σ ${per} expenses = expenses`, totals.expenses, sum2(rows.map((m) => m.expenses))),
     recon(`${byYear ? "years" : "months"}Due`, `Σ ${per} rent due = rent that fell due`, totals.rentExpected, sum2(rows.map((m) => m.rentExpected))),
     recon("unitsRent", "Σ unit rent = rent collected", totals.rentCollected, sum2(unitRows.map((u) => u.rentCollected))),
-    recon("unitsExpenses", "Unit expenses + whole-plot expenses = expenses", totals.expenses, sum2(unitRows.map((u) => u.expenses))),
+    recon("unitsExpenses", "Unit expenses + premises expenses = expenses", totals.expenses, sum2(unitRows.map((u) => u.expenses))),
     recon("categories", "Σ expense categories = expenses", totals.expenses, sum2(expensesByCategory.map((c) => c.amount))),
     recon("expenseList", "Σ expense list = expenses", totals.expenses, sum2(expenses.map((x) => x.amount))),
     recon("net", "Rent collected − expenses = net cash", round2(totals.rentCollected - totals.expenses), totals.net),

@@ -236,7 +236,7 @@ function CategoryView({ data, view, push }: { data: DashboardData; view: Extract
                 <span className={s.rowMain}>
                   <span className={s.rowTitle}>{x.description || view.name}</span>
                   <span className={s.rowSub}>
-                    <span className="num">{formatDate(x.expenseDate)}</span> · {x.unit?.name ?? "Whole plot"}
+                    <span className="num">{formatDate(x.expenseDate)}</span> · {x.unit?.name ?? "Premises"}
                     {x.propertyTaxId && " · from property tax"}
                   </span>
                 </span>
@@ -364,7 +364,7 @@ function ExpenseView({ id }: { id: string }) {
         </div>
         <div>
           <dt>For</dt>
-          <dd>{x.unit?.name ?? "Whole plot"}</dd>
+          <dd>{x.unit?.name ?? "Premises"}</dd>
         </div>
         <div>
           <dt>Category</dt>

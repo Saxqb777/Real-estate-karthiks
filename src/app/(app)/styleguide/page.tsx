@@ -425,7 +425,7 @@ export default function StyleguidePage() {
                     variant="segment"
                     size="sm"
                     items={[
-                      { id: "plot", label: "Whole plot" },
+                      { id: "plot", label: "Premises" },
                       { id: "front", label: "Front" },
                       { id: "back", label: "Back" },
                     ]}
@@ -809,7 +809,7 @@ export default function StyleguidePage() {
             <Select defaultValue="repairs" options={[{ value: "repairs", label: "Repairs" }, { value: "tax", label: "Property Tax" }, { value: "eb", label: "Electricity" }]} />
           </Field>
           <Field label="Applies to">
-            <Tabs label="Applies to" variant="segment" size="sm" items={[{ id: "plot", label: "Whole plot" }, { id: "front", label: "Front" }, { id: "back", label: "Back" }]} defaultValue="back" />
+            <Tabs label="Applies to" variant="segment" size="sm" items={[{ id: "plot", label: "Premises" }, { id: "front", label: "Front" }, { id: "back", label: "Back" }]} defaultValue="back" />
           </Field>
           <Field label="Note">
             <Textarea defaultValue="Kitchen tap replaced by Murugan" />

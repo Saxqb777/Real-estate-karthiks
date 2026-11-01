@@ -50,7 +50,7 @@ export function UnitsCompare({ data, period, onDrill, onOpenUnit, className }: U
       scope: p.label,
       rows: [
         { label: "Rent collected", format: "inr", unit: (u) => u.periods[period].rentCollected, total: p.rentCollected, key: "rentCollected", scoped: true, tone: "income" },
-        { label: "Expenses", format: "inr", unit: (u) => u.periods[period].expenses, total: p.expenses, key: "expenses", scoped: true, tone: "expense", note: "Property column includes whole-plot expenses" },
+        { label: "Expenses", format: "inr", unit: (u) => u.periods[period].expenses, total: p.expenses, key: "expenses", scoped: true, tone: "expense", note: "Property column includes premises expenses" },
         { label: "Net cash", format: "inr", unit: (u) => u.periods[period].net, total: p.net, key: "netCash", scoped: true, tone: "signed" },
       ],
     },

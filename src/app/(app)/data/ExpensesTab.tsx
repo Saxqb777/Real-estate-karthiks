@@ -71,7 +71,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
     return [...set].sort((a, b) => b - a);
   }, [all.data, mode, year]);
 
-  const unitName = unitId === WHOLE_PLOT ? "Whole plot" : units.data?.items.find((u) => u.id === unitId)?.name;
+  const unitName = unitId === WHOLE_PLOT ? "Premises" : units.data?.items.find((u) => u.id === unitId)?.name;
   const catName = cats.data?.items.find((c) => c.id === categoryId)?.name;
   const scope = [periodText(period, mode), unitName, catName].filter(Boolean).join(" · ");
   const filtered = (period.kind === "year" && period.year !== currentYear(mode)) || Boolean(unitId) || Boolean(categoryId);
@@ -110,7 +110,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
                   {category(e)} <ProofMark count={proofCount(e)} />
                 </>
               }
-              bottom={`${formatDate(e.expenseDate)} · ${e.unit?.name ?? "Whole plot"}${e.description ? ` · ${e.description}` : ""}`}
+              bottom={`${formatDate(e.expenseDate)} · ${e.unit?.name ?? "Premises"}${e.description ? ` · ${e.description}` : ""}`}
             />
           ),
           footer: footerLabel,
@@ -120,7 +120,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
     : [
         { key: "date", header: "Paid on", sortValue: (e) => e.expenseDate, cell: (e) => <span className="num">{formatDate(e.expenseDate)}</span>, footer: footerLabel },
         { key: "category", header: "Category", sortValue: (e) => e.category.name, cell: category },
-        { key: "unit", header: "For", sortValue: (e) => e.unit?.name ?? "", cell: (e) => e.unit?.name ?? <span className="dim">Whole plot</span> },
+        { key: "unit", header: "For", sortValue: (e) => e.unit?.name ?? "", cell: (e) => e.unit?.name ?? <span className="dim">Premises</span> },
         { key: "desc", header: "What for", wrap: true, cell: what },
         { key: "proof", header: <ProofHead />, align: "center", width: 44, cell: (e) => <ProofMark count={proofCount(e)} /> },
         { key: "amount", header: "Amount", numeric: true, sortValue: (e) => e.amount, cell: (e) => <span className="neg">{money(e.amount)}</span>, footer: footerTotal },
@@ -163,7 +163,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
                   {unitLabel(u)}
                 </option>
               ))}
-              <option value={WHOLE_PLOT}>Whole plot (shared)</option>
+              <option value={WHOLE_PLOT}>Premises</option>
             </Select>
             <Select compact aria-label="Category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={s.filterSelect}>
               <option value="">All categories</option>
@@ -236,7 +236,7 @@ function ExpenseDrawer({ sel, goto }: { sel: ReturnType<typeof useSelection>; go
 
   const view = e ? (
     <div className={s.detail}>
-      <DetailHero label="Spent" tone="coral" value={money(e.amount)} sub={`${e.category.name} · ${e.unit?.name ?? "Whole plot"}`} />
+      <DetailHero label="Spent" tone="coral" value={money(e.amount)} sub={`${e.category.name} · ${e.unit?.name ?? "Premises"}`} />
       <Facts
         items={[
           { label: "Paid on", value: formatDate(e.expenseDate), num: true },
@@ -249,7 +249,7 @@ function ExpenseDrawer({ sel, goto }: { sel: ReturnType<typeof useSelection>; go
               </span>
             ),
           },
-          { label: "For", value: e.unit?.name ?? "Whole plot (shared)" },
+          { label: "For", value: e.unit?.name ?? "Premises" },
           {
             label: "What for",
             // the bill's clip (owner, 10/10/2026: clip only, no files showing); the automatic tax expense has none

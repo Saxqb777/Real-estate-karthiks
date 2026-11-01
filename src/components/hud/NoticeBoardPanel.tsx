@@ -129,7 +129,7 @@ function Todo({ a, today, onEdit }: { a: ActionDTO; today: string; onEdit: () =>
       <button type="button" className={b.todoMain} onClick={onEdit}>
         <span className={b.todoTitle}>{a.title}</span>
         <span className={b.todoMeta}>
-          {a.unit?.name ?? "Whole property"}
+          {a.unit?.name ?? "Premises"}
           {d && <span className={cx(d.late && b.lateText)}> · {d.text}</span>}
         </span>
       </button>

@@ -682,6 +682,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   globals.css (48px, 4px border, blue arc ¾ … ½ turn, 0.9 s spin; slower for reduced motion) on the dark background — the
   overview arrival cover and the sign-in hand-over ("Arriving at your estate…" text + bar removed). Preview branch
   pending/loading-ring (also carries the Due/Paid tax filter).
+- 1/11/2026: "PREMISES" replaces "Whole property" / "Whole plot" / "Whole plot (shared)" everywhere the owner sees it
+  (owner picked it from a list; "All units" stays as the filter's everything option): expense "For" box + Expenses filter
+  + tables + drawers, to-do "For", drill-downs, compare note, report / dashboard rows (unitName "Premises"), explain
+  notes ("premises expenses"). Code names stay (WHOLE_PLOT, unitId null). Preview branch pending/loading-ring.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
