@@ -50,7 +50,7 @@ export function ActionForm({ action, defaults, onSaved, onCancel, frame = inline
         <Field label="What needs doing?" required span="full" error={form.error("title")}>
           <Input {...form.text("title")} icon={<ListTodo />} autoComplete="off" data-autofocus />
         </Field>
-        <Field label="Due by" aside="optional" error={form.error("dueDate")}>
+        <Field label="Due by" error={form.error("dueDate")}>
           <DateInput {...form.date("dueDate")} />
         </Field>
         <Field label="For" error={form.error("unitId")}>

@@ -110,7 +110,7 @@ export function PlotForm({ plot, onSaved, onCancel, frame = inlineFrame, submitL
           <Field label="Town" required error={form.error("townName")} hint="Shown on receipts and the header">
             <Input {...form.text("townName")} icon={<MapPinned />} autoComplete="off" />
           </Field>
-          <Field label="Site plan image" aside="optional" error={form.error("sitePlanImageUrl")} hint="A https:// link or /site-plan.png">
+          <Field label="Site plan image" error={form.error("sitePlanImageUrl")} hint="A https:// link or /site-plan.png">
             <Input {...form.text("sitePlanImageUrl")} icon={<ImageIcon />} autoComplete="off" />
           </Field>
         </FormGrid>

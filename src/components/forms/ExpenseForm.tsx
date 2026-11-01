@@ -76,7 +76,7 @@ export function ExpenseForm({ expense, defaults, onSaved, onCancel, frame = inli
           <Field label="For" error={form.error("unitId")} hint={v.unitId ? undefined : "Shared costs: compound wall, borewell, legal fees"}>
             <Select {...form.select("unitId")} options={[{ value: "", label: "Whole plot (shared)" }, ...unitOptions(units.data?.items, { keepId: expense?.unitId })]} />
           </Field>
-          <Field label="What was it for?" aside="optional" span="full" error={form.error("description")}>
+          <Field label="What was it for?" span="full" error={form.error("description")}>
             {/* the clip (owner, 10/10/2026: clip only, no files showing) in the corner of the "What for" box */}
             <Textarea
               {...form.text("description")}

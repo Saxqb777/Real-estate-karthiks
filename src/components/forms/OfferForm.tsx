@@ -52,7 +52,7 @@ export function OfferForm({ offer, unitId, purchasePrice, onSaved, onCancel, fra
         <Field label="Offered on" required error={form.error("offerDate")}>
           <DateInput {...form.date("offerDate")} max={toInputDate(todayIST())} />
         </Field>
-        <Field label="Who offered / notes" aside="optional" span="full" error={form.error("notes")}>
+        <Field label="Who offered / notes" span="full" error={form.error("notes")}>
           <Textarea {...form.text("notes")} />
         </Field>
       </FormGrid>

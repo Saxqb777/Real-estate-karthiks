@@ -183,7 +183,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         <Field label="First day" required error={form.error("startDate")} hint={editing ? undefined : "The day they move in (can be in the future)"}>
           <DateInput {...form.date("startDate")} />
         </Field>
-        <Field label="Last day of tenancy" aside="optional" error={form.error("endDate")} hint="Leave empty while they live there">
+        <Field label="Last day of tenancy" error={form.error("endDate")} hint="Leave empty while they live there">
           <DateInput {...form.date("endDate")} />
         </Field>
         <Field
@@ -260,7 +260,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
             <Field label="Refunded on" error={form.error("depositRefundDate")}>
               <DateInput {...form.date("depositRefundDate")} />
             </Field>
-            <Field label="Move-out notes" aside="optional" span="full" error={form.error("moveOutNotes")}>
+            <Field label="Move-out notes" span="full" error={form.error("moveOutNotes")}>
               <Textarea {...form.text("moveOutNotes")} />
             </Field>
           </FormGrid>

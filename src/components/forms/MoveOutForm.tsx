@@ -50,7 +50,6 @@ export function MoveOutForm({ lease, onSaved, onCancel, frame = inlineFrame, sub
     success: () => `Moved out · ${lease.tenant.name} left ${lease.unit.name}`,
     onSaved,
   });
-  const v = form.values;
 
   const body = (
     <FormBody form={form} intro={<>{lease.tenant.name} has lived in {lease.unit.name} since {formatDate(lease.startDate)}.</>}>
@@ -65,10 +64,10 @@ export function MoveOutForm({ lease, onSaved, onCancel, frame = inlineFrame, sub
         >
           <NumberInput {...form.number("depositRefundedAmount")} currency placeholder="0" max={lease.securityDeposit || undefined} />
         </Field>
-        <Field label="Refunded on" error={form.error("depositRefundDate")} aside={v.depositRefundedAmount ? undefined : "optional"}>
+        <Field label="Refunded on" error={form.error("depositRefundDate")}>
           <DateInput {...form.date("depositRefundDate")} max={today} />
         </Field>
-        <Field label="Notes" aside="optional" span="full" error={form.error("moveOutNotes")}>
+        <Field label="Notes" span="full" error={form.error("moveOutNotes")}>
           <Textarea {...form.text("moveOutNotes")} />
         </Field>
       </FormGrid>

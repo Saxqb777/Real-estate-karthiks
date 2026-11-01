@@ -213,7 +213,7 @@ export default function StyleguidePage() {
       <Field label="Lease start" required>
         <DateInput value={date} onValueChange={setDate} />
       </Field>
-      <Field label="Notes" span="full" aside="optional">
+      <Field label="Notes" span="full">
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
       </Field>
     </FormGrid>

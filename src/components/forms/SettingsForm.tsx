@@ -102,10 +102,10 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
 
       <FormSection title="Revenue officer">
         <FormGrid cols={2}>
-          <Field label="Name" aside="optional" error={form.error("taxCollectorName")}>
+          <Field label="Name" error={form.error("taxCollectorName")}>
             <Input {...form.text("taxCollectorName")} icon={<UserRound />} autoComplete="off" />
           </Field>
-          <Field label="Phone" aside="optional" error={form.error("taxCollectorPhone")}>
+          <Field label="Phone" error={form.error("taxCollectorPhone")}>
             <Input {...form.text("taxCollectorPhone")} icon={<Phone />} type="tel" autoComplete="off" />
           </Field>
         </FormGrid>
@@ -113,7 +113,7 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
 
       <FormSection title="Email">
         <FormGrid cols={2}>
-          <Field label="Your email" aside="optional" span="full" error={form.error("ownerEmail")} hint="“Email me” on the To-dos list sends your pending to-dos here">
+          <Field label="Your email" span="full" error={form.error("ownerEmail")} hint="“Email me” on the To-dos list sends your pending to-dos here">
             <Input {...form.text("ownerEmail")} icon={<Mail />} type="email" autoComplete="email" />
           </Field>
         </FormGrid>

@@ -108,7 +108,7 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
               <option value="Shop" />
             </datalist>
           </Field>
-          <Field label="Address" aside="optional" span="full" error={form.error("address")}>
+          <Field label="Address" span="full" error={form.error("address")}>
             <Input {...form.text("address")} icon={<MapPin />} autoComplete="off" />
           </Field>
         </FormGrid>
@@ -164,10 +164,10 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
 
       <FormSection title="Electricity" note="TNPDCL">
         <FormGrid cols={2}>
-          <Field label="Consumer number" aside="optional" error={form.error("electricityConsumerNumber")}>
+          <Field label="Consumer number" error={form.error("electricityConsumerNumber")}>
             <Input {...form.text("electricityConsumerNumber")} icon={<Hash />} autoComplete="off" />
           </Field>
-          <Field label="Pay link" aside="optional" error={form.error("electricityPayUrl")} hint="Opens from the pole in the 3D view">
+          <Field label="Pay link" error={form.error("electricityPayUrl")} hint="Opens from the pole in the 3D view">
             <Input {...form.text("electricityPayUrl")} icon={<Zap />} type="url" autoComplete="off" suffix={v.electricityPayUrl ? <ExternalLink width={14} height={14} /> : undefined} />
           </Field>
         </FormGrid>
