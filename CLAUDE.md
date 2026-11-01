@@ -686,7 +686,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   + tables + drawers, to-do "For", drill-downs, compare note, report / dashboard rows (unitName "Premises"), explain
   notes ("premises expenses"). Code names stay (WHOLE_PLOT, unitId null). DEPLOYED 1/11/2026.
 - 1/11/2026: SIGN-OUT cover = the same blue ring (owner: "even this should be the blue loading circle"): "Leaving the
-  estate…" text removed; .leaving shows .pe-spinner on the dark background until logout. Preview branch pending/leave-ring.
+  estate…" text removed; .leaving shows .pe-spinner until logout. Then (owner: "the blue circle should load behind a
+  background like this not black screen", pointing at mock A): every loading cover (overview arrival, sign-in hand-over,
+  sign-out) gets .pe-loadbg (globals.css) — the estate picture (public/estate-backdrop.jpg) blurred 26px, dimmed .62,
+  slowly drifting (14 s; still for reduced motion) behind the ring; the ring's track is white .22 + a soft shadow.
+  Preview branch pending/leave-ring.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

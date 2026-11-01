@@ -117,7 +117,7 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
       <AnimatePresence>
         {/* the arrival screen only on the overview itself; behind Data / Config the world just loads quietly */}
         {!arrived && active && (
-          <motion.div key="arrival" className={s.arrival} role="status" exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
+          <motion.div key="arrival" className={cx(s.arrival, "pe-loadbg")} role="status" exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
             <span className="pe-spinner" aria-label="Loading" />
           </motion.div>
         )}
@@ -496,7 +496,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       <LeavePrompt open={askLeave} onStay={stay} onLeave={driveOff} />
       {leaving && (
         <motion.div
-          className={s.leaving}
+          className={cx(s.leaving, "pe-loadbg")}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.9, ease: "easeIn" }}

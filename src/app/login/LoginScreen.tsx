@@ -558,7 +558,7 @@ export function LoginScreen({ next }: { next: string }) {
         {stage === "done" && (
           <motion.div
             key="travel"
-            className={s.travel}
+            className={cx(s.travel, "pe-loadbg")}
             role="status"
             initial={reduce ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
