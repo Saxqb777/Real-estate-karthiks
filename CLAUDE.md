@@ -676,16 +676,15 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   removed (expense / offer / tenant / settings / lease / move-out / to-do / unit forms); required fields keep their blue ✱.
   The ▲ / ▼ % vs-last-year chips STAY (owner). DEPLOYED 1/11/2026 (f58806e).
 - 1/11/2026: PROPERTY TAX filter = Due · Paid only (owner: "just show paid and dues not all years"); "All years" removed.
-  It opens on Due when any year is due, else on Paid. Preview branch pending/tax-due-paid.
+  It opens on Due when any year is due, else on Paid. DEPLOYED 1/11/2026 with the loading ring + Premises.
 - 1/11/2026: LOADING SCREEN = a plain BLUE RING, no words (owner, after mocks A frosted card / B site plan drawing /
   C floating island / D ring + name: "lets do a basic blue circle loading without any words"): .pe-spinner in
   globals.css (48px, 4px border, blue arc ¾ … ½ turn, 0.9 s spin; slower for reduced motion) on the dark background — the
-  overview arrival cover and the sign-in hand-over ("Arriving at your estate…" text + bar removed). Preview branch
-  pending/loading-ring (also carries the Due/Paid tax filter).
+  overview arrival cover and the sign-in hand-over ("Arriving at your estate…" text + bar removed). DEPLOYED 1/11/2026.
 - 1/11/2026: "PREMISES" replaces "Whole property" / "Whole plot" / "Whole plot (shared)" everywhere the owner sees it
   (owner picked it from a list; "All units" stays as the filter's everything option): expense "For" box + Expenses filter
   + tables + drawers, to-do "For", drill-downs, compare note, report / dashboard rows (unitName "Premises"), explain
-  notes ("premises expenses"). Code names stay (WHOLE_PLOT, unitId null). Preview branch pending/loading-ring.
+  notes ("premises expenses"). Code names stay (WHOLE_PLOT, unitId null). DEPLOYED 1/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
