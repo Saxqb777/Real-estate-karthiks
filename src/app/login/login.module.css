@@ -631,41 +631,11 @@
   gap: 16px;
   background: var(--bg-0);
 }
-.travelText {
-  font-family: var(--ff-body);
-  font-size: 17px;
-  font-weight: 500;
-  color: #fff;
-}
-.travelBar {
-  width: 220px;
-  height: 4px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 2px;
-}
-.travelBar i {
-  display: block;
-  height: 100%;
-  width: 40%;
-  background: var(--marigold);
-  border-radius: 2px;
-  animation: travel 1.1s ease-in-out infinite;
-}
-@keyframes travel {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(250%);
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .pulse,
   .pinBob,
   .press,
-  .travelBar i,
   .minor {
     animation: none;
   }

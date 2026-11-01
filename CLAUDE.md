@@ -677,10 +677,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   The ▲ / ▼ % vs-last-year chips STAY (owner). DEPLOYED 1/11/2026 (f58806e).
 - 1/11/2026: PROPERTY TAX filter = Due · Paid only (owner: "just show paid and dues not all years"); "All years" removed.
   It opens on Due when any year is due, else on Paid. Preview branch pending/tax-due-paid.
-- 1/11/2026: LOADING SCREEN options shown to the owner (mocks, not built): A frosted glass card over the blurred estate
-  (name + IST day/time + thin white line) · B the site plan draws itself in blue lines (plot, both houses, gates,
-  23′3″ / 22′3″) · C the floating island at the hour (sky gradient, sun, clouds, island bobbing, name + line) · D minimal
-  white ring around a house icon (name + IST time). Waiting for the owner's pick.
+- 1/11/2026: LOADING SCREEN = a plain BLUE RING, no words (owner, after mocks A frosted card / B site plan drawing /
+  C floating island / D ring + name: "lets do a basic blue circle loading without any words"): .pe-spinner in
+  globals.css (48px, 4px border, blue arc ¾ … ½ turn, 0.9 s spin; slower for reduced motion) on the dark background — the
+  overview arrival cover and the sign-in hand-over ("Arriving at your estate…" text + bar removed). Preview branch
+  pending/loading-ring (also carries the Due/Paid tax filter).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

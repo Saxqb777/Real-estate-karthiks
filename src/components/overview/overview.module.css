@@ -477,7 +477,8 @@
   color: var(--marigold);
 }
 
-/* arrival cover — matches the login hand-over screen so sign-in → estate is one continuous shot */
+/* arrival cover — matches the login hand-over screen so sign-in → estate is one continuous shot; just the blue ring
+   (.pe-spinner in globals.css, owner 1/11/2026: no words) */
 .arrival {
   position: fixed;
   inset: 0;
@@ -489,37 +490,6 @@
   gap: 16px;
   background: var(--bg-0);
 }
-.arrivalText {
-  font-family: var(--ff-display);
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--marigold);
-}
-.arrivalBar {
-  width: 220px;
-  height: 4px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
-}
-.arrivalBar i {
-  display: block;
-  height: 100%;
-  width: 40%;
-  background: var(--marigold);
-  border-radius: 2px;
-  animation: arrivalSlide 1.1s ease-in-out infinite;
-}
-@keyframes arrivalSlide {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(250%);
-  }
-}
-
 /* CENTRE GAME MENU (owner chose option 3): "Open" on any card shows its panel as one wide window in the middle of the
    screen over a darkened world (like a game's inventory screen). Click the dark area / ✕ / Esc to go back. */
 .centreShade {

@@ -568,10 +568,7 @@ export function LoginScreen({ next }: { next: string }) {
               ease: "easeIn",
             }}
           >
-            <span className={s.travelText}>Arriving at your estate…</span>
-            <span className={s.travelBar}>
-              <i />
-            </span>
+            <span className="pe-spinner" aria-label="Loading" />
           </motion.div>
         )}
       </AnimatePresence>

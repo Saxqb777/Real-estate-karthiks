@@ -118,10 +118,7 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
         {/* the arrival screen only on the overview itself; behind Data / Config the world just loads quietly */}
         {!arrived && active && (
           <motion.div key="arrival" className={s.arrival} role="status" exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
-            <span className={s.arrivalText}>Arriving at your estate…</span>
-            <span className={s.arrivalBar}>
-              <i />
-            </span>
+            <span className="pe-spinner" aria-label="Loading" />
           </motion.div>
         )}
       </AnimatePresence>
