@@ -245,7 +245,7 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
     case "plot":
       return { title: `Plot · ${data.plot.areaSqft.toLocaleString("en-IN")} sqft`, lines: [`${data.plot.frontWidthFt}′ front · ${data.plot.depthFt}′ deep`], tone: "neutral", action: "Click for the plot" };
     case "photographer":
-      return { title: "Photographer", lines: ["Interior photos"], tone: "neutral", action: "Click to see the photos" };
+      return { title: "CCTV", lines: ["Interior photos"], tone: "neutral", action: "Click to see the photos" };
   }
 }
 
@@ -259,7 +259,7 @@ const TAG_NAME: Record<SceneObjectKind, string> = {
   tenant: "Tenant",
   taxstamp: "Revenue officer",
   plot: "Plot marker",
-  photographer: "Photographer",
+  photographer: "CCTV",
 };
 export function WorldHint({ obj, data }: { obj: SceneObject | null; data: DashboardData }) {
   const isClient = useIsClient();
@@ -663,6 +663,6 @@ function useCardParts({
         ),
       };
     case "photographer":
-      return { eyebrow: "Photographer", title: "Interior photos", body: null, actions: details };
+      return { eyebrow: "CCTV", title: "Interior photos", body: null, actions: details };
   }
 }

@@ -361,7 +361,7 @@ export interface DogFamily {
  * The dog family on the lane side (owner, 9/10/2026: "remove the dog from front and keep 1 big dog here and 2 babies
  * with it … on the side of the property"): the mother lies on the open grass between the banana clumps, off the side
  * gate's kolam, facing the front — inside the garden stroller's loop and clear of the property manager's walk down the
- * lane, the back tenant at Gate B and the photographer by the hand pump.
+ * lane and the back tenant at Gate B.
  */
 export function dogFamily(layout: Pick<SiteLayout, "plot">): DogFamily {
   const [FL, , , BL] = layout.plot.polygon;
@@ -502,7 +502,7 @@ export function motherLook(fam: DogFamily, t: number): number {
   return -0.45 + Math.sin(t * 0.13) * 0.35;
 }
 
-// ───────────────────────────── the property manager, the photographer, the cow ─────────────────────────────
+// ───────────────────────────── the property manager, the cow ─────────────────────────────
 
 export const MANAGER_SPEED = 2.1; // ft/s
 export const MANAGER_WRITE = 4; // s at each corner
@@ -542,14 +542,6 @@ export function managerAt(loop: ReturnType<typeof managerLoop>, t: number): { x:
   }
   const last = loop.segs[0];
   return { x: last.a.x, z: last.a.z, dx: last.b.x - last.a.x, dz: last.b.z - last.a.z, writing: true, walked };
-}
-
-/** The photographer and his tripod on the grass beside the hand pump, out on the lane side of the front house. */
-export function photographerSpot(layout: Pick<SiteLayout, "plot">): Pt {
-  const [FL, , , BL] = layout.plot.polygon;
-  const D = layout.plot.depthFt;
-  const z = D * 0.26;
-  return { x: FL.x + ((BL.x - FL.x) * z) / D - 10, z };
 }
 
 /** The zebu cow grazing on the front grass under the palms at the right (she sways ±1.5 ft along x). */

@@ -14,7 +14,7 @@ import type { Env } from "./env";
 import { Hotspot, spotKey, useScene, type V3 } from "./Interact";
 import { gateNear } from "./gate-state";
 import { EDGE_CLIP, G } from "./materials";
-import { bake, ball, box, cone, rod, type Part } from "./bake";
+import { ball, box, cone, rod, type Part } from "./bake";
 import { SKIN, personLimbs, posePerson, rigGeometry, rigMaterials, type Limb, type Outfit, type RigMaterials } from "./rig";
 import { blobTex } from "./textures";
 import {
@@ -26,7 +26,6 @@ import {
   managerAt,
   managerLoop,
   motherLook,
-  photographerSpot,
   pupAt,
   streetSchedule,
   tenantAt,
@@ -733,126 +732,3 @@ export function PoliceGuard({ env, position, rotationY = 0 }: { env: RefObject<E
   );
 }
 
-// ───────────────────────────── photographer by the hand pump ─────────────────────────────
-
-/** A man in a blue shirt and dark trousers with a camera strap. */
-function photographerLimbs(): Limb[] {
-  const limbs = personLimbs({ top: "#3f6fa8", bottom: "#2c2f38", wrap: "pants", skin: SKIN.mid, hair: "short" });
-  limbs[0].parts.push(box([0, 3.7, 0.28], [0.5, 0.08, 0.02], "#2a2a2a")); // strap across the chest
-  return limbs;
-}
-
-/** A black camera with a lens and a flash unit on a three-legged stand (stand origin = the floor under the head). */
-function tripodParts(): Part[] {
-  const black = "#151515";
-  const metal = "#6d6f73";
-  const H = 4.35; // head height
-  const parts: Part[] = [];
-  for (let i = 0; i < 3; i++) {
-    const ang = (i / 3) * Math.PI * 2 + Math.PI / 6;
-    const fx = Math.sin(ang) * 1.05;
-    const fz = Math.cos(ang) * 1.05;
-    const len = Math.hypot(fx, H - 0.1, fz);
-    // a leg from the head down to its foot: tilt about the axis perpendicular to its direction
-    parts.push({ g: "cyl", p: [fx / 2, H / 2, fz / 2], s: [0.09, len, 0.09], c: metal, r: [Math.atan2(-fz, H), 0, Math.atan2(fx, H)] });
-  }
-  parts.push({ g: "cyl", p: [0, H - 0.6, 0], s: [0.12, 1.2, 0.12], c: metal }); // centre column
-  parts.push({ g: "box", p: [0, H + 0.08, 0], s: [0.36, 0.16, 0.36], c: black }); // head
-  parts.push({ g: "box", p: [0, H + 0.45, 0], s: [0.82, 0.55, 0.48], c: black }); // camera body
-  parts.push({ g: "cyl", p: [0, H + 0.43, 0.45], s: [0.38, 0.5, 0.38], c: "#202020", r: [Math.PI / 2, 0, 0] }); // lens
-  parts.push({ g: "cyl", p: [0, H + 0.43, 0.71], s: [0.3, 0.03, 0.3], c: "#3a5a8a", r: [Math.PI / 2, 0, 0] }); // glass
-  parts.push({ g: "box", p: [0.18, H + 0.88, 0.05], s: [0.36, 0.32, 0.3], c: black }); // flash unit
-  parts.push({ g: "box", p: [0.18, H + 0.88, 0.21], s: [0.3, 0.2, 0.03], c: "#e9e9e9" }); // flash window
-  parts.push({ g: "box", p: [-0.15, H + 0.65, -0.26], s: [0.4, 0.3, 0.05], c: "#2b3b4a" }); // screen at the back
-  return parts;
-}
-
-/**
- * Owner, 6/10/2026: a photographer on the grass beside the hand pump, by 116/B7 (the front unit), clear of the garden
- * walker's loop and the property manager's path. Camera on a TRIPOD (reads better than a hand-held one at this cartoon
- * scale): he stands at the camera and takes two pictures every 15 s — each shot FLASHES (white burst + a quick point light).
- * Clickable (kind "photographer") → his window shows the front unit's interior photos (hud/PhotosPanel).
- */
-export function Photographer({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
-  const { geo, rig } = useRig(photographerLimbs, []);
-  const stand = useMemo(() => tripodParts(), []);
-  const root = useRef<THREE.Group>(null);
-  const flash = useRef<THREE.Sprite>(null);
-  const light = useRef<THREE.PointLight>(null);
-  const spot = useMemo(() => {
-    const p = photographerSpot(layout); // between the pump (D·0.2) and the banana clumps (D·0.36)
-    const front = layout.slots.find((s) => s.slot === "front");
-    const aim = front ? { x: (front.rect.x0 + front.rect.x1) / 2, z: (front.rect.z0 + front.rect.z1) / 2 } : { x: p.x + 10, z: p.z };
-    const X = world.x(p.x);
-    const Z = world.z(p.z);
-    return { X, Z, yaw: Math.atan2(world.x(aim.x) - X, world.z(aim.z) - Z) };
-  }, [layout, world]);
-  // owner, 6/10/2026: no leaning in, no turning the stand — he just stands at the camera; every 15 s two clicks, two flashes
-  const CYCLE = 15;
-  const SHOTS = [1.2, 2.6]; // two clicks, two flashes (owner)
-  useFrame(() => {
-    const g = root.current;
-    if (!g) return;
-    const e = env.current;
-    const t = e.t - Math.floor(e.t / CYCLE) * CYCLE;
-    g.rotation.y = spot.yaw;
-    posePerson(rig.u, "idle", 0, e.t, 4.1);
-    // right hand to the shutter button for the click, then back down
-    const press = t < 0.5 ? smoothstep(0, 0.5, t) : t < 3.2 ? 1 : t < 3.7 ? 1 - smoothstep(3.2, 3.7, t) : 0;
-    const a = rig.u.uAng.value;
-    a[P_ARM_R] = a[P_ARM_R] * (1 - press) - 1.1 * press;
-    let f = 0;
-    for (const s of SHOTS) {
-      const d = t - s;
-      if (d >= 0 && d < 0.35) f = Math.max(f, Math.exp(-d * 18));
-    }
-    if (flash.current) {
-      flash.current.visible = f > 0.02;
-      flash.current.scale.setScalar(0.6 + f * 2.2);
-      flash.current.material.opacity = f;
-    }
-    if (light.current) light.current.intensity = f * 60;
-  });
-  const anchor = useMemo<V3>(() => [spot.X, 7.4, spot.Z], [spot]);
-  return (
-    <Hotspot spot={{ key: "photographer", kind: "photographer", anchor }}>
-      <group ref={root} position={[spot.X, 0, spot.Z]}>
-        <RigMesh geo={geo} rig={rig} />
-        {/* generous click target: the man and his stand */}
-        <mesh geometry={G.box()} position={[0, 3.2, 0.8]} scale={[3.4, 6.8, 3.6]} visible={false} userData={{ pickFirst: true }} />
-        <group position={[0, 0, 1.6]}>
-          <StandMesh parts={stand} />
-          {/* the flash burst at the flash unit: a soft white glow (not a ball) */}
-          <sprite ref={flash} position={[0.18, 5.23, 0.3]} visible={false}>
-            <spriteMaterial map={FLASH_TEX} color="#ffffff" transparent opacity={0} depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
-          </sprite>
-          <pointLight ref={light} position={[0.18, 5.23, 0.8]} color="#f4f7ff" intensity={0} distance={22} decay={2} />
-        </group>
-      </group>
-    </Hotspot>
-  );
-}
-
-function StandMesh({ parts }: { parts: Part[] }) {
-  const geo = useMemo(() => bake(parts), [parts]);
-  useEffect(() => () => geo.dispose(), [geo]);
-  return <mesh geometry={geo} material={STAND_MAT} castShadow />;
-}
-/** Soft round glow for the camera flash (white core fading out). */
-const FLASH_TEX = (() => {
-  if (typeof document === "undefined") return null;
-  const c = document.createElement("canvas");
-  c.width = c.height = 64;
-  const g = c.getContext("2d")!;
-  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grad.addColorStop(0, "rgba(255,255,255,1)");
-  grad.addColorStop(0.18, "rgba(255,255,255,0.95)");
-  grad.addColorStop(0.45, "rgba(220,235,255,0.35)");
-  grad.addColorStop(1, "rgba(220,235,255,0)");
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 64, 64);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-})();
-const STAND_MAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.25 });

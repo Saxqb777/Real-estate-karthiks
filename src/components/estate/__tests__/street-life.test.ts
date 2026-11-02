@@ -1,6 +1,6 @@
 // The people on the grass (owner, 9/10/2026: a passer-by stood right beside the waiting tenant, both on the gate kolam).
 // Plays everyone's day — the passers-by, both tenants, the dog family (a mother and her 2 pups on the lane side), the
-// property manager, the revenue officer, the photographer, the policeman and the cow — over two hours of scene time on
+// property manager, the revenue officer, the policeman and the cow — over two hours of scene time on
 // three plot sizes (and with the front house empty) and checks: nobody stands within 4 ft of anybody, nobody walks
 // through someone standing, nobody stands on a kolam, and the passers-by take turns on the front grass.
 import { describe, expect, it } from "vitest";
@@ -18,7 +18,6 @@ import {
   legTimeline,
   managerAt,
   managerLoop,
-  photographerSpot,
   pupAt,
   streetSchedule,
   tenantAt,
@@ -65,7 +64,6 @@ function cast(L: SiteLayout) {
   const statics: Body[] = [
     // she's ~3.4 ft nose to rump (+ the tail curled round): a 1.9 ft body
     { who: "dog", p: { x: fam.x, z: fam.z }, standing: true, r: 1.9 },
-    { who: "photographer", p: photographerSpot(L), standing: true, r: 1.3 },
     { who: "policeman", p: mopedFrame(L).at(GUARD_AT.x, GUARD_AT.z), standing: true, r: 0.7 },
   ];
   const kolams = tenants.map((t) => kolamCentre(t.sign!));

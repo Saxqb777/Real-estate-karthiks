@@ -1,5 +1,5 @@
 "use client";
-// The photographer by the front unit (owner, 6/10/2026): his window shows the interior photos — design D "no box"
+// The CCTV camera on the front-left corner pillar (owner 2/11/2026; was the photographer): its window shows the interior photos — design D "no box"
 // (owner, 9/10/2026): no frame and no title (no unit name), the photos float over the darkened world with only 📌 / ✕
 // above them; 3 across on every screen, no enlarge view (owner). Photos live under /interiors/ (behind the login — see
 // middleware matcher).

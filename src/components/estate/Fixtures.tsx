@@ -4,6 +4,7 @@
 //   EB pole + meter (on the grass by the gate) → electricity · tax collector + moped (TaxCollector.tsx) → property tax ·
 //   survey stone + flag → plot.
 // Positions come from layout.fixtures (src/lib/site-layout.ts, unit tested). Each is a <Hotspot>.
+import { CctvCam } from "./CctvCam";
 import { Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
@@ -48,6 +49,8 @@ export function Fixtures({ layout, world, env, cues, lampLight, crows }: { layou
       {/* property tax: the tax collector's moped on the grass right of the plot (owner, 9/10/2026; was a bamboo hut) */}
       <TaxCollector layout={layout} world={world} env={env} due={cues?.tax === "due"} />
       <PlotMarker layout={layout} world={world} env={env} />
+      {/* CCTV camera on the lane-wall pillar facing 116/B7's veranda → interior photos (owner 2/11/2026; replaced the photographer) */}
+      <CctvCam layout={layout} world={world} env={env} />
     </group>
   );
 }

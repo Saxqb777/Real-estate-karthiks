@@ -711,6 +711,15 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   a vignette (.cctvFeed) and a slight wash (the colour tint stays at .16). "Unsaved" / "Showing <field>" chips sit under
   the clock. Preview.tsx (useCctvClock / cctvStamp) + .osd* in config.module.css. DEPLOYED 2/11/2026 (4bcfb2c) with the
   CCTV power-on + chart animations (owner: "deploy").
+- 2/11/2026: CCTV CAMERA replaces the PHOTOGRAPHER (owner: drone mocked first → "no need drone", "replace the cctv for the
+  camera man so remove him"): estate/CctvCam.tsx — a white bullet camera (black lens front, blinking red light, no visor:
+  from the high default view a visor hid the lens) on a wall bracket on top of the LANE-WALL PILLAR facing 116/B7's veranda
+  (nearest the default view; nothing else clickable there), watching the lane, tilted down, slow ±16° sweep. Mounted in
+  Fixtures (scenery: stays with Life off; the photographer lived in Life). Same hotspot (kind / key "photographer") → the
+  interior photos window; hover / "?" name "CCTV". Photographer, tripod, flash + photographerSpot (and its street-life test
+  entry) deleted. Spot options shown to the owner: 1 lane-wall pillar (built) · 2 Gate A corner pillar (busy: gate,
+  mailbox, tenant, EB pole) · 3 on 116/B7's wall above the veranda. Preview branch pending/cctv-cam (pending/drone kept
+  locally, unused).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

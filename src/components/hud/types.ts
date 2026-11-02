@@ -24,7 +24,7 @@ export type PanelTarget =
   | { kind: "noticeboard" }
   | { kind: "pole" }
   | { kind: "tax" }
-  /** the photographer by 116/B7: interior photos of the front unit */
+  /** the CCTV camera on the front-left corner pillar: interior photos of the front unit */
   | { kind: "photos" };
 
 export type PanelKind = PanelTarget["kind"];
