@@ -804,6 +804,14 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   Reproduced and checked in a standalone page with the real geometry: before, input 62 / button 50; after, input,
   button and separator all 62, title block 59.6. NOT run against the real app — `npm install` is unavailable in this
   session, so this is a CSS-only change verified by measurement, not a screenshot of the built site.
+- 2/11/2026: KIND / TYPE BOXES FIXED (owner: "the drop down here is broken doesnt open up list if something is input"): the
+  to-do "Kind" and Config unit "Type" were text boxes with the browser's own suggestion list (datalist), which only shows
+  the entries matching what's typed. Now ui ComboInput: the same glass list as every Select, tap the box / ⌄ / ↓ = the
+  WHOLE list (current one ticked), typing highlights the matching row (Enter takes it), a new word is kept as typed.
+  Choices = the usual ones + kinds already used in the records (prod to-dos have Renovation, Software), "Custom" last
+  (forms/kind-choices.ts, tested). SelectMenu `typed` mode lets letters / space / Home / End through to the box; every
+  dropdown list now keeps inside the visible screen when a phone keyboard is up (visualViewport). DEPLOYED 2/11/2026
+  (owner: "just deploy dropdown fix"; alone — the black birds and the period pills stayed in preview).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
