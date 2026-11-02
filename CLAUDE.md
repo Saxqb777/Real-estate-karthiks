@@ -716,11 +716,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   left will look good"): estate/CctvCam.tsx — a white PTZ DOME camera (white domed housing, grey band, glossy smoked black
   dome underneath) hanging from a curved white arm clamped halfway up the LEFT EB pole (fixtures.poles[1], off the lane
   corner — not a hotspot, so no clash with the Electricity Board pole), steel straps + a grey junction box behind; real
-  size-ish (small), the arm out over the lane-side grass (clear of Gate A, its kolam and the waiting tenant), static (no
+  size-ish (small; then 25% smaller — owner: "a bit smaller", K = 0.75 in CctvCam), the arm out over the lane-side grass (clear of Gate A, its kolam and the waiting tenant), static (no
   LED). Mounted in Fixtures (scenery: stays with Life off; the photographer lived in Life). Same hotspot (kind / key
   "photographer", generous pickFirst click box round the dome) → the interior photos window; hover / "?" name "CCTV".
   Photographer, tripod, flash + photographerSpot (and its street-life test entry) deleted. Earlier tries (bullet camera on
-  a lane-wall pillar; drone) dropped. Preview branch pending/cctv-cam.
+  a lane-wall pillar; drone) dropped. DEPLOYED 2/11/2026 (owner: "deploy but … a bit smaller").
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
