@@ -57,3 +57,37 @@ export function useLeaving(): boolean {
 
 /** How long the old page takes to dissolve before the switch. */
 export const EXIT_MS = 170;
+
+// ---------------------------------------------------------------- loading covers (owner 2/11/2026: "dont let the top
+// option bar come in the loading page"): the floating Overview · Data · Config bar stays hidden while a loading cover is
+// up — the overview's arrival screen (until the world has arrived on "/") and the sign-out screen — then fades in.
+
+function flag() {
+  let v = false;
+  const subs = new Set<() => void>();
+  return {
+    get: () => v,
+    set(n: boolean) {
+      if (n === v) return;
+      v = n;
+      subs.forEach((f) => f());
+    },
+    subscribe(f: () => void) {
+      subs.add(f);
+      return () => {
+        subs.delete(f);
+      };
+    },
+  };
+}
+/** The overview's arrival screen has gone (the world is in, or it gave up waiting). */
+export const arrivedFlag = flag();
+/** The sign-out screen is up. */
+export const signingOutFlag = flag();
+
+/** True while a loading cover is on screen (server render on "/" too, so the bar never flashes before the cover). */
+export function useCovered(pathname: string): boolean {
+  const arrived = useSyncExternalStore(arrivedFlag.subscribe, arrivedFlag.get, () => false);
+  const out = useSyncExternalStore(signingOutFlag.subscribe, signingOutFlag.get, () => false);
+  return out || (pathname === "/" && !arrived);
+}

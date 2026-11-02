@@ -725,6 +725,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   data.kpis) is called "OVERALL" (was "Property"; owner first asked for "Premises" — not used: Premises = shared costs of
   neither house, so it would mean two things; owner picked "Overall"). Checked against prod: running net cash 2024
   +₹4,000 → 2025 +₹87,400 (₹91,400) → 2026 so far −₹16,080 (₹50,000 rent − ₹66,080 costs) = ₹75,320. DEPLOYED 2/11/2026.
+- 2/11/2026: NO NAV ON THE LOADING SCREENS (owner: "dont let the top option bar come in the loading page"): the floating
+  Overview · Data · Config bar (HudBar) hides (data-covered: opacity 0 + visibility hidden + inert) while the overview's
+  arrival screen is up on "/" (also during the server render, so it never flashes) and during the sign-out screen, then
+  fades back in (0.5 s). Flags in shell/world-state.ts: arrivedFlag (mirrors Overview `arrived`, reset on unmount so a
+  sign-in after a sign-out hides it again) + signingOutFlag (Game `leaving`); useCovered(pathname). Phones' bottom bar
+  unchanged (it is part of the layout — hiding it would leave an empty strip). Preview branch pending/nav-cover.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

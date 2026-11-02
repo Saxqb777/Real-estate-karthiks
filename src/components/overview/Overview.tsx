@@ -30,7 +30,7 @@ import {
 } from "@/components/hud";
 import { AsOfContext } from "@/components/hud/year-jump";
 import { chartMenu, useChartMenu } from "@/components/shell/chart-menu";
-import { worldState } from "@/components/shell/world-state";
+import { arrivedFlag, signingOutFlag, worldState } from "@/components/shell/world-state";
 import { logout } from "@/lib/client";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
@@ -89,6 +89,9 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
     setSceneReady(true);
     worldState.setReady(true);
   }, []);
+  // the floating nav hides under the arrival screen (and comes back clean after a sign-out → sign-in)
+  useEffect(() => arrivedFlag.set(arrived), [arrived]);
+  useEffect(() => () => arrivedFlag.set(false), []);
   useEffect(() => {
     if (!failedAsOf) return;
     toast.error("Couldn't show that date", { description: failedAsOf });
@@ -172,6 +175,11 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
     setLeaving(true);
     window.setTimeout(() => void logout(), 1400);
   }, []);
+  // …and under the sign-out screen
+  useEffect(() => {
+    signingOutFlag.set(leaving);
+    return () => signingOutFlag.set(false);
+  }, [leaving]);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [, setTourFlag] = useFlag(TOUR_KEY);

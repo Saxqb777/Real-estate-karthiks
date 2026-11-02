@@ -666,6 +666,18 @@
   border: 1px solid var(--glass-edge);
   border-radius: var(--radius-pill);
   box-shadow: var(--glass-shine), var(--glass-shadow);
+  transition:
+    opacity 0.5s ease-out 0.15s,
+    visibility 0s linear 0s;
+}
+/* under a loading cover (owner 2/11/2026: "dont let the top option bar come in the loading page") */
+.floatNav[data-covered] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease-out,
+    visibility 0s linear 0.2s;
 }
 .floatLink {
   position: relative;

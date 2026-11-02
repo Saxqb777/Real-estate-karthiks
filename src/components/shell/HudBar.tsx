@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useApi } from "@/lib/client";
 import { isActive, NAV } from "./nav";
 import { useSmoothNav } from "./smooth-nav";
+import { useCovered } from "./world-state";
 import styles from "./Shell.module.css";
 
 export function useBrandName(): string {
@@ -20,8 +21,10 @@ export function useBrandName(): string {
 export function HudBar() {
   const pathname = usePathname();
   const go = useSmoothNav();
+  // hidden under a loading cover (the arrival / sign-out screen), fades in once the world is there
+  const covered = useCovered(pathname);
   return (
-    <nav className={styles.floatNav} aria-label="Main" data-print-hide>
+    <nav className={styles.floatNav} aria-label="Main" data-print-hide data-covered={covered || undefined} inert={covered || undefined}>
       {NAV.map((item) => {
         const active = isActive(pathname, item.href);
         const Icon = item.icon;
