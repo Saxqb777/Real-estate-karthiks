@@ -866,12 +866,12 @@ button.sqftBar:hover .sqftVal {
 .yearSelect {
   flex: none;
   width: auto;
-  height: 30px;
+  height: var(--pill-h);
   border-radius: var(--radius-pill);
 }
 .yearSelect select {
-  padding-left: 13px;
-  padding-right: 30px;
+  padding-left: 14px;
+  padding-right: 34px;
   font-size: 13px;
   font-weight: 500;
 }

@@ -225,7 +225,7 @@
   --tone: var(--sky);
 }
 .choicesSm .choice {
-  height: 26px;
+  height: calc(var(--pill-h) - 8px); /* + 3px track padding + 1px edge, top and bottom = --pill-h */
   padding: 0 10px;
   font-size: 13px;
 }

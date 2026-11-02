@@ -31,7 +31,22 @@
   opacity: 0.5;
 }
 .compact {
-  height: 32px;
+  height: var(--pill-h); /* lines up with the pills and small buttons beside it */
+}
+/* a compact dropdown is a toolbar PILL (owner 2/11/2026: "all types of pills like these make them all same sized
+   pills"): the same 34px height, round ends and 13px text as the [ Year | All time ] / [ FY | Calendar ] pills */
+.selectBox.compact {
+  height: var(--pill-h);
+  border-radius: var(--radius-pill);
+}
+.selectBox.compact .select {
+  padding-left: 14px;
+  padding-right: 34px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.selectBox.compact .chev {
+  right: 12px;
 }
 
 .input {

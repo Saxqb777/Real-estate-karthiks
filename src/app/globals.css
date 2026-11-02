@@ -77,6 +77,8 @@
   --radius-sm: 12px;
   --radius-xs: 8px;
   --radius-pill: 999px;
+  /* one height for every toolbar pill: [ Year | All time ], [ FY | Calendar ] and the dropdowns beside them (2/11/2026) */
+  --pill-h: 34px;
 
   /* Depth */
   --glow: 0 0 0 1px var(--line-strong), 0 8px 30px rgba(0, 0, 0, 0.45);

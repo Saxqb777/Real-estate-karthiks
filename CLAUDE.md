@@ -834,6 +834,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     (income-chart columns for a range) — tested in reports.test.ts. IncomeExpenseChart still takes a `span`.
   • Chosen pill keeps dark text under the mouse (it went white-on-white: forms.module.css hover rule skips aria-checked).
   DEPLOYED 2/11/2026 (owner: "deploy"; the black birds stayed in preview on pending/black-birds).
+- 2/11/2026: ONE PILL SIZE (owner, on the Reports header [ Year | All time ] [2026 ▾] [ FY | Calendar ]: "all types of
+  pills like these make them all same sized pills"): globals.css --pill-h 34px = the height of EVERY small pill —
+  ChoiceGroup sm (choice = --pill-h − 8 inside the 3px track + 1px edge), compact dropdowns (Input .selectBox.compact:
+  round ends, 13px / 500 text, chevron 12px in — they were 32px with 8px corners), the window / chart year dropdowns
+  (hud .pyearSelect, charts .yearSelect: were 30px), small buttons (Button .sm: + Record rent / Add expense / Sign lease …,
+  were 30px) and compact text / number / date boxes (.compact, so rows like Rent changes line up). Measured 34px with
+  round ends on Reports, Payments, Expenses, Leases, the property window and the side charts, desktop + phone.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
