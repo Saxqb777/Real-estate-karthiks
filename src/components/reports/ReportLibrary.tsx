@@ -314,11 +314,14 @@ function IncomeReport({ a }: { a: AnnualReport }) {
   // all time (and custom dates over 24 months): one row per FY / calendar year, oldest first; else month by month
   const byYear = a.years.length > 0;
   const rows = byYear ? a.years : a.months;
+  // a deposit kept back at move-out: income, inside net cash — its box + column show only when there is one (owner 2/11/2026)
+  const kept = t.depositsKept > 0;
   return (
     <>
       <Kpis
         items={[
           { label: "Rent collected", value: inr(t.rentCollected), tone: s.teal, delta: vsLastYear(a.previous, "rentCollected") },
+          ...(kept ? [{ label: "Deposit kept", value: inr(t.depositsKept), tone: s.teal }] : []),
           { label: "Expenses", value: inr(t.expenses), tone: s.red, delta: vsLastYear(a.previous, "expenses") },
           { label: "Net cash", value: inr(t.net), tone: netTone(t.net), delta: vsLastYear(a.previous, "net") },
         ]}
@@ -330,6 +333,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
               <tr>
                 <th>{byYear ? "Year" : "Month"}</th>
                 <th className={s.r}>Rent in</th>
+                {kept && <th className={s.r}>Deposit kept</th>}
                 <th className={s.r}>Expenses</th>
                 <th className={s.r}>Net</th>
               </tr>
@@ -339,8 +343,9 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                 <tr key={m.key}>
                   <td>{m.label}</td>
                   <td className={cx(s.r, s.teal)}>{dash(m.rentCollected)}</td>
+                  {kept && <td className={cx(s.r, s.teal)}>{dash(m.depositsKept)}</td>}
                   <td className={cx(s.r, s.red)}>{dash(m.expenses)}</td>
-                  <td className={cx(s.r, netTone(m.net))}>{m.rentCollected || m.expenses ? inr(m.net) : "—"}</td>
+                  <td className={cx(s.r, netTone(m.net))}>{m.rentCollected || m.depositsKept || m.expenses ? inr(m.net) : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -348,6 +353,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
               <tr>
                 <td>Total</td>
                 <td className={cx(s.r, s.teal)}>{inr(t.rentCollected)}</td>
+                {kept && <td className={cx(s.r, s.teal)}>{inr(t.depositsKept)}</td>}
                 <td className={cx(s.r, s.red)}>{inr(t.expenses)}</td>
                 <td className={cx(s.r, netTone(t.net))}>{inr(t.net)}</td>
               </tr>
@@ -393,6 +399,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                 <tr>
                   <th>Unit</th>
                   <th className={s.r}>Rent in</th>
+                  {kept && <th className={s.r}>Deposit kept</th>}
                   <th className={s.r}>Expenses</th>
                   <th className={s.r}>Net</th>
                 </tr>
@@ -402,6 +409,7 @@ function IncomeReport({ a }: { a: AnnualReport }) {
                   <tr key={u.unitId ?? "plot"}>
                     <td>{u.unitName}</td>
                     <td className={cx(s.r, s.teal)}>{dash(u.rentCollected)}</td>
+                    {kept && <td className={cx(s.r, s.teal)}>{dash(u.depositsKept)}</td>}
                     <td className={cx(s.r, s.red)}>{dash(u.expenses)}</td>
                     <td className={cx(s.r, netTone(u.net))}>{inr(u.net)}</td>
                   </tr>

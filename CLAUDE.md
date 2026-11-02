@@ -850,21 +850,22 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   tabular digits, receipt numbers inherit the row font too), like the Data tables; amounts stay green. DEPLOYED 2/11/2026
   (alone — the kept-deposit income change and the black birds stayed in preview).
 - 2/11/2026: DEPOSIT KEPT = INCOME AT MOVE-OUT (owner: "why does the deposit held not considered as a income?" → told him
-  held deposits are the tenant's money; then "what the deposit that was not refunded" → prod: Janani 116/B8 left 24/5/2026,
-  ₹30,000 deposit, ₹0 refunded; Muthukumar 116/B8 7/10 – 1/11/2026, ₹20,000 deposit, ₹14,000 refunded → ₹36,000 kept and
-  counted nowhere → "just simply keep it as an income at the time of move out"). calculations.keptDepositIncome(leases,
-  asOf): the kept part (deposit − refunded, same rule as the deposits ledger's "kept": tenancy ended + refund recorded) =
-  a cash record dated the lease's LAST DAY (id "deposit-kept:<leaseId>", isKeptDeposit). MONEY IN (cashIn = payments +
-  kept) feeds every cash total: rent collected, net cash, unit cards, yields, vs-last-year, income chart months / years,
-  statements (reports cashDataAt, unit report). NOT rent for any month: the rent schedule / expected / arrears / next
-  payment / receipts / recent payments use the real payments only. Breakdown: "… — 9 payments + deposit kept", the input
-  row "Deposit kept at move-out · <tenant> · <unit>" (kind lease → opens the lease); rent explain note updated. Data →
-  Payments: GET /api/payments also returns depositsKept + keptTotal (same period / lease filter); the table lists each
-  as a row on its move-out day ("Deposit kept" in Rent for, no paid-by / ref / receipt / clip, not clickable) and the
-  footer total = payments + kept, so it equals the reports. Tested in reports.test.ts (5,000 kept from the fixture's
-  Murugan: dated 31/5/2023, in all-time / year / May 2023, = ledger kept, rent schedule unchanged, labelled).
-
-## UI conventions (built in round 1)
+  held deposits are the tenant's money; "what the deposit that was not refunded" → prod: Janani 116/B8 left 24/5/2026,
+  ₹30,000 deposit, ₹0 refunded; Muthukumar 116/B8 7/10 – 1/11/2026, ₹20,000 deposit, ₹14,000 refunded → ₹36,000 kept,
+  counted nowhere; "just simply keep it as an income at the time of move out"; then "its not a payment or rent collected
+  so just record as a income in the charts" + picked "Charts + net cash"). calculations.keptDepositIncome(leases, asOf):
+  the kept part (deposit − refunded; same rule as the deposits ledger's "kept": tenancy ended + refund recorded) = a cash
+  record dated the lease's LAST DAY (id "deposit-kept:<leaseId>", isKeptDeposit). It is its OWN figure, never rent, never
+  a payment: PeriodSummary.depositsKept (scopedCash splits it out; explain key [unit:<id>:][year:|month:]depositsKept,
+  per tenant "deposit − refunded = kept", inputs open the lease); NET CASH = rent collected + deposit kept − expenses
+  everywhere (net explain shows the + step; recon "Rent collected + deposits kept − expenses = net cash", keptByYear).
+  Rent collected, rent schedule / arrears / collection %, receipts, Data → Payments (unchanged API + table), recent
+  payments and yields (rent ÷ value) stay rent only. MonthPoint / YearSeries / SpanPoint .depositsKept (net includes it).
+  Shown only when > 0: Income vs expenses chart (pale green #bbf7d0 part stacked on the rent bar, legend + total
+  "Deposit kept", hover tip line), property window ("Rent · Deposit kept · Expenses" under net cash), house window (4th
+  cell), compare chart row, Income & expenses report (4th KPI box, "Deposit kept" column in the month / year and by-unit
+  tables; AnnualReport rows .depositsKept; unit report totals.depositsKept). Tested in reports.test.ts (the fixture's
+  Murugan: 5,000 kept, 31/5/2023, May 2023, ledger = income, rent / payments / yields unchanged).
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
   AnimatedNumber, StatTile, SegmentedBar, LevelBadge, Modal/Drawer/ConfirmDialog, toast, InspectCard, CommandProvider…);
   data hooks from `@/lib/client` (`api`, `useApi`, `useMutation`, `invalidate`).

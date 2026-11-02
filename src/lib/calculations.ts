@@ -833,6 +833,8 @@ export function depositRowFor(lease: DepositLease, unitName: string, asOf: Date)
 /** Ids of the made-up cash records for a kept-back deposit ("deposit-kept:<leaseId>"). */
 export const KEPT_DEPOSIT_PREFIX = "deposit-kept:";
 export const isKeptDeposit = (p: Pick<PaymentInput, "id">) => p.id.startsWith(KEPT_DEPOSIT_PREFIX);
+/** the same test for rows that may carry no id (series inputs) */
+const isKeptPayment = (p: object) => "id" in p && typeof p.id === "string" && p.id.startsWith(KEPT_DEPOSIT_PREFIX);
 
 /**
  * A security deposit KEPT BACK at move-out (deposit − refunded, once the refund is recorded) counts as MONEY IN on the
@@ -916,7 +918,8 @@ export function monthlyByYear(
 ): YearSeries[] {
   const asOfMonth = monthIndexOfDay(dayNum(asOf));
   const mi = (d: Date) => monthIndex(d.getUTCFullYear(), d.getUTCMonth() + 1);
-  const inc = groupBy(payments, (p) => mi(p.paymentDate));
+  const inc = groupBy(payments.filter((p) => !isKeptPayment(p)), (p) => mi(p.paymentDate));
+  const keptBy = groupBy(payments.filter(isKeptPayment), (p) => mi(p.paymentDate));
   const exp = groupBy(expenses, (e) => mi(e.expenseDate));
   const lastKey = yearKeyOfMonth(asOfMonth, mode);
   let firstKey = lastKey;
@@ -930,8 +933,9 @@ export function monthlyByYear(
     const months: MonthPoint[] = [];
     for (let i = first; i < first + 12; i++) {
       const income = sumAmounts(inc.get(i) ?? []);
+      const keptM = sumAmounts(keptBy.get(i) ?? []);
       const expensesM = sumAmounts(exp.get(i) ?? []);
-      const net = round2(income - expensesM);
+      const net = round2(income + keptM - expensesM);
       running = round2(running + net);
       months.push({
         month: miMonth(i),
@@ -940,6 +944,7 @@ export function monthlyByYear(
         label: MONTHS_SHORT[miMonth(i) - 1],
         longLabel: miLabel(i),
         income,
+        depositsKept: keptM,
         expenses: expensesM,
         net,
         cumulative: running,
@@ -947,6 +952,7 @@ export function monthlyByYear(
       });
     }
     const income = sum2(months.map((m) => m.income));
+    const keptY = sum2(months.map((m) => m.depositsKept));
     const expensesY = sum2(months.map((m) => m.expenses));
     const { start, end } = yearBounds(key, mode);
     out.push({
@@ -957,8 +963,9 @@ export function monthlyByYear(
       end: end.toISOString(),
       isCurrent: key === lastKey,
       income,
+      depositsKept: keptY,
       expenses: expensesY,
-      net: round2(income - expensesY),
+      net: round2(income + keptY - expensesY),
       months,
     });
   }
@@ -1003,11 +1010,13 @@ export function spanPoints(
   return cols.map((c) => {
     const lo = Math.max(c.startDay, scope.startDay as number);
     const hi = Math.min(c.endDay, scope.endDay);
-    const income = c.future ? 0 : sumAmounts(payments.filter((p) => between(dayNum(p.paymentDate), lo, hi)));
+    const inSpan = c.future ? [] : payments.filter((p) => between(dayNum(p.paymentDate), lo, hi));
+    const income = sumAmounts(inSpan.filter((p) => !isKeptPayment(p)));
+    const keptC = sumAmounts(inSpan.filter(isKeptPayment));
     const spent = c.future ? 0 : sumAmounts(expenses.filter((e) => between(dayNum(e.expenseDate), lo, hi)));
-    const net = round2(income - spent);
+    const net = round2(income + keptC - spent);
     running = round2(running + net);
-    return { key: c.key, label: c.label, longLabel: c.longLabel, income, expenses: spent, net, cumulative: running, isFuture: c.future };
+    return { key: c.key, label: c.label, longLabel: c.longLabel, income, depositsKept: keptC, expenses: spent, net, cumulative: running, isFuture: c.future };
   });
 }
 const between = (d: number, lo: number, hi: number) => d >= lo && d <= hi;
@@ -1378,23 +1387,20 @@ export interface CashData {
 export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: UnitInput): { summary: PeriodSummary; explains: Explain[] } {
   const prefix = unit ? `unit:${unit.id}:${scopePrefix(scope)}` : scopePrefix(scope);
   const scopeText = scope.kind === "allTime" ? "since you started" : `in ${scope.label}`;
-  const payments = data.payments.filter((p) => inDayScope(scope, dayNum(p.paymentDate)));
+  // money in = rent payments + deposits kept back at move-out (separate: a kept deposit is income, not rent — owner 2/11/2026)
+  const inScope = data.payments.filter((p) => inDayScope(scope, dayNum(p.paymentDate)));
+  const payments = inScope.filter((p) => !isKeptDeposit(p));
+  const keptRows = inScope.filter(isKeptDeposit);
   const expenses = data.expenses.filter((e) => inDayScope(scope, dayNum(e.expenseDate)));
 
   // Rent collected: per unit (portfolio) or per lease (unit view).
-  // "N payments" (+ "deposit kept" when a kept-back deposit is in the scope)
-  const countText = (rows: PaymentInput[]) => {
-    const kept = rows.filter(isKeptDeposit).length;
-    const real = rows.length - kept;
-    return [real ? plural(real, "payment") : "", kept ? "deposit kept" : ""].filter(Boolean).join(" + ");
-  };
   const rentParts: Part[] = unit
     ? [...groupBy(payments, (p) => p.leaseId)].map(([leaseId, rows]) => {
         const l = ctx.leaseById.get(leaseId);
-        return { label: `${l?.tenantName ?? "Unknown tenant"} — ${countText(rows)}`, value: sumAmounts(rows) };
+        return { label: `${l?.tenantName ?? "Unknown tenant"} — ${plural(rows.length, "payment")}`, value: sumAmounts(rows) };
       })
     : [...groupBy(payments, (p) => ctx.leaseById.get(p.leaseId)?.unitId ?? "?")].map(([unitId, rows]) => ({
-        label: `${unitNameOf(ctx, unitId === "?" ? null : unitId)} — ${countText(rows)}`,
+        label: `${unitNameOf(ctx, unitId === "?" ? null : unitId)} — ${plural(rows.length, "payment")}`,
         value: sumAmounts(rows),
       }));
   const rent = sumSteps(rentParts, "Rent collected");
@@ -1415,8 +1421,37 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
     inputsNote: pIn.note,
     notes: [
       "Counted by the date the money was received (cash), whichever month it was for.",
-      "Security deposits are not included while you hold them; a deposit you KEPT BACK at move-out counts here as money in on the move-out day.",
+      "Security deposits are not rent and are not included (a deposit you keep back at move-out counts as Deposit kept).",
     ],
+  });
+
+  // Deposit kept: the part of a deposit kept back at move-out — income on the move-out day (owner 2/11/2026)
+  const keptParts: Part[] = keptRows.map((k) => {
+    const l = ctx.leaseById.get(k.leaseId);
+    const deposit = round2(l?.securityDeposit ?? k.amount);
+    return {
+      label: `${l?.tenantName ?? "Unknown tenant"}${unit ? "" : ` · ${unitNameOf(ctx, l?.unitId ?? null)}`} — moved out ${formatDate(k.paymentDate)}`,
+      value: k.amount,
+      expression: `${fINR(deposit)} deposit − ${fINR(round2(deposit - k.amount))} refunded = ${fINR(k.amount)}`,
+    };
+  });
+  const kept = sumSteps(keptParts, "Deposit kept");
+  const kIn = paymentInputs(ctx, keptRows);
+  const keptExplain = explainOf({
+    key: `${prefix}depositsKept`,
+    title: "Deposit kept",
+    bucket: "cash",
+    scope: scope.label,
+    value: kept.total,
+    format: "inr",
+    plain: keptRows.length
+      ? `Security deposits you kept back when a tenant moved out ${scopeText} — yours once the tenant left, so they count as income on the move-out day.`
+      : `No deposit was kept back ${scopeText}.`,
+    formula: "Deposit − amount refunded, for each tenant who moved out",
+    steps: kept.steps,
+    inputs: kIn.inputs,
+    inputsNote: kIn.note,
+    notes: ["Not rent: it is not counted against any month's rent.", "Deposits you still hold are the tenants' money and are never income."],
   });
 
   // Expenses: per unit + whole plot (portfolio) or per category (unit view).
@@ -1452,7 +1487,8 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
     notes: expNotes,
   });
 
-  const net = round2(rent.total - exp.total);
+  const net = round2(rent.total + kept.total - exp.total);
+  const hasKept = kept.total !== 0;
   const netExplain = explainOf({
     key: `${prefix}netCash`,
     title: "Net cash",
@@ -1460,14 +1496,19 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
     scope: scope.label,
     value: net,
     format: "inr",
-    plain: `Money in minus money out ${scopeText}${unit ? ` for ${unit.name}` : ""}: rent collected less expenses.`,
-    formula: "Rent collected − Expenses",
+    plain: `Money in minus money out ${scopeText}${unit ? ` for ${unit.name}` : ""}: rent collected${hasKept ? " plus deposits kept" : ""} less expenses.`,
+    formula: hasKept ? "Rent collected + Deposit kept − Expenses" : "Rent collected − Expenses",
     steps: [
       step("Rent collected", fINR(rent.total), rent.total),
+      ...(hasKept ? [step("Deposit kept", fINR(kept.total), kept.total)] : []),
       step("Expenses", fINR(exp.total), exp.total),
-      step("Net cash", `${fINR(rent.total)} − ${fINR(exp.total)} = ${fINR(net)}`, net),
+      step(
+        "Net cash",
+        hasKept ? `${fINR(rent.total)} + ${fINR(kept.total)} − ${fINR(exp.total)} = ${fINR(net)}` : `${fINR(rent.total)} − ${fINR(exp.total)} = ${fINR(net)}`,
+        net,
+      ),
     ],
-    notes: ["Property value (offers, estimates) and deposits are not cash and never enter this figure."],
+    notes: ["Property value (offers, estimates) and deposits you still hold are not income and never enter this figure."],
   });
 
   // Collection: rent that fell due vs received towards it.
@@ -1533,6 +1574,7 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
     start: scope.startDay === null ? null : isoDay(scope.startDay),
     end: isoDay(scope.endDay),
     rentCollected: rent.total,
+    depositsKept: kept.total,
     rentExpected: sched.expected,
     rentReceivedForScope: sched.received,
     rentUnpaid: unpaid,
@@ -1541,7 +1583,7 @@ export function scopedCash(ctx: Ctx, scope: CashScope, data: CashData, unit?: Un
     expenses: exp.total,
     net,
   };
-  return { summary, explains: [rentExplain, expExplain, netExplain, collectionExplain] };
+  return { summary, explains: [rentExplain, keptExplain, expExplain, netExplain, collectionExplain] };
 }
 
 // ───────────────────────────── per-unit value / occupancy explains ─────────────────────────────
@@ -1936,16 +1978,16 @@ export const changeOf = (now: number, before: number): CashChange => ({
 
 /** Rent collected / expenses / net cash in `now` vs `before` — cash by date, the same rule as scopedCash. */
 export function compareCash(data: Pick<CashData, "payments" | "expenses">, now: CashScope, before: CashScope, label: string): CashComparison {
-  const rent = (sc: CashScope) => sumAmounts(data.payments.filter((p) => inDayScope(sc, dayNum(p.paymentDate))));
+  const sumIn = (sc: CashScope, kept: boolean) => sumAmounts(data.payments.filter((p) => isKeptDeposit(p) === kept && inDayScope(sc, dayNum(p.paymentDate))));
   const spent = (sc: CashScope) => sumAmounts(data.expenses.filter((e) => inDayScope(sc, dayNum(e.expenseDate))));
-  const [rn, rb, en, eb] = [rent(now), rent(before), spent(now), spent(before)];
+  const [rn, rb, kn, kb, en, eb] = [sumIn(now, false), sumIn(before, false), sumIn(now, true), sumIn(before, true), spent(now), spent(before)];
   return {
     label,
     start: before.startDay === null ? null : isoDay(before.startDay),
     end: isoDay(Math.max(before.endDay, before.startDay ?? before.endDay)),
     rentCollected: changeOf(rn, rb),
     expenses: changeOf(en, eb),
-    net: changeOf(round2(rn - en), round2(rb - eb)),
+    net: changeOf(round2(rn + kn - en), round2(rb + kb - eb)),
   };
 }
 
@@ -2760,7 +2802,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
   const inLast12 = (d: Date) => dayNum(d) >= yStart && dayNum(d) <= A;
   const last12Label = "Last 12 months";
   const yieldUnits: YieldRow[] = activeRows.map(({ u, breakdown: b }) => {
-    const rent = sumAmounts((leasesByUnit.get(u.id) ?? []).flatMap((l) => cashByLease.get(l.id) ?? []).filter((p) => inLast12(p.paymentDate)));
+    const rent = sumAmounts((leasesByUnit.get(u.id) ?? []).flatMap((l) => paymentsByLease.get(l.id) ?? []).filter((p) => inLast12(p.paymentDate)));
     const spent = sumAmounts((expensesByUnit.get(u.id) ?? []).filter((e) => inLast12(e.expenseDate)));
     return yieldRow(u.id, u.name, rent, spent, b.purchasePrice, b.valuation, dayNum(u.purchaseDate) < yStart);
   });
@@ -2950,7 +2992,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
   const spanSeries = range ? spanPoints(cashIn, expenses, scopes.year, mode) : null;
 
   // ── reconciliation ──
-  const leaseTotals = [...cashByLease.values()].map((rows) => sumAmounts(rows));
+  const leaseTotals = [...paymentsByLease.values()].map((rows) => sumAmounts(rows));
   const checks = reconciliation([
     recon(
       "expensesByUnit",
@@ -2966,10 +3008,16 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
     recon(
       "monthsToYears",
       "Σ months = year totals",
-      sum2(series.map((s) => round2(s.income - s.expenses))),
+      sum2(series.map((s) => round2(s.income + s.depositsKept - s.expenses))),
       sum2(series.flatMap((s) => s.months.map((m) => m.net))),
     ),
-    recon("netCash", "Rent collected − expenses = net cash", round2(rentCollected - totalExpenses), kpis.netProfit),
+    recon("keptByYear", "Σ yearly deposits kept = deposits kept (all time)", pAll.summary.depositsKept, sum2(series.map((s) => s.depositsKept))),
+    recon(
+      "netCash",
+      "Rent collected + deposits kept − expenses = net cash",
+      round2(rentCollected + pAll.summary.depositsKept - totalExpenses),
+      kpis.netProfit,
+    ),
     recon("worthByUnit", "Σ unit worth = worth now", bestOfferTotal, sum2(act.map((u) => u.valuation))),
     recon(
       "deposits",

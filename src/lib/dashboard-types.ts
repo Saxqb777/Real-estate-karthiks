@@ -208,6 +208,8 @@ export interface PeriodSummary {
   end: string;
   /** CASH received in the scope (by payment date) */
   rentCollected: number;
+  /** deposits kept back at move-out in the scope — income on the move-out day, not rent (owner 2/11/2026) */
+  depositsKept: number;
   /** rent that fell due in the scope before the as-of date (every lease-month whose due date has passed) */
   rentExpected: number;
   /** received (by the as-of date) towards that due rent, capped at each month's rent */
@@ -219,7 +221,7 @@ export interface PeriodSummary {
   /** rentReceivedForScope ÷ rentExpected; null when nothing has fallen due yet */
   collectionPct: number | null;
   expenses: number;
-  /** rentCollected − expenses */
+  /** rentCollected + depositsKept − expenses */
   net: number;
 }
 
@@ -342,8 +344,10 @@ export interface MonthPoint {
   label: string; // "Apr"
   longLabel: string; // "Apr 2026"
   income: number; // rent collected (by payment date)
+  /** deposits kept back at move-out this month — income, not rent (owner 2/11/2026) */
+  depositsKept: number;
   expenses: number;
-  net: number;
+  net: number; // income + depositsKept − expenses
   cumulative: number; // running net within the year
   /** after the as-of month (always zero) */
   isFuture: boolean;
@@ -355,6 +359,7 @@ export interface SpanPoint {
   label: string; // "Apr" | "FY 25-26"
   longLabel: string; // "Apr 2026" | "FY 2025-26"
   income: number;
+  depositsKept: number;
   expenses: number;
   net: number;
   cumulative: number; // running net from the span's first day
@@ -370,6 +375,7 @@ export interface YearSeries {
   end: string; // last day
   isCurrent: boolean; // contains the as-of date
   income: number;
+  depositsKept: number;
   expenses: number;
   net: number;
   months: MonthPoint[]; // 12, in year order (Apr → Mar for FY)
@@ -635,6 +641,7 @@ export interface AnnualReport {
     rentCollected: number;
     rentExpected: number;
     rentReceivedForMonth: number;
+    depositsKept: number;
     expenses: number;
     net: number;
   }[];
@@ -646,6 +653,7 @@ export interface AnnualReport {
     rentCollected: number;
     rentExpected: number;
     rentReceivedForYear: number;
+    depositsKept: number;
     expenses: number;
     net: number;
     isPartial: boolean;
@@ -657,6 +665,7 @@ export interface AnnualReport {
     rentCollected: number;
     rentExpected: number;
     collectionPct: number | null;
+    depositsKept: number;
     expenses: number;
     net: number;
   }[];
@@ -742,7 +751,7 @@ export interface UnitReport {
   valueGrowth: { date: string; label: string; estimate: number; bestOfferToDate: number | null }[];
   /** the purchase → today story, oldest first */
   story: { date: string; kind: "purchase" | "lease-start" | "rent-change" | "lease-end" | "vacant" | "offer" | "expense"; text: string; amount: number | null }[];
-  totals: { rentCollected: number; expenses: number; netCash: number; rentLost: number; vacantDays: number };
+  totals: { rentCollected: number; depositsKept: number; expenses: number; netCash: number; rentLost: number; vacantDays: number };
   reconciliation: Reconciliation;
 }
 

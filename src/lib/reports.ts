@@ -21,6 +21,7 @@ import {
   compareUnits,
   dayNum,
   depositRowFor,
+  isKeptDeposit,
   keptDepositIncome,
   expenseSlices,
   leaseMonthBounds,
@@ -236,6 +237,7 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
         rentCollected: ys.rentCollected,
         rentExpected: ys.rentExpected,
         rentReceivedForYear: ys.rentReceivedForScope,
+        depositsKept: ys.depositsKept,
         expenses: ys.expenses,
         net: ys.net,
         isPartial: through < dayNum(yearBounds(k, mode).end),
@@ -260,6 +262,7 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
       rentCollected: future ? 0 : sm.rentCollected,
       rentExpected: future ? 0 : sm.rentExpected,
       rentReceivedForMonth: future ? 0 : sm.rentReceivedForScope,
+      depositsKept: future ? 0 : sm.depositsKept,
       expenses: future ? 0 : sm.expenses,
       net: future ? 0 : sm.net,
     };
@@ -275,6 +278,7 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
       rentCollected: us.rentCollected,
       rentExpected: us.rentExpected,
       collectionPct: us.collectionPct,
+      depositsKept: us.depositsKept,
       expenses: us.expenses,
       net: us.net,
     };
@@ -284,7 +288,7 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
   // Rent from leases on units that weren't owned yet can't happen through the API; keep any such rows visible.
   const ownedIds = new Set(owned.map((u) => u.id));
   const orphanRent = sumAmounts(
-    data.payments.filter((p) => inYear(p.paymentDate) && !ownedIds.has(ctx.leaseById.get(p.leaseId)?.unitId ?? "")),
+    data.payments.filter((p) => !isKeptDeposit(p) && inYear(p.paymentDate) && !ownedIds.has(ctx.leaseById.get(p.leaseId)?.unitId ?? "")),
   );
   const orphanExp = sumAmounts(yearExpenses.filter((x) => x.unitId !== null && !ownedIds.has(x.unitId)));
   const wholePlot = sumAmounts(yearExpenses.filter((x) => x.unitId === null));
@@ -294,6 +298,7 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
     rentCollected: orphanRent,
     rentExpected: 0,
     collectionPct: null,
+    depositsKept: 0,
     expenses: round2(wholePlot + orphanExp),
     net: round2(orphanRent - wholePlot - orphanExp),
   });
@@ -380,7 +385,8 @@ export function buildAnnualReport(input: DashboardInput, o: Opts & { year?: numb
     recon("unitsExpenses", "Unit expenses + premises expenses = expenses", totals.expenses, sum2(unitRows.map((u) => u.expenses))),
     recon("categories", "Σ expense categories = expenses", totals.expenses, sum2(expensesByCategory.map((c) => c.amount))),
     recon("expenseList", "Σ expense list = expenses", totals.expenses, sum2(expenses.map((x) => x.amount))),
-    recon("net", "Rent collected − expenses = net cash", round2(totals.rentCollected - totals.expenses), totals.net),
+    recon(`${byYear ? "years" : "months"}Kept`, `Σ ${per} deposits kept = deposit kept`, totals.depositsKept, sum2(rows.map((m) => m.depositsKept))),
+    recon("net", "Rent collected + deposit kept − expenses = net cash", round2(totals.rentCollected + totals.depositsKept - totals.expenses), totals.net),
     recon(
       "deposits",
       "Opening deposits + received − refunded − kept = closing",
@@ -428,9 +434,6 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
   const leaseIds = new Set(leases.map((l) => l.id));
   const payments = input.payments.filter((p) => leaseIds.has(p.leaseId) && dayNum(p.paymentDate) <= t);
   const paymentsByLease = groupBy(payments, (p) => p.leaseId);
-  // money in (rent + deposits kept back at move-out) for the cash totals; rent months use the real payments
-  const cashIn = [...payments, ...keptDepositIncome(leases, today)];
-  const cashByLease = groupBy(cashIn, (p) => p.leaseId);
   const unitExpenses = input.expenses.filter((x) => x.unitId === unitId && dayNum(x.expenseDate) <= t);
   const offers = input.offers.filter((x) => x.unitId === unitId && dayNum(x.offerDate) <= t);
   const best = pickBestOffer(offers);
@@ -451,7 +454,7 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
       monthlyRent: round2(rentOn(l, today)),
       months: months.length,
       rentExpected: expected,
-      rentCollected: sumAmounts(cashByLease.get(l.id) ?? []),
+      rentCollected: sumAmounts(paymentsByLease.get(l.id) ?? []),
       rentUnpaid: round2(expected - receivedForDue),
       deposit: depositRowFor(l, u.name, today) ?? emptyDeposit(l, u.name),
     };
@@ -541,7 +544,9 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
   const KIND_ORDER = { purchase: 0, "lease-end": 1, vacant: 2, "lease-start": 3, "rent-change": 4, offer: 5, expense: 6 } as const;
   story.sort((x, y) => x.date.localeCompare(y.date) || KIND_ORDER[x.kind] - KIND_ORDER[y.kind]);
 
-  const rentCollected = sumAmounts(cashIn);
+  const rentCollected = sumAmounts(payments);
+  // deposits kept back at move-out: income on the move-out day, not rent (owner 2/11/2026)
+  const depositsKept = sumAmounts(keptDepositIncome(leases, today));
   const expensesTotal = sumAmounts(unitExpenses);
   const rentLost = sum2(vacancies.map((p) => p.unrealizedLoss));
   const vacantDays = vacancies.reduce((n, p) => n + p.days, 0);
@@ -592,7 +597,7 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
     expensesByCategory,
     valueGrowth,
     story,
-    totals: { rentCollected, expenses: expensesTotal, netCash: round2(rentCollected - expensesTotal), rentLost, vacantDays },
+    totals: { rentCollected, depositsKept, expenses: expensesTotal, netCash: round2(rentCollected + depositsKept - expensesTotal), rentLost, vacantDays },
     reconciliation: reconciliation(items),
   };
 }

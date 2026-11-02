@@ -89,6 +89,12 @@ export function PropertyPanel({ data, period, onClose, onOpenUnit, side = "left"
               </div>
               <div className={b.cSub}>
                 Rent {amt(p.rentCollected, explainKey("rentCollected", period), "income")}
+                {/* a deposit kept back at move-out: income, inside net cash (owner 2/11/2026) */}
+                {p.depositsKept > 0 && (
+                  <>
+                    {" · "}Deposit kept {amt(p.depositsKept, explainKey("depositsKept", period), "income")}
+                  </>
+                )}
                 {" · "}Expenses {amt(p.expenses, explainKey("expenses", period), "expense")}
               </div>
             </div>

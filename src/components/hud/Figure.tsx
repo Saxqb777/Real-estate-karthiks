@@ -195,9 +195,9 @@ export function vsLastYear(cmp: CashComparison | null | undefined, field: "rentC
   return <Delta change={c.change} better={field === "expenses" ? "down" : "up"} title={`${cmp.label}: ${inr(c.before)}`} onClick={onClick} />;
 }
 
-export function FigCells({ children, cols = 3 }: { children: ReactNode; cols?: 2 | 3 }) {
+export function FigCells({ children, cols = 3 }: { children: ReactNode; cols?: 2 | 3 | 4 }) {
   return (
-    <div className={s.miniGrid} style={cols === 2 ? { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } : undefined}>
+    <div className={s.miniGrid} style={cols !== 3 ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } : undefined}>
       {children}
     </div>
   );

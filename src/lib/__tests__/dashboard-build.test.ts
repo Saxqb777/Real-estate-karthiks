@@ -381,6 +381,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       start: null,
       end: ISO("2026-06-15"),
       rentCollected: 75_000,
+      depositsKept: 0,
       rentExpected: 450_000, // Jan 2025 … Jun 2026 = 18 months × 25,000, all due before 15/6
       rentReceivedForScope: 75_000,
       rentUnpaid: 375_000, // = the arrears
@@ -396,6 +397,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       start: ISO("2026-04-01"),
       end: ISO("2026-06-15"),
       rentCollected: 25_000, // the 4/5/2026 payment
+      depositsKept: 0,
       rentExpected: 75_000, // Apr + May + Jun 2026
       rentReceivedForScope: 25_000,
       rentUnpaid: 50_000,
@@ -815,6 +817,7 @@ describe("buildDashboard — reconciliation", () => {
       "incomeByYear",
       "expensesByYear",
       "monthsToYears",
+      "keptByYear",
       "netCash",
       "worthByUnit",
       "deposits",

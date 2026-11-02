@@ -223,9 +223,9 @@ describe("annual statement", () => {
   it("cash flow by unit + whole plot", () => {
     const r = buildAnnualReport(fixture(), { ...opts(), year: 2025 });
     expect(r.units).toEqual([
-      { unitId: "A", unitName: "Unit A", rentCollected: 150_000, rentExpected: 150_000, collectionPct: 1, expenses: 4_200, net: 145_800 },
-      { unitId: "B", unitName: "Unit B", rentCollected: 11_000, rentExpected: 11_000, collectionPct: 1, expenses: 54_380.5, net: -43_380.5 },
-      { unitId: null, unitName: "Premises", rentCollected: 0, rentExpected: 0, collectionPct: null, expenses: 5_800, net: -5_800 },
+      { unitId: "A", unitName: "Unit A", rentCollected: 150_000, rentExpected: 150_000, collectionPct: 1, depositsKept: 0, expenses: 4_200, net: 145_800 },
+      { unitId: "B", unitName: "Unit B", rentCollected: 11_000, rentExpected: 11_000, collectionPct: 1, depositsKept: 0, expenses: 54_380.5, net: -43_380.5 },
+      { unitId: null, unitName: "Premises", rentCollected: 0, rentExpected: 0, collectionPct: null, depositsKept: 0, expenses: 5_800, net: -5_800 },
     ]);
     expect(r.expensesByCategory.map((c) => [c.name, c.amount])).toEqual([
       ["Renovation", 54_000],
@@ -257,7 +257,7 @@ describe("annual statement", () => {
   it("a year before anything was bought is empty but valid", () => {
     const r = buildAnnualReport(fixture(), { ...opts(), year: 2015 });
     expect(r.totals).toMatchObject({ rentCollected: 0, expenses: 0, net: 0, collectionPct: null });
-    expect(r.units).toEqual([{ unitId: null, unitName: "Premises", rentCollected: 0, rentExpected: 0, collectionPct: null, expenses: 0, net: 0 }]);
+    expect(r.units).toEqual([{ unitId: null, unitName: "Premises", rentCollected: 0, rentExpected: 0, collectionPct: null, depositsKept: 0, expenses: 0, net: 0 }]);
     expect(r.reconciliation.ledgerBalanced).toBe(true);
   });
 });
@@ -405,48 +405,66 @@ describe("custom dates in the 3D windows + side charts (dashboard year slot)", (
   });
 });
 
-describe("a deposit kept back at move-out = money in on the move-out day", () => {
-  // owner 2/11/2026: "just simply keep it as an income at the time of move out"
+describe("a deposit kept back at move-out = income on the move-out day (not rent)", () => {
+  // owner 2/11/2026: "just simply keep it as an income at the time of move out" → "its not a payment or rent collected
+  // so just record as an income in the charts" (+ net cash everywhere)
   // fixture: Murugan (A1) left on 31/5/2023, deposit 50,000, refunded 45,000 → 5,000 kept
+  const noneKept = () =>
+    buildDashboard(
+      { ...fixture(), leases: fixture().leases.map((l) => ({ ...l, depositRefundedAmount: l.securityDeposit })) },
+      { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" },
+    );
+
   it("is dated the lease's last day, after the tenancy ended and the refund was recorded", () => {
     const kept = keptDepositIncome(fixture().leases, TODAY);
     expect(kept.map((k) => [k.leaseId, k.amount, k.paymentDate.toISOString().slice(0, 10), isKeptDeposit(k)])).toEqual([["A1", 5_000, "2023-05-31", true]]);
-    // before he left there was nothing kept yet; current leases never count
     expect(keptDepositIncome(fixture().leases, D("2023-05-15"))).toEqual([]);
   });
 
-  it("counts in rent collected + net cash (all time, its year, its month), the same as the deposits ledger's 'kept'", () => {
+  it("is its own figure: rent collected unchanged, net cash + 5,000, = the deposits ledger's 'kept'", () => {
     const d = dash();
-    const withoutKept = buildDashboard({ ...fixture(), leases: fixture().leases.map((l) => ({ ...l, depositRefundedAmount: l.securityDeposit })) }, { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" });
-    expect(round2(d.periods.allTime.rentCollected - withoutKept.periods.allTime.rentCollected)).toBe(5_000);
-    expect(round2(d.periods.allTime.net - withoutKept.periods.allTime.net)).toBe(5_000);
-    expect(d.deposits.kept).toBe(5_000);
-    const fy23 = d.monthlyByYear.find((y) => y.year === 2023)!;
-    const fy23w = withoutKept.monthlyByYear.find((y) => y.year === 2023)!;
-    expect(round2(fy23.months[1].income - fy23w.months[1].income)).toBe(5_000); // May 2023
-    // the statement for that year agrees with the dashboard as it was then
-    const st = buildAnnualReport(fixture(), { ...opts(), year: 2023 });
-    expect(st.totals.rentCollected).toBe(fy23.income);
+    const w = noneKept();
+    expect(d.periods.allTime.depositsKept).toBe(5_000);
+    expect(d.periods.allTime.rentCollected).toBe(w.periods.allTime.rentCollected);
+    expect(round2(d.periods.allTime.net - w.periods.allTime.net)).toBe(5_000);
+    expect(d.periods.allTime.net).toBe(round2(d.periods.allTime.rentCollected + d.periods.allTime.depositsKept - d.periods.allTime.expenses));
+    expect(d.deposits.kept).toBe(d.periods.allTime.depositsKept);
+    expect(d.units.find((u) => u.id === "A")!.periods.allTime.depositsKept).toBe(5_000);
   });
 
-  it("is not rent for any month: what was due / received for rent and the arrears don't change", () => {
+  it("in the income chart: May 2023 shows it beside the rent, the year's net includes it", () => {
+    const fy23 = dash().monthlyByYear.find((y) => y.year === 2023)!;
+    const w23 = noneKept().monthlyByYear.find((y) => y.year === 2023)!;
+    expect(fy23.months[1]).toMatchObject({ longLabel: "May 2023", depositsKept: 5_000, income: w23.months[1].income });
+    expect(fy23.depositsKept).toBe(5_000);
+    expect(round2(fy23.net - w23.net)).toBe(5_000);
+    // the statement agrees (totals, its May row, the reconciliation)
+    const st = buildAnnualReport(fixture(), { ...opts(), year: 2023 });
+    expect([st.totals.rentCollected, st.totals.depositsKept, st.totals.net]).toEqual([fy23.income, 5_000, fy23.net]);
+    expect(st.months[1]).toMatchObject({ label: "May 2023", depositsKept: 5_000 });
+    expect(st.reconciliation.ledgerBalanced, JSON.stringify(st.reconciliation.items.filter((x) => !x.ok))).toBe(true);
+  });
+
+  it("is not a payment and not rent for any month", () => {
     const d = dash();
-    const withoutKept = buildDashboard({ ...fixture(), leases: fixture().leases.map((l) => ({ ...l, depositRefundedAmount: l.securityDeposit })) }, { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" });
+    const w = noneKept();
     expect([d.periods.allTime.rentExpected, d.periods.allTime.rentReceivedForScope, d.periods.allTime.rentUnpaid]).toEqual([
-      withoutKept.periods.allTime.rentExpected,
-      withoutKept.periods.allTime.rentReceivedForScope,
-      withoutKept.periods.allTime.rentUnpaid,
+      w.periods.allTime.rentExpected,
+      w.periods.allTime.rentReceivedForScope,
+      w.periods.allTime.rentUnpaid,
     ]);
     expect(d.recentPayments.some((p) => p.id.startsWith("deposit-kept:"))).toBe(false);
+    expect(d.yields.units.map((y) => y.rent)).toEqual(w.yields.units.map((y) => y.rent));
+    expect(d.checks.ledgerBalanced).toBe(true);
   });
 
-  it("its breakdown names it and opens the lease", () => {
-    const e = dash().explain["rentCollected"]!;
-    const row = e.inputs?.find((i) => i.label.startsWith("Deposit kept"));
-    // all-time inputs may be grouped per lease when there are many; either way the deposit is named
-    if (row) expect(row).toMatchObject({ kind: "lease", id: "A1", value: 5_000 });
-    else expect(e.steps.some((st) => /deposit kept/.test(st.label))).toBe(true);
-    expect(dash().checks.ledgerBalanced).toBe(true);
+  it("has its own breakdown that names it and opens the lease; net cash's breakdown adds it", () => {
+    const d = dash();
+    const k = d.explain["depositsKept"]!;
+    expect(k.value).toBe(5_000);
+    expect(k.inputs?.[0]).toMatchObject({ kind: "lease", id: "A1", value: 5_000 });
+    expect(d.explain["netCash"]!.formula).toBe("Rent collected + Deposit kept − Expenses");
+    expect(d.explain["rentCollected"]!.inputs?.some((x) => x.label.startsWith("Deposit kept"))).toBe(false);
   });
 });
 
@@ -564,6 +582,8 @@ describe("unit report", () => {
     expect(r.now).toEqual(card);
     expect(r.totals).toEqual({
       rentCollected: card.rentCollected,
+      // Murugan's 5,000 kept deposit: income, inside net cash (owner 2/11/2026)
+      depositsKept: 5_000,
       expenses: card.expenses,
       netCash: card.netCash,
       rentLost: card.unrealizedLoss,
@@ -580,8 +600,7 @@ describe("unit report", () => {
       [6_150_000, true],
     ]);
     expect(r.leases.map((l) => [l.tenantName, l.state, l.months, l.rentExpected, l.rentCollected, l.rentUnpaid])).toEqual([
-      // money in = 4,37,000 rent + the 5,000 of his 50,000 deposit kept back at move-out (owner 2/11/2026)
-      ["Murugan Selvaraj", "ended", 46, 437_000, 442_000, 0],
+      ["Murugan Selvaraj", "ended", 46, 437_000, 437_000, 0],
       ["Lakshmi Narayanan", "current", 38, 462_500, 435_000, 27_500], // Oct 2026 not due yet
     ]);
     expect(r.leases[0].deposit).toMatchObject({ refunded: 45_000, kept: 5_000, held: 0 });

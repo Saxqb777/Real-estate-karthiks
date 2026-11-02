@@ -155,8 +155,10 @@ function UnitPanelInner({ data, unitId, period, onClose, onOpenUnit, onOpenTenan
           )}
 
           {/* ---------------- this house's cash (the period switch is in the title bar) */}
-          <FigCells>
+          <FigCells cols={p.depositsKept > 0 ? 4 : 3}>
             <FigCell label="Rent collected" value={p.rentCollected} tone="income" delta={vsLastYear(cmp, "rentCollected")} onClick={() => openScoped("rentCollected")} />
+            {/* a deposit kept back at move-out: income, inside net cash (owner 2/11/2026) — only when there is one */}
+            {p.depositsKept > 0 && <FigCell label="Deposit kept" value={p.depositsKept} tone="income" onClick={() => openScoped("depositsKept")} />}
             <FigCell label="Its expenses" value={p.expenses} tone="expense" delta={vsLastYear(cmp, "expenses")} onClick={() => openScoped("expenses")} />
             <FigCell label="Net cash" value={p.net} tone="signed" delta={vsLastYear(cmp, "net")} onClick={() => openScoped("netCash")} />
           </FigCells>

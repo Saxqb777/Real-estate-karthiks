@@ -15,7 +15,7 @@ import s from "./charts.module.css";
 export interface IncomeExpenseChartProps {
   years: YearSeries[];
   /** all-time totals (data.periods.allTime) + running net per year (data.cumulativeNetByYear) → the ALL TIME view */
-  allTime?: { rentCollected: number; expenses: number; net: number };
+  allTime?: { rentCollected: number; depositsKept: number; expenses: number; net: number };
   cumulative?: { year: number; cumulative: number }[];
   /** the running year vs the same days a year earlier (data.comparisons.year) → ▲ / ▼ on its totals */
   lastYear?: CashComparison;
@@ -23,9 +23,9 @@ export interface IncomeExpenseChartProps {
   year?: number | "all";
   onYearChange?: (year: number | "all") => void;
   /** custom dates (owner 2/11/2026): their columns (data.spanSeries) + totals (data.periods.year) */
-  span?: { label: string; points: SpanPoint[]; rentCollected: number; expenses: number; net: number } | null;
+  span?: { label: string; points: SpanPoint[]; rentCollected: number; depositsKept: number; expenses: number; net: number } | null;
   /** click a total of the CURRENT year, ALL TIME or the custom dates → its explanation (other years have none) */
-  onDrill?: (key: "rentCollected" | "expenses" | "netCash", scope: YearSeries | "all" | "span") => void;
+  onDrill?: (key: "rentCollected" | "depositsKept" | "expenses" | "netCash", scope: YearSeries | "all" | "span") => void;
   className?: string;
 }
 
@@ -35,6 +35,8 @@ interface Point {
   label: string;
   longLabel: string;
   income: number;
+  /** a deposit kept back at move-out — income, stacked on the rent bar in a lighter green (owner 2/11/2026) */
+  depositsKept: number;
   expenses: number;
   net: number;
   cumulative: number;
@@ -44,7 +46,7 @@ interface Point {
 /** "FY 2025-26" → "FY 25-26" so eight years fit under the columns. */
 const shortYear = (label: string) => label.replace(/^FY (\d{2})(\d{2})-/, "FY $2-");
 
-const C = { income: "var(--teal)", expense: "var(--coral)", net: "var(--plaster)" };
+const C = { income: "var(--teal)", kept: "#bbf7d0", expense: "var(--coral)", net: "var(--plaster)" };
 const M = { l: 50, r: 10, t: 12, b: 22 };
 
 export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year: controlled, onYearChange, span, onDrill, className }: IncomeExpenseChartProps) {
@@ -76,6 +78,7 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
         label: shortYear(y.label),
         longLabel: y.label,
         income: y.income,
+        depositsKept: y.depositsKept,
         expenses: y.expenses,
         net: y.net,
         cumulative: runningNet.get(y.year) ?? y.net,
@@ -83,16 +86,17 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
       }))
     : ys.months;
   const head = span
-    ? { label: span.label, income: span.rentCollected, expenses: span.expenses, net: span.net }
+    ? { label: span.label, income: span.rentCollected, kept: span.depositsKept, expenses: span.expenses, net: span.net }
     : all
-      ? { label: "All time", income: allTime!.rentCollected, expenses: allTime!.expenses, net: allTime!.net }
-      : { label: ys.label, income: ys.income, expenses: ys.expenses, net: ys.net };
+      ? { label: "All time", income: allTime!.rentCollected, kept: allTime!.depositsKept, expenses: allTime!.expenses, net: allTime!.net }
+      : { label: ys.label, income: ys.income, kept: ys.depositsKept, expenses: ys.expenses, net: ys.net };
+  const anyKept = points.some((m) => m.depositsKept > 0);
 
   const W = Math.max(size.w, 200);
   const H = Math.max(size.h, 120);
   const pw = W - M.l - M.r;
   const ph = H - M.t - M.b;
-  const vals = points.flatMap((m) => (m.isFuture ? [0] : [m.income, m.expenses, m.net]));
+  const vals = points.flatMap((m) => (m.isFuture ? [0] : [m.income + m.depositsKept, m.expenses, m.net]));
   const ticks = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals), 4);
   const lo = ticks[0];
   const hi = ticks[ticks.length - 1];
@@ -104,8 +108,8 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
   const linePts = past.map(({ m, i }) => `${cx0(i)},${y(m.net)}`).join(" ");
   const hm = hover !== null ? points[hover] : null;
   const scope: YearSeries | "all" | "span" = custom ? "span" : all ? "all" : ys;
-  const drill = onDrill && (custom || all || ys.isCurrent) ? (k: "rentCollected" | "expenses" | "netCash") => onDrill(k, scope) : undefined;
-  const allZero = past.every(({ m }) => m.income === 0 && m.expenses === 0);
+  const drill = onDrill && (custom || all || ys.isCurrent) ? (k: "rentCollected" | "depositsKept" | "expenses" | "netCash") => onDrill(k, scope) : undefined;
+  const allZero = past.every(({ m }) => m.income === 0 && m.depositsKept === 0 && m.expenses === 0);
   // ▲ / ▼ on the totals: the running year vs the same days last year; a past year vs the whole year before it
   const before = idx > 0 ? years[idx - 1] : null;
   const cmp: CashComparison | null = custom
@@ -141,11 +145,13 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
         )}
         <div className={s.legend}>
           <LegendKey color={C.income} label="Rent collected" />
+          {anyKept && <LegendKey color={C.kept} label="Deposit kept" />}
           <LegendKey color={C.expense} label="Expenses" />
           <LegendKey color={C.net} label="Net cash" line />
         </div>
         <div className={s.totals}>
           <Total label="Rent collected" value={head.income} tone="income" delta={vsLastYear(cmp, "rentCollected")} onClick={drill ? () => drill("rentCollected") : undefined} />
+          {head.kept > 0 && <Total label="Deposit kept" value={head.kept} tone="income" onClick={drill ? () => drill("depositsKept") : undefined} />}
           <Total label="Expenses" value={head.expenses} tone="expense" delta={vsLastYear(cmp, "expenses")} onClick={drill ? () => drill("expenses") : undefined} />
           <Total
             label="Net cash"
@@ -179,7 +185,11 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
                 {hover === i && <rect x={M.l + band * i + 2} y={M.t} width={band - 4} height={ph} className={s.hoverBand} />}
                 {!m.isFuture && (
                   <>
-                    <path d={barPath(cx0(i) - bw - 1, y(0), y(m.income), bw)} fill={C.income} className={s.bar} style={{ "--i": i } as CSSProperties} />
+                    <path d={barPath(cx0(i) - bw - 1, y(0), y(m.income), bw, m.depositsKept > 0 ? 0 : 4)} fill={C.income} className={s.bar} style={{ "--i": i } as CSSProperties} />
+                    {m.depositsKept > 0 && (
+                      // the kept deposit sits on top of the rent, in a lighter green
+                      <path d={barPath(cx0(i) - bw - 1, y(m.income), y(m.income + m.depositsKept), bw)} fill={C.kept} className={s.bar} style={{ "--i": i } as CSSProperties} />
+                    )}
                     <path d={barPath(cx0(i) + 1, y(0), y(m.expenses), bw)} fill={C.expense} className={s.bar} style={{ "--i": i } as CSSProperties} />
                   </>
                 )}
@@ -214,6 +224,7 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
             title={hm.longLabel}
             rows={[
               { label: "Rent collected", value: inr(hm.income), color: C.income },
+              ...(hm.depositsKept > 0 ? [{ label: "Deposit kept", value: inr(hm.depositsKept), color: C.kept }] : []),
               { label: "Expenses", value: inr(hm.expenses), color: C.expense },
               { label: "Net cash", value: inr(hm.net), strong: true },
             ]}

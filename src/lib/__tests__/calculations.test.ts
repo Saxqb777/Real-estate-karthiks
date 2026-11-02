@@ -627,6 +627,7 @@ describe("Monthly income vs expenses (cash basis) and cumulative net", () => {
       label: "Jan",
       longLabel: "Jan 2025",
       income: 25_000,
+      depositsKept: 0,
       expenses: 0,
       net: 25_000,
       cumulative: 25_000,

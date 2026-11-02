@@ -119,7 +119,7 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
             year={period === "allTime" ? "all" : data.monthlyByYear.find((y) => y.isCurrent)?.year}
             allTime={data.periods.allTime}
             cumulative={data.cumulativeNetByYear}
-            span={custom ? { label: p.label, points: custom, rentCollected: p.rentCollected, expenses: p.expenses, net: p.net } : null}
+            span={custom ? { label: p.label, points: custom, rentCollected: p.rentCollected, depositsKept: p.depositsKept, expenses: p.expenses, net: p.net } : null}
             lastYear={data.comparisons.year}
             onDrill={drillKey ? (k, scope) => drillKey(scope === "all" ? k : `year:${k}`) : undefined}
           />
