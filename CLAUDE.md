@@ -779,11 +779,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   one draw call of GPU streaks (1800 / 1100 / 500 by tier, count by rain strength, lean with the wind, hidden inside the
   houses below their roofs, fade at the ground) + splash rings on the grass; birds and fireflies keep away in the rain;
   windAt × windBoostFor(km/h) (0.85 … 1.4, amplitudes only). Lab: ?weather=clear|partly|cloudy|fog|drizzle|rain|heavyRain|
-  storm. Checked live from the dev server: Pattukkottai was overcast (code 3, 26 °C). Preview branch pending/weather.
+  storm. Checked live from the dev server: Pattukkottai was overcast (code 3, 26 °C). DEPLOYED 2/11/2026 (owner: "deploy").
 - 2/11/2026: REVENUE OFFICER ON HER PHONE (owner: "the hands of her is not natural just holding the pen n book the whole
   day … maybe hands in pocket or just using a phone"): register + pen gone; a phone (lit screen) in her right hand, held
   up and scrolled (thumb flicks) with the head bowed a little towards it for ~7.5 s, then lowered while she looks up and
-  about (LOOKS) for ~3.5 s; left hand on her lap. Same preview branch.
+  about (LOOKS) for ~3.5 s; left hand on her lap. DEPLOYED 2/11/2026 with the weather.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
