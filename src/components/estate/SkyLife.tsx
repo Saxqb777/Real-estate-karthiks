@@ -1,5 +1,5 @@
 "use client";
-// Sky life: soft painted clouds drifting around (and below) the floating tile, crow / parakeet flocks crossing,
+// Sky life: soft painted clouds drifting around (and below) the floating tile, black crow flocks crossing,
 // fireflies at night and marigold petals blowing across the plot on the gusts. All instanced / points.
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
@@ -290,7 +290,6 @@ export function Birds({ layout, env }: { layout: SiteLayout; env: RefObject<Env>
   const wr = useRef<THREE.InstancedMesh>(null);
   const tmp = useMemo(() => ({ o: new THREE.Object3D(), w: new THREE.Object3D(), m: new THREE.Matrix4() }), []);
   const crow = useMemo(() => std("#1d1d24", { flat: true, side: THREE.DoubleSide, rough: 0.7 }), []);
-  const parrot = useMemo(() => std("#3fa65a", { flat: true, side: THREE.DoubleSide, rough: 0.7 }), []);
   const R = layout.radius;
   useFrame(() => {
     const t = env.current.t;
@@ -298,14 +297,13 @@ export function Birds({ layout, env }: { layout: SiteLayout; env: RefObject<Env>
     const ft = t - flock * FLOCK_PERIOD;
     const r = rng(flock * 97 + 3);
     const heading = r() * Math.PI * 2;
-    const isParrot = r() > 0.6;
+    r(); // was the green parrot pick — every flock is black crows now (owner 2/11/2026); kept so the paths stay the same
     // no flocks at night or in the rain
     const night = env.current.night > 0.6 || env.current.rain > 0.25;
     const meshes = [body.current, wl.current, wr.current];
     if (meshes.some((m) => !m)) return;
     meshes.forEach((m) => (m!.visible = !night && ft < 14));
     if (night || ft >= 14) return;
-    meshes.forEach((m) => (m!.material = isParrot ? parrot : crow));
     const dx = Math.cos(heading);
     const dz = Math.sin(heading);
     const along = (ft / 14) * R * 3.2 - R * 1.6;
@@ -319,10 +317,10 @@ export function Birds({ layout, env }: { layout: SiteLayout; env: RefObject<Env>
       const lat = sgn * row * 2.6 + side;
       o.position.set(dx * (along - back) - dz * lat, y + Math.sin(t * 1.3 + i * 1.7) * 1.2, dz * (along - back) + dx * lat);
       o.rotation.set(0, -heading, 0);
-      o.scale.setScalar(isParrot ? 1.1 : 1.4);
+      o.scale.setScalar(1.4);
       o.updateMatrix();
       body.current!.setMatrixAt(i, o.matrix);
-      const flap = Math.sin(t * (isParrot ? 16 : 10) + i * 0.9) * 0.75;
+      const flap = Math.sin(t * 10 + i * 0.9) * 0.75;
       w.position.set(0.2, 0.05, 0);
       w.rotation.set(flap, 0, 0);
       w.scale.set(1, 1, 1);

@@ -872,6 +872,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   hints DD/MM/YYYY; the house window's short date (UnitPanel shortDate) and the empty-slot day/month (UnitSlot dayMonth)
   are padded too ("05/11"). Tests updated. Note: Config → Settings "Date format" (settings.dateFormat) is NOT wired to
   formatDate — it changes nothing. DEPLOYED 2/11/2026 (black birds still in preview).
+- 2/11/2026: BIRDS ALL BLACK (owner: "the birds flying in the sky are green, change it to black"): the green parrot flocks
+  are gone — every flock crossing the sky is black crows (#1d1d24, crow size + wingbeat; SkyLife.tsx Birds). Flock paths unchanged.
+  DEPLOYED 2/11/2026 (owner: "deploy").
+
+## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
   AnimatedNumber, StatTile, SegmentedBar, LevelBadge, Modal/Drawer/ConfirmDialog, toast, InspectCard, CommandProvider…);
   data hooks from `@/lib/client` (`api`, `useApi`, `useMutation`, `invalidate`).
