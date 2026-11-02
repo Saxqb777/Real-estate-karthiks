@@ -744,7 +744,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   road to the FRONT side of the nearest banana clump (visible from the default camera), faces it, unfolds the arm and taps
   the stem, folds, drives back on (no other lane stop: the garden stroller walks beside that road). Palm / banana spots
   moved into street-life.ts (palmSpots, bananaSpots, insidePolygon; Vegetation imports them). Street test: the rover is
-  r 1.1, `stopped` (was `writing`). Preview branch pending/rover.
+  r 1.1, `stopped` (was `writing`). DEPLOYED 2/11/2026 (owner: "deploy"; size + tag kept as built).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
