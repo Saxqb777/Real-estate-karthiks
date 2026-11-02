@@ -1,6 +1,7 @@
 // /lab query-param parsing (server + client). Kept out of the "use client" module so the page can call it.
 import type { Tier } from "./Effects";
 import type { TimeOfDay } from "./env";
+import type { WeatherKind } from "@/lib/weather";
 import type { SceneMode } from "./UnitSlot";
 import type { SlotName } from "@/lib/site-layout";
 import type { SceneObjectKind } from "./types";
@@ -12,6 +13,7 @@ export type InsetPreset = "none" | "hud" | "panel" | "dock" | "sheet";
 export const INSET_PRESETS: InsetPreset[] = ["none", "hud", "panel", "dock", "sheet"];
 export const HINT_KINDS: SceneObjectKind[] = ["unit", "mailbox", "noticeboard", "pole", "tolet", "tenant", "taxstamp", "plot"];
 export const TIMES: TimeOfDay[] = ["auto", "dawn", "morning", "day", "afternoon", "evening", "dusk", "night"];
+export const WEATHERS: (WeatherKind | "")[] = ["", "clear", "partly", "cloudy", "fog", "drizzle", "rain", "heavyRain", "storm"];
 export const MODES: SceneMode[] = ["hero", "preview", "login"];
 export const FIELDS = [
   "",
@@ -43,6 +45,8 @@ export interface LabConfig {
   back: number;
   depth: number;
   time: TimeOfDay;
+  /** real-weather preview ("" = none / clear) */
+  weather: WeatherKind | "";
   mode: SceneMode;
   dims: boolean;
   labels: boolean;
@@ -82,6 +86,7 @@ export const LAB_DEFAULTS: LabConfig = {
   back: 22.25,
   depth: 76.66,
   time: "auto",
+  weather: "",
   mode: "hero",
   dims: false,
   labels: true,
@@ -133,6 +138,7 @@ export function parseLabParams(sp: Record<string, string | string[] | undefined>
     back: num("back", D.back, 8, 80)!,
     depth: num("depth", D.depth, 20, 200)!,
     time: pick("time", TIMES, D.time),
+    weather: pick("weather", WEATHERS, D.weather),
     mode: pick("mode", MODES, D.mode),
     dims: flag("dims", D.dims),
     labels: flag("labels", D.labels),
@@ -173,6 +179,7 @@ export function toParams(c: LabConfig): string {
   put("back", c.back, D.back);
   put("depth", c.depth, D.depth);
   put("time", c.time, D.time);
+  put("weather", c.weather, D.weather);
   put("mode", c.mode, D.mode);
   put("dims", c.dims, D.dims);
   put("labels", c.labels, D.labels);

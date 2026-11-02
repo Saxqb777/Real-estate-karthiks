@@ -87,6 +87,20 @@ export type Env = { [K in ColorField]: THREE.Color } & { [K in NumField]: number
   /** gust strength 0.15..1 at the plot centre, and the prevailing wind heading in world x/z */
   wind: number;
   windDir: [number, number];
+  /** Pattukkottai's real weather, eased (owner 2/11/2026): 0 clear … 1 overcast */
+  overcast: number;
+  /** 0 dry … 1 downpour */
+  rain: number;
+  /** 0 … 1 mist / fog */
+  mist: number;
+  /** 0 … 1 thunderstorm */
+  storm: number;
+  /** a lightning flash right now, 0 … 1 */
+  flash: number;
+  /** how much the clouds hide the sun / moon disc, 0 … 1 (the HUD's sun/moon target still follows it) */
+  veil: number;
+  /** wind multiplier from the real wind (gentle either way) */
+  windBoost: number;
 };
 
 const keyColors = KEYS.map((k) => Object.fromEntries(COLOR_FIELDS.map((f) => [f, new THREE.Color(k[f])])) as Record<ColorField, THREE.Color>);
@@ -109,6 +123,13 @@ export function createEnv(): Env {
   e.timeScale = 1;
   e.wind = 0.5;
   e.windDir = [1, 0];
+  e.overcast = 0;
+  e.rain = 0;
+  e.mist = 0;
+  e.storm = 0;
+  e.flash = 0;
+  e.veil = 0;
+  e.windBoost = 1;
   return e;
 }
 
@@ -185,4 +206,63 @@ export const GUST_SPEED = 26;
 /** Gust strength at a world position: the plot-centre gust, delayed by how far downwind the point is. */
 export function gustAt(e: Pick<Env, "t" | "windDir">, x: number, z: number): number {
   return windAt(e.t - (x * e.windDir[0] + z * e.windDir[1]) / GUST_SPEED);
+}
+
+// ───────────────────────────── the real weather (owner 2/11/2026) ─────────────────────────────
+
+const _grey = new THREE.Color();
+/** Pull a colour towards its own (slightly cool) grey by k, then darken it by `dark`. */
+function overcastColor(c: THREE.Color, k: number, dark: number) {
+  const l = c.r * 0.299 + c.g * 0.587 + c.b * 0.114;
+  _grey.setRGB(l * 0.98, l, l * 1.05);
+  c.lerp(_grey, k).multiplyScalar(1 - dark);
+}
+
+/**
+ * Lay the weather over the time-of-day palette (call after evalEnv): an overcast sky goes grey and dimmer, the sun /
+ * moon fade behind the clouds and shadows soften (the key light drops, the sky light carries the scene), rain darkens it
+ * a little more, mist pulls the fog in (Lights), lightning flashes the whole scene for a moment.
+ */
+export function applyWeather(e: Env): void {
+  const o = Math.min(1, Math.max(e.overcast, e.rain > 0 ? 0.85 : 0));
+  const r = e.rain;
+  e.veil = Math.min(1, o * 0.92 + r * 0.5); // in rain the sun / moon disappear completely
+  if (o < 0.001 && e.mist < 0.001 && e.flash < 0.001) return;
+  const dark = o * 0.2 + r * 0.12;
+  overcastColor(e.skyTop, o * 0.85, dark);
+  overcastColor(e.skyHorizon, o * 0.8, dark * 0.8);
+  overcastColor(e.skyBottom, o * 0.7, dark * 0.6);
+  overcastColor(e.cloud, o * 0.75, o * 0.32 + r * 0.1);
+  overcastColor(e.hemiSky, o * 0.55, 0);
+  overcastColor(e.key, o * 0.6, 0);
+  overcastColor(e.fog, Math.max(o, e.mist) * 0.8, dark * 0.5);
+  e.keyI *= 1 - 0.72 * o;
+  e.fillI *= 1 - 0.35 * o;
+  e.hemi *= 1 - 0.1 * o - 0.1 * r;
+  e.stars *= 1 - o;
+  if (e.flash > 0) {
+    e.hemi += e.flash * 2.4;
+    e.skyTop.addScalar(e.flash * 0.28);
+    e.skyHorizon.addScalar(e.flash * 0.36);
+  }
+}
+
+/** Thunderstorm flashes on scene time: most ~7.5 s windows have one, a bright strike and a fainter flicker after it. */
+export function lightningAt(t: number): number {
+  const P = 7.5;
+  const n = Math.floor(t / P);
+  const h = (k: number) => {
+    const x = Math.sin(n * 127.1 + k * 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  if (h(1) > 0.62) return 0;
+  const local = t - n * P - h(2) * 5;
+  if (local >= 0 && local < 0.12) return 1 - local / 0.12;
+  if (local >= 0.22 && local < 0.34) return 0.55 * (1 - (local - 0.22) / 0.12);
+  return 0;
+}
+
+/** Real wind (km/h) → the breeze multiplier: a touch more on a windy day, never a gale (owner: steady, gentle). */
+export function windBoostFor(kmh: number): number {
+  return 0.85 + 0.55 * Math.min(1, Math.max(0, (kmh - 8) / 30));
 }

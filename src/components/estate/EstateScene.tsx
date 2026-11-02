@@ -4,6 +4,7 @@
 // Import it through EstateSceneLazy (next/dynamic, ssr: false) so three.js never runs on the server.
 // SCENE CONTRACT v2 (types.ts): world objects report hover / click / right-click with their screen position,
 // the camera frames the plot inside the area the HUD leaves free, and `dimmed` softly dims the world.
+import type { WeatherNow } from "@/lib/weather";
 import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, advance, useFrame, useThree, events as r3fEvents } from "@react-three/fiber";
 import { Selection } from "@react-three/postprocessing";
@@ -29,6 +30,7 @@ import { SitePlanFallback } from "./SitePlanFallback";
 import { UnitSlot, dayMonth, slotLabels, type SceneMode } from "./UnitSlot";
 import { useAnimatedLayout } from "./useAnimatedLayout";
 import { Clouds, Fireflies } from "./SkyLife";
+import { Rain } from "./Rain";
 import { Garden, Greenery, Palms } from "./Vegetation";
 import { gateSign } from "./street-life";
 import { SCENE_OBJECT_INFO, type ObjectScreenFn, type SceneInsets, type SceneObject, type SceneObjectKind } from "./types";
@@ -49,6 +51,8 @@ export interface EstateSceneProps {
   onEmptySlotClick?: (slot: "front" | "back") => void;
   /** "auto" follows the IST clock (src/lib/day-phase.ts); the rest are previews. */
   timeOfDay?: TimeOfDay;
+  /** Pattukkottai's weather right now (/api/weather; null = clear sky) — overcast, rain, storm, mist (owner 2/11/2026). */
+  weather?: WeatherNow | null;
   showLabels?: boolean;
   showDimensions?: boolean;
   /** e.g. "frontWidthFt", "depthFt", "footprintWidthFt:front", "floors:<unitId>", "areaSqft" */
@@ -501,6 +505,7 @@ function SceneContents({
   onSelectUnit,
   onEmptySlotClick,
   timeOfDay = "auto",
+  weather = null,
   showLabels = false,
   showDimensions = false,
   highlightField = null,
@@ -693,9 +698,11 @@ function SceneContents({
 
   return (
     <SceneApiProvider value={api}>
-      <EnvDriver env={env} timeOfDay={timeOfDay} instant={reduced} dimmed={dimmed} />
+      <EnvDriver env={env} timeOfDay={timeOfDay} instant={reduced} dimmed={dimmed} weather={weather} />
       <Backdrop env={env} insets={insets} />
       <CloudsM layout={layout} env={env} count={counts.clouds} animate={animate} />
+      {/* rain when it rains in Pattukkottai (hidden otherwise; not part of "life", so it stays with Life off) */}
+      {animate && <Rain layout={layout} world={world} env={env} count={tier === "high" ? 1800 : tier === "mid" ? 1100 : 500} />}
       {/* sharper shadows (owner, 10/10/2026: ultra HD): 4096 on the desktop hero while it runs its full effects */}
       <Lights env={env} radius={layout.radius} shadowSize={tier === "high" && fx === "full" ? 4096 : tier === "low" ? 1024 : 2048} shadowRadius={tier === "high" && fx === "full" ? 5 : 4} shadows />
       {/* the tree shape stays the same across tiers / effect levels so stepping down never remounts the world */}

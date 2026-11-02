@@ -5,17 +5,34 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { skyBody } from "./sky-body";
-import { evalEnv, stepHour, targetHour, windAt, windDir, type Env, type TimeOfDay } from "./env";
+import type { WeatherNow } from "@/lib/weather";
+import { applyWeather, evalEnv, lightningAt, stepHour, targetHour, windAt, windBoostFor, windDir, type Env, type TimeOfDay } from "./env";
 import type { SceneInsets } from "./types";
 import { damp } from "./util";
 
 /** Advances the displayed hour towards the target (IST or override), scene time and wind; evaluates the palette. */
-export function EnvDriver({ env, timeOfDay, instant, dimmed = false }: { env: RefObject<Env>; timeOfDay: TimeOfDay; instant: boolean; dimmed?: boolean }) {
+export function EnvDriver({
+  env,
+  timeOfDay,
+  instant,
+  dimmed = false,
+  weather = null,
+}: {
+  env: RefObject<Env>;
+  timeOfDay: TimeOfDay;
+  instant: boolean;
+  dimmed?: boolean;
+  /** Pattukkottai's weather right now (null = clear) — the world eases into it over a few seconds */
+  weather?: WeatherNow | null;
+}) {
   const hour = useRef<number | null>(null);
   const tod = useRef(timeOfDay);
   tod.current = timeOfDay;
   const dim = useRef(dimmed);
   dim.current = dimmed;
+  const wx = useRef(weather);
+  wx.current = weather;
+  const first = useRef(true);
   useFrame((_, dtRaw) => {
     const e = env.current;
     const dt = Math.min(dtRaw, 0.1);
@@ -25,7 +42,18 @@ export function EnvDriver({ env, timeOfDay, instant, dimmed = false }: { env: Re
     e.timeScale = instant ? (dim.current ? 0.3 : 1) : damp(e.timeScale, dim.current ? 0.3 : 1, 2.5, dt);
     e.dt = dt * e.timeScale;
     e.t += e.dt;
-    e.wind = windAt(e.t);
+    // the weather: eases in (the first frame and reduced motion jump straight to it)
+    const w = wx.current;
+    const k = first.current || instant ? 1 : 1 - Math.exp(-dt * 0.35);
+    first.current = false;
+    e.overcast += ((w?.overcast ?? 0) - e.overcast) * k;
+    e.rain += ((w?.rain ?? 0) - e.rain) * k;
+    e.mist += ((w?.mist ?? 0) - e.mist) * k;
+    e.storm += ((w?.storm ? 1 : 0) - e.storm) * k;
+    e.windBoost += (windBoostFor(w?.windKmh ?? 0) - e.windBoost) * k;
+    e.flash = e.storm > 0.5 && !instant ? lightningAt(e.t) * e.storm : 0;
+    applyWeather(e);
+    e.wind = windAt(e.t) * e.windBoost;
     windDir(e.t, e.windDir);
   }, -10);
   return null;
@@ -135,12 +163,13 @@ export function Backdrop({ env, insets }: { env: RefObject<Env>; insets?: SceneI
     // never slide under the floating OVERVIEW · DATA · CONFIG menu at the top centre; still high enough to clear the palms.
     const arc = (t: number) => 0.78 + 0.05 * (1 - Math.sin(Math.min(1, Math.max(0, t)) * Math.PI));
     u.uSun.value.set(l + span * (0.1 + 0.8 * day), arc(day) - (day < 0 || day > 1 ? 0.2 : 0));
-    u.uSunVis.value = e.sunVis * (1 - e.night * 0.8);
+    const sunSeen = e.sunVis * (1 - e.night * 0.8);
+    u.uSunVis.value = sunSeen * (1 - e.veil);
     const nightP = (((e.hour - 18.6 + 24) % 24) / (24 - 18.6 + 5.6));
     u.uMoon.value.set(l + span * (0.12 + 0.76 * nightP), arc(nightP));
-    u.uMoonVis.value = e.moonVis;
-    // publish the brighter body's screen position for the HUD's sun/moon target
-    const sunV = u.uSunVis.value as number;
+    u.uMoonVis.value = e.moonVis * (1 - e.veil);
+    // publish the brighter body's screen position for the HUD's sun/moon target (clouds or not: it stays clickable)
+    const sunV = sunSeen;
     const moonV = e.moonVis;
     const body = sunV >= moonV ? (u.uSun.value as THREE.Vector2) : (u.uMoon.value as THREE.Vector2);
     const rect = gl.domElement.getBoundingClientRect();
@@ -211,8 +240,10 @@ export function Lights({ env, radius, shadowSize, shadowRadius = 4, shadows }: {
     }
     fog.color.copy(e.fog);
     const d = camera.position.length();
-    fog.near = d * 1.2;
-    fog.far = d * 4.4;
+    // mist (and rain) pull the haze in towards the island
+    const m = Math.min(1, e.mist + e.rain * 0.3);
+    fog.near = d * (1.2 - 0.75 * m);
+    fog.far = d * (4.4 - 2.7 * m);
   });
 
   return (

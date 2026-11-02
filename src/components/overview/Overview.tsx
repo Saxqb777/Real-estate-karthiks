@@ -31,7 +31,8 @@ import {
 import { AsOfContext } from "@/components/hud/year-jump";
 import { chartMenu, useChartMenu } from "@/components/shell/chart-menu";
 import { arrivedFlag, signingOutFlag, worldState } from "@/components/shell/world-state";
-import { logout } from "@/lib/client";
+import { invalidate, logout, useApi } from "@/lib/client";
+import type { WeatherNow } from "@/lib/weather";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { sceneUnitsFromBreakdown } from "@/lib/site-layout";
 import { useOverviewCommands } from "./commands";
@@ -437,6 +438,12 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
 
   const selected = panel?.kind === "unit" || panel?.kind === "tenant" ? panel.unitId : null;
   const dimmed = active && !mobile && !hudHidden && !tourOpen && (Boolean(tab) || Boolean(panel) || propertyOpen);
+  // Pattukkottai's real weather for the world (owner 2/11/2026): fetched on arrival, refreshed every 15 minutes
+  const { data: wx } = useApi<{ weather: WeatherNow | null }>("/api/weather", { dedupeMs: 15 * 60_000 });
+  useEffect(() => {
+    const id = window.setInterval(() => invalidate("/api/weather"), 15 * 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const getObjectScreen = useCallback((fn: ObjectScreenFn | null) => {
     setLocate(() => fn);
     // test handle (dev builds only): lets browser checks find a house on screen
@@ -467,6 +474,7 @@ function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady
       hud={false} /* the Life switch lives in the side bar (hud/Dock) */
       onFirstFrame={onSceneReady}
       paused={paused}
+      weather={wx?.weather ?? null}
     />
   );
 

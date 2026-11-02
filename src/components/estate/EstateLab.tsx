@@ -2,6 +2,7 @@
 // /lab — visual sandbox for the 3D estate scene: every state switchable from a panel or from the URL, e.g.
 //   /lab?units=2&state=overdue&state2=vacant&time=night&dims=1&hl=frontWidthFt&panel=0
 //   /lab?insets=panel&dim=1&hints=mailbox,noticeboard,pole   (SCENE CONTRACT v2 props)
+import { sampleWeather } from "@/lib/weather";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trapezoidArea } from "@/lib/calculations";
 import type { PlotGeometry, RentState, UnitStatus } from "@/lib/dashboard-types";
@@ -153,6 +154,7 @@ export default function EstateLab({ initial }: { initial: LabConfig }) {
         units={units}
         mode={c.mode}
         timeOfDay={c.time}
+        weather={c.weather ? sampleWeather(c.weather) : null}
         showLabels={c.labels}
         showDimensions={c.dims}
         highlightField={c.hl || null}

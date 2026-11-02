@@ -765,6 +765,25 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   saree lap −0.62, register on her lap) and turns her HEAD (new head limb, index 6, yaw on the neck) to a new direction
   every 3.4 s with eased turns. tax-route tests now check the seat (on the moped, clear of the policeman / EB pole /
   wall). DEPLOYED 2/11/2026 with the rover route + cow visit (owner: "deploy").
+- 2/11/2026: REAL WEATHER (owner: "connect the real weather with my website, so its sunny, raining or dark depending on
+  the real weather of pattukkottai" → "go"; defaults taken: visual only — no weather words — and a gentle real-wind boost).
+  lib/weather.ts (tested): Open-Meteo forecast API (free, no key; lat 10.4235, lon 79.3197) `current` → WeatherNow {kind,
+  code, overcast, rain, mist, storm, windKmh, tempC, observedAt} via lookForCode (WMO codes) + cloud cover / hourly mm;
+  sampleWeather(kind) for previews. GET /api/weather (behind login): fetch with next.revalidate 900 (≤ ~4 calls an hour),
+  5 s timeout, { weather: null } on any failure (= clear world). Overview fetches it (useApi, dedupe 15 min, re-checked
+  every 15 min) → EstateScene `weather` prop → EnvDriver eases Env.overcast / rain / mist / storm / windBoost (k = 1 − e^−.35dt;
+  instant on the first frame / reduced motion) → env.applyWeather after the time-of-day palette: sky, clouds, fog, sky
+  light and sun colour go grey + darker, key light −72 % (soft shadows), stars off, sun / moon discs veiled (Env.veil;
+  the HUD sun/moon target keeps its unveiled visibility so it stays clickable), lightning (lightningAt, scene time:
+  bright strike + flicker in most 7.5 s windows) brightens the sky light; Lights pulls the fog in for mist / rain. Rain.tsx:
+  one draw call of GPU streaks (1800 / 1100 / 500 by tier, count by rain strength, lean with the wind, hidden inside the
+  houses below their roofs, fade at the ground) + splash rings on the grass; birds and fireflies keep away in the rain;
+  windAt × windBoostFor(km/h) (0.85 … 1.4, amplitudes only). Lab: ?weather=clear|partly|cloudy|fog|drizzle|rain|heavyRain|
+  storm. Checked live from the dev server: Pattukkottai was overcast (code 3, 26 °C). Preview branch pending/weather.
+- 2/11/2026: REVENUE OFFICER ON HER PHONE (owner: "the hands of her is not natural just holding the pen n book the whole
+  day … maybe hands in pocket or just using a phone"): register + pen gone; a phone (lit screen) in her right hand, held
+  up and scrolled (thumb flicks) with the head bowed a little towards it for ~7.5 s, then lowered while she looks up and
+  about (LOOKS) for ~3.5 s; left hand on her lap. Same preview branch.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

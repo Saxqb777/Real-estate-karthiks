@@ -252,7 +252,7 @@ export function Fireflies({ layout, world, env, count, animate }: { layout: Site
   useEffect(() => () => mat.dispose(), [mat]);
   const pts = useRef<THREE.Points>(null);
   useFrame(({ clock, gl }) => {
-    const n = env.current.night;
+    const n = env.current.night * (1 - Math.min(1, env.current.rain * 3)); // no fireflies in the rain
     mat.uniforms.uOpacity.value = Math.max(0, (n - 0.45) / 0.55);
     mat.uniforms.uTime.value = animate ? clock.elapsedTime : 1.5;
     mat.uniforms.uPx.value = gl.getPixelRatio();
@@ -299,7 +299,8 @@ export function Birds({ layout, env }: { layout: SiteLayout; env: RefObject<Env>
     const r = rng(flock * 97 + 3);
     const heading = r() * Math.PI * 2;
     const isParrot = r() > 0.6;
-    const night = env.current.night > 0.6;
+    // no flocks at night or in the rain
+    const night = env.current.night > 0.6 || env.current.rain > 0.25;
     const meshes = [body.current, wl.current, wr.current];
     if (meshes.some((m) => !m)) return;
     meshes.forEach((m) => (m!.visible = !night && ft < 14));

@@ -2,7 +2,8 @@
 // The property-tax entry point (owner, 9/10/2026; replaces the bamboo hut): the REVENUE OFFICER (Ummarani, in a saree)
 // with the moped on its side stand on the grass right of the plot and the angry policeman guarding its cash box.
 // Owner 2/11/2026: "let the revenue officer just sit on the bike and move her head looking" — she sits side-saddle on
-// the seat, the register on her lap, and looks about (the houses, the road, the policeman …), turning her head.
+// the seat scrolling on her phone, now and then looking up and about (the houses, the road, the policeman …) —
+// owner 2/11/2026: "not natural just holding the pen n book the whole day … maybe … just using a phone".
 // Clicking the moped, the policeman or the officer opens property tax (kind "taxstamp").
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef, type RefObject } from "react";
@@ -16,7 +17,7 @@ import { G } from "./materials";
 import { PoliceGuard, RigMesh, useRig } from "./People";
 import { P, SKIN, personLimbs, posePerson, type Limb } from "./rig";
 import { GUARD_AT, MOPED_YAW, collectorSeat } from "./tax-route";
-import { smoothstep, type World } from "./util";
+import type { World } from "./util";
 
 /** The moped leans onto its side stand (to its left, +x). */
 const LEAN = -0.08;
@@ -93,15 +94,15 @@ const LAP = 5;
 const HEAD = 6;
 
 /** Ummarani (owner, 9/10/2026): a deep-blue cotton saree with a gold border, mustard blouse, hair in a bun with
- *  jasmine, a cloth bag on the right shoulder; green register in the left hand, a pen in the right. */
+ *  jasmine, a cloth bag on the right shoulder and a phone in her right hand. */
 function collectorLimbs(): Limb[] {
   const limbs = personLimbs({ top: "#d1a33a", bottom: SAREE, wrap: "saree", skin: SKIN.mid, hair: "bun", jasmine: true });
   limbs[P.body].parts.push(
     box([0.42, 3.1, -0.3], [0.2, 0.8, 0.62], "#b49d72"), // cloth bag at the back of the right hip
     box([0.36, 3.95, -0.05], [0.08, 1.5, 0.08], "#8a7550", [0.25, 0, 0.12]), // its strap over the right shoulder
   );
-  limbs[P.armL].parts.push(box([-0.55, 2.75, 0.38], [0.2, 1.2, 0.92], "#2f5a3a"), box([-0.44, 2.75, 0.38], [0.04, 1.1, 0.85], "#f4efe0"));
-  limbs[P.armR].parts.push(box([0.61, 2.6, 0.2], [0.06, 0.06, 0.48], "#1f3fa8"));
+  // a phone in the right hand (screen to the front at rest: raised, it faces up at her), lit screen
+  limbs[P.armR].parts.push(box([0.6, 2.76, 0.13], [0.24, 0.42, 0.05], "#1b1b1e"), box([0.6, 2.76, 0.16], [0.2, 0.36, 0.012], "#9fd3ff"));
   limbs.push({ parts: [box([0, 1.55, 0], [0.8, 2.15, 0.44], SAREE), box([0, 0.5, 0], [0.82, 0.1, 0.46], "#d4a72c")], pivot: [0, 2.65, 0], axis: [1, 0, 0] });
   // the head (and hair, bun, jasmine) on its own neck joint so she can look about
   const body = limbs[P.body].parts;
@@ -112,8 +113,11 @@ function collectorLimbs(): Limb[] {
 }
 
 /** Where she looks, in turn (head yaw, + = to her right): ahead, the houses, the road, the policeman, … */
-const LOOKS = [0, 0.75, 0.25, -0.7, -0.2, 1.0, 0.1, -0.9, 0.5, -0.4];
-const LOOK_HOLD = 3.4; // s on each, the turns eased
+/** Where she looks when she glances up from the phone (head yaw, + = to her right). */
+const LOOKS = [0.75, -0.7, 1.0, -0.4, 0.45, -0.9, 0.2, -0.2];
+/** One cycle: ~7.5 s on the phone, then ~3.5 s looking up and about. */
+const CYCLE = 11;
+const ON_PHONE = 7.5;
 
 function Collector({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
   const { geo, rig } = useRig(collectorLimbs, []);
@@ -122,6 +126,9 @@ function Collector({ layout, world, env }: { layout: SiteLayout; world: World; e
   const X = world.x(seat.p.x);
   const Z = world.z(seat.p.z);
   const anchor = useMemo<V3>(() => [X, 7.2, Z], [X, Z]);
+  const head = useRef(0.3);
+  const lean = useRef(0.1);
+  const lift = useRef(1);
   useFrame(() => {
     const g = root.current;
     if (!g) return;
@@ -129,19 +136,25 @@ function Collector({ layout, world, env }: { layout: SiteLayout; world: World; e
     const u = rig.u;
     const a = u.uAng.value;
     posePerson(u, "idle", 0, e.t, 2.9);
-    // sitting side-saddle on the seat (hips down on it, feet on the ground in front), the register on her lap
-    a[P.armL] = -0.95;
-    a[P.armR] = -0.8;
+    // sitting side-saddle on the seat (hips down on it, feet on the ground in front), left hand resting on her lap
     a[P.legL] = -0.6;
     a[P.legR] = -0.52;
     a[LAP] = -0.62;
-    // she looks about: one direction for a few seconds, then an eased turn to the next
-    const k = Math.floor(e.t / LOOK_HOLD);
-    const f = e.t / LOOK_HOLD - k;
-    const n = LOOKS.length;
-    const from = LOOKS[((k % n) + n) % n];
-    const to = LOOKS[(((k + 1) % n) + n) % n];
-    a[HEAD] = from + (to - from) * smoothstep(0.62, 1, f) + Math.sin(e.t * 1.3) * 0.03;
+    a[P.armL] = -0.55;
+    // the phone: held up and scrolled (a small thumb flick now and then), head bowed a little towards it; then she
+    // lowers it a bit and looks up and about for a few seconds, and goes back to it
+    const k = Math.floor(e.t / CYCLE);
+    const f = e.t - k * CYCLE;
+    const phone = f < ON_PHONE;
+    const look = LOOKS[((k % LOOKS.length) + LOOKS.length) % LOOKS.length];
+    const ease = 1 - Math.exp(-e.dt * 3.2);
+    head.current += ((phone ? 0.28 : look) - head.current) * ease;
+    lean.current += ((phone ? 0.11 : 0) - lean.current) * ease;
+    lift.current += ((phone ? 1 : 0.55) - lift.current) * ease;
+    const flick = phone ? Math.max(0, Math.sin(e.t * 2.6)) ** 6 * 0.05 : 0;
+    a[P.armR] = -0.75 - 0.5 * lift.current - flick;
+    a[HEAD] = head.current + Math.sin(e.t * 1.3) * 0.025;
+    u.uLean.value = lean.current;
     g.position.set(X, -0.42, Z);
     g.rotation.y = seat.face;
   });
