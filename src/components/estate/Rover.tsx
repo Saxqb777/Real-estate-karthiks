@@ -224,18 +224,24 @@ export function Rover({ layout, world, env }: { layout: SiteLayout; world: World
       const rel = Math.atan2(tx, tz) - heading.current;
       const scan = s.act === "look" ? Math.sin(s.into * 0.7) * 0.28 : 0;
       yaw = Math.atan2(Math.sin(rel), Math.cos(rel)) + scan;
-      pitch = Math.max(-1.15, Math.min(0.7, Math.atan2(2.9 - s.target.y, Math.hypot(tx, tz)))) + (s.act === "look" ? Math.sin(s.into * 0.45) * 0.08 : 0);
+      pitch =
+        Math.max(-1.15, Math.min(0.7, Math.atan2(2.9 - s.target.y, Math.hypot(tx, tz)))) +
+        (s.act === "look" ? Math.sin(s.into * 0.45) * 0.08 : s.act === "cow" ? Math.sin(s.into * 3) * 0.12 : 0);
     } else if (stopped) yaw = 0;
     look.current += (yaw - look.current) * (1 - Math.exp(-e.dt * 1.6));
     lookUp.current += (pitch - lookUp.current) * (1 - Math.exp(-e.dt * 1.4));
     if (pan.current) pan.current.rotation.y = look.current;
     if (tilt.current) tilt.current.rotation.x = lookUp.current;
     // the arm: unfolds towards the plant once the rover faces it, taps it gently, folds away before it drives on
-    const want2 = s.act === "inspect" ? Math.min(smooth(1.8, 3.6, s.into), smooth(0.6, 2.6, s.left)) : 0;
+    // (at the cow it lifts the arm half way and waves it)
+    const want2 =
+      s.act === "inspect" ? Math.min(smooth(1.8, 3.6, s.into), smooth(0.6, 2.6, s.left)) : s.act === "cow" ? 0.45 * Math.min(smooth(2.5, 4, s.into), smooth(1, 2.5, s.left)) : 0;
     reach.current += (want2 - reach.current) * (1 - Math.exp(-e.dt * 6));
     const r = reach.current;
     const tap = s.act === "inspect" ? Math.max(0, Math.sin(s.into * 2.2)) * 0.08 * r : 0;
-    if (shoulder.current) shoulder.current.rotation.set(ARM_FOLD.sp + (ARM_REACH.sp - ARM_FOLD.sp) * r, ARM_FOLD.sy + (ARM_REACH.sy - ARM_FOLD.sy) * r, 0, "YXZ");
+    const wave = s.act === "cow" ? Math.sin(s.into * 4) * 0.35 * r : 0;
+    if (shoulder.current)
+      shoulder.current.rotation.set(ARM_FOLD.sp + (ARM_REACH.sp - ARM_FOLD.sp) * r - (s.act === "cow" ? 0.5 * r : 0), ARM_FOLD.sy + (ARM_REACH.sy - ARM_FOLD.sy) * r + wave, 0, "YXZ");
     if (elbow.current) elbow.current.rotation.set(ARM_FOLD.ep + (ARM_REACH.ep - ARM_FOLD.ep) * r + tap, ARM_FOLD.ey + (ARM_REACH.ey - ARM_FOLD.ey) * r, 0, "YXZ");
     if (hga.current) hga.current.rotation.set(-0.5, e.t * 0.05, 0);
     anchor[0] = X;

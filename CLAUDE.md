@@ -745,6 +745,26 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   the stem, folds, drives back on (no other lane stop: the garden stroller walks beside that road). Palm / banana spots
   moved into street-life.ts (palmSpots, bananaSpots, insidePolygon; Vegetation imports them). Street test: the rover is
   r 1.1, `stopped` (was `writing`). DEPLOYED 2/11/2026 (owner: "deploy"; size + tag kept as built).
+- 2/11/2026: ROVER GOES ROUND THINGS + VISITS THE COW (owner: "the robot rn just goes through the trees and other objects
+  fix that make it go around it and interact with the cow"). street-life.ts: roverObstacles(layout) = palms (r .9),
+  banana clumps (1.4), both EB poles, plot marker, moped + policeman (3.4), hand pump, coconut husks, chilli mat, the
+  mother dog (3 small circles along her body), the cow (3 circles, she sways). planRound(): a 0.5 ft grid over the island
+  (blocked: obstacles + ROVER_R + .35, the wall zone WALL_CLEAR 4.2 — hedges —, the island rim, and the passers-by's
+  front track between the front corners), A* between the waypoints (a step costs more the further it strays from the
+  straight line, so it keeps its usual line and only swings round things), string-pulled, bends rounded where clear;
+  `planned` says every leg found a way (tested). Stops now by arc length: front look, COW VISIT (stops in front of her
+  head, faces her, nods its camera, half-lifts its arm and waves; the Cow in People.tsx reads the same managerAt: stops
+  grazing, lifts her head with slow nods, turns her body up to ~0.6 rad towards it, swishes her tail faster), right-side
+  palm, behind 116/B8, banana clump (pulls off from the road point beside its parking spot; clumps < 8 ft from the dogs
+  skipped). No corner stops (it drives the rounded corners). The back-row palms moved back to D + 6.9 … 7.5 so a lane
+  exists behind 116/B8. Tests: never into an obstacle (the examined clump excepted), the dog as her real ellipse, the cow
+  visit once per round, `planned`.
+- 2/11/2026: REVENUE OFFICER JUST SITS (owner: "let the revenue officer just sit on the bike and move her head looking"):
+  her walk to Gate A + phone / demand notice / cash-box routine is gone (collectorRoutine → collectorSeat in tax-route.ts;
+  TaxCollector's `due` prop removed). She sits side-saddle on the moped (hips on the seat y −0.42, legs −0.6 / −0.52,
+  saree lap −0.62, register on her lap) and turns her HEAD (new head limb, index 6, yaw on the neck) to a new direction
+  every 3.4 s with eased turns. tax-route tests now check the seat (on the moped, clear of the policeman / EB pole /
+  wall). Preview branch pending/rover-path.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

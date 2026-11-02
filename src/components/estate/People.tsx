@@ -23,6 +23,8 @@ import {
   dogFamily,
   gatePoint,
   legTimeline,
+  managerAt,
+  managerLoop,
   motherLook,
   pupAt,
   streetSchedule,
@@ -493,15 +495,34 @@ export function Cow({ layout, world, env, movers }: { layout: SiteLayout; world:
   const g = useRef<THREE.Group>(null);
   // grazing on the front grass under the palms at the right, clear of the walkers' tracks
   const { x, z } = useMemo(() => cowSpot(layout), [layout]);
+  // the rover's round (street-life.ts): when it stops in front of her she looks up and turns to it (owner 2/11/2026)
+  const rover = useMemo(() => managerLoop(layout), [layout]);
   const neck = useRef(0);
+  const turn = useRef(0);
+  const BASE_YAW = Math.PI - 0.25;
   useFrame(() => {
     const e = env.current;
     const t = e.t + 3.7;
-    const graze = Math.sin(t * 0.35) > -0.2;
-    neck.current += ((graze ? -0.85 : 0.05) + Math.sin(t * 3) * (graze ? 0.05 : 0) - neck.current) * (1 - Math.exp(-e.dt * 2.4));
+    const r = managerAt(rover, e.t);
+    const visit = r.stopped && r.act === "cow";
+    const graze = !visit && Math.sin(t * 0.35) > -0.2;
+    // visited: head up (a slow nod now and then, as if lowing at it); else grazing / looking about
+    const want = visit ? 0.12 + Math.max(0, Math.sin(r.into * 1.4)) * 0.18 : graze ? -0.85 : 0.05;
+    neck.current += (want + Math.sin(t * 3) * (graze ? 0.05 : 0) - neck.current) * (1 - Math.exp(-e.dt * 2.4));
     rig.u.uAng.value[1] = neck.current;
-    rig.u.uAng.value[2] = Math.sin(t * 1.7) * 0.5 + Math.sin(t * 5.1) * 0.12;
-    if (g.current) g.current.position.x = world.x(x) + Math.sin(t * 0.05) * 1.5;
+    rig.u.uAng.value[2] = Math.sin(t * (visit ? 3.4 : 1.7)) * 0.5 + Math.sin(t * 5.1) * 0.12;
+    const cx = world.x(x) + Math.sin(t * 0.05) * 1.5;
+    // she turns her body towards the rover while it is there (local +x = her head)
+    let yawTo = 0;
+    if (visit) {
+      const a = Math.atan2(-(world.z(r.z) - world.z(z)), world.x(r.x) - cx) - BASE_YAW;
+      yawTo = Math.max(-0.6, Math.min(0.6, Math.atan2(Math.sin(a), Math.cos(a)) * 0.7));
+    }
+    turn.current += (yawTo - turn.current) * (1 - Math.exp(-e.dt * 1.2));
+    if (g.current) {
+      g.current.position.x = cx;
+      g.current.rotation.y = BASE_YAW + turn.current;
+    }
   });
   return (
     <group
@@ -510,7 +531,7 @@ export function Cow({ layout, world, env, movers }: { layout: SiteLayout; world:
         movers?.set("cow", o, 3.6);
       }}
       position={[world.x(x), 0, world.z(z)]}
-      rotation={[0, Math.PI - 0.25, 0]}
+      rotation={[0, BASE_YAW, 0]}
     >
       <RigMesh geo={geo} rig={rig} />
     </group>

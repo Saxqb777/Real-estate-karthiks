@@ -47,7 +47,7 @@ export function Fixtures({ layout, world, env, cues, lampLight, crows }: { layou
       {/* the to-dos live with the property manager — a rover driving round the compound (Rover.tsx, owner 2/11/2026) */}
       <Rover layout={layout} world={world} env={env} />
       {/* property tax: the tax collector's moped on the grass right of the plot (owner, 9/10/2026; was a bamboo hut) */}
-      <TaxCollector layout={layout} world={world} env={env} due={cues?.tax === "due"} />
+      <TaxCollector layout={layout} world={world} env={env} />
       <PlotMarker layout={layout} world={world} env={env} />
       {/* CCTV dome camera on the left EB pole → interior photos (owner 2/11/2026; replaced the photographer) */}
       <CctvCam layout={layout} world={world} />

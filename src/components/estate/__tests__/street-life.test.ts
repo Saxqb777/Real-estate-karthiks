@@ -5,7 +5,7 @@
 // through someone standing, nobody stands on a kolam, and the passers-by take turns on the front grass.
 import { describe, expect, it } from "vitest";
 import { computeSiteLayout, type Pt, type SceneUnit, type SiteLayout } from "../../../lib/site-layout";
-import { GUARD_AT, collectorRoutine, mopedFrame } from "../tax-route";
+import { GUARD_AT, collectorSeat, mopedFrame } from "../tax-route";
 import {
   KOLAM_FT,
   WALKERS,
@@ -18,6 +18,8 @@ import {
   legTimeline,
   managerAt,
   managerLoop,
+  roverObstacles,
+  ROVER_R,
   pupAt,
   streetSchedule,
   tenantAt,
@@ -50,7 +52,6 @@ const CASES = PLOTS.flatMap((plot) => [
 
 type Body = { who: string; p: Pt; standing: boolean; r: number };
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.z - b.z);
-const mod = (t: number, p: number) => ((t % p) + p) % p;
 
 function cast(L: SiteLayout) {
   const walkers = streetSchedule(L);
@@ -59,7 +60,7 @@ function cast(L: SiteLayout) {
     .filter((t) => t.slot.status === "occupied" && t.sign)
     .map((t) => ({ ...t, tl: legTimeline(tenantRoute(t.slot, gatePoint(t.sign!))) }));
   const loop = managerLoop(L);
-  const day = collectorRoutine(L);
+  const seat = collectorSeat(L);
   const fam = dogFamily(L);
   const statics: Body[] = [
     // she's ~3.4 ft nose to rump (+ the tail curled round): a 1.9 ft body
@@ -88,10 +89,8 @@ function cast(L: SiteLayout) {
       }
       const m = managerAt(loop, t);
       out.push({ who: "manager", p: { x: m.x, z: m.z }, standing: m.stopped, r: 1.1 }); // the rover, ~2.1 ft wide
-      const tt = mod(t + 4, day.period);
-      const sg = day.segs.find((x) => tt < x.t1) ?? day.segs[day.segs.length - 1];
-      const k = sg.t1 > sg.t0 ? Math.min(1, Math.max(0, (tt - sg.t0) / (sg.t1 - sg.t0))) : 1;
-      out.push({ who: "officer", p: { x: sg.a.x + (sg.b.x - sg.a.x) * k, z: sg.a.z + (sg.b.z - sg.a.z) * k }, standing: sg.act !== "walk", r: 0.7 });
+      // the revenue officer sits on her moped (owner 2/11/2026: she no longer walks to the gate)
+      out.push({ who: "officer", p: seat.p, standing: true, r: 0.7 });
       return out;
     },
   };
@@ -117,6 +116,18 @@ describe("the people on the grass", () => {
             const b = bodies[j];
             if (intended(a.who, b.who)) continue;
             const d = dist(a.p, b.p);
+            // the rover going past the mother dog: she lies stretched out (an ellipse ~4.7 × 1.5 ft along her facing),
+            // so it may pass her side closer than her nose-to-tail length
+            if ((a.who === "manager" && b.who === "dog") || (a.who === "dog" && b.who === "manager")) {
+              const m = a.who === "manager" ? a : b;
+              const fam = dogFamily(L);
+              const dx = m.p.x - fam.x;
+              const dz = m.p.z - fam.z;
+              const u = dx * fam.fx + dz * fam.fz;
+              const w = dx * fam.fz - dz * fam.fx;
+              if ((u / (2.35 + m.r + 0.2)) ** 2 + (w / (0.75 + m.r + 0.2)) ** 2 < 1) bad.push(`t=${t} the rover drives into the dog (u ${u.toFixed(2)}, w ${w.toFixed(2)})`);
+              continue;
+            }
             // two standing still: a clear 4 ft between two people (more round the cow / the tripod)
             if (a.standing && b.standing && d < 4 + (a.r - 0.7) + (b.r - 0.7)) bad.push(`t=${t} ${a.who} + ${b.who} standing ${d.toFixed(2)} ft apart`);
             // one walking past someone standing: never through them
@@ -177,6 +188,33 @@ describe("the people on the grass", () => {
         // the gate opens within 2.4 ft (gate-state.ts): the waiting spot stays outside that
         expect(dist(tenantWaitSpot(gate), gate)).toBeGreaterThan(2.4);
       }
+    });
+
+    it(`the rover drives round the trees, poles and everything else on the grass — never through them (${c.label})`, () => {
+      const loop = managerLoop(L);
+      const obstacles = roverObstacles(L);
+      const bad: string[] = [];
+      for (let tt = 0; tt < loop.cycle && bad.length < 8; tt += 0.25) {
+        const m = managerAt(loop, tt);
+        for (const o of obstacles) {
+          // the banana clump it pulls up to (its arm taps the stem) is the one thing it may come close to
+          const plant = m.target ?? m.approaching;
+          const examining = (m.act === "inspect" || !!m.approaching) && !!plant && dist(plant, o.p) < 0.01;
+          const need = examining ? 1.85 : o.r + ROVER_R;
+          if (dist(m, o.p) < need) bad.push(`t=${tt} the rover runs into the ${o.what} (${dist(m, o.p).toFixed(2)} ft < ${need.toFixed(2)})`);
+        }
+      }
+      expect(bad).toEqual([]);
+    });
+
+    it(`the rover's round finds a way round everything on every side (${c.label})`, () => {
+      expect(managerLoop(L).planned).toBe(true);
+    });
+
+    it(`the rover visits the cow and looks her over (${c.label})`, () => {
+      const loop = managerLoop(L);
+      const visits = loop.legs.filter((l) => l.kind === "stop" && l.act === "cow");
+      expect(visits.length).toBe(1);
     });
   }
 });
