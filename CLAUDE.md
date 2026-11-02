@@ -816,7 +816,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   "Income vs expenses" lost its own year dropdown (inside the chart, left of the legend); the year is the same
   PeriodSwitch as Where money went? / compare, top-right of the chart header (Dock yearPick.income), and the chart shows
   the year of the overview's as-of date (IncomeExpenseChart `year` prop; its own dropdown only when nothing outside
-  picks the year). Picking an earlier year = the estate at that year's end, like the other charts.
+  picks the year). Picking an earlier year = the estate at that year's end, like the other charts. DEPLOYED 2/11/2026
+  (owner: "deploy year on the side"; alone — black birds + period pills still in preview).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
