@@ -875,6 +875,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
 - 2/11/2026: BIRDS ALL BLACK (owner: "the birds flying in the sky are green, change it to black"): the green parrot flocks
   are gone — every flock crossing the sky is black crows (#1d1d24, crow size + wingbeat; SkyLife.tsx Birds). Flock paths unchanged.
   DEPLOYED 2/11/2026 (owner: "deploy").
+- 2/11/2026: CONFIG → SETTINGS tidied (owner: "remove it" — the Date format dropdown, which changed nothing since dates are
+  always DD/MM/YYYY; and "remove how the app works" — the eyebrow over the "Settings" title). The dropdown is gone from
+  SettingsForm and settingsSchema (DATE_FORMATS deleted); the DB column settings.date_format stays (unused, no migration).
+  Formats section = Currency only. DEPLOYED 2/11/2026 (owner: "deploy").
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

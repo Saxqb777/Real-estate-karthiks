@@ -1,9 +1,9 @@
 "use client";
 import { Mail, Phone, Type, UserRound } from "lucide-react";
-import { Field, FormGrid, Input, NumberInput, Select, Toggle } from "@/components/ui";
+import { Field, FormGrid, Input, NumberInput, Toggle } from "@/components/ui";
 import { api } from "@/lib/client";
 import { formatINR } from "@/lib/format";
-import { DATE_FORMATS, settingsSchema, type SettingsDTO } from "@/lib/schemas/settings";
+import { settingsSchema, type SettingsDTO } from "@/lib/schemas/settings";
 import { FormActions, FormBody, FormSection, inlineFrame, type BaseFormProps } from "./FormFrame";
 import { useForm } from "./useForm";
 import s from "./forms.module.css";
@@ -13,7 +13,6 @@ type Values = {
   subtitle: string;
   ownerEmail: string;
   currency: string;
-  dateFormat: string;
   rentDueDay: number | null;
   lateFeeEnabled: boolean;
   lateFeeAmount: number | null;
@@ -37,7 +36,6 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
       subtitle: settings.subtitle ?? "",
       ownerEmail: settings.ownerEmail ?? "",
       currency: settings.currency,
-      dateFormat: settings.dateFormat,
       rentDueDay: settings.rentDueDay,
       lateFeeEnabled: settings.lateFeeEnabled,
       lateFeeAmount: settings.lateFeeAmount,
@@ -123,9 +121,6 @@ export function SettingsForm({ settings, onSaved, onCancel, frame = inlineFrame,
         <FormGrid cols={2}>
           <Field label="Currency" error={form.error("currency")} hint="Amounts use Indian grouping: ₹12,34,567">
             <Input {...form.text("currency")} autoComplete="off" maxLength={3} className={s.upper} />
-          </Field>
-          <Field label="Date format" error={form.error("dateFormat")}>
-            <Select {...form.select("dateFormat")} options={DATE_FORMATS.map((f) => ({ value: f, label: f }))} />
           </Field>
         </FormGrid>
       </FormSection>

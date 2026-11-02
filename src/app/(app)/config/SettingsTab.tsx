@@ -6,7 +6,7 @@ import s from "./config.module.css";
 export function SettingsTab() {
   const settings = useSettings();
   return (
-    <Panel fill padding="none" eyebrow="How the app works" title="Settings" className={s.settingsPanel}>
+    <Panel fill padding="none" title="Settings" className={s.settingsPanel}>
       {settings.data ? (
         <SettingsForm key={settings.data.updatedAt} settings={settings.data} />
       ) : (

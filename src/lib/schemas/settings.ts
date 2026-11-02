@@ -6,8 +6,6 @@ import type { Serialized } from "@/lib/types";
 import { zPhoneOrNull } from "./tenant";
 import { zEmailOrNull, zFlag, zInt, zMoney, zRequired, zRequiredText, zText } from "@/lib/validation";
 
-export const DATE_FORMATS = ["D/M/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"] as const;
-
 /** Every editable setting (what a full settings form submits). */
 export const settingsSchema = z.object({
   brandName: zRequiredText("Brand name", 80),
@@ -18,7 +16,6 @@ export const settingsSchema = z.object({
     .trim()
     .toUpperCase()
     .regex(/^[A-Z]{3}$/, "must be a 3-letter currency code like INR"),
-  dateFormat: z.enum(DATE_FORMATS, { message: `must be one of ${DATE_FORMATS.join(", ")}` }),
   rentDueDay: zRequired(zInt(1, 31)),
   lateFeeEnabled: zFlag,
   lateFeeAmount: zMoney,
