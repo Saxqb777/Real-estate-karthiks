@@ -844,6 +844,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   Data · Config tabs (Shell .floatLink, were 36px). A crawl of every Data / Config section, a drawer form, the overview
   and a window found every round-ended control at 34px (the small ▲ / ▼ % change badges are labels, left as they are).
   DEPLOYED 2/11/2026 (owner: "deploy it"; the black birds stayed in preview).
+- 2/11/2026: PAYMENTS CHART CELLS UNIFORM (owner, side chart "Payments": "why is the font size not constant on the dates
+  here. fix that and deploy it"): the dates (and amounts) used the global .num display font at 600 / 14px while the names
+  were 400 / 13px; now every cell is the body font 14px / 400 (charts.module.css .payTable 14px, td .num only
+  tabular digits, receipt numbers inherit the row font too), like the Data tables; amounts stay green. DEPLOYED 2/11/2026
+  (alone — the kept-deposit income change and the black birds stayed in preview).
 - 2/11/2026: DEPOSIT KEPT = INCOME AT MOVE-OUT (owner: "why does the deposit held not considered as a income?" → told him
   held deposits are the tenant's money; then "what the deposit that was not refunded" → prod: Janani 116/B8 left 24/5/2026,
   ₹30,000 deposit, ₹0 refunded; Muthukumar 116/B8 7/10 – 1/11/2026, ₹20,000 deposit, ₹14,000 refunded → ₹36,000 kept and

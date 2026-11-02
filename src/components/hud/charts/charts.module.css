@@ -731,7 +731,7 @@ button.sqftBar:hover .sqftVal {
 .payTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 .payTable th {
   position: relative;
@@ -745,13 +745,21 @@ button.sqftBar:hover .sqftVal {
   background: transparent;
   border-bottom: 1px solid var(--line-strong);
 }
+/* every cell in ONE font / size / weight, like the Data tables (owner 2/11/2026: "why is the font size not constant on
+   the dates here") — the dates and amounts only get even-width digits; colours stay */
 .payTable td {
   padding: 5px 10px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
+  font-family: var(--ff-body);
+  font-size: 14px;
+  font-weight: 400;
 }
 .payTable td:global(.num) {
-  font-size: 14px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 .payRowBtn {
   cursor: pointer;
@@ -766,8 +774,9 @@ button.sqftBar:hover .sqftVal {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--ff-display);
-  font-weight: 600;
+  font-family: inherit;
+  font-weight: inherit;
+  font-variant-numeric: tabular-nums lining-nums;
   color: var(--text-dim);
 }
 .invoice svg {
