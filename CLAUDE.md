@@ -704,6 +704,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   the list rows rising in, occupancy timelines grow left → right, payments / compare table rows rise a beat apart. Each
   chart remounts when its tab opens; picking another year replays it (svg keyed by year). Reduced motion = none.
   Preview branch pending/chart-anim (carries the CCTV preview too).
+- 2/11/2026: CONFIG PREVIEW = CCTV FOOTAGE (owner: "instead of live preview make it look like a cctv footage with date and
+  time"): the "Live preview" chip is gone; once the picture is on (after the power-on) the preview carries a camera's
+  on-screen display in white monospace with a hard shadow, no boxes — the property's date + time (IST, ticks each second:
+  "02-11-2026 MON 05:29:21") top-left, a blinking red ● REC top-right, "CAM 01" bottom-right — plus faint scan lines and
+  a vignette (.cctvFeed) and a slight wash (the colour tint stays at .16). "Unsaved" / "Showing <field>" chips sit under
+  the clock. Preview.tsx (useCctvClock / cctvStamp) + .osd* in config.module.css. Same preview branch (pending/chart-anim).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

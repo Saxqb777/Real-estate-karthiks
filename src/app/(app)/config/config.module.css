@@ -143,7 +143,80 @@
   transition: opacity 1.2s ease-in-out 0.35s;
 }
 .cctvTintOff {
+  opacity: 0.16; /* a touch washed out, like real camera footage */
+}
+/* ---------- CCTV footage (owner 1/11/2026: "make it look like a cctv footage with date and time"): faint scan lines +
+   a vignette over the picture, and the camera's on-screen display — date + time (IST) top-left, blinking REC
+   top-right, camera name bottom-right — in white monospace with a hard shadow, no boxes. All appear with the signal. */
+.cctvFeed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 95% at 50% 50%, transparent 58%, rgba(0, 0, 0, 0.42) 100%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.13) 0 1px, transparent 1px 3px);
   opacity: 0;
+  transition: opacity 0.6s ease-out 0.4s;
+}
+.cctvFeedOn {
+  opacity: 1;
+}
+.osd {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #f4f6f5;
+  text-shadow:
+    1px 1px 0 rgba(0, 0, 0, 0.85),
+    0 0 1px #000,
+    0 0 6px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.3s ease-out 0.25s;
+}
+.osdOn {
+  opacity: 1;
+}
+.osd > span {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+.osdClock {
+  top: 14px;
+  left: 14px;
+}
+.osd > .osdRec {
+  top: 14px;
+  right: 14px;
+  gap: 7px;
+}
+.osdRecDot {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.75);
+  animation: osd-rec 1s steps(1) infinite;
+}
+@keyframes osd-rec {
+  50% {
+    opacity: 0;
+  }
+}
+.osdCam {
+  right: 14px;
+  bottom: 14px;
 }
 @keyframes cctv-line {
   0% {
@@ -198,11 +271,14 @@
   .cctvLive::after {
     animation: none;
   }
+  .osdRecDot {
+    animation: none;
+  }
 }
 
 .previewTop {
   position: absolute;
-  top: 12px;
+  top: 38px; /* under the camera clock */
   left: 12px;
   right: 12px;
   z-index: 2;
@@ -212,7 +288,6 @@
   gap: 8px;
   pointer-events: none;
 }
-.liveChip,
 .unsavedChip {
   display: inline-flex;
   align-items: center;
@@ -228,22 +303,6 @@
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border: 1px solid var(--line-strong);
-}
-.liveChip {
-  color: var(--text);
-}
-.liveDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
-  animation: live 2.4s ease-in-out infinite;
-}
-@keyframes live {
-  50% {
-    opacity: 0.45;
-  }
 }
 .unsavedChip {
   color: var(--marigold);
@@ -675,5 +734,30 @@
   }
   .previewHint {
     display: none;
+  }
+  .osd {
+    font-size: 11px;
+  }
+  .osd > span {
+    gap: 9px;
+  }
+  .osd > .osdClock,
+  .osd > .osdRec {
+    top: 10px;
+  }
+  .osd > .osdClock {
+    left: 10px;
+  }
+  .osd > .osdRec,
+  .osd > .osdCam {
+    right: 10px;
+  }
+  .osd > .osdCam {
+    bottom: 10px;
+  }
+  .previewTop {
+    top: 30px;
+    left: 10px;
+    right: 10px;
   }
 }
