@@ -117,14 +117,17 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
   return (
     <div className={cx(s.chart, className)}>
       <div className={s.chartBar}>
-        {/* the year as the same glass dropdown as everywhere else (owner 1/11/2026: years only, no All time) */}
-        <Select compact aria-label="Year" value={String(ys.year)} className={s.yearSelect} onChange={(e) => pick(Number(e.target.value))}>
-          {[...years].reverse().map((yy) => (
-            <option key={yy.year} value={yy.year}>
-              {yy.label}
-            </option>
-          ))}
-        </Select>
+        {/* its own year dropdown only when nothing outside picks the year — the side chart puts it in its header like the
+            other charts (owner 2/11/2026: "keep the year on the side like the other charts") */}
+        {controlled === undefined && (
+          <Select compact aria-label="Year" value={String(ys.year)} className={s.yearSelect} onChange={(e) => pick(Number(e.target.value))}>
+            {[...years].reverse().map((yy) => (
+              <option key={yy.year} value={yy.year}>
+                {yy.label}
+              </option>
+            ))}
+          </Select>
+        )}
         <div className={s.legend}>
           <LegendKey color={C.income} label="Rent collected" />
           <LegendKey color={C.expense} label="Expenses" />

@@ -103,8 +103,10 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         ? data.expenseComposition.month
         : (data.expenseComposition.byYear.find((y) => String(y.year) === p.key)?.slices ?? []);
 
-  // the chart's header = its name (+ the year for the period charts) — no scope words, no ledger line (owner 1/11/2026)
+  // the chart's header = its name (+ the year for the period charts, the income chart too — owner 2/11/2026: "keep the
+  // year on the side like the other charts") — no scope words, no ledger line (owner 1/11/2026)
   const yearPick: Partial<Record<DockTab, ReactNode>> = {
+    income: <PeriodSwitch data={data} />,
     spending: <PeriodSwitch data={data} />,
     units: <PeriodSwitch data={data} />,
   };
@@ -116,6 +118,8 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         return (
           <IncomeExpenseChart
             years={data.monthlyByYear}
+            // the year the header picked (the year of the as-of date)
+            year={data.monthlyByYear.find((y) => y.isCurrent)?.year}
             lastYear={data.comparisons.year}
             onDrill={drillKey ? (k, scope) => drillKey(scope === "all" ? k : `year:${k}`) : undefined}
           />

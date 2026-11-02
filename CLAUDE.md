@@ -812,6 +812,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   (forms/kind-choices.ts, tested). SelectMenu `typed` mode lets letters / space / Home / End through to the box; every
   dropdown list now keeps inside the visible screen when a phone keyboard is up (visualViewport). DEPLOYED 2/11/2026
   (owner: "just deploy dropdown fix"; alone — the black birds and the period pills stayed in preview).
+- 2/11/2026: INCOME CHART YEAR IN THE HEADER (owner: "keep the year on the side like the other charts"): the side chart
+  "Income vs expenses" lost its own year dropdown (inside the chart, left of the legend); the year is the same
+  PeriodSwitch as Where money went? / compare, top-right of the chart header (Dock yearPick.income), and the chart shows
+  the year of the overview's as-of date (IncomeExpenseChart `year` prop; its own dropdown only when nothing outside
+  picks the year). Picking an earlier year = the estate at that year's end, like the other charts.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
