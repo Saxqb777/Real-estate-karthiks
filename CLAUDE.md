@@ -758,13 +758,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   palm, behind 116/B8, banana clump (pulls off from the road point beside its parking spot; clumps < 8 ft from the dogs
   skipped). No corner stops (it drives the rounded corners). The back-row palms moved back to D + 6.9 … 7.5 so a lane
   exists behind 116/B8. Tests: never into an obstacle (the examined clump excepted), the dog as her real ellipse, the cow
-  visit once per round, `planned`.
+  visit once per round, `planned`. DEPLOYED 2/11/2026.
 - 2/11/2026: REVENUE OFFICER JUST SITS (owner: "let the revenue officer just sit on the bike and move her head looking"):
   her walk to Gate A + phone / demand notice / cash-box routine is gone (collectorRoutine → collectorSeat in tax-route.ts;
   TaxCollector's `due` prop removed). She sits side-saddle on the moped (hips on the seat y −0.42, legs −0.6 / −0.52,
   saree lap −0.62, register on her lap) and turns her HEAD (new head limb, index 6, yaw on the neck) to a new direction
   every 3.4 s with eased turns. tax-route tests now check the seat (on the moped, clear of the policeman / EB pole /
-  wall). Preview branch pending/rover-path.
+  wall). DEPLOYED 2/11/2026 with the rover route + cow visit (owner: "deploy").
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
