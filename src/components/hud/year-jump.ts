@@ -1,11 +1,10 @@
 "use client";
-// The overview's period, for the pill in the windows and charts (owner 2/11/2026: "add all time and custom date … in
-// every page where dates are present" — [ Year | All time | Custom ]): Year = the estate as it stood at the end of
-// the picked year (the as-of date; this year = today), All time = everything up to today, Custom = the figures for
-// the dates (the dashboard fills its year slot with them; as-of = the To day, or today).
+// The overview's period, for the pill in the windows and charts (owner 2/11/2026: "just add all time with year pill"
+// — [ Year | All time ]): Year = the estate as it stood at the end of the picked year (the as-of date; this year =
+// today), All time = everything up to today.
 import { createContext, useContext } from "react";
 
-export type Span = { kind: "year" } | { kind: "all" } | { kind: "range"; from: string; to: string };
+export type Span = { kind: "year" } | { kind: "all" };
 
 export interface SpanApi {
   span: Span;

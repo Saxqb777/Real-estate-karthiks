@@ -64,7 +64,7 @@ const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export function Overview({ layout = "immersive", active = true }: OverviewProps) {
   const isClient = useIsClient();
-  // the period (owner 2/11/2026): Year (at the as-of date) · All time · Custom dates — shared by every window + chart
+  // the period (owner 2/11/2026): Year (at the as-of date) · All time — shared by every window + chart
   const [asOf, setYearAsOf] = useState<string | null>(null);
   const [span, setSpan] = useState<Span>({ kind: "year" });
   // the time travel (sun / moon) and the year dropdown both mean "the year view at this date"
@@ -73,12 +73,12 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
     setYearAsOf(d);
   }, []);
   const spanApi = useMemo(() => ({ span, setSpan, setAsOf }), [span, setAsOf]);
-  const dash = useHudDashboard(span.kind === "year" ? asOf : null, span.kind === "range" ? span : null);
+  const dash = useHudDashboard(span.kind === "year" ? asOf : null);
   const data = dash.data;
   const period: PeriodKind = span.kind === "all" ? "allTime" : "year";
 
-  // a bad / failed as-of date (or custom dates) snaps back to today with a plain message
-  const failedAsOf = (asOf || span.kind === "range") && dash.error ? dash.error.message : null;
+  // a bad / failed as-of date snaps back to today with a plain message
+  const failedAsOf = asOf && dash.error ? dash.error.message : null;
 
   // ARRIVAL: one calm loading screen (same as the login hand-over) covers the page until the figures are in and the
   // 3D world has drawn its first frames; then it fades away and the whole game appears at once — no pop-ins.

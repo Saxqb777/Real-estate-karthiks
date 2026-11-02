@@ -124,7 +124,6 @@ export function ReportLibrary() {
         mode={yearMode}
         onModeChange={setYearMode}
         modeOnAll
-        arrows
         className={s.period}
       />
     </div>

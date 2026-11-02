@@ -243,8 +243,8 @@
 
 /* the year picker (PeriodSwitch, owner 1/11/2026: years only) — a small glass dropdown, or plain text when there's
    only one year */
-/* the period in a window's title bar / a side chart's header (owner 2/11/2026): [ Year | All time | Custom ] +
-   the year dropdown or From – To; wraps onto a second line when the space is narrow */
+/* the period in a window's title bar / a side chart's header (owner 2/11/2026): [ Year | All time ] + the year
+   dropdown; wraps onto a second line when the space is narrow */
 .pswitch {
   display: inline-flex;
   align-items: center;
@@ -260,31 +260,6 @@
 }
 .pkinds > * {
   flex-wrap: nowrap;
-}
-.pdates {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-.pdate {
-  width: 152px;
-}
-.pdash {
-  color: var(--text-faint);
-}
-@media (max-width: 767px) {
-  .pswitch {
-    justify-content: flex-start;
-  }
-  .pdates {
-    flex: 1 1 100%;
-  }
-  .pdate {
-    flex: 1 1 0;
-    width: auto;
-    min-width: 0;
-  }
 }
 .pyear {
   flex: none;
@@ -494,18 +469,10 @@
     min-width: 0;
     margin: 2px 0 0;
   }
-  /* the period under the title: pills, then the two dates sharing the window's width */
+  /* the period under the title, from its left edge */
   .panelHeadTools .pswitch {
     flex: 1 1 100%;
     justify-content: flex-start;
-  }
-  .panelHeadTools .pdates {
-    flex: 1 1 100%;
-  }
-  .panelHeadTools .pdate {
-    flex: 1 1 0;
-    width: auto;
-    min-width: 0;
   }
 }
 .pinBtn svg {
