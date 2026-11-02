@@ -731,6 +731,20 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   fades back in (0.5 s). Flags in shell/world-state.ts: arrivedFlag (mirrors Overview `arrived`, reset on unmount so a
   sign-in after a sign-out hides it again) + signingOutFlag (Game `leaving`); useCovered(pathname). Phones' bottom bar
   unchanged (it is part of the layout — hiding it would leave an empty strip). DEPLOYED 2/11/2026 (owner: "deploy").
+- 2/11/2026: PROPERTY MANAGER = A ROVER (owner: "can we replace the property manager to this space robot" + a Mars rover
+  picture; then "not only circle around the property but also stop in some place and do more natural things like he's
+  looking around the property even the plants"). estate/Rover.tsx replaces the walking man (PropertyOfficer + officerLimbs
+  deleted from People.tsx): six wheels with orange rims + cleats on rocker-bogie legs, gold body, solar-cell deck (canvas
+  cell texture) with flared wings, white camera mast + camera bar (pans / tilts), gold dish antenna, radio rod, an
+  instrument ARM (shoulder / elbow / turret) folded across the front. ~2.1 ft wide (SCALE 1.05). Same hotspot (kind / key
+  "noticeboard" → to-dos; tag "Property manager"). ROUTE (street-life.ts, tested): managerCorners — lane side 6 ft out,
+  right side 5 ft out, front run 7.3 ft out (clear of both EB poles, the passers-by's track, the policeman), 1.5 ft/s;
+  turns in place at each corner (2.5 s); STOPS: in front of 116/B7 (scans the façade; x chosen clear of the passers-by's
+  stops), short of the right-side palm (looks up into the crown), behind 116/B8 (looks it over), and pulls OFF the lane
+  road to the FRONT side of the nearest banana clump (visible from the default camera), faces it, unfolds the arm and taps
+  the stem, folds, drives back on (no other lane stop: the garden stroller walks beside that road). Palm / banana spots
+  moved into street-life.ts (palmSpots, bananaSpots, insidePolygon; Vegetation imports them). Street test: the rover is
+  r 1.1, `stopped` (was `writing`). Preview branch pending/rover.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

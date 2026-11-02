@@ -17,7 +17,7 @@ import { Baked, vcMaterial } from "./Baked";
 import { G, std } from "./materials";
 import { WireCrows } from "./People";
 import { glowTex } from "./textures";
-import { PropertyOfficer } from "./People";
+import { Rover } from "./Rover";
 import { TaxCollector } from "./TaxCollector";
 import type { World } from "./util";
 
@@ -44,8 +44,8 @@ export function Fixtures({ layout, world, env, cues, lampLight, crows }: { layou
     <group>
       <PoleAndMeter layout={layout} world={world} env={env} lampLight={lampLight} crows={crows} />
       <Mailbox layout={layout} world={world} mail={!!cues?.mail} />
-      {/* the to-dos live with the property manager who walks round the compound (People.tsx) */}
-      <PropertyOfficer layout={layout} world={world} env={env} />
+      {/* the to-dos live with the property manager — a rover driving round the compound (Rover.tsx, owner 2/11/2026) */}
+      <Rover layout={layout} world={world} env={env} />
       {/* property tax: the tax collector's moped on the grass right of the plot (owner, 9/10/2026; was a bamboo hut) */}
       <TaxCollector layout={layout} world={world} env={env} due={cues?.tax === "due"} />
       <PlotMarker layout={layout} world={world} env={env} />

@@ -87,7 +87,7 @@ function cast(L: SiteLayout) {
         if (s.y < 0.01) out.push({ who: `tenant-${tn.slot.slot}`, p: { x: s.x, z: s.z }, standing: !s.moving, r: 0.7 });
       }
       const m = managerAt(loop, t);
-      out.push({ who: "manager", p: { x: m.x, z: m.z }, standing: m.writing, r: 0.7 });
+      out.push({ who: "manager", p: { x: m.x, z: m.z }, standing: m.stopped, r: 1.1 }); // the rover, ~2.1 ft wide
       const tt = mod(t + 4, day.period);
       const sg = day.segs.find((x) => tt < x.t1) ?? day.segs[day.segs.length - 1];
       const k = sg.t1 > sg.t0 ? Math.min(1, Math.max(0, (tt - sg.t0) / (sg.t1 - sg.t0))) : 1;

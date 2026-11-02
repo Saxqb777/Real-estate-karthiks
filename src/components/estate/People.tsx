@@ -23,8 +23,6 @@ import {
   dogFamily,
   gatePoint,
   legTimeline,
-  managerAt,
-  managerLoop,
   motherLook,
   pupAt,
   streetSchedule,
@@ -603,76 +601,8 @@ export function BlobShadows({ list, max }: { list: RefObject<Map<string, { g: TH
   return <instancedMesh ref={ref} args={[G.plane(), mat, Math.max(1, max)]} frustumCulled={false} renderOrder={1} />;
 }
 
-// ───────────────────────────── property manager (the to-do list) ─────────────────────────────
-
-/** White shirt, white trousers, black shoes, a maroon register in the left hand and a pen in the right. */
-function officerLimbs(): Limb[] {
-  const white = "#f3f1ea";
-  const limbs = personLimbs({ top: white, bottom: "#ebe8df", wrap: "pants", skin: SKIN.mid, hair: "short" });
-  // long white sleeves; black shoes
-  for (const l of limbs) for (const pt of l.parts) if (pt.c === "#2b211b") pt.c = "#121212";
-  for (const i of [P_ARM_L, P_ARM_R]) {
-    const arm = limbs[i].parts[0];
-    arm.c = white;
-  }
-  limbs[0].parts.push(box([0.25, 3.9, 0.27], [0.24, 0.32, 0.04], "#1d4f91")); // ID card
-  limbs[P_ARM_L].parts.push(box([-0.55, 2.75, 0.38], [0.2, 1.25, 0.95], "#8c1f24"), box([-0.44, 2.75, 0.38], [0.04, 1.16, 0.88], "#f4efe0")); // register
-  limbs[P_ARM_R].parts.push(box([0.61, 2.6, 0.2], [0.06, 0.06, 0.48], "#1f3fa8")); // pen
-  return limbs;
-}
 const P_ARM_L = 3;
 const P_ARM_R = 4;
-
-/**
- * The property manager: walks a slow loop round the outside of the compound at all times, stopping at each corner to
- * write in his register. Clicking him opens the to-dos (the old notice board's job). His anchor moves with him.
- * Pointer hover is re-tested a few times a second while he walks, so he lights up when he walks under a still cursor
- * (R3F only raycasts on pointer events otherwise).
- */
-export function PropertyOfficer({ layout, world, env }: { layout: SiteLayout; world: World; env: RefObject<Env> }) {
-  const { geo, rig } = useRig(officerLimbs, []);
-  const root = useRef<THREE.Group>(null);
-  const anchor = useMemo<V3>(() => [0, 7.4, 0], []);
-  // a loop outside the wall: front grass → right passage → behind the back → down the lane (street-life.ts)
-  const loop = useMemo(() => managerLoop(layout), [layout]);
-  const heading = useRef<number | null>(null);
-  const lastPick = useRef(0);
-  useFrame((state) => {
-    const g = root.current;
-    if (!g) return;
-    if (state.clock.elapsedTime - lastPick.current > 0.12) {
-      lastPick.current = state.clock.elapsedTime;
-      state.events.update?.();
-    }
-    const e = env.current;
-    const { x, z, dx, dz, writing, walked } = managerAt(loop, e.t);
-    const X = world.x(x);
-    const Z = world.z(z);
-    g.position.set(X, 0, Z);
-    const want = Math.atan2(dx, -dz);
-    if (heading.current === null) heading.current = want;
-    let dh = want - heading.current;
-    while (dh > Math.PI) dh -= Math.PI * 2;
-    while (dh < -Math.PI) dh += Math.PI * 2;
-    heading.current += dh * (1 - Math.exp(-e.dt * 5));
-    g.rotation.y = heading.current;
-    // walking: the register stays up in the left hand; at the corners he writes in it
-    posePerson(rig.u, writing ? "idle" : "walk", (walked / 1.6) * Math.PI, e.t, 1.7);
-    const a = rig.u.uAng.value;
-    a[P_ARM_L] = -0.95;
-    if (writing) a[P_ARM_R] = -0.85 + Math.sin(e.t * 9) * 0.05;
-    anchor[0] = X;
-    anchor[2] = Z;
-  });
-  return (
-    <Hotspot spot={{ key: "noticeboard", kind: "noticeboard", anchor }}>
-      <group ref={root}>
-        <RigMesh geo={geo} rig={rig} />
-        <mesh geometry={G.box()} position={[0, 3.3, 0]} scale={[3.6, 7, 3.6]} visible={false} />
-      </group>
-    </Hotspot>
-  );
-}
 
 // ───────────────────────────── angry policeman guarding the tax collector's moped ─────────────────────────────
 

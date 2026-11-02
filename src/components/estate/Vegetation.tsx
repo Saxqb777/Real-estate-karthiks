@@ -4,23 +4,16 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
-import { offsetPolygon, type Pt, type SiteLayout } from "@/lib/site-layout";
+import { offsetPolygon, type SiteLayout } from "@/lib/site-layout";
 import { gustAt, type Env } from "./env";
 import { Baked } from "./Baked";
 import type { Part } from "./bake";
 import { G, PAL, std } from "./materials";
 import { chilliMatTex } from "./textures";
+import { bananaSpots, insidePolygon, palmSpots } from "./street-life";
 import { rng, type World } from "./util";
 
-export function insidePolygon(p: Pt, poly: Pt[]): boolean {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const a = poly[i];
-    const b = poly[j];
-    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-}
+export { insidePolygon };
 
 // ── geometry builders ──
 
@@ -150,33 +143,6 @@ interface PalmSpec {
   lean: number;
   phase: number;
   fronds: { yaw: number; pitch: number; len: number; dead: boolean }[];
-}
-
-function palmSpots(layout: SiteLayout): Pt[] {
-  const [FL, , , BL] = layout.plot.polygon;
-  const D = layout.plot.depthFt;
-  const R = layout.plot.rightX;
-  const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
-  const M = layout.site.meadow;
-  // on the right and behind the buildings: they frame the view from the front-left instead of hiding the facades;
-  // two more at the front-right corner of the grass, where the cow grazes
-  const spots: Pt[] = [
-    { x: R + 9.2, z: M.z0 + 4.4 },
-    { x: R + 13.4, z: M.z0 + 2.4 },
-    // (the palm that stood at R+7, z 5 made way for the property-tax spot: now the tax collector's moped)
-    { x: R + 10.5, z: 23 },
-    { x: R + 7.5, z: 42 },
-    { x: R + 11, z: 58 },
-    { x: R + 7, z: D - 3 },
-    { x: (R + leftX(D)) / 2 + 6, z: D + 6 },
-    { x: (R + leftX(D)) / 2 - 6, z: D + 5 },
-    { x: leftX(D) - 9, z: D + 6.5 },
-    { x: leftX(D - 6) - 11, z: D - 6 },
-  ];
-  const rear = layout.rearYard.z1 - layout.rearYard.z0;
-  if (rear > 6.5) spots.push({ x: leftX(D - rear / 2) + 4.2, z: D - rear / 2 });
-  const tileIn = offsetPolygon(layout.site.tile, -2.2);
-  return spots.filter((p) => insidePolygon(p, tileIn));
 }
 
 export function Palms({ layout, world, env, animate, count }: { layout: SiteLayout; world: World; env: RefObject<Env>; animate: boolean; count: number }) {
@@ -474,22 +440,13 @@ export function Garden({ layout, world, env, animate }: { layout: SiteLayout; wo
   useEffect(() => () => leafGeo.dispose(), [leafGeo]);
   const clumps = useMemo(() => {
     const r = rng(515);
-    const spots = [
-      { x: leftX(D * 0.36) - 9.5, z: D * 0.36 },
-      { x: leftX(D * 0.36 + 3) - 12.5, z: D * 0.36 + 3.5 },
-      { x: leftX(D * 0.62) - 8.5, z: D * 0.62 },
-      { x: layout.plot.rightX + 6.8, z: layout.site.meadow.z0 + 2.8 },
-    ];
-    const tileIn = offsetPolygon(layout.site.tile, -2);
-    return spots
-      .filter((p) => insidePolygon(p, tileIn))
+    return bananaSpots(layout)
       .map((p) => ({
         x: world.x(p.x),
         z: world.z(p.z),
         h: 7 + r() * 3,
         leaves: Array.from({ length: 7 }, (_, k) => ({ yaw: (k / 7) * Math.PI * 2 + r() * 0.5, pitch: 0.55 - r() * 0.7, len: 5.5 + r() * 2, ph: r() * 6 })),
       }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layout, world]);
   const leafRef = useRef<THREE.InstancedMesh>(null);
   const leafCount = clumps.reduce((n, c) => n + c.leaves.length, 0);

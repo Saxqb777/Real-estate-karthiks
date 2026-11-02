@@ -8,7 +8,7 @@
 //   • a tenant waits BESIDE the unit's gate (never on its kolam), facing it, until it swings open.
 // Owner, 9/10/2026 (later): the dog left the front — a big mother dog lies on the lane-side grass with her 2 pups
 // (dogFamily / pupAt): they nap against her, wake, play and chase each other round her, then flop down again.
-import type { BuildingSlot, Pt, SiteLayout } from "../../lib/site-layout";
+import { offsetPolygon, type BuildingSlot, type Pt, type SiteLayout } from "../../lib/site-layout";
 
 /** x of a polygon edge (a → b) at plan z. */
 const xOnEdge = (a: Pt, b: Pt, z: number) => (Math.abs(b.z - a.z) < 1e-9 ? a.x : a.x + ((b.x - a.x) * (z - a.z)) / (b.z - a.z));
@@ -20,6 +20,61 @@ export function tileXRange(layout: Pick<SiteLayout, "site">, z: number): [number
 }
 
 const mod = (t: number, p: number) => ((t % p) + p) % p;
+
+// ───────────────────────────── plants (Vegetation.tsx draws them; the rover stops by them) ─────────────────────────────
+
+export function insidePolygon(p: Pt, poly: Pt[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.z > p.z !== b.z > p.z && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+/** Where the coconut palms stand (plan ft): on the right and behind the buildings, two at the front-right corner. */
+export function palmSpots(layout: Pick<SiteLayout, "plot" | "site" | "rearYard">): Pt[] {
+  const [FL, , , BL] = layout.plot.polygon;
+  const D = layout.plot.depthFt;
+  const R = layout.plot.rightX;
+  const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
+  const M = layout.site.meadow;
+  // on the right and behind the buildings: they frame the view from the front-left instead of hiding the facades;
+  // two more at the front-right corner of the grass, where the cow grazes
+  const spots: Pt[] = [
+    { x: R + 9.2, z: M.z0 + 4.4 },
+    { x: R + 13.4, z: M.z0 + 2.4 },
+    // (the palm that stood at R+7, z 5 made way for the property-tax spot: now the tax collector's moped)
+    { x: R + 10.5, z: 23 },
+    { x: R + 7.5, z: 42 },
+    { x: R + 11, z: 58 },
+    { x: R + 7, z: D - 3 },
+    { x: (R + leftX(D)) / 2 + 6, z: D + 6 },
+    { x: (R + leftX(D)) / 2 - 6, z: D + 5 },
+    { x: leftX(D) - 9, z: D + 6.5 },
+    { x: leftX(D - 6) - 11, z: D - 6 },
+  ];
+  const rear = layout.rearYard.z1 - layout.rearYard.z0;
+  if (rear > 6.5) spots.push({ x: leftX(D - rear / 2) + 4.2, z: D - rear / 2 });
+  const tileIn = offsetPolygon(layout.site.tile, -2.2);
+  return spots.filter((p) => insidePolygon(p, tileIn));
+}
+
+/** Where the banana clumps grow (plan ft): the side garden on the lane side, one more by the cow at the front right. */
+export function bananaSpots(layout: Pick<SiteLayout, "plot" | "site">): Pt[] {
+  const [FL, , , BL] = layout.plot.polygon;
+  const D = layout.plot.depthFt;
+  const leftX = (z: number) => FL.x + ((BL.x - FL.x) * z) / D;
+  const spots: Pt[] = [
+    { x: leftX(D * 0.36) - 9.5, z: D * 0.36 },
+    { x: leftX(D * 0.36 + 3) - 12.5, z: D * 0.36 + 3.5 },
+    { x: leftX(D * 0.62) - 8.5, z: D * 0.62 },
+    { x: layout.plot.rightX + 6.8, z: layout.site.meadow.z0 + 2.8 },
+  ];
+  const tileIn = offsetPolygon(layout.site.tile, -2);
+  return spots.filter((p) => insidePolygon(p, tileIn));
+}
 
 // ───────────────────────────── gates, signs, kolams ─────────────────────────────
 
@@ -100,13 +155,13 @@ export function crossSpots(layout: Pick<SiteLayout, "compoundWalls" | "slots" | 
   const front = layout.slots.find((s) => s.slot === "front");
   const empty = !!front && (front.status === "vacant" || front.status === "incoming");
   const right = Math.min(gr + 6.5, R + 2);
-  // left of the gate: halfway between the property manager's front-left corner (he stops there to write) and the tenant
+  // left of the gate: halfway between the property manager's front-left corner (the rover turns there) and the tenant
   // waiting by the gate, if that leaves room round both — else right of the gate (the passers-by take turns, so two of
   // them never stand there together)
-  const corner = managerLoop(layout).segs[0].a;
+  const corner = managerCorners(layout)[0];
   const sign = gateSign(layout, "front");
   const wait = sign ? tenantWaitSpot(gatePoint(sign)) : null;
-  const clear = (x: number) => Math.hypot(x - corner.x, CROSS_Z - corner.z) >= 4.1 && (!wait || Math.hypot(x - wait.x, CROSS_Z - wait.z) >= 4.1);
+  const clear = (x: number) => Math.hypot(x - corner.x, CROSS_Z - corner.z) >= 4.5 && (!wait || Math.hypot(x - wait.x, CROSS_Z - wait.z) >= 4.1);
   const mid = wait ? (corner.x + wait.x) / 2 : gl - 4.8;
   const left = clear(mid) ? mid : clear(gl - 4.8) ? gl - 4.8 : right;
   return { left, right, board: empty ? (gl + gr) / 2 : null };
@@ -502,46 +557,162 @@ export function motherLook(fam: DogFamily, t: number): number {
   return -0.45 + Math.sin(t * 0.13) * 0.35;
 }
 
-// ───────────────────────────── the property manager, the cow ─────────────────────────────
+// ───────────────────────────── the property manager (a rover), the cow ─────────────────────────────
 
-export const MANAGER_SPEED = 2.1; // ft/s
-export const MANAGER_WRITE = 4; // s at each corner
+export const MANAGER_SPEED = 1.5; // ft/s — the rover drives slowly (owner 2/11/2026: the property manager is a rover)
+/** Seconds at each corner: it stops and turns in place to the next side. */
+const CORNER_TURN = 2.5;
+/** How close (centre to stem, ft) the rover pulls up to the banana clump it examines. */
+const PULL_UP = 1.9;
 
-/** The property manager's round outside the wall: front grass → right passage → behind the back → down the lane. */
-export function managerLoop(layout: Pick<SiteLayout, "plot">) {
+/** What the rover does at a stop: turn at a corner, look something over with its mast camera, or examine it with its arm. */
+export type RoverAct = "turn" | "look" | "inspect";
+type Target = Pt & { y: number };
+type RoverLeg =
+  | { kind: "drive"; a: Pt; b: Pt; t0: number; t1: number; d0: number }
+  | { kind: "stop"; p: Pt; dir: Pt; act: RoverAct; target?: Target; t0: number; t1: number; d0: number };
+
+/** The corners of the rover's round (front-left, front-right, back-right, back-left). */
+export function managerCorners(layout: Pick<SiteLayout, "plot">): Pt[] {
   const [FL, FR, BR, BL] = layout.plot.polygon;
-  const pts: Pt[] = [
-    { x: FL.x - 5, z: FL.z - 6.5 },
-    { x: FR.x + 3, z: FR.z - 6.5 },
-    { x: BR.x + 3, z: BR.z + 3.8 },
-    { x: BL.x - 5, z: BL.z + 3.8 },
+  return [
+    { x: FL.x - 6, z: FL.z - 7.3 },
+    { x: FR.x + 5, z: FR.z - 7.3 },
+    { x: BR.x + 5, z: BR.z + 3.8 },
+    { x: BL.x - 6, z: BL.z + 3.8 },
   ];
+}
+
+/**
+ * The property manager's round outside the wall: front grass → right side → behind the back → down the lane. The rover
+ * is ~2.1 ft wide, so its sides run wide of the EB poles (they stand 3.5 ft in front of the wall, ~3.5 ft out from each
+ * front corner) — lane side 6 ft out, right side 5 ft out (inside the policeman by the moped) — and its front run 7.3 ft
+ * out, clear of the passers-by's track (CROSS_Z).
+ * Owner 2/11/2026: "not only circle around the property but also stop in some place and do more natural things like
+ * he's looking around the property even the plants" — on the way it stops to look 116/B7's front over, looks up at the
+ * palm by the right side, looks at the back house and, down the lane, pulls off the road to the nearest banana clump,
+ * examines it with its arm and drives back onto the road a little further on; at every corner it turns in place. (No
+ * other stop on the lane road: the garden stroller walks right beside it there.)
+ */
+export function managerLoop(layout: Pick<SiteLayout, "plot" | "site" | "rearYard" | "slots" | "compoundWalls">) {
+  const pts = managerCorners(layout);
   const segs = pts.map((a, i) => {
     const b = pts[(i + 1) % pts.length];
     return { a, b, len: Math.hypot(b.x - a.x, b.z - a.z) };
   });
-  const total = segs.reduce((n, sg) => n + sg.len, 0);
-  return { segs, total, cycle: total / MANAGER_SPEED + MANAGER_WRITE * segs.length };
+  // a plant / house point → how far along a side the rover stops for it, and how far off that side it is
+  const along = (i: number, p: Pt) => {
+    const { a, b, len } = segs[i];
+    const ux = (b.x - a.x) / len;
+    const uz = (b.z - a.z) / len;
+    const s = (p.x - a.x) * ux + (p.z - a.z) * uz;
+    return { at: Math.min(len - 3, Math.max(3, s)), off: Math.abs((p.x - a.x) * uz - (p.z - a.z) * ux), inside: s > 2 && s < len - 2 };
+  };
+  const stops: { seg: number; at: number; dur: number; act: RoverAct; target: Target; pull?: Pt }[] = [];
+  const front = layout.slots.find((s) => s.slot === "front");
+  const back = layout.slots.find((s) => s.slot === "back");
+  if (front) {
+    // in front of 116/B7, but clear of where the passers-by stop on their track (left / right of the gate, the board)
+    const mid = (front.rect.x0 + front.rect.x1) / 2;
+    const taken = Object.values(crossSpots(layout)).filter((x): x is number => x !== null);
+    const x = [0, 2, -2, 4, -4, 6, -6].map((o) => mid + o).find((c) => taken.every((s) => Math.abs(c - s) >= 3.6) && along(0, { x: c, z: 0 }).inside);
+    if (x !== undefined) stops.push({ seg: 0, at: along(0, { x, z: 0 }).at, dur: 7, act: "look", target: { x: mid, z: front.rect.z0, y: front.heightFt * 0.6 } });
+  }
+  const palm = palmSpots(layout)
+    .map((p) => ({ p, ...along(1, p) }))
+    .filter((c) => c.inside && c.off >= 2.4 && c.off < 4)
+    .sort((m, n) => m.off - n.off)[0];
+  // it pulls up a little short of the palm (clear of its flared foot) and looks up into the crown
+  if (palm) stops.push({ seg: 1, at: Math.max(3, palm.at - 2.5), dur: 7, act: "look", target: { ...palm.p, y: 22 } });
+  if (back) {
+    const p = { x: (back.rect.x0 + back.rect.x1) / 2, z: back.rect.z1 };
+    stops.push({ seg: 2, at: along(2, p).at, dur: 6, act: "look", target: { ...p, y: back.heightFt * 0.6 } });
+  }
+  const clump = bananaSpots(layout)
+    .map((p) => ({ p, ...along(3, p) }))
+    .filter((c) => c.inside && c.off > PULL_UP + 1 && c.off < 7.5)
+    .sort((m, n) => m.off - n.off)[0]; // the clump nearest the road (the far ones sit by the dog family)
+  if (clump) {
+    // off the road to the stem's FRONT side (not behind it: the default camera looks from the lane side, so the stem
+    // would hide the rover and its arm), PULL_UP from the stem, facing it
+    const sg = segs[3];
+    const fx = (sg.b.x - sg.a.x) / sg.len;
+    const fz = (sg.b.z - sg.a.z) / sg.len;
+    const road = { x: sg.a.x + fx * clump.at, z: sg.a.z + fz * clump.at };
+    const wx = (road.x - clump.p.x) / clump.off + fx * 2.2;
+    const wz = (road.z - clump.p.z) / clump.off + fz * 2.2;
+    const wl = Math.hypot(wx, wz);
+    const pull = { x: clump.p.x + (wx / wl) * PULL_UP, z: clump.p.z + (wz / wl) * PULL_UP };
+    const ahead = (pull.x - sg.a.x) * fx + (pull.z - sg.a.z) * fz;
+    stops.push({ seg: 3, at: Math.max(3, Math.min(clump.at, ahead - 2.5)), dur: 11, act: "inspect", target: { ...clump.p, y: 3.2 }, pull });
+  }
+  // the timeline: per side — turn at its first corner, then drive from stop to stop to the next corner
+  const legs: RoverLeg[] = [];
+  let t = 0;
+  let d = 0;
+  segs.forEach((sg, i) => {
+    const dir = { x: sg.b.x - sg.a.x, z: sg.b.z - sg.a.z };
+    const at = (s: number): Pt => ({ x: sg.a.x + (dir.x * s) / sg.len, z: sg.a.z + (dir.z * s) / sg.len });
+    legs.push({ kind: "stop", p: sg.a, dir, act: "turn", t0: t, t1: (t += CORNER_TURN), d0: d });
+    let s = 0;
+    const mine = stops.filter((x) => x.seg === i).sort((m, n) => m.at - n.at);
+    for (const st of mine) {
+      if (st.at - s < 4) continue; // too close to the last stop: skip it
+      legs.push({ kind: "drive", a: at(s), b: at(st.at), t0: t, t1: (t += (st.at - s) / MANAGER_SPEED), d0: d });
+      d += st.at - s;
+      s = st.at;
+      if (st.pull) {
+        // pull off the road to it, stop facing it, then drive back onto the road a little further on
+        const off = Math.hypot(st.pull.x - at(s).x, st.pull.z - at(s).z);
+        legs.push({ kind: "drive", a: at(s), b: st.pull, t0: t, t1: (t += off / MANAGER_SPEED), d0: d });
+        d += off;
+        legs.push({ kind: "stop", p: st.pull, dir: { x: st.target.x - st.pull.x, z: st.target.z - st.pull.z }, act: st.act, target: st.target, t0: t, t1: (t += st.dur), d0: d });
+        const ahead = (st.pull.x - sg.a.x) * (dir.x / sg.len) + (st.pull.z - sg.a.z) * (dir.z / sg.len);
+        const on = Math.min(sg.len - 1, Math.max(s, ahead) + 3.5);
+        const back = Math.hypot(at(on).x - st.pull.x, at(on).z - st.pull.z);
+        legs.push({ kind: "drive", a: st.pull, b: at(on), t0: t, t1: (t += back / MANAGER_SPEED), d0: d });
+        d += back;
+        s = on;
+        continue;
+      }
+      legs.push({ kind: "stop", p: at(s), dir, act: st.act, target: st.target, t0: t, t1: (t += st.dur), d0: d });
+    }
+    legs.push({ kind: "drive", a: at(s), b: sg.b, t0: t, t1: (t += (sg.len - s) / MANAGER_SPEED), d0: d });
+    d += sg.len - s;
+  });
+  return { segs, legs, cycle: t, total: d };
 }
 
-export function managerAt(loop: ReturnType<typeof managerLoop>, t: number): { x: number; z: number; dx: number; dz: number; writing: boolean; walked: number } {
-  let tt = mod(t + loop.cycle * 0.35, loop.cycle); // starts on the right side, away from the front walkers
-  let walked = 0;
-  for (const sg of loop.segs) {
-    const walkT = sg.len / MANAGER_SPEED;
-    const dx = sg.b.x - sg.a.x;
-    const dz = sg.b.z - sg.a.z;
-    if (tt < MANAGER_WRITE) return { x: sg.a.x, z: sg.a.z, dx, dz, writing: true, walked };
-    tt -= MANAGER_WRITE;
-    if (tt < walkT) {
-      const k = tt / walkT;
-      return { x: sg.a.x + dx * k, z: sg.a.z + dz * k, dx, dz, writing: false, walked: walked + tt * MANAGER_SPEED };
-    }
-    tt -= walkT;
-    walked += sg.len;
+export interface RoverState {
+  x: number;
+  z: number;
+  /** the way it faces (plan) */
+  dx: number;
+  dz: number;
+  /** standing still (a corner turn or a stop) */
+  stopped: boolean;
+  /** distance driven so far this round (wheels roll with it) */
+  walked: number;
+  act?: RoverAct;
+  /** what its camera (and arm) is on, plan ft + height */
+  target?: Target;
+  /** seconds into / left of the current stop */
+  into: number;
+  left: number;
+}
+
+export function managerAt(loop: ReturnType<typeof managerLoop>, t: number): RoverState {
+  const tt = mod(t + loop.cycle * 0.35, loop.cycle); // starts on the right side, away from the front walkers
+  const leg = loop.legs.find((l) => tt < l.t1) ?? loop.legs[loop.legs.length - 1];
+  const into = tt - leg.t0;
+  const left = leg.t1 - tt;
+  if (leg.kind === "drive") {
+    const k = leg.t1 > leg.t0 ? Math.min(1, into / (leg.t1 - leg.t0)) : 1;
+    const dx = leg.b.x - leg.a.x;
+    const dz = leg.b.z - leg.a.z;
+    return { x: leg.a.x + dx * k, z: leg.a.z + dz * k, dx, dz, stopped: false, walked: leg.d0 + Math.hypot(dx, dz) * k, into, left };
   }
-  const last = loop.segs[0];
-  return { x: last.a.x, z: last.a.z, dx: last.b.x - last.a.x, dz: last.b.z - last.a.z, writing: true, walked };
+  return { x: leg.p.x, z: leg.p.z, dx: leg.dir.x, dz: leg.dir.z, stopped: true, walked: leg.d0, act: leg.act, target: leg.target, into, left };
 }
 
 /** The zebu cow grazing on the front grass under the palms at the right (she sways ±1.5 ft along x). */
