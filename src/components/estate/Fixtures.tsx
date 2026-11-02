@@ -49,8 +49,8 @@ export function Fixtures({ layout, world, env, cues, lampLight, crows }: { layou
       {/* property tax: the tax collector's moped on the grass right of the plot (owner, 9/10/2026; was a bamboo hut) */}
       <TaxCollector layout={layout} world={world} env={env} due={cues?.tax === "due"} />
       <PlotMarker layout={layout} world={world} env={env} />
-      {/* CCTV camera on the lane-wall pillar facing 116/B7's veranda → interior photos (owner 2/11/2026; replaced the photographer) */}
-      <CctvCam layout={layout} world={world} env={env} />
+      {/* CCTV dome camera on the left EB pole → interior photos (owner 2/11/2026; replaced the photographer) */}
+      <CctvCam layout={layout} world={world} />
     </group>
   );
 }

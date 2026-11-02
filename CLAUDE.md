@@ -712,14 +712,15 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   the clock. Preview.tsx (useCctvClock / cctvStamp) + .osd* in config.module.css. DEPLOYED 2/11/2026 (4bcfb2c) with the
   CCTV power-on + chart animations (owner: "deploy").
 - 2/11/2026: CCTV CAMERA replaces the PHOTOGRAPHER (owner: drone mocked first → "no need drone", "replace the cctv for the
-  camera man so remove him"): estate/CctvCam.tsx — a white bullet camera (black lens front, blinking red light, no visor:
-  from the high default view a visor hid the lens) on a wall bracket on top of the LANE-WALL PILLAR facing 116/B7's veranda
-  (nearest the default view; nothing else clickable there), watching the lane, tilted down, slow ±16° sweep. Mounted in
-  Fixtures (scenery: stays with Life off; the photographer lived in Life). Same hotspot (kind / key "photographer") → the
-  interior photos window; hover / "?" name "CCTV". Photographer, tripod, flash + photographerSpot (and its street-life test
-  entry) deleted. Spot options shown to the owner: 1 lane-wall pillar (built) · 2 Gate A corner pillar (busy: gate,
-  mailbox, tenant, EB pole) · 3 on 116/B7's wall above the veranda. Preview branch pending/cctv-cam (pending/drone kept
-  locally, unused).
+  camera man so remove him", then his photo of a street PTZ dome: "a real looking small sized cctv on the eb pole on the
+  left will look good"): estate/CctvCam.tsx — a white PTZ DOME camera (white domed housing, grey band, glossy smoked black
+  dome underneath) hanging from a curved white arm clamped halfway up the LEFT EB pole (fixtures.poles[1], off the lane
+  corner — not a hotspot, so no clash with the Electricity Board pole), steel straps + a grey junction box behind; real
+  size-ish (small), the arm out over the lane-side grass (clear of Gate A, its kolam and the waiting tenant), static (no
+  LED). Mounted in Fixtures (scenery: stays with Life off; the photographer lived in Life). Same hotspot (kind / key
+  "photographer", generous pickFirst click box round the dome) → the interior photos window; hover / "?" name "CCTV".
+  Photographer, tripod, flash + photographerSpot (and its street-life test entry) deleted. Earlier tries (bullet camera on
+  a lane-wall pillar; drone) dropped. Preview branch pending/cctv-cam.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
