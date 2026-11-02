@@ -175,6 +175,28 @@
 .selectBox[data-open] .chev {
   rotate: 180deg;
 }
+/* "type it or pick it" (ComboInput): a text box with a ⌄ that opens the same glass list */
+.comboBox .input {
+  padding-right: 38px;
+}
+.chevBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 38px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.chevBtn:disabled {
+  cursor: not-allowed;
+}
+.comboBox[data-open] .chev {
+  rotate: 180deg;
+}
 .chev {
   position: absolute;
   right: 10px;

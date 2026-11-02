@@ -10,11 +10,13 @@ export { Button, LinkButton, IconButton, buttonClass, type ButtonProps, type Lin
 export { Field, FormGrid, useField, type FieldProps, type FormGridProps } from "./Field";
 export {
   Input,
+  ComboInput,
   NumberInput,
   DateInput,
   Select,
   Textarea,
   type InputProps,
+  type ComboInputProps,
   type NumberInputProps,
   type DateInputProps,
   type SelectProps,

@@ -1,11 +1,12 @@
 "use client";
 import { ListTodo } from "lucide-react";
-import { DateInput, Field, FormGrid, Input, Select, Toggle } from "@/components/ui";
+import { ComboInput, DateInput, Field, FormGrid, Input, Select, Toggle } from "@/components/ui";
 import { api } from "@/lib/client";
 import { toInputDate } from "@/lib/dates";
 import { DEFAULT_ACTION_TYPE, actionCreateSchema, actionUpdateSchema, type ActionDTO, type PriorityValue } from "@/lib/schemas/action";
 import { ChoiceGroup } from "./controls";
-import { unitOptions, useUnits } from "./data";
+import { unitOptions, useActions, useUnits } from "./data";
+import { kindChoices } from "./kind-choices";
 import { FormActions, FormBody, inlineFrame, type BaseFormProps } from "./FormFrame";
 import { useForm } from "./useForm";
 
@@ -22,6 +23,9 @@ export const ACTION_TYPES = ["Repair", "Rent", "Lease", "Tax", "Electricity", "W
 export function ActionForm({ action, defaults, onSaved, onCancel, frame = inlineFrame, submitLabel }: ActionFormProps) {
   const editing = Boolean(action);
   const units = useUnits();
+  // every kind: the usual ones + the ones already used in the to-dos, "Custom" last
+  const todos = useActions("all");
+  const kinds = kindChoices(ACTION_TYPES, todos.data?.items.map((a) => a.type) ?? [], DEFAULT_ACTION_TYPE);
   const form = useForm<Values, ActionDTO>({
     initial: {
       title: action?.title ?? defaults?.title ?? "",
@@ -70,12 +74,7 @@ export function ActionForm({ action, defaults, onSaved, onCancel, frame = inline
           />
         </Field>
         <Field label="Kind" error={form.error("type")}>
-          <Input {...form.text("type")} autoComplete="off" list="pe-action-types" placeholder={DEFAULT_ACTION_TYPE} />
-          <datalist id="pe-action-types">
-            {ACTION_TYPES.map((t) => (
-              <option key={t} value={t} />
-            ))}
-          </datalist>
+          <ComboInput {...form.text("type")} options={kinds} placeholder={DEFAULT_ACTION_TYPE} />
         </Field>
         {editing && (
           <Field label="Status" span="full">
