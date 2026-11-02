@@ -246,10 +246,10 @@ describe("annual statement", () => {
   });
 
   it("occupancy per unit inside the year", () => {
-    // FY 2023-24 (366 days, includes 29/2/2024): Unit A empty 1/6 – 31/8/2023 = 92 days at Murugan's 9,500
+    // FY 2023-24 (366 days, includes 29/02/2024): Unit A empty 1/6 – 31/08/2023 = 92 days at Murugan's 9,500
     const a = buildAnnualReport(fixture(), { ...opts(), year: 2023 }).occupancy[0];
     expect(a).toMatchObject({ unitId: "A", daysInYear: 366, daysOccupied: 274, vacantDays: 92, rentLost: 29_133 });
-    // FY 2025-26: Unit B let 1/4 – 30/4/2025 only; 335 empty days × 11,000 / 30 = 1,22,833
+    // FY 2025-26: Unit B let 1/4 – 30/04/2025 only; 335 empty days × 11,000 / 30 = 1,22,833
     const b = buildAnnualReport(fixture(), { ...opts(), year: 2025 }).occupancy[1];
     expect(b).toMatchObject({ unitId: "B", daysInYear: 365, daysOccupied: 30, vacantDays: 335, rentLost: 122_833 });
   });
@@ -315,7 +315,7 @@ describe("all-time statement (year = all)", () => {
   });
 });
 
-// ─────────────────────────────── upgrades (owner 8/10/2026) ───────────────────────────────
+// ─────────────────────────────── upgrades (owner 08/10/2026) ───────────────────────────────
 
 describe("custom dates (from → to)", () => {
   const pick = (t: { rentCollected: number; rentExpected: number; rentReceivedForScope: number; expenses: number; net: number }) => [
@@ -329,7 +329,7 @@ describe("custom dates (from → to)", () => {
   it("the dates of a whole FY = that FY's statement (months, totals, reconciliation)", () => {
     const fy = buildAnnualReport(fixture(), { ...opts(), year: 2025 });
     const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2025-04-01"), to: D("2026-03-31") } });
-    expect(r).toMatchObject({ kind: "range", label: "1/4/2025 – 31/3/2026", isPartial: false });
+    expect(r).toMatchObject({ kind: "range", label: "01/04/2025 – 31/03/2026", isPartial: false });
     expect(pick(r.totals)).toEqual(pick(fy.totals));
     expect(r.months.map((m) => [m.label, m.rentCollected, m.expenses])).toEqual(fy.months.map((m) => [m.label, m.rentCollected, m.expenses]));
     expect(r.reconciliation.ledgerBalanced).toBe(true);
@@ -360,15 +360,15 @@ describe("custom dates (from → to)", () => {
 });
 
 describe("custom dates in the 3D windows + side charts (dashboard year slot)", () => {
-  // owner 2/11/2026: Year · All time · Custom everywhere — the dashboard fills its "year" slot with the dates
+  // owner 02/11/2026: Year · All time · Custom everywhere — the dashboard fills its "year" slot with the dates
   const ranged = (from: string, to: string, asOf: Date = TODAY) =>
     buildDashboard(fixture(), { asOf, today: TODAY, now: NOW, yearMode: "fy", range: { from: D(from), to: D(to) } });
 
   it("= the custom-dates statement for the same dates (totals, label, last year)", () => {
     const d = ranged("2025-04-01", "2026-03-31", D("2026-03-31"));
     const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2025-04-01"), to: D("2026-03-31") } });
-    expect(d.periods.year).toMatchObject({ kind: "range", label: "1/4/2025 – 31/3/2026", rentCollected: r.totals.rentCollected, expenses: r.totals.expenses, net: r.totals.net });
-    expect(d.scopeLabels.year).toBe("1/4/2025 – 31/3/2026");
+    expect(d.periods.year).toMatchObject({ kind: "range", label: "01/04/2025 – 31/03/2026", rentCollected: r.totals.rentCollected, expenses: r.totals.expenses, net: r.totals.net });
+    expect(d.scopeLabels.year).toBe("01/04/2025 – 31/03/2026");
     expect(d.comparisons.year.rentCollected.before).toBe(r.previous?.rentCollected.before);
   });
 
@@ -406,9 +406,9 @@ describe("custom dates in the 3D windows + side charts (dashboard year slot)", (
 });
 
 describe("a deposit kept back at move-out = income on the move-out day (not rent)", () => {
-  // owner 2/11/2026: "just simply keep it as an income at the time of move out" → "its not a payment or rent collected
+  // owner 02/11/2026: "just simply keep it as an income at the time of move out" → "its not a payment or rent collected
   // so just record as an income in the charts" (+ net cash everywhere)
-  // fixture: Murugan (A1) left on 31/5/2023, deposit 50,000, refunded 45,000 → 5,000 kept
+  // fixture: Murugan (A1) left on 31/05/2023, deposit 50,000, refunded 45,000 → 5,000 kept
   const noneKept = () =>
     buildDashboard(
       { ...fixture(), leases: fixture().leases.map((l) => ({ ...l, depositRefundedAmount: l.securityDeposit })) },
@@ -473,13 +473,13 @@ describe("compared with last year", () => {
     const d = dash();
     const then = dash(D("2025-10-02"));
     const c = d.comparisons.year;
-    expect(c.label).toBe("FY 2025-26 to 2/10/2025");
+    expect(c.label).toBe("FY 2025-26 to 02/10/2025");
     expect([c.rentCollected.now, c.rentCollected.before]).toEqual([d.periods.year.rentCollected, then.periods.year.rentCollected]);
     expect([c.expenses.now, c.expenses.before]).toEqual([d.periods.year.expenses, then.periods.year.expenses]);
     expect(c.net.now).toBe(d.periods.year.net);
     expect(c.rentCollected.change).toBeCloseTo((c.rentCollected.now - c.rentCollected.before) / c.rentCollected.before, 6);
     // and this month: 1–2 Oct 2026 vs 1–2 Oct 2025
-    expect(d.comparisons.month.label).toBe("Oct 2025 to 2/10/2025");
+    expect(d.comparisons.month.label).toBe("Oct 2025 to 02/10/2025");
     expect(d.comparisons.month.rentCollected.before).toBe(then.periods.month.rentCollected);
   });
 
@@ -504,7 +504,7 @@ describe("rental yield (last 12 months)", () => {
   const y = dash().yields;
   it("per unit: rent and own expenses ÷ price paid and ÷ worth now", () => {
     const a = y.units.find((u) => u.unitId === "A")!;
-    // 3/10/2025 – 2/10/2026: nine 12,500 payments (Oct–Jun) + 10,000 part = 1,22,500; geyser 4,200
+    // 03/10/2025 – 02/10/2026: nine 12,500 payments (Oct–Jun) + 10,000 part = 1,22,500; geyser 4,200
     expect(a).toMatchObject({ rent: 122_500, expenses: 4_200, net: 118_300, price: 3_850_000, value: 6_150_000, fullYear: true });
     expect(a.grossOnPrice).toBeCloseTo(122_500 / 3_850_000, 6);
     expect(a.netOnPrice).toBeCloseTo(118_300 / 3_850_000, 6);
@@ -582,7 +582,7 @@ describe("unit report", () => {
     expect(r.now).toEqual(card);
     expect(r.totals).toEqual({
       rentCollected: card.rentCollected,
-      // Murugan's 5,000 kept deposit: income, inside net cash (owner 2/11/2026)
+      // Murugan's 5,000 kept deposit: income, inside net cash (owner 02/11/2026)
       depositsKept: 5_000,
       expenses: card.expenses,
       netCash: card.netCash,

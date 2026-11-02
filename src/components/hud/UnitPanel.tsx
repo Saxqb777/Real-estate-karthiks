@@ -53,10 +53,10 @@ export function RentStatePill({ unit, size = "sm" }: { unit: Pick<UnitBreakdown,
   return <StatusPill status={unit.rentState} size={size} label={unit.rentState === "paid" ? "Rent paid" : undefined} />;
 }
 
-/** "5/11" */
+/** "05/11" (two digits, like every date — owner 2/11/2026) */
 const shortDate = (iso: string) => {
   const d = new Date(iso);
-  return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
+  return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 };
 
 export function UnitPanel(props: UnitPanelProps) {

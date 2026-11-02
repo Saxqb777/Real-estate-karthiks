@@ -46,7 +46,7 @@ describe("overlap: leases may not share a single day", () => {
   it("explains the clash and suggests the day after the last day", () => {
     const others = [{ ...span("2019-08-01", "2023-08-31"), tenant: { name: "Murugan" } }];
     expect(leaseConflictMessage(span("2023-08-15", null), others, "Unit A")).toBe(
-      "These dates overlap Murugan's lease on Unit A (1/8/2019 – 31/8/2023). Leases on the same unit can't share a day — the next lease can start on 1/9/2023, the day after their last day.",
+      "These dates overlap Murugan's lease on Unit A (01/08/2019 – 31/08/2023). Leases on the same unit can't share a day — the next lease can start on 01/09/2023, the day after their last day.",
     );
     expect(leaseConflictMessage(span("2023-09-01", null), others, "Unit A")).toBeNull();
     // only one open lease per unit
@@ -56,7 +56,7 @@ describe("overlap: leases may not share a single day", () => {
 
   it("last day before the start is rejected with the new wording", () => {
     expect(leaseRuleIssues({ startDate: D("2026-01-10"), endDate: D("2026-01-09"), securityDeposit: 0 })).toEqual([
-      { field: "endDate", message: "Last day of tenancy 9/1/2026 can't be before the start date 10/1/2026" },
+      { field: "endDate", message: "Last day of tenancy 09/01/2026 can't be before the start date 10/01/2026" },
     ]);
   });
 });
@@ -104,7 +104,7 @@ describe("rent periods: the last rent month is the month of the last day", () =>
     expect(paymentPeriodError(l, { month: 4, year: 2025 })).toBeNull();
     expect(paymentPeriodError(l, { month: 7, year: 2021 })).toBeNull();
     expect(paymentPeriodError(l, { month: 5, year: 2025 })).toBe(
-      "Rent period May 2025 is after the tenant's last day of tenancy (30/4/2025) — this lease's last rent month is April 2025. Choose April 2025 or earlier.",
+      "Rent period May 2025 is after the tenant's last day of tenancy (30/04/2025) — this lease's last rent month is April 2025. Choose April 2025 or earlier.",
     );
     expect(paymentPeriodError(l, { month: 6, year: 2021 })).toMatch(/^Rent period June 2021 is before this lease started \(July 2021\)/);
     // a one-day tenancy still has one rent month

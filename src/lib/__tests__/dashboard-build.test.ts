@@ -84,14 +84,14 @@ function expectAllFinite(value: unknown, path = "$"): void {
 }
 
 // ─────────────────────────────── full scenario ───────────────────────────────
-// Unit A "Front House": bought 15/6/2022 for 50,00,000 at 8%/yr, 1,200 sqft → held 1,461 days = 4.0 years.
+// Unit A "Front House": bought 15/06/2022 for 50,00,000 at 8%/yr, 1,200 sqft → held 1,461 days = 4.0 years.
 // (Estimates are whole rupees: 50L × 1.08⁴ = 68,02,444.80 → 68,02,445; 40L × 1.05⁸ = 59,09,821.78 → 59,09,822.)
-//   Offers 60,00,000 (1/3/2026), 72,00,000 (10/1/2026), 72,00,000 (1/5/2026) → best 72,00,000 dated 1/5/2026 (tie → latest).
-//   Lease to Ravi from 10/1/2025 (active), rent 25,000, deposit 1,00,000.
-// Unit B "Back House": bought 15/6/2018 for 40,00,000 at 5%/yr, 1,000 sqft → 2,922 days = 8.0 years. No offers, never leased.
-// Payments (lease L1): 25,000 ×3 — Jan 2025 (paid 10/1/2025), Feb 2025 (6/2/2025), May 2026 (4/5/2026).
-// Expenses: Maintenance 12,500.50 on A (12/3/2025); Property Tax 4,320.25 on B (20/2/2026).
-// Settings: rent due on the 5th, late fee 500 after 3 grace days. Today = 15/6/2026.
+//   Offers 60,00,000 (01/03/2026), 72,00,000 (10/01/2026), 72,00,000 (01/05/2026) → best 72,00,000 dated 01/05/2026 (tie → latest).
+//   Lease to Ravi from 10/01/2025 (active), rent 25,000, deposit 1,00,000.
+// Unit B "Back House": bought 15/06/2018 for 40,00,000 at 5%/yr, 1,000 sqft → 2,922 days = 8.0 years. No offers, never leased.
+// Payments (lease L1): 25,000 ×3 — Jan 2025 (paid 10/01/2025), Feb 2025 (06/02/2025), May 2026 (04/05/2026).
+// Expenses: Maintenance 12,500.50 on A (12/03/2025); Property Tax 4,320.25 on B (20/02/2026).
+// Settings: rent due on the 5th, late fee 500 after 3 grace days. Today = 15/06/2026.
 const scenario = (): DashboardInput => ({
   settings,
   plot,
@@ -212,7 +212,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
     expect(d.asOf).toBe(ISO("2026-06-15"));
     expect(d.isLive).toBe(true);
     expect(d.yearMode).toBe("fy");
-    expect(d.scopeLabels).toEqual({ allTime: "All time", year: "FY 2026-27", month: "Jun 2026", asOf: "As of 15/6/2026" });
+    expect(d.scopeLabels).toEqual({ allTime: "All time", year: "FY 2026-27", month: "Jun 2026", asOf: "As of 15/06/2026" });
     expect(d.settings).toEqual({
       brandName: "Pattukottai Estates",
       subtitle: "Two townhouses",
@@ -251,7 +251,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       yearsHeld: 4, // 1,461 / 365.25
       currentValue: 6_802_445, // 50,00,000 × 1.36048896 = 68,02,444.80 → whole rupees
       bestOffer: 7_200_000,
-      bestOfferDate: ISO("2026-05-01"), // tie with 10/1/2026 → most recent
+      bestOfferDate: ISO("2026-05-01"), // tie with 10/01/2026 → most recent
       offersCount: 3,
       valuation: 7_200_000,
       valuationSource: "offer",
@@ -267,7 +267,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       netCash: 62_499.5,
       occupancyPct: 0.356605, // 521 / 1,461
       daysOwned: 1461,
-      daysOccupied: 521, // 10/1/2025 → 15/6/2026
+      daysOccupied: 521, // 10/01/2025 → 15/06/2026
       vacantDays: 940,
       unrealizedLoss: 783_333,
       activeLease: {
@@ -286,7 +286,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       electricityConsumerNumber: "04-123-456",
       electricityPayUrl: "https://www.tnebltd.gov.in/",
     });
-    // 15/6/2022 → 10/1/2025 = 940 days, before the first lease → next lease's rent
+    // 15/06/2022 → 10/01/2025 = 940 days, before the first lease → next lease's rent
     expect(A.vacantPeriods).toEqual([
       {
         start: ISO("2022-06-15"),
@@ -313,7 +313,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       paidSoFar: 0,
       amountDue: 25_500,
       isOverdue: true,
-      daysOverdue: 467, // 5/3/2025 → 15/6/2026
+      daysOverdue: 467, // 05/03/2025 → 15/06/2026
       lateFeeApplied: true,
       lateFee: 500,
     });
@@ -396,14 +396,14 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       label: "FY 2026-27",
       start: ISO("2026-04-01"),
       end: ISO("2026-06-15"),
-      rentCollected: 25_000, // the 4/5/2026 payment
+      rentCollected: 25_000, // the 04/05/2026 payment
       depositsKept: 0,
       rentExpected: 75_000, // Apr + May + Jun 2026
       rentReceivedForScope: 25_000,
       rentUnpaid: 50_000,
       rentDueLater: 0,
       collectionPct: 0.333333,
-      expenses: 0, // the 20/2/2026 tax belongs to FY 2025-26
+      expenses: 0, // the 20/02/2026 tax belongs to FY 2025-26
       net: 25_000,
     });
     expect(d.periods.month).toMatchObject({ key: "2026-06", label: "Jun 2026", rentCollected: 0, rentExpected: 25_000, collectionPct: 0, expenses: 0, net: 0 });
@@ -437,7 +437,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
 
   it("monthly income vs expenses by FY, zero-filled from the first purchase", () => {
     expect(d.monthlyByYear.map((y) => [y.label, y.income, y.expenses, y.net])).toEqual([
-      ["FY 2018-19", 0, 0, 0], // B bought 15/6/2018
+      ["FY 2018-19", 0, 0, 0], // B bought 15/06/2018
       ["FY 2019-20", 0, 0, 0],
       ["FY 2020-21", 0, 0, 0],
       ["FY 2021-22", 0, 0, 0],
@@ -531,7 +531,7 @@ describe("buildDashboard — full scenario (2 units, 1 tenant, 1 lease, 3 paymen
       input.payments.push({ id: `px${i}`, leaseId: "L1", amount: 25_000, paymentDate: D("2026-06-14"), periodMonth: m, periodYear: y, invoiceSeq: seq++, invoiceNumber: `PE-X-${i}` });
     }
     let out = build(input);
-    // next = July, due 5/7/2026 → 20 days away → "paid"
+    // next = July, due 05/07/2026 → 20 days away → "paid"
     expect(out.units[0]).toMatchObject({ rentState: "paid", nextPayment: { dueDate: ISO("2026-07-05"), isOverdue: false, amountDue: 25_000 } });
     expect(out.kpis).toMatchObject({ overdueCount: 0, overdueAmount: 0, arrearsTotal: 0, rentCollected: 450_000 });
     expect(out.periods.allTime.collectionPct).toBe(1);
@@ -547,14 +547,14 @@ const round2x = (n: number) => Math.round(n * 100) / 100;
 
 describe("buildDashboard — as of a past date", () => {
   it("only records dated on/before the as-of date count; values grow to that date", () => {
-    // 1/3/2025: no offers yet (first is 10/1/2026) → A valued by estimate; payments Jan + Feb 2025; no expenses yet
+    // 01/03/2025: no offers yet (first is 10/01/2026) → A valued by estimate; payments Jan + Feb 2025; no expenses yet
     const d = build(scenario(), D("2025-03-01"));
     expect(d.isLive).toBe(false);
     expect(d.asOf).toBe(ISO("2025-03-01"));
     expect(d.today).toBe(ISO("2026-06-15"));
-    expect(d.scopeLabels).toMatchObject({ year: "FY 2024-25", month: "Mar 2025", asOf: "As of 1/3/2025" });
+    expect(d.scopeLabels).toMatchObject({ year: "FY 2024-25", month: "Mar 2025", asOf: "As of 01/03/2025" });
     const A = d.units[0];
-    // held 15/6/2022 → 1/3/2025 = 990 days = 2.710472 yr; 50L × 1.08^2.710472 = 61,58,524.39… → whole rupees
+    // held 15/06/2022 → 01/03/2025 = 990 days = 2.710472 yr; 50L × 1.08^2.710472 = 61,58,524.39… → whole rupees
     expect(A).toMatchObject({ yearsHeld: 2.710472, bestOffer: null, valuationSource: "estimate", rentCollected: 50_000, expenses: 0, offersCount: 0 });
     expect(A.currentValue).toBe(Math.round(5_000_000 * Math.pow(1.08, 990 / 365.25)));
     expect(d.kpis).toMatchObject({ rentCollected: 50_000, totalExpenses: 0, overdueAmount: 0, overdueCount: 0, unitsWithOffer: 0 });
@@ -575,7 +575,7 @@ describe("buildDashboard — as of a past date", () => {
   });
 
   it("the arrears as they stood on that date", () => {
-    // 15/7/2025: Mar, Apr, May, Jun, Jul 2025 overdue (Jul due 5/7)
+    // 15/07/2025: Mar, Apr, May, Jun, Jul 2025 overdue (Jul due 5/7)
     const d = build(scenario(), D("2025-07-15"));
     expect(d.units[0].nextPayment?.arrears.months.map((m) => m.label)).toEqual(["Mar 2025", "Apr 2025", "May 2025", "Jun 2025", "Jul 2025"]);
     expect(d.kpis).toMatchObject({ arrearsTotal: 125_000, lateFeesTotal: 2_500, overdueAmount: 127_500 });
@@ -755,7 +755,7 @@ describe("buildDashboard — explain map: the maths shown is the maths used", ()
 
   it("worth now: substitutes real numbers in Indian format and notes the estimate", () => {
     const e = d.explain.worthNow;
-    expect(e).toMatchObject({ title: "Worth now (est.)", bucket: "value", scope: "As of 15/6/2026", format: "inr" });
+    expect(e).toMatchObject({ title: "Worth now (est.)", bucket: "value", scope: "As of 15/06/2026", format: "inr" });
     expect(e.steps.map((s) => s.expression)).toEqual([
       "₹72,00,000",
       "₹40,00,000 × (1 + 5%)^8.00 = ₹59,09,822",
@@ -773,7 +773,7 @@ describe("buildDashboard — explain map: the maths shown is the maths used", ()
     const steps = d.explain.overdue.steps;
     // 15 overdue months → the oldest 4 (Mar – Jun 2025) in one line + the latest 11 one by one
     expect(steps[0]).toEqual({ label: "Front House · Mar 2025 – Jun 2025", expression: "4 months unpaid or part-paid = ₹1,00,000", value: 100_000, format: "inr" });
-    expect(steps[1]).toEqual({ label: "Front House · Jul 2025 (due 5/7/2025)", expression: "₹25,000 unpaid", value: 25_000, format: "inr" });
+    expect(steps[1]).toEqual({ label: "Front House · Jul 2025 (due 05/07/2025)", expression: "₹25,000 unpaid", value: 25_000, format: "inr" });
     expect(steps).toHaveLength(1 + 11 + 3);
     expect(steps.slice(-3).map((s) => s.expression)).toEqual(["₹3,75,000", "15 months × ₹500 = ₹7,500", "₹3,75,000 + ₹7,500 = ₹3,82,500"]);
     // part-paid months show the subtraction
@@ -874,7 +874,7 @@ describe("buildDashboard — timeline", () => {
 describe("buildDashboard — inactive units are listed but excluded from portfolio totals", () => {
   const input = scenario();
   // Unit C: inactive (sold), positioned front, created before everything, with a big offer, an ended lease
-  // (1/1/2016 – last day 1/3/2016), one 10,000 payment and a 1,000 expense.
+  // (01/01/2016 – last day 01/03/2016), one 10,000 payment and a 1,000 expense.
   input.units.push(
     unit({
       id: "uC",
@@ -930,7 +930,7 @@ describe("buildDashboard — inactive units are listed but excluded from portfol
     expect(d.kpis.totalExpenses).toBe(17_820.75); // 16,820.75 + 1,000
     expect(d.kpis.netProfit).toBe(67_179.25);
     expect(d.kpis.totalReturn).toBe(4_194_822); // 41,09,822 + 85,000
-    expect(d.monthlyByYear[0].label).toBe("FY 2014-15"); // C bought 1/1/2015
+    expect(d.monthlyByYear[0].label).toBe("FY 2014-15"); // C bought 01/01/2015
     expect(d.monthlyByYear.at(-1)?.label).toBe("FY 2026-27");
     expect(d.cumulativeNetByYear.at(-1)?.cumulative).toBe(67_179.25);
     expect(d.expenseComposition.byYear.map((y) => y.year)).toEqual(d.monthlyByYear.map((y) => y.year));
@@ -997,7 +997,7 @@ describe("buildDashboard — ordering", () => {
       id: `p${i + 1}`,
       leaseId: "L1",
       amount: 25_000,
-      // p1..p20 paid on the 1st of consecutive months from 1/1/2024, then p21 and p22 both on 1/12/2025
+      // p1..p20 paid on the 1st of consecutive months from 01/01/2024, then p21 and p22 both on 01/12/2025
       paymentDate: i >= 20 ? D("2025-12-01") : D(`${2024 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, "0")}-01`),
       periodMonth: (i % 12) + 1,
       periodYear: 2024 + Math.floor(i / 12),

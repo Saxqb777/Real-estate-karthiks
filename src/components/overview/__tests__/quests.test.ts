@@ -83,7 +83,7 @@ describe("buildQuests (onboarding quest log)", () => {
     expect(q.complete).toBe(true);
     expect(q.current).toBeNull();
     expect(q.quests.every((x) => !x.locked)).toBe(true);
-    expect(q.quests.find((x) => x.id === "rent")?.doneNote).toBe("₹12,500 on 18/7/2026");
+    expect(q.quests.find((x) => x.id === "rent")?.doneNote).toBe("₹12,500 on 18/07/2026");
     expect(q.quests.find((x) => x.id === "lease")?.doneNote).toBe("Lakshmi Narayanan · Unit A · ₹12,500/month");
   });
 

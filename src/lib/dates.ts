@@ -45,12 +45,14 @@ function stripTime(d: Date) {
   return dateOnly(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
 }
 
-/** Format a date-only value (Date or ISO string) as D/M/YYYY. */
+/** Format a date-only value (Date or ISO string) as DD/MM/YYYY. */
 export function formatDate(d: Date | string | null | undefined): string {
   if (!d) return "—";
   const dt = typeof d === "string" ? new Date(d) : d;
   if (isNaN(dt.getTime())) return "—";
-  return `${dt.getUTCDate()}/${dt.getUTCMonth() + 1}/${dt.getUTCFullYear()}`;
+  // DD/MM/YYYY — two-digit day and month so every date is the same length (owner 2/11/2026: "make them all constant")
+  const two = (n: number) => String(n).padStart(2, "0");
+  return `${two(dt.getUTCDate())}/${two(dt.getUTCMonth() + 1)}/${dt.getUTCFullYear()}`;
 }
 
 /** YYYY-MM-DD for <input type="date"> values. */

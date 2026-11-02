@@ -43,11 +43,11 @@ export interface UnitSlotProps {
   occluder?: (o: THREE.Object3D | null) => void;
 }
 
-/** "1/11" from an ISO date-only string (UTC parts, like formatDate). */
+/** "01/11" from an ISO date-only string (UTC parts and two digits, like formatDate). */
 export function dayMonth(iso: string | null | undefined): string {
   if (!iso) return "soon";
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? "soon" : `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
+  return isNaN(d.getTime()) ? "soon" : `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 export function statusLook(slot: BuildingSlot) {

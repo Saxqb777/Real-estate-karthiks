@@ -322,7 +322,7 @@ function relativeDay(d: Date): string {
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-/** Native date picker, styled; shows the Indian D/M/YYYY reading + relative day below. */
+/** Native date picker, styled; shows the Indian DD/MM/YYYY reading + relative day below. */
 export function DateInput({ value, onValueChange, onChange, hideHint = true, compact, className, id, disabled, required, ...rest }: DateInputProps) {
   const field = useField();
   const baseId = id ?? field?.id;
@@ -332,7 +332,7 @@ export function DateInput({ value, onValueChange, onChange, hideHint = true, com
   return (
     <div className={className}>
       <div className={cx(styles.control, styles.dateControl, compact && styles.compact)} data-invalid={invalid} data-disabled={disabled}>
-        {/* the date in the owner's D/M/YYYY inside the box (the native field follows the browser locale, e.g. 10/07/2026) */}
+        {/* the date in the owner's DD/MM/YYYY inside the box (the native field follows the browser locale, e.g. 10/07/2026) */}
         <span className={cx(styles.dateFace, !d && styles.dateFaceEmpty)} aria-hidden>
           {d ? (
             <>
@@ -340,7 +340,7 @@ export function DateInput({ value, onValueChange, onChange, hideHint = true, com
               <span className={styles.dateDay}>{WEEKDAYS[d.getUTCDay()].slice(0, 3)}</span>
             </>
           ) : (
-            "D/M/YYYY"
+            "DD/MM/YYYY"
           )}
         </span>
         <input
@@ -367,7 +367,7 @@ export function DateInput({ value, onValueChange, onChange, hideHint = true, com
               </span>
             </>
           ) : (
-            <span>D/M/YYYY</span>
+            <span>DD/MM/YYYY</span>
           )}
         </div>
       )}

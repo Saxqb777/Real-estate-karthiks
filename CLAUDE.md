@@ -1,7 +1,7 @@
 # Pattukottai Estates — project memory
 
 Private rental-portfolio dashboard for ONE owner: 2 townhouse units on 1 plot in Pattukottai, Tamil Nadu.
-Currency INR, Indian grouping (lakhs/crores), dates D/M/YYYY. Single user login (APP_USERNAME / APP_PASSWORD).
+Currency INR, Indian grouping (lakhs/crores), dates DD/MM/YYYY. Single user login (APP_USERNAME / APP_PASSWORD).
 The owner wants it **visually stunning, game-like and highly interactive** — a 3D diorama of the plot is the centrepiece.
 
 ## Stack
@@ -867,6 +867,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   tables; AnnualReport rows .depositsKept; unit report totals.depositsKept). Tested in reports.test.ts (the fixture's
   Murugan: 5,000 kept, 31/5/2023, May 2023, ledger = income, rent / payments / yields unchanged). DEPLOYED 2/11/2026
   (owner: "deploy"; the black birds stayed in preview on pending/black-birds).
+- 2/11/2026: DATES ALL THE SAME LENGTH (owner, Payments chart: "make them all constant" → "deploy this also"): formatDate
+  (lib/dates.ts) = DD/MM/YYYY with a two-digit day + month everywhere ("07/06/2026", was "7/6/2026"); DateInput shows /
+  hints DD/MM/YYYY; the house window's short date (UnitPanel shortDate) and the empty-slot day/month (UnitSlot dayMonth)
+  are padded too ("05/11"). Tests updated. Note: Config → Settings "Date format" (settings.dateFormat) is NOT wired to
+  formatDate — it changes nothing. DEPLOYED 2/11/2026 (black birds still in preview).
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
   AnimatedNumber, StatTile, SegmentedBar, LevelBadge, Modal/Drawer/ConfirmDialog, toast, InspectCard, CommandProvider…);
   data hooks from `@/lib/client` (`api`, `useApi`, `useMutation`, `invalidate`).
