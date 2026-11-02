@@ -833,6 +833,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
     To day; expenseComposition.span (the year slot's spending ring — now also used for plain years); spanSeries
     (income-chart columns for a range) — tested in reports.test.ts. IncomeExpenseChart still takes a `span`.
   • Chosen pill keeps dark text under the mouse (it went white-on-white: forms.module.css hover rule skips aria-checked).
+  DEPLOYED 2/11/2026 (owner: "deploy"; the black birds stayed in preview on pending/black-birds).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
