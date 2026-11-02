@@ -730,7 +730,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   arrival screen is up on "/" (also during the server render, so it never flashes) and during the sign-out screen, then
   fades back in (0.5 s). Flags in shell/world-state.ts: arrivedFlag (mirrors Overview `arrived`, reset on unmount so a
   sign-in after a sign-out hides it again) + signingOutFlag (Game `leaving`); useCovered(pathname). Phones' bottom bar
-  unchanged (it is part of the layout — hiding it would leave an empty strip). Preview branch pending/nav-cover.
+  unchanged (it is part of the layout — hiding it would leave an empty strip). DEPLOYED 2/11/2026 (owner: "deploy").
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
