@@ -788,7 +788,7 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   from data.monthlyByYear, which stops at the as-of year once an earlier year is picked → only that year + this year
   were left. Now hud/year-choices.ts yearChoices(now, shown, dataYears) = every year from the earliest (records / shown)
   to this year, newest first, no gaps (≤ 30 years; tested). Checked in the browser: FY 2019-20 picked → all 8 years still
-  listed. Preview branch pending/year-fix.
+  listed. DEPLOYED 2/11/2026 (owner: "deploy").
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
