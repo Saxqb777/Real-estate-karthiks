@@ -470,7 +470,7 @@
   z-index: 200;
   display: grid;
   place-items: center;
-  background: var(--bg-0);
+  background: #fff;
 }
 
 /* arrival cover — matches the login hand-over screen so sign-in → estate is one continuous shot; just the blue ring
@@ -484,7 +484,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background: var(--bg-0);
+  background: #fff;
 }
 /* CENTRE GAME MENU (owner chose option 3): "Open" on any card shows its panel as one wide window in the middle of the
    screen over a darkened world (like a game's inventory screen). Click the dark area / ✕ / Esc to go back. */

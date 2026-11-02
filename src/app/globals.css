@@ -487,10 +487,12 @@ hr {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.22);
+  /* the unlit part of the ring: was white at 22% for the dark cover, which
+     is invisible now the cover is white */
+  border: 4px solid rgba(26, 29, 36, 0.14);
   border-top-color: var(--marigold);
   border-right-color: var(--marigold);
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 2px 8px rgba(26, 29, 36, 0.12));
   animation: pe-spin 0.9s linear infinite;
 }
 @keyframes pe-spin {
@@ -504,30 +506,13 @@ hr {
   }
 }
 
-/* behind the blue ring: the estate itself, softly blurred and drifting (owner 1/11/2026: "the blue circle should load
-   behind a background like this not black screen") — loading, sign-in hand-over and sign-out covers */
+/* The loading, sign-in hand-over and sign-out covers: plain white behind the
+   blue ring (owner 2/11/2026). This replaces the blurred, drifting estate
+   photo asked for on 1/11/2026 — that backdrop was /estate-backdrop.jpg at
+   960x600, which `cover` had to blow up about 2.4x on a desktop window, so
+   it read as heavily zoomed however much the blur hid the softness. */
 .pe-loadbg {
   isolation: isolate;
   overflow: hidden;
-  background-color: #1a1d24;
-}
-.pe-loadbg::before {
-  content: "";
-  position: absolute;
-  inset: -48px;
-  z-index: -1;
-  background: url(/estate-backdrop.jpg) center / cover no-repeat;
-  filter: blur(26px) saturate(1.15) brightness(0.62);
-  transform: scale(1.06);
-  animation: pe-drift 14s ease-in-out infinite alternate;
-}
-@keyframes pe-drift {
-  to {
-    transform: scale(1.12) translate(-1.5%, -1%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pe-loadbg::before {
-    animation: none;
-  }
+  background-color: #fff;
 }
