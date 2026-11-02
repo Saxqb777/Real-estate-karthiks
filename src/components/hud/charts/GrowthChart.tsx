@@ -112,7 +112,7 @@ function PerSqft({ data, onDrill }: { data: DashboardData; onDrill?: (key: strin
   const units = data.units.filter((u) => u.isActive && u.boughtAtPerSqft !== null);
   const rows = [
     ...units.map((u) => ({ id: u.id, label: u.name, bought: u.boughtAtPerSqft, now: u.offeredAtPerSqft, src: u.valuationSource, bKey: `unit:${u.id}:perSqftBought`, nKey: `unit:${u.id}:perSqftOffered` })),
-    { id: "all", label: "Property", bought: data.kpis.boughtAtPerSqft, now: data.kpis.offeredAtPerSqft, src: data.kpis.bestOfferIsPartialEstimate ? "estimate" : "offer", bKey: "perSqftBought", nKey: "perSqftOffered" },
+    { id: "all", label: "Overall", bought: data.kpis.boughtAtPerSqft, now: data.kpis.offeredAtPerSqft, src: data.kpis.bestOfferIsPartialEstimate ? "estimate" : "offer", bKey: "perSqftBought", nKey: "perSqftOffered" },
   ].filter((r) => r.bought !== null);
   const max = Math.max(1, ...rows.flatMap((r) => [r.bought ?? 0, r.now ?? 0]));
   return (

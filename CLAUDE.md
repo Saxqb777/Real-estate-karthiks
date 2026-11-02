@@ -721,6 +721,10 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   "photographer", generous pickFirst click box round the dome) → the interior photos window; hover / "?" name "CCTV".
   Photographer, tripod, flash + photographerSpot (and its street-life test entry) deleted. Earlier tries (bullet camera on
   a lane-wall pillar; drone) dropped. DEPLOYED 2/11/2026 (owner: "deploy but … a bit smaller").
+- 2/11/2026: GROWTH chart (side chart "Growth", GrowthChart.tsx): the price-per-sqft total row (both houses together,
+  data.kpis) is called "OVERALL" (was "Property"; owner first asked for "Premises" — not used: Premises = shared costs of
+  neither house, so it would mean two things; owner picked "Overall"). Checked against prod: running net cash 2024
+  +₹4,000 → 2025 +₹87,400 (₹91,400) → 2026 so far −₹16,080 (₹50,000 rent − ₹66,080 costs) = ₹75,320. DEPLOYED 2/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
