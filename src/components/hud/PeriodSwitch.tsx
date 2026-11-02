@@ -5,6 +5,7 @@
 import { Select, cx } from "@/components/ui";
 import { yearLabel, yearOf } from "@/components/forms/year-mode";
 import type { DashboardData } from "@/lib/dashboard-types";
+import { yearChoices } from "./year-choices";
 import { useSetAsOf } from "./year-jump";
 import s from "./hud.module.css";
 
@@ -23,7 +24,7 @@ export function PeriodSwitch({ data, className }: PeriodSwitchProps) {
   const mode = data.yearMode;
   const now = yearOf(data.today, mode);
   const shown = yearOf(data.asOf, mode);
-  const years = [...new Set([now, shown, ...data.monthlyByYear.map((y) => y.year)])].filter((y) => y <= now).sort((a, b) => b - a);
+  const years = yearChoices(now, shown, data.monthlyByYear.map((y) => y.year));
   if (!setAsOf || years.length < 2) return <span className={cx(s.pyear, className)}>{yearLabel(shown, mode)}</span>;
   return (
     <Select

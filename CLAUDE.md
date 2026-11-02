@@ -784,6 +784,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   day … maybe hands in pocket or just using a phone"): register + pen gone; a phone (lit screen) in her right hand, held
   up and scrolled (thumb flicks) with the head bowed a little towards it for ~7.5 s, then lowered while she looks up and
   about (LOOKS) for ~3.5 s; left hand on her lap. DEPLOYED 2/11/2026 with the weather.
+- 2/11/2026: FIX year dropdown (owner: "when 2024 is selected 2025 disappears … a glitch"): PeriodSwitch built its years
+  from data.monthlyByYear, which stops at the as-of year once an earlier year is picked → only that year + this year
+  were left. Now hud/year-choices.ts yearChoices(now, shown, dataYears) = every year from the earliest (records / shown)
+  to this year, newest first, no gaps (≤ 30 years; tested). Checked in the browser: FY 2019-20 picked → all 8 years still
+  listed. Preview branch pending/year-fix.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
