@@ -186,8 +186,7 @@ function categoryTotal(data: DashboardData, v: Extract<DrillView, { kind: "categ
   if (!v.unitId) {
     if (v.period === "allTime") return find(data.expenseComposition.allTime);
     if (v.period === "month") return find(data.expenseComposition.month);
-    const y = data.expenseComposition.byYear.find((b) => String(b.year) === data.periods.year.key);
-    return y ? find(y.slices) : null;
+    return find(data.expenseComposition.span); // the year slot's own: a year, or the custom dates
   }
   if (v.period === "allTime") {
     const u = data.expenseComposition.byUnit.find((b) => b.unitId === v.unitId);
@@ -200,8 +199,14 @@ function CategoryView({ data, view, push }: { data: DashboardData; view: Extract
   const period = data.periods[view.period];
   const q = new URLSearchParams({ categoryId: view.categoryId });
   if (view.period !== "allTime") {
-    q.set("year", data.periods.year.key);
-    q.set("yearMode", data.yearMode);
+    if (period.kind === "range" && period.start) {
+      // custom dates (owner 2/11/2026): the same dates from the expenses list
+      q.set("from", period.start.slice(0, 10));
+      q.set("to", period.end.slice(0, 10));
+    } else {
+      q.set("year", data.periods.year.key);
+      q.set("yearMode", data.yearMode);
+    }
   }
   if (view.unitId) q.set("unitId", view.unitId);
   const res = useApi<ExpenseListResponse>(`/api/expenses?${q}`);

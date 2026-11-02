@@ -85,6 +85,7 @@ import type {
   UnitStatus,
   VacantPeriod,
   YearMode,
+  SpanPoint,
   YearSeries,
   YieldRow,
   Yields,
@@ -929,6 +930,53 @@ export function monthlyByYear(
   return out;
 }
 
+/** At most this many month columns for custom dates; a longer span is shown year by year. */
+export const SPAN_MONTHS_MAX = 24;
+
+/**
+ * Custom dates on the income chart (owner 2/11/2026): money in / out for each month the dates touch — or each FY /
+ * calendar year when they cover more than SPAN_MONTHS_MAX months — CLIPPED to the dates (and the as-of date), so the
+ * columns add up exactly to the span's own totals (periods.year when custom dates are picked). Running net from the
+ * span's first day.
+ */
+export function spanPoints(
+  payments: Pick<PaymentInput, "amount" | "paymentDate">[],
+  expenses: Pick<ExpenseInput, "amount" | "expenseDate">[],
+  scope: CashScope,
+  mode: YearMode = "fy",
+): SpanPoint[] {
+  if (scope.startDay === null) return [];
+  const first = monthIndexOfDay(scope.startDay);
+  const last = monthIndexOfDay(Math.max(scope.startDay, scope.endDay));
+  // the span's own last day (its "to"), which may be after the as-of date: those columns are still to come
+  const [, toKey] = scope.key.split("..");
+  const toDay = toKey ? dayNum(new Date(`${toKey}T00:00:00.000Z`)) : scope.endDay;
+  const lastShown = monthIndexOfDay(Math.max(scope.startDay, toDay));
+  const byYear = lastShown - first + 1 > SPAN_MONTHS_MAX;
+  const cols: { key: string; label: string; longLabel: string; startDay: number; endDay: number; future: boolean }[] = [];
+  if (!byYear) {
+    for (let i = first; i <= lastShown; i++)
+      cols.push({ key: miKey(i), label: MONTHS_SHORT[miMonth(i) - 1], longLabel: miLabel(i), startDay: monthStartDay(i), endDay: monthEndDay(i), future: i > last });
+  } else {
+    for (let k = yearKeyOfMonth(first, mode); k <= yearKeyOfMonth(lastShown, mode); k++) {
+      const f = yearFirstMonth(k, mode);
+      const label = yearLabel(k, mode);
+      cols.push({ key: String(k), label: label.replace(/^FY (\d{2})(\d{2})-/, "FY $2-"), longLabel: label, startDay: monthStartDay(f), endDay: monthEndDay(f + 11), future: f > last });
+    }
+  }
+  let running = 0;
+  return cols.map((c) => {
+    const lo = Math.max(c.startDay, scope.startDay as number);
+    const hi = Math.min(c.endDay, scope.endDay);
+    const income = c.future ? 0 : sumAmounts(payments.filter((p) => between(dayNum(p.paymentDate), lo, hi)));
+    const spent = c.future ? 0 : sumAmounts(expenses.filter((e) => between(dayNum(e.expenseDate), lo, hi)));
+    const net = round2(income - spent);
+    running = round2(running + net);
+    return { key: c.key, label: c.label, longLabel: c.longLabel, income, expenses: spent, net, cumulative: running, isFuture: c.future };
+  });
+}
+const between = (d: number, lo: number, hi: number) => d >= lo && d <= hi;
+
 export function cumulativeNetByYear(series: YearSeries[]): DashboardData["cumulativeNetByYear"] {
   let running = 0;
   return series.map((s) => {
@@ -964,6 +1012,9 @@ export function expenseSlices(
 
 export interface CashScope {
   kind: PeriodSummary["kind"];
+  /** the dashboard slot it fills when that differs from its kind (custom dates shown in the "year" slot, owner
+   *  2/11/2026) — explain keys follow the slot so the windows find them ("year:netCash") */
+  slot?: "year" | "month";
   key: string;
   label: string;
   /** first day (null = all time) and last day counted (inclusive, ≤ A) */
@@ -1268,7 +1319,7 @@ function expenseInputs(ctx: Ctx, expenses: ExpenseInput[]): { inputs: ExplainInp
 }
 
 /** Explain key prefix for a scope: "" (all time), "year:", "month:". */
-const scopePrefix = (s: CashScope) => (s.kind === "allTime" ? "" : `${s.kind}:`);
+const scopePrefix = (s: CashScope) => (s.kind === "allTime" ? "" : `${s.slot ?? s.kind}:`);
 
 export interface CashData {
   payments: PaymentInput[]; // dated ≤ A
@@ -1775,6 +1826,8 @@ export interface BuildOptions {
   today?: Date;
   /** wall clock, only used for generatedAt (default: new Date()) */
   now?: Date;
+  /** custom dates (both days included) shown in place of the year (owner 2/11/2026: Year · All time · Custom) */
+  range?: { from: Date; to: Date } | null;
 }
 
 const leaseSummary = (l: LeaseInput, asOf: Date): LeaseSummary => ({
@@ -1795,7 +1848,8 @@ export function resolveOptions(o: BuildOptions) {
   const now = o.now ?? new Date();
   const today = stripTime(o.today ?? todayIST(now));
   const asOf = stripTime(o.asOf ?? today);
-  return { now, today, asOf, mode: o.yearMode ?? ("fy" as YearMode) };
+  const range = o.range ? { from: stripTime(o.range.from), to: stripTime(o.range.to) } : null;
+  return { now, today, asOf, mode: o.yearMode ?? ("fy" as YearMode), range };
 }
 
 /** Lookups for explain builders (exported for reports). */
@@ -1853,7 +1907,7 @@ function comparisonExplains(prefix: string, scope: CashScope, cmp: CashCompariso
     const c = cmp[field];
     const diff = round2(c.now - c.before);
     return explainOf({
-      key: `${prefix}yoy:${scope.kind}:${key}`,
+      key: `${prefix}yoy:${scope.slot ?? scope.kind}:${key}`,
       title: `${title} vs last year`,
       bucket: "cash",
       scope: scope.label,
@@ -1961,7 +2015,7 @@ export const agreementDaysLeft = (agreementEnd: Date, asOf: Date) => dayNum(agre
 export function buildDashboard(input: DashboardInput, options?: BuildOptions): DashboardData;
 export function buildDashboard(input: DashboardInput, today: Date, now: Date): DashboardData;
 export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b?: Date): DashboardData {
-  const { now, today, asOf, mode } = resolveOptions(a instanceof Date ? { asOf: a, today: a, now: b } : (a ?? {}));
+  const { now, today, asOf, mode, range } = resolveOptions(a instanceof Date ? { asOf: a, today: a, now: b } : (a ?? {}));
   const A = dayNum(asOf);
   const { settings } = input;
   const ctx = makeCtx(input, asOf, mode);
@@ -1989,7 +2043,8 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
 
   const scopes = {
     allTime: allTimeScope(asOf),
-    year: yearScope(yearKeyOf(asOf, mode), mode, asOf),
+    // the year slot: the year of the as-of date, or the custom dates when picked (their figures, keys "year:…")
+    year: range ? { ...rangeScope(range.from, range.to, asOf), slot: "year" as const } : yearScope(yearKeyOf(asOf, mode), mode, asOf),
     month: monthScope(asOf),
   };
   // compared with last year: the same span one year earlier (exists for both the year and the month)
@@ -2828,8 +2883,14 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
     allTime: expenseSlices(expenses, input.categories),
     byYear: series.map((s) => ({ year: s.year, label: s.label, slices: expenseSlices(expensesByYear.get(s.year) ?? [], input.categories) })),
     month: expenseSlices(monthExpenses, input.categories),
+    // the year slot's own (the year of the as-of date, or the custom dates)
+    span: expenseSlices(
+      expenses.filter((e) => inDayScope(scopes.year, dayNum(e.expenseDate))),
+      input.categories,
+    ),
     byUnit,
   };
+  const spanSeries = range ? spanPoints(payments, expenses, scopes.year, mode) : null;
 
   // ── reconciliation ──
   const leaseTotals = [...groupBy(payments, (p) => p.leaseId).values()].map((rows) => sumAmounts(rows));
@@ -2932,6 +2993,7 @@ export function buildDashboard(input: DashboardInput, a?: BuildOptions | Date, b
       .map((u) => ({ id: u.id, name: u.name, position: u.position, purchaseDate: iso(u.purchaseDate) })),
     monthlyByYear: series,
     cumulativeNetByYear: cumulativeNetByYear(series),
+    spanSeries,
     expenseComposition,
     vacancy: {
       totalVacantDays: vacantDays,

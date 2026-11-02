@@ -357,6 +357,52 @@ describe("custom dates (from → to)", () => {
   });
 });
 
+describe("custom dates in the 3D windows + side charts (dashboard year slot)", () => {
+  // owner 2/11/2026: Year · All time · Custom everywhere — the dashboard fills its "year" slot with the dates
+  const ranged = (from: string, to: string, asOf: Date = TODAY) =>
+    buildDashboard(fixture(), { asOf, today: TODAY, now: NOW, yearMode: "fy", range: { from: D(from), to: D(to) } });
+
+  it("= the custom-dates statement for the same dates (totals, label, last year)", () => {
+    const d = ranged("2025-04-01", "2026-03-31", D("2026-03-31"));
+    const r = buildAnnualReport(fixture(), { ...opts(), range: { from: D("2025-04-01"), to: D("2026-03-31") } });
+    expect(d.periods.year).toMatchObject({ kind: "range", label: "1/4/2025 – 31/3/2026", rentCollected: r.totals.rentCollected, expenses: r.totals.expenses, net: r.totals.net });
+    expect(d.scopeLabels.year).toBe("1/4/2025 – 31/3/2026");
+    expect(d.comparisons.year.rentCollected.before).toBe(r.previous?.rentCollected.before);
+  });
+
+  it("the windows' breakdowns keep their keys (year:…, yoy:year:…, per unit too)", () => {
+    const d = ranged("2026-06-15", "2026-08-20");
+    expect(d.explain["year:rentCollected"]?.value).toBe(d.periods.year.rentCollected);
+    expect(d.explain["year:netCash"]).toBeDefined();
+    expect(d.explain["yoy:year:rentCollected"]).toBeDefined();
+    expect(d.explain["unit:A:year:rentCollected"]?.value).toBe(d.units.find((u) => u.id === "A")!.periods.year.rentCollected);
+    expect(Object.keys(d.explain).some((k) => k.startsWith("range:") || k.includes("yoy:range:"))).toBe(false);
+    // part months count only the days inside the dates (as the statement)
+    expect([d.periods.year.rentCollected, d.periods.year.expenses]).toEqual([10_000, 470]);
+  });
+
+  it("spending ring + income chart add up to the span", () => {
+    const d = ranged("2026-06-15", "2026-08-20");
+    expect(sum(d.expenseComposition.span.map((x) => x.amount))).toBe(d.periods.year.expenses);
+    expect(d.spanSeries!.map((p) => p.longLabel)).toEqual(["Jun 2026", "Jul 2026", "Aug 2026"]);
+    expect(sum(d.spanSeries!.map((p) => p.income))).toBe(d.periods.year.rentCollected);
+    expect(sum(d.spanSeries!.map((p) => p.expenses))).toBe(d.periods.year.expenses);
+    expect(d.spanSeries!.at(-1)!.cumulative).toBe(d.periods.year.net);
+    // a plain year: no span series, and the ring = that year's own
+    const y = dash();
+    expect(y.spanSeries).toBeNull();
+    expect(sum(y.expenseComposition.span.map((x) => x.amount))).toBe(y.periods.year.expenses);
+  });
+
+  it("long spans go year by year; dates past the as-of show later columns empty", () => {
+    const long = ranged("2019-01-01", "2026-10-02");
+    expect(long.spanSeries![0].longLabel).toBe("FY 2018-19");
+    expect(sum(long.spanSeries!.map((p) => p.income))).toBe(long.periods.allTime.rentCollected);
+    const ahead = ranged("2026-09-01", "2026-12-31");
+    expect(ahead.spanSeries!.map((p) => [p.label, p.isFuture])).toEqual([["Sep", false], ["Oct", false], ["Nov", true], ["Dec", true]]);
+  });
+});
+
 describe("compared with last year", () => {
   it("this FY so far vs the same days last year = the dashboard as it looked a year ago", () => {
     const d = dash();

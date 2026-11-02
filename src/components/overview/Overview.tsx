@@ -22,13 +22,13 @@ import {
   useFormDrawer,
   useHudDashboard,
   useInspect,
-  usePeriod,
   usePinned,
   type DockTab,
   type DrillView,
   type PanelTarget,
+  type PeriodKind,
 } from "@/components/hud";
-import { AsOfContext } from "@/components/hud/year-jump";
+import { SpanContext, type Span } from "@/components/hud/year-jump";
 import { chartMenu, useChartMenu } from "@/components/shell/chart-menu";
 import { arrivedFlag, signingOutFlag, worldState } from "@/components/shell/world-state";
 import { invalidate, logout, useApi } from "@/lib/client";
@@ -64,12 +64,21 @@ const ZERO: SceneInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export function Overview({ layout = "immersive", active = true }: OverviewProps) {
   const isClient = useIsClient();
-  const [asOf, setAsOf] = useState<string | null>(null);
-  const dash = useHudDashboard(asOf);
+  // the period (owner 2/11/2026): Year (at the as-of date) · All time · Custom dates — shared by every window + chart
+  const [asOf, setYearAsOf] = useState<string | null>(null);
+  const [span, setSpan] = useState<Span>({ kind: "year" });
+  // the time travel (sun / moon) and the year dropdown both mean "the year view at this date"
+  const setAsOf = useCallback((d: string | null) => {
+    setSpan({ kind: "year" });
+    setYearAsOf(d);
+  }, []);
+  const spanApi = useMemo(() => ({ span, setSpan, setAsOf }), [span, setAsOf]);
+  const dash = useHudDashboard(span.kind === "year" ? asOf : null, span.kind === "range" ? span : null);
   const data = dash.data;
+  const period: PeriodKind = span.kind === "all" ? "allTime" : "year";
 
-  // a bad / failed as-of date snaps back to today with a plain message
-  const failedAsOf = asOf && dash.error ? dash.error.message : null;
+  // a bad / failed as-of date (or custom dates) snaps back to today with a plain message
+  const failedAsOf = (asOf || span.kind === "range") && dash.error ? dash.error.message : null;
 
   // ARRIVAL: one calm loading screen (same as the login hand-over) covers the page until the figures are in and the
   // 3D world has drawn its first frames; then it fades away and the whole game appears at once — no pop-ins.
@@ -97,16 +106,17 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
     if (!failedAsOf) return;
     toast.error("Couldn't show that date", { description: failedAsOf });
     setAsOf(null);
-  }, [failedAsOf]);
+  }, [failedAsOf, setAsOf]);
 
   return (
     <Screen flush contained={false} className={s.screen}>
       <QuickAddHost />
       {isClient && (
-        <AsOfContext value={setAsOf}>
+        <SpanContext value={spanApi}>
           <Game
             data={data}
-            asOf={asOf}
+            period={period}
+            asOf={span.kind === "year" ? asOf : null}
             setAsOf={setAsOf}
             loading={dash.refreshing}
             error={!data ? dash.error?.message : undefined}
@@ -116,7 +126,7 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
             active={active}
             paused={!active && sceneReady}
           />
-        </AsOfContext>
+        </SpanContext>
       )}
       <AnimatePresence>
         {/* the arrival screen only on the overview itself; behind Data / Config the world just loads quietly */}
@@ -134,6 +144,8 @@ export function Overview({ layout = "immersive", active = true }: OverviewProps)
 
 interface GameProps {
   data: DashboardData | undefined;
+  /** the windows' + charts' cash period: "year" = the year slot (a year, or custom dates), "allTime" */
+  period: PeriodKind;
   asOf: string | null;
   setAsOf: (d: string | null) => void;
   loading: boolean;
@@ -147,10 +159,9 @@ interface GameProps {
   paused: boolean;
 }
 
-function Game({ data, asOf, setAsOf, loading, error, retry, layout, onSceneReady, active, paused }: GameProps) {
+function Game({ data, period, asOf, setAsOf, loading, error, retry, layout, onSceneReady, active, paused }: GameProps) {
   const mobile = useMediaQuery(MOBILE_QUERY);
   const narrow = useMediaQuery("(max-width: 1179px)");
-  const [period] = usePeriod();
   const [yearMode, setYearMode] = useYearMode();
   const tax = usePropertyTax();
   const tenants = useTenants();

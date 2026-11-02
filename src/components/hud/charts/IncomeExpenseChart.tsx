@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { Select, cx } from "@/components/ui";
 import { changeOf } from "@/lib/calculations";
-import type { CashComparison, YearSeries } from "@/lib/dashboard-types";
+import type { CashComparison, SpanPoint, YearSeries } from "@/lib/dashboard-types";
 import { vsLastYear } from "../Figure";
 import { inr } from "../format";
 import { ChartTip, LegendKey, axisINR, barPath, niceTicks, useSize } from "./util";
@@ -22,8 +22,10 @@ export interface IncomeExpenseChartProps {
   /** selected year key or "all" (default: the year containing the as-of date) */
   year?: number | "all";
   onYearChange?: (year: number | "all") => void;
-  /** click a total of the CURRENT year or of ALL TIME → its explanation (other years have no explanation) */
-  onDrill?: (key: "rentCollected" | "expenses" | "netCash", scope: YearSeries | "all") => void;
+  /** custom dates (owner 2/11/2026): their columns (data.spanSeries) + totals (data.periods.year) */
+  span?: { label: string; points: SpanPoint[]; rentCollected: number; expenses: number; net: number } | null;
+  /** click a total of the CURRENT year, ALL TIME or the custom dates → its explanation (other years have none) */
+  onDrill?: (key: "rentCollected" | "expenses" | "netCash", scope: YearSeries | "all" | "span") => void;
   className?: string;
 }
 
@@ -45,11 +47,12 @@ const shortYear = (label: string) => label.replace(/^FY (\d{2})(\d{2})-/, "FY $2
 const C = { income: "var(--teal)", expense: "var(--coral)", net: "var(--plaster)" };
 const M = { l: 50, r: 10, t: 12, b: 22 };
 
-export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year: controlled, onYearChange, onDrill, className }: IncomeExpenseChartProps) {
+export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year: controlled, onYearChange, span, onDrill, className }: IncomeExpenseChartProps) {
   const current = years.find((y) => y.isCurrent) ?? years[years.length - 1];
   const [inner, setInner] = useState<number | "all" | undefined>(undefined);
   const picked = controlled ?? inner ?? current?.year;
-  const all = picked === "all" && Boolean(allTime);
+  const custom = Boolean(span);
+  const all = !custom && picked === "all" && Boolean(allTime);
   const [shown, setShown] = useState<number | undefined>(undefined); // the year the stepper shows while ALL TIME is on
   const key = picked === "all" ? (shown ?? current?.year) : picked;
   const idx = Math.max(0, years.findIndex((y) => y.year === key));
@@ -65,7 +68,9 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
   if (!ys) return <div className={s.empty}>No money recorded yet</div>;
 
   const runningNet = new Map((cumulative ?? []).map((c) => [c.year, c.cumulative]));
-  const points: Point[] = all
+  const points: Point[] = span
+    ? span.points
+    : all
     ? years.map((y) => ({
         key: String(y.year),
         label: shortYear(y.label),
@@ -77,7 +82,11 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
         isFuture: false,
       }))
     : ys.months;
-  const head = all ? { label: "All time", income: allTime!.rentCollected, expenses: allTime!.expenses, net: allTime!.net } : { label: ys.label, income: ys.income, expenses: ys.expenses, net: ys.net };
+  const head = span
+    ? { label: span.label, income: span.rentCollected, expenses: span.expenses, net: span.net }
+    : all
+      ? { label: "All time", income: allTime!.rentCollected, expenses: allTime!.expenses, net: allTime!.net }
+      : { label: ys.label, income: ys.income, expenses: ys.expenses, net: ys.net };
 
   const W = Math.max(size.w, 200);
   const H = Math.max(size.h, 120);
@@ -94,12 +103,14 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
   const past = points.map((m, i) => ({ m, i })).filter((p) => !p.m.isFuture);
   const linePts = past.map(({ m, i }) => `${cx0(i)},${y(m.net)}`).join(" ");
   const hm = hover !== null ? points[hover] : null;
-  const scope: YearSeries | "all" = all ? "all" : ys;
-  const drill = onDrill && (all || ys.isCurrent) ? (k: "rentCollected" | "expenses" | "netCash") => onDrill(k, scope) : undefined;
+  const scope: YearSeries | "all" | "span" = custom ? "span" : all ? "all" : ys;
+  const drill = onDrill && (custom || all || ys.isCurrent) ? (k: "rentCollected" | "expenses" | "netCash") => onDrill(k, scope) : undefined;
   const allZero = past.every(({ m }) => m.income === 0 && m.expenses === 0);
   // ▲ / ▼ on the totals: the running year vs the same days last year; a past year vs the whole year before it
   const before = idx > 0 ? years[idx - 1] : null;
-  const cmp: CashComparison | null = all
+  const cmp: CashComparison | null = custom
+    ? (lastYear ?? null)
+    : all
     ? null
     : ys.isCurrent
       ? (lastYear ?? null)
@@ -117,14 +128,17 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
   return (
     <div className={cx(s.chart, className)}>
       <div className={s.chartBar}>
-        {/* the year as the same glass dropdown as everywhere else (owner 1/11/2026: years only, no All time) */}
-        <Select compact aria-label="Year" value={String(ys.year)} className={s.yearSelect} onChange={(e) => pick(Number(e.target.value))}>
-          {[...years].reverse().map((yy) => (
-            <option key={yy.year} value={yy.year}>
-              {yy.label}
-            </option>
-          ))}
-        </Select>
+        {/* its own year dropdown only when nothing outside picks the period (the side chart's header does, like the
+            other charts — owner 2/11/2026: "fix the placement of years like the other tabs") */}
+        {controlled === undefined && (
+          <Select compact aria-label="Year" value={String(ys.year)} className={s.yearSelect} onChange={(e) => pick(Number(e.target.value))}>
+            {[...years].reverse().map((yy) => (
+              <option key={yy.year} value={yy.year}>
+                {yy.label}
+              </option>
+            ))}
+          </Select>
+        )}
         <div className={s.legend}>
           <LegendKey color={C.income} label="Rent collected" />
           <LegendKey color={C.expense} label="Expenses" />
@@ -145,7 +159,13 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
       </div>
       <div ref={box} className={s.plot} onMouseLeave={() => setHover(null)}>
         {size.w > 0 && (
-          <svg key={ys.year} width={W} height={H} role="img" aria-label={all ? "Rent collected and expenses by year, all time" : `Rent collected and expenses by month, ${ys.label}`}>
+          <svg
+            key={custom ? `span:${span!.label}` : all ? "all" : ys.year}
+            width={W}
+            height={H}
+            role="img"
+            aria-label={custom ? `Rent collected and expenses, ${span!.label}` : all ? "Rent collected and expenses by year, all time" : `Rent collected and expenses by month, ${ys.label}`}
+          >
             {ticks.map((t) => (
               <g key={t}>
                 <line x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} className={t === 0 ? s.zero : s.grid} />
@@ -185,7 +205,7 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
             ))}
           </svg>
         )}
-        {allZero && <div className={s.plotNote}>{all ? "No rent or expenses yet" : `No rent or expenses in ${ys.label}`}</div>}
+        {allZero && <div className={s.plotNote}>{all ? "No rent or expenses yet" : `No rent or expenses in ${head.label}`}</div>}
         {hm && hover !== null && !hm.isFuture && (
           <ChartTip
             x={cx0(hover)}
@@ -197,12 +217,12 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
               { label: "Expenses", value: inr(hm.expenses), color: C.expense },
               { label: "Net cash", value: inr(hm.net), strong: true },
             ]}
-            foot={all ? `Running net since the start: ${inr(hm.cumulative)}` : `Running net in ${ys.label}: ${inr(hm.cumulative)}`}
+            foot={all ? `Running net since the start: ${inr(hm.cumulative)}` : `Running net in ${head.label}: ${inr(hm.cumulative)}`}
           />
         )}
       </div>
       <table className="sr-only">
-        <caption>{all ? "Cash by year, all time" : `Monthly cash, ${ys.label}`}</caption>
+        <caption>{all ? "Cash by year, all time" : custom ? `Cash, ${head.label}` : `Monthly cash, ${ys.label}`}</caption>
         <thead>
           <tr>
             <th>{all ? "Year" : "Month"}</th>

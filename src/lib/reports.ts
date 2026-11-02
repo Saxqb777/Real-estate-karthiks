@@ -92,7 +92,7 @@ export const zYearMode = z.preprocess(
   z.enum(["fy", "calendar"], { message: "must be fy or calendar" }).default("fy"),
 );
 
-/** GET /api/dashboard?asOf=YYYY-MM-DD&yearMode=fy|calendar — asOf can't be after today (IST). */
+/** GET /api/dashboard?asOf=YYYY-MM-DD&yearMode=fy|calendar[&from=&to=] — asOf can't be after today (IST). */
 export const dashboardQuerySchema = z.object({
   asOf: z.preprocess(
     blankToUndefined,
@@ -113,7 +113,15 @@ export const dashboardQuerySchema = z.object({
       .optional(),
   ),
   yearMode: zYearMode,
-});
+  // custom dates (owner 2/11/2026): figures for from → to (both days included) in the year slot; as-of = the To day
+  // (or today when To is later)
+  from: zDateParam,
+  to: zDateParam,
+})
+  .superRefine(checkDateRange)
+  .superRefine((q, ctx) => {
+    if (q.from && q.from.getTime() > todayIST().getTime()) ctx.addIssue({ code: "custom", path: ["from"], message: "can't be in the future" });
+  });
 
 /** GET /api/reports/annual?year=<start year>|all&yearMode= (year defaults to the current FY / calendar year). */
 export const annualReportQuerySchema = z.object({

@@ -97,17 +97,16 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
   const drillKey = onDrill ? (key: string) => onDrill({ kind: "metric", key }) : undefined;
   const p = data.periods[period];
   const slices: ExpenseSlice[] =
-    period === "allTime"
-      ? data.expenseComposition.allTime
-      : period === "month"
-        ? data.expenseComposition.month
-        : (data.expenseComposition.byYear.find((y) => String(y.year) === p.key)?.slices ?? []);
+    period === "allTime" ? data.expenseComposition.allTime : period === "month" ? data.expenseComposition.month : data.expenseComposition.span;
 
-  // the chart's header = its name (+ the year for the period charts) — no scope words, no ledger line (owner 1/11/2026)
+  // the chart's header = its name + the period (Year · All time · Custom) for the period charts — the income chart too
+  // (owner 2/11/2026: "fix the placement of years like the other tabs"); no scope words, no ledger line
   const yearPick: Partial<Record<DockTab, ReactNode>> = {
+    income: <PeriodSwitch data={data} />,
     spending: <PeriodSwitch data={data} />,
     units: <PeriodSwitch data={data} />,
   };
+  const custom = period === "year" && p.kind === "range" && data.spanSeries;
 
 
   const content = (t: DockTab) => {
@@ -116,6 +115,10 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         return (
           <IncomeExpenseChart
             years={data.monthlyByYear}
+            year={period === "allTime" ? "all" : (data.monthlyByYear.find((y) => y.isCurrent)?.year ?? undefined)}
+            allTime={data.periods.allTime}
+            cumulative={data.cumulativeNetByYear}
+            span={custom ? { label: p.label, points: custom, rentCollected: p.rentCollected, expenses: p.expenses, net: p.net } : null}
             lastYear={data.comparisons.year}
             onDrill={drillKey ? (k, scope) => drillKey(scope === "all" ? k : `year:${k}`) : undefined}
           />

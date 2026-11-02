@@ -1061,6 +1061,7 @@ describe("buildDashboard — empty database", () => {
       allTime: [],
       byYear: [{ year: 2026, label: "FY 2026-27", slices: [] }],
       month: [],
+      span: [],
       byUnit: [{ unitId: null, unitName: "Premises", amount: 0, slices: [] }],
     });
     expect(d.plot.usingDefaults).toBe(true);

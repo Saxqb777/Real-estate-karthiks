@@ -349,6 +349,18 @@ export interface MonthPoint {
   isFuture: boolean;
 }
 
+/** One column of the custom-dates income chart: a month (or a year for a long span), clipped to the dates. */
+export interface SpanPoint {
+  key: string; // "2026-04" | "2025"
+  label: string; // "Apr" | "FY 25-26"
+  longLabel: string; // "Apr 2026" | "FY 2025-26"
+  income: number;
+  expenses: number;
+  net: number;
+  cumulative: number; // running net from the span's first day
+  isFuture: boolean;
+}
+
 export interface YearSeries {
   /** FY start year ("fy") or calendar year */
   year: number;
@@ -562,12 +574,17 @@ export interface DashboardData {
   monthlyByYear: YearSeries[];
   /** All-time running net, one point per year end */
   cumulativeNetByYear: { year: number; label: string; net: number; cumulative: number }[];
+  /** custom dates only (else null): the income chart's columns — each month the dates touch (each year past 24
+   *  months), clipped to the dates, adding up to periods.year */
+  spanSeries: SpanPoint[] | null;
   expenseComposition: {
     allTime: ExpenseSlice[];
     /** same years as monthlyByYear */
     byYear: { year: number; label: string; slices: ExpenseSlice[] }[];
     /** the month of the as-of date */
     month: ExpenseSlice[];
+    /** the year slot's own: the year of the as-of date, or the custom dates when picked (= periods.year.expenses) */
+    span: ExpenseSlice[];
     /** all time, per unit (owned units) then "Whole plot" (unitId null) */
     byUnit: { unitId: string | null; unitName: string; amount: number; slices: ExpenseSlice[] }[];
   };

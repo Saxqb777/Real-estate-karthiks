@@ -789,6 +789,25 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   were left. Now hud/year-choices.ts yearChoices(now, shown, dataYears) = every year from the earliest (records / shown)
   to this year, newest first, no gaps (≤ 30 years; tested). Checked in the browser: FY 2019-20 picked → all 8 years still
   listed. DEPLOYED 2/11/2026 (owner: "deploy").
+- 2/11/2026: YEAR · ALL TIME · CUSTOM EVERYWHERE (owner: "add all time and custom date like this in every page where dates
+  are present" + the FY | Calendar pill; picked TWO PILLS, "all places its required") — supersedes 1/11 "years only".
+  • Data → Payments / Expenses + reports Income & expenses / Occupancy: forms/PeriodPicker = [ Year | All time | Custom ]
+    then the year dropdown (‹ › in reports) or From – To date boxes, then [ FY | Calendar ] (with Year; with All time
+    only in reports, whose rows group by year). Pure helpers in forms/period-pick.ts (defaultRange: the year on screen up
+    to today, or the last 12 months from All time; keepOrder: From ≤ To; tested). Phones: pills full width, then year +
+    FY | Calendar or the two dates.
+  • 3D windows (house, mailbox, property) + side charts (Income vs expenses, Where money went?, compare): ONE period for
+    the whole overview (hud/year-jump.ts SpanContext: span year / all / range + setAsOf). hud/PeriodSwitch = the same
+    [ Year | All time | Custom ] + year dropdown / dates in the window title bar / chart header (dates share the width
+    under the title in a narrow window). Year = as before (as-of = year end); All time = periods.allTime as of today;
+    Custom = GET /api/dashboard?from=&to= (both or neither, From ≤ To, From not in the future): the dashboard fills its
+    YEAR SLOT with rangeScope (CashScope.slot "year" keeps the explain keys year:… / yoy:year:…), as-of = the To day
+    (or today), expenseComposition.span (the slot's ring, also for plain years), spanSeries (income chart columns: each
+    month the dates touch, clipped; year columns past 24 months; add up to periods.year — tested in reports.test.ts).
+    Time travel (sun / moon) returns to the Year view. Electricity Board cell says "Custom dates" then.
+  • INCOME CHART: its year dropdown moved from inside the chart to the HEADER like the other charts (owner: "fix the
+    placement of years like the other tabs") and it follows the shared period (All time = year bars, Custom = spanSeries).
+  • Chosen pill keeps dark text under the mouse (it went white-on-white: hover rule now skips aria-checked).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

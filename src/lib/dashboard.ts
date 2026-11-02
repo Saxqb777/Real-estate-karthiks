@@ -134,13 +134,18 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
 }
 
 export interface DashboardQuery {
-  /** date-only; default today (IST) */
+  /** date-only; default today (IST) — or the To day of custom dates when that's earlier */
   asOf?: Date;
   yearMode?: YearMode;
+  /** custom dates, both days included (owner 2/11/2026) */
+  from?: Date;
+  to?: Date;
 }
 
 /** Full dashboard payload; "today" is the current date in India. */
 export async function loadDashboard(q: DashboardQuery = {}, now: Date = new Date()): Promise<DashboardData> {
   const today = todayIST(now);
-  return buildDashboard(await loadDashboardInput(), { asOf: q.asOf ?? today, yearMode: q.yearMode ?? "fy", today, now });
+  const range = q.from && q.to ? { from: q.from, to: q.to } : null;
+  const asOf = q.asOf ?? (range && range.to.getTime() < today.getTime() ? range.to : today);
+  return buildDashboard(await loadDashboardInput(), { asOf, yearMode: q.yearMode ?? "fy", today, now, range });
 }

@@ -82,6 +82,7 @@ export function PolePanel({ data, onClose, side = "right", drill: external, clas
               rows={rows}
               year={year}
               yearLabel={data.periods.year.label}
+              custom={data.periods.year.kind === "range"}
               loading={loading}
               onBill={(e) => drill.push({ kind: "expense", id: e.id, label: formatDate(e.expenseDate) })}
               onBills={
@@ -110,6 +111,7 @@ function MeterCard({
   rows,
   year,
   yearLabel,
+  custom,
   loading,
   onBill,
   onBills,
@@ -119,6 +121,8 @@ function MeterCard({
   rows: ExpenseDTO[];
   year: ExpenseDTO[];
   yearLabel: string;
+  /** the overview's period is custom dates (owner 2/11/2026), not a year */
+  custom: boolean;
   loading: boolean;
   onBill: (e: ExpenseDTO) => void;
   onBills?: (period: "year" | "allTime") => void;
@@ -156,7 +160,7 @@ function MeterCard({
       <div className={b.mStats}>
         <Stat label="Last bill" value={wait ?? (last ? inr(last.amount) : null)} sub={last ? formatDate(last.expenseDate) : "No bills yet"} onClick={last ? () => onBill(last) : undefined} />
         <Stat
-          label="This year"
+          label={custom ? "Custom dates" : "This year"}
           value={wait ?? (year.length ? inr(sumAmounts(year)) : null)}
           sub={year.length ? bills(year.length) : yearLabel}
           onClick={year.length && onBills ? () => onBills("year") : undefined}

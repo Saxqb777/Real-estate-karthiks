@@ -79,9 +79,13 @@ export function PeriodControl({ data, period: p, onPeriodChange, yearMode: ym, o
  * The dashboard in the remembered year type (and optional as-of date). Keeps showing the previous data while a new
  * year type loads, so the HUD never flashes empty.
  */
-export function useHudDashboard(asOf?: string | null) {
+export function useHudDashboard(asOf?: string | null, range?: { from: string; to: string } | null) {
   const [mode] = useYearMode();
   const q = new URLSearchParams({ yearMode: mode });
-  if (asOf) q.set("asOf", asOf.slice(0, 10));
+  if (range) {
+    // custom dates: their figures in the year slot, as at the To day (or today) — owner 2/11/2026
+    q.set("from", range.from.slice(0, 10));
+    q.set("to", range.to.slice(0, 10));
+  } else if (asOf) q.set("asOf", asOf.slice(0, 10));
   return useApi<DashboardData>(`/api/dashboard?${q}`, { keepPrevious: true });
 }
