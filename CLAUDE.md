@@ -865,7 +865,8 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   "Deposit kept", hover tip line), property window ("Rent · Deposit kept · Expenses" under net cash), house window (4th
   cell), compare chart row, Income & expenses report (4th KPI box, "Deposit kept" column in the month / year and by-unit
   tables; AnnualReport rows .depositsKept; unit report totals.depositsKept). Tested in reports.test.ts (the fixture's
-  Murugan: 5,000 kept, 31/5/2023, May 2023, ledger = income, rent / payments / yields unchanged).
+  Murugan: 5,000 kept, 31/5/2023, May 2023, ledger = income, rent / payments / yields unchanged). DEPLOYED 2/11/2026
+  (owner: "deploy"; the black birds stayed in preview on pending/black-birds).
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
   AnimatedNumber, StatTile, SegmentedBar, LevelBadge, Modal/Drawer/ConfirmDialog, toast, InspectCard, CommandProvider…);
   data hooks from `@/lib/client` (`api`, `useApi`, `useMutation`, `invalidate`).
