@@ -147,7 +147,19 @@ export type PaymentListItem = PaymentDTO & {
 export interface PaymentListResponse {
   items: PaymentListItem[];
   count: number;
+  /** the rent payments' total */
   total: number;
+  /** deposits kept back at move-out in the same period — money in on the move-out day (owner 2/11/2026) */
+  depositsKept: DepositKeptItem[];
+  keptTotal: number;
+}
+/** A deposit kept back at move-out, listed with the money in (not a payment: no receipt, no rent month). */
+export interface DepositKeptItem {
+  id: string; // "deposit-kept:<leaseId>"
+  leaseId: string;
+  date: string; // the lease's last day
+  amount: number;
+  lease: { id: string; unit: { id: string; name: string }; tenant: { id: string; name: string } };
 }
 
 /** GET /api/payments/[id] */

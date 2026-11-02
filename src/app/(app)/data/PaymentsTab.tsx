@@ -23,12 +23,18 @@ import { ProofClip, ProofHead, ProofMark, proofCount } from "@/components/proof"
 import { api, useApi, useMutation } from "@/lib/client";
 import { formatDate, periodLabel } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
-import type { PaymentDetail, PaymentListItem } from "@/lib/schemas/payment";
+import { sumAmounts } from "@/lib/calculations";
+import type { DepositKeptItem, PaymentDetail, PaymentListItem } from "@/lib/schemas/payment";
 import { DataPanel, DeleteButton, DrawerLoading, DetailHero, RecordDrawer, Spacer, Stack2, TotalLabel, shortPeriod, useCreate, useNarrow, useNewSignal, useSelection } from "./shared";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
 
 const money = (n: number) => formatINR(n, n % 1 !== 0);
+
+/** A row: a rent payment, or a deposit kept back at move-out — money in on the move-out day (owner 2/11/2026). */
+type Row = { kind: "payment"; id: string; date: string; p: PaymentListItem } | { kind: "kept"; id: string; date: string; k: DepositKeptItem };
+const leaseOf = (r: Row) => (r.kind === "payment" ? r.p.lease : r.k.lease);
+const amountOf = (r: Row) => (r.kind === "payment" ? r.p.amount : r.k.amount);
 
 export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
   const [leaseId, setLeaseId] = useState("");
@@ -49,20 +55,28 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
   const years = useMemo(() => {
     const set = new Set<number>([currentYear(mode)]);
     for (const p of all.data?.items ?? []) set.add(yearOf(p.paymentDate, mode));
+    for (const k of all.data?.depositsKept ?? []) set.add(yearOf(k.date, mode));
     if (year !== null) set.add(year);
     return [...set].sort((a, b) => b - a);
   }, [all.data, mode, year]);
   const scope = [periodText(period, mode), lease?.tenant.name].filter(Boolean).join(" · ");
   const data = payments.data;
-  const rows = data?.items;
+  // newest first; a kept deposit sits on its move-out day among the payments
+  const rows: Row[] | undefined = data
+    ? [
+        ...data.items.map((p): Row => ({ kind: "payment", id: p.id, date: p.paymentDate, p })),
+        ...(data.depositsKept ?? []).map((k): Row => ({ kind: "kept", id: k.id, date: k.date, k })),
+      ].sort((a, b) => b.date.localeCompare(a.date))
+    : undefined;
+  const moneyIn = data ? sumAmounts([{ amount: data.total }, { amount: data.keptTotal ?? 0 }]) : 0;
 
   const groups = useMemo(() => {
     const items = leases.data?.items ?? [];
     return { current: items.filter((l) => leasePhase(l) !== "past"), past: items.filter((l) => leasePhase(l) === "past") };
   }, [leases.data]);
 
-  const footerLabel = rows?.length ? <TotalLabel scope={scope} count={data!.count} noun={["payment", "payments"]} /> : undefined;
-  const footerTotal = rows?.length ? <span className="pos">{money(data!.total)}</span> : undefined;
+  const footerLabel = rows?.length ? <TotalLabel scope={scope} count={rows.length} noun={["payment", "payments"]} /> : undefined;
+  const footerTotal = rows?.length ? <span className="pos">{money(moneyIn)}</span> : undefined;
 
   const receipt = (p: PaymentListItem) => (
     <a className={s.receipt} href={`/invoice/${p.id}`} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} title="Open the printable receipt">
@@ -70,44 +84,56 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
       {p.invoiceNumber}
     </a>
   );
+  const none = <span className="faint">—</span>;
 
-  const columns: Column<PaymentListItem>[] = narrow
+  const columns: Column<Row>[] = narrow
     ? [
         {
           key: "what",
           header: "Payment", wrap: true,
-          cell: (p) => (
-            <Stack2
-              top={
-                <>
-                  {shortPeriod(p)} · {p.lease.tenant.name} <ProofMark count={proofCount(p)} />
-                </>
-              }
-              bottom={`${p.lease.unit.name} · ${formatDate(p.paymentDate)} · ${METHOD_LABEL[p.method]}${p.reference ? ` ${p.reference}` : ""}`}
-            />
-          ),
+          cell: (r) =>
+            r.kind === "kept" ? (
+              <Stack2 top={`Deposit kept · ${r.k.lease.tenant.name}`} bottom={`${r.k.lease.unit.name} · ${formatDate(r.k.date)} · moved out`} />
+            ) : (
+              <Stack2
+                top={
+                  <>
+                    {shortPeriod(r.p)} · {r.p.lease.tenant.name} <ProofMark count={proofCount(r.p)} />
+                  </>
+                }
+                bottom={`${r.p.lease.unit.name} · ${formatDate(r.p.paymentDate)} · ${METHOD_LABEL[r.p.method]}${r.p.reference ? ` ${r.p.reference}` : ""}`}
+              />
+            ),
           footer: footerLabel,
         },
-        { key: "amount", header: "Amount", numeric: true, cell: (p) => <span className="pos">{money(p.amount)}</span>, footer: footerTotal },
+        { key: "amount", header: "Amount", numeric: true, cell: (r) => <span className="pos">{money(amountOf(r))}</span>, footer: footerTotal },
       ]
     : [
-        { key: "date", header: "Received", sortValue: (p) => p.paymentDate, cell: (p) => <span className="num">{formatDate(p.paymentDate)}</span>, footer: footerLabel },
-        { key: "period", header: "Rent for", sortValue: (p) => p.periodYear * 12 + p.periodMonth, cell: (p) => shortPeriod(p) },
-        { key: "unit", header: "Unit", sortValue: (p) => p.lease.unit.name, cell: (p) => p.lease.unit.name },
-        { key: "tenant", header: "Tenant", sortValue: (p) => p.lease.tenant.name, cell: (p) => p.lease.tenant.name },
+        { key: "date", header: "Received", sortValue: (r) => r.date, cell: (r) => <span className="num">{formatDate(r.date)}</span>, footer: footerLabel },
+        {
+          key: "period",
+          header: "Rent for",
+          sortValue: (r) => (r.kind === "payment" ? r.p.periodYear * 12 + r.p.periodMonth : 0),
+          cell: (r) => (r.kind === "payment" ? shortPeriod(r.p) : "Deposit kept"),
+        },
+        { key: "unit", header: "Unit", sortValue: (r) => leaseOf(r).unit.name, cell: (r) => leaseOf(r).unit.name },
+        { key: "tenant", header: "Tenant", sortValue: (r) => leaseOf(r).tenant.name, cell: (r) => leaseOf(r).tenant.name },
         {
           key: "method",
           header: "Paid by",
-          cell: (p) => (
-            <Badge size="sm" tone="neutral">
-              {METHOD_LABEL[p.method]}
-            </Badge>
-          ),
+          cell: (r) =>
+            r.kind === "payment" ? (
+              <Badge size="sm" tone="neutral">
+                {METHOD_LABEL[r.p.method]}
+              </Badge>
+            ) : (
+              none
+            ),
         },
-        { key: "ref", header: "Ref no.", cell: (p) => (p.reference ? <span className="num">{p.reference}</span> : <span className="faint">—</span>) },
-        { key: "receipt", header: "Receipt", cell: receipt },
-        { key: "proof", header: <ProofHead />, align: "center", width: 44, cell: (p) => <ProofMark count={proofCount(p)} /> },
-        { key: "amount", header: "Amount", numeric: true, sortValue: (p) => p.amount, cell: (p) => <span className="pos">{money(p.amount)}</span>, footer: footerTotal },
+        { key: "ref", header: "Ref no.", cell: (r) => (r.kind === "payment" && r.p.reference ? <span className="num">{r.p.reference}</span> : none) },
+        { key: "receipt", header: "Receipt", cell: (r) => (r.kind === "payment" ? receipt(r.p) : none) },
+        { key: "proof", header: <ProofHead />, align: "center", width: 44, cell: (r) => (r.kind === "payment" ? <ProofMark count={proofCount(r.p)} /> : null) },
+        { key: "amount", header: "Amount", numeric: true, sortValue: (r) => amountOf(r), cell: (r) => <span className="pos">{money(amountOf(r))}</span>, footer: footerTotal },
       ];
 
   return (
@@ -152,8 +178,8 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
           columns={columns}
           rows={rows}
           loading={payments.loading}
-          rowKey={(p) => p.id}
-          onRowClick={(p) => sel.select(p.id)}
+          rowKey={(r) => r.id}
+          onRowClick={(r) => r.kind === "payment" && sel.select(r.id)}
           selectedKey={sel.selected}
           caption="Rent payments"
           empty={

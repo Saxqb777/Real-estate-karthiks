@@ -21,6 +21,7 @@ import {
   compareUnits,
   dayNum,
   depositRowFor,
+  keptDepositIncome,
   expenseSlices,
   leaseMonthBounds,
   leaseRentMonths,
@@ -160,8 +161,10 @@ function cashDataAt(input: DashboardInput, asOf: Date, unitId?: string): CashDat
   const leaseIds = new Set(leases.map((l) => l.id));
   const payments = input.payments.filter((p) => dayNum(p.paymentDate) <= a && (!unitId || leaseIds.has(p.leaseId)));
   return {
-    payments,
+    // money in = rent payments + deposits kept back at move-out (owner 2/11/2026), as on the dashboard
+    payments: [...payments, ...keptDepositIncome(leases, asOf)],
     expenses: input.expenses.filter((e) => dayNum(e.expenseDate) <= a && (!unitId || e.unitId === unitId)),
+    // the rent schedule: real payments only
     months: allRentMonths({ ...input, payments }, asOf, leases),
   };
 }
@@ -425,6 +428,9 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
   const leaseIds = new Set(leases.map((l) => l.id));
   const payments = input.payments.filter((p) => leaseIds.has(p.leaseId) && dayNum(p.paymentDate) <= t);
   const paymentsByLease = groupBy(payments, (p) => p.leaseId);
+  // money in (rent + deposits kept back at move-out) for the cash totals; rent months use the real payments
+  const cashIn = [...payments, ...keptDepositIncome(leases, today)];
+  const cashByLease = groupBy(cashIn, (p) => p.leaseId);
   const unitExpenses = input.expenses.filter((x) => x.unitId === unitId && dayNum(x.expenseDate) <= t);
   const offers = input.offers.filter((x) => x.unitId === unitId && dayNum(x.offerDate) <= t);
   const best = pickBestOffer(offers);
@@ -445,7 +451,7 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
       monthlyRent: round2(rentOn(l, today)),
       months: months.length,
       rentExpected: expected,
-      rentCollected: sumAmounts(paymentsByLease.get(l.id) ?? []),
+      rentCollected: sumAmounts(cashByLease.get(l.id) ?? []),
       rentUnpaid: round2(expected - receivedForDue),
       deposit: depositRowFor(l, u.name, today) ?? emptyDeposit(l, u.name),
     };
@@ -535,7 +541,7 @@ export function buildUnitReport(input: DashboardInput, unitId: string, o: Opts):
   const KIND_ORDER = { purchase: 0, "lease-end": 1, vacant: 2, "lease-start": 3, "rent-change": 4, offer: 5, expense: 6 } as const;
   story.sort((x, y) => x.date.localeCompare(y.date) || KIND_ORDER[x.kind] - KIND_ORDER[y.kind]);
 
-  const rentCollected = sumAmounts(payments);
+  const rentCollected = sumAmounts(cashIn);
   const expensesTotal = sumAmounts(unitExpenses);
   const rentLost = sum2(vacancies.map((p) => p.unrealizedLoss));
   const vacantDays = vacancies.reduce((n, p) => n + p.days, 0);

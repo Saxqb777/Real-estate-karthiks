@@ -3,6 +3,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDashboard,
+  isKeptDeposit,
+  keptDepositIncome,
   type DashboardInput,
   type ExpenseInput,
   type LeaseInput,
@@ -403,6 +405,51 @@ describe("custom dates in the 3D windows + side charts (dashboard year slot)", (
   });
 });
 
+describe("a deposit kept back at move-out = money in on the move-out day", () => {
+  // owner 2/11/2026: "just simply keep it as an income at the time of move out"
+  // fixture: Murugan (A1) left on 31/5/2023, deposit 50,000, refunded 45,000 → 5,000 kept
+  it("is dated the lease's last day, after the tenancy ended and the refund was recorded", () => {
+    const kept = keptDepositIncome(fixture().leases, TODAY);
+    expect(kept.map((k) => [k.leaseId, k.amount, k.paymentDate.toISOString().slice(0, 10), isKeptDeposit(k)])).toEqual([["A1", 5_000, "2023-05-31", true]]);
+    // before he left there was nothing kept yet; current leases never count
+    expect(keptDepositIncome(fixture().leases, D("2023-05-15"))).toEqual([]);
+  });
+
+  it("counts in rent collected + net cash (all time, its year, its month), the same as the deposits ledger's 'kept'", () => {
+    const d = dash();
+    const withoutKept = buildDashboard({ ...fixture(), leases: fixture().leases.map((l) => ({ ...l, depositRefundedAmount: l.securityDeposit })) }, { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" });
+    expect(round2(d.periods.allTime.rentCollected - withoutKept.periods.allTime.rentCollected)).toBe(5_000);
+    expect(round2(d.periods.allTime.net - withoutKept.periods.allTime.net)).toBe(5_000);
+    expect(d.deposits.kept).toBe(5_000);
+    const fy23 = d.monthlyByYear.find((y) => y.year === 2023)!;
+    const fy23w = withoutKept.monthlyByYear.find((y) => y.year === 2023)!;
+    expect(round2(fy23.months[1].income - fy23w.months[1].income)).toBe(5_000); // May 2023
+    // the statement for that year agrees with the dashboard as it was then
+    const st = buildAnnualReport(fixture(), { ...opts(), year: 2023 });
+    expect(st.totals.rentCollected).toBe(fy23.income);
+  });
+
+  it("is not rent for any month: what was due / received for rent and the arrears don't change", () => {
+    const d = dash();
+    const withoutKept = buildDashboard({ ...fixture(), leases: fixture().leases.map((l) => ({ ...l, depositRefundedAmount: l.securityDeposit })) }, { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" });
+    expect([d.periods.allTime.rentExpected, d.periods.allTime.rentReceivedForScope, d.periods.allTime.rentUnpaid]).toEqual([
+      withoutKept.periods.allTime.rentExpected,
+      withoutKept.periods.allTime.rentReceivedForScope,
+      withoutKept.periods.allTime.rentUnpaid,
+    ]);
+    expect(d.recentPayments.some((p) => p.id.startsWith("deposit-kept:"))).toBe(false);
+  });
+
+  it("its breakdown names it and opens the lease", () => {
+    const e = dash().explain["rentCollected"]!;
+    const row = e.inputs?.find((i) => i.label.startsWith("Deposit kept"));
+    // all-time inputs may be grouped per lease when there are many; either way the deposit is named
+    if (row) expect(row).toMatchObject({ kind: "lease", id: "A1", value: 5_000 });
+    else expect(e.steps.some((st) => /deposit kept/.test(st.label))).toBe(true);
+    expect(dash().checks.ledgerBalanced).toBe(true);
+  });
+});
+
 describe("compared with last year", () => {
   it("this FY so far vs the same days last year = the dashboard as it looked a year ago", () => {
     const d = dash();
@@ -533,7 +580,8 @@ describe("unit report", () => {
       [6_150_000, true],
     ]);
     expect(r.leases.map((l) => [l.tenantName, l.state, l.months, l.rentExpected, l.rentCollected, l.rentUnpaid])).toEqual([
-      ["Murugan Selvaraj", "ended", 46, 437_000, 437_000, 0],
+      // money in = 4,37,000 rent + the 5,000 of his 50,000 deposit kept back at move-out (owner 2/11/2026)
+      ["Murugan Selvaraj", "ended", 46, 437_000, 442_000, 0],
       ["Lakshmi Narayanan", "current", 38, 462_500, 435_000, 27_500], // Oct 2026 not due yet
     ]);
     expect(r.leases[0].deposit).toMatchObject({ refunded: 45_000, kept: 5_000, held: 0 });

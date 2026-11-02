@@ -1,10 +1,11 @@
 import { handler, json, parseBody, parseQuery } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
-import { sumAmounts } from "@/lib/calculations";
+import { keptDepositIncome, sumAmounts } from "@/lib/calculations";
+import { todayIST } from "@/lib/dates";
 import { prisma } from "@/lib/db";
 import { createPaymentWithInvoice } from "@/lib/invoice";
 import { yearRange } from "@/lib/schemas/expense";
-import { paymentCreateSchema, paymentListQuerySchema, paymentPeriodError } from "@/lib/schemas/payment";
+import { paymentCreateSchema, paymentListQuerySchema, paymentPeriodError, type DepositKeptItem } from "@/lib/schemas/payment";
 
 const paymentInclude = {
   lease: {
@@ -29,10 +30,52 @@ export const GET = handler(async (req) => {
     orderBy: [{ paymentDate: "desc" }, { invoiceSeq: "desc" }],
     include: paymentInclude,
   });
+  // deposits kept back at move-out in the same period (money in on the move-out day — owner 2/11/2026)
+  const ended = await prisma.lease.findMany({
+    where: { id: leaseId, endDate: { not: null }, depositRefundedAmount: { not: null } },
+    select: {
+      id: true,
+      unitId: true,
+      startDate: true,
+      endDate: true,
+      securityDeposit: true,
+      depositRefundedAmount: true,
+      depositRefundDate: true,
+      unit: { select: { id: true, name: true } },
+      tenant: { select: { id: true, name: true } },
+    },
+  });
+  const byId = new Map(ended.map((l) => [l.id, l]));
+  const inRange = (d: Date) => {
+    if (!range) return true;
+    const t = d.getTime();
+    if (t < range.gte.getTime()) return false;
+    return "lte" in range && range.lte ? t <= range.lte.getTime() : "lt" in range && range.lt ? t < range.lt.getTime() : true;
+  };
+  const depositsKept: DepositKeptItem[] = keptDepositIncome(
+    ended.map((l) => ({
+      id: l.id,
+      tenantName: l.tenant.name,
+      unitId: l.unitId,
+      startDate: l.startDate,
+      endDate: l.endDate,
+      securityDeposit: l.securityDeposit.toNumber(),
+      depositRefundedAmount: l.depositRefundedAmount?.toNumber() ?? null,
+      depositRefundDate: l.depositRefundDate,
+    })),
+    todayIST(),
+  )
+    .filter((k) => inRange(k.paymentDate))
+    .map((k) => {
+      const l = byId.get(k.leaseId)!;
+      return { id: k.id, leaseId: k.leaseId, date: k.paymentDate.toISOString(), amount: k.amount, lease: { id: l.id, unit: l.unit, tenant: l.tenant } };
+    });
   return json({
     items,
     count: items.length,
     total: sumAmounts(items.map((p) => ({ amount: p.amount.toNumber() }))),
+    depositsKept,
+    keptTotal: sumAmounts(depositsKept),
   });
 });
 
