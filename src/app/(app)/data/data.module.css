@@ -506,10 +506,14 @@ button.miniRow:hover {
   .toolbar {
     padding: 8px 12px;
   }
-  .filterSelect,
-  .filterPeriod {
+  .filterSelect {
     min-width: 0;
     flex: 1 1 140px;
+  }
+  /* the period pills + year / dates take whole rows (PeriodPicker lays them out) */
+  .filterPeriod {
+    min-width: 0;
+    flex: 1 1 100%;
   }
   .heroValue {
     font-size: 28px;

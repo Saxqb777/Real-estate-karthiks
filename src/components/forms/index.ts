@@ -15,7 +15,7 @@ export {
 } from "./FormFrame";
 export { ChoiceGroup, Stepper, Swatches, SWATCHES, Dot, Facts, ScopeChip, type Choice, type Fact } from "./controls";
 export { useYearMode, yearLabel, yearOf, currentYear, YEAR_MODE_KEY, type YearMode } from "./year-mode";
-export { PeriodPicker, periodParams, periodText, type PeriodPick, type PeriodPickerProps } from "./PeriodPicker";
+export { PeriodPicker, defaultRange, keepOrder, periodParams, periodText, type PeriodKindPick, type PeriodPick, type PeriodPickerProps } from "./PeriodPicker";
 export { RenewAgreementButton, nextAgreementEnd, type RenewAgreementButtonProps } from "./RenewAgreement";
 export {
   useUnits,

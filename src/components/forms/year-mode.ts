@@ -3,7 +3,7 @@
 // Remembered per browser and shared by every screen through one localStorage key, so a global period control
 // can use the same store (useYearMode) and every scope chip shows the active label.
 import { useCallback, useSyncExternalStore } from "react";
-import { todayIST } from "@/lib/dates";
+import { todayIST } from "../../lib/dates";
 import type { YearMode } from "@/lib/schemas/expense";
 
 export type { YearMode } from "@/lib/schemas/expense";

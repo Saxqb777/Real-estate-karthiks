@@ -3,7 +3,6 @@ import { Lock, Plus, ReceiptIndianRupee } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge, Button, EmptyState, Select, Table, type Column } from "@/components/ui";
 import {
-  ChoiceGroup,
   Dot,
   ExpenseForm,
   Facts,
@@ -144,18 +143,7 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
         }
         toolbar={
           <>
-            <PeriodPicker value={period} onChange={setPeriod} years={years} mode={mode} className={s.filterPeriod} />
-            <ChoiceGroup
-              name="yearMode"
-              aria-label="Year type"
-              size="sm"
-              value={mode}
-              onChange={setMode}
-              options={[
-                { value: "fy", label: "FY" },
-                { value: "calendar", label: "Calendar" },
-              ]}
-            />
+            <PeriodPicker value={period} onChange={setPeriod} years={years} mode={mode} onModeChange={setMode} className={s.filterPeriod} />
             <Select compact aria-label="Unit" value={unitId} onChange={(e) => setUnitId(e.target.value)} className={s.filterSelect}>
               <option value="">All units</option>
               {(units.data?.items ?? []).map((u) => (

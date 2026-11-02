@@ -196,7 +196,8 @@
   width: 14px;
   height: 14px;
 }
-.choice:hover:not(:disabled) {
+/* not on the chosen one: its white pill keeps dark text under the mouse (white-on-white before, 2/11/2026) */
+.choice:hover:not(:disabled):not([aria-checked="true"]) {
   color: var(--text);
 }
 .choice:disabled {

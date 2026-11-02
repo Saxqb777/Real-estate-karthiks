@@ -3,7 +3,6 @@ import { Coins, ExternalLink, Pencil, Plus, ReceiptText, X } from "lucide-react"
 import { useMemo, useState } from "react";
 import { Badge, Button, EmptyState, Input, LinkButton, Select, Table, cx, toast, type Column } from "@/components/ui";
 import {
-  ChoiceGroup,
   Facts,
   METHOD_LABEL,
   PaymentForm,
@@ -123,18 +122,7 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
         }
         toolbar={
           <>
-            <PeriodPicker value={period} onChange={setPeriod} years={years} mode={mode} className={s.filterPeriod} />
-            <ChoiceGroup
-              name="paymentsYearMode"
-              aria-label="Year type"
-              size="sm"
-              value={mode}
-              onChange={setMode}
-              options={[
-                { value: "fy", label: "FY" },
-                { value: "calendar", label: "Calendar" },
-              ]}
-            />
+            <PeriodPicker value={period} onChange={setPeriod} years={years} mode={mode} onModeChange={setMode} className={s.filterPeriod} />
             <Select compact aria-label="Show payments for" value={leaseId} onChange={(e) => setLeaseId(e.target.value)} className={s.filterSelect}>
               <option value="">All leases</option>
               {groups.current.length > 0 && (

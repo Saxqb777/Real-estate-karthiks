@@ -5,9 +5,8 @@
 // re-computed here except plain column totals (sumAmounts).
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Button, Delta, EmptyState, IconButton, LinkButton, Panel, Select, Skeleton, cx } from "@/components/ui";
+import { Button, Delta, EmptyState, LinkButton, Panel, Select, Skeleton, cx } from "@/components/ui";
 import {
-  ChoiceGroup,
   PeriodPicker,
   agreementText,
   currentYear,
@@ -19,7 +18,6 @@ import {
   useYearMode,
   yearOf,
   type PeriodPick,
-  type YearMode,
 } from "@/components/forms";
 import { sumAmounts } from "@/lib/calculations";
 import { useApi } from "@/lib/client";
@@ -78,7 +76,6 @@ export function ReportLibrary() {
   const [pick, setPick] = useState<PeriodPick | null>(null);
   const period: PeriodPick =
     pick === null ? { kind: "year", year: lastYear } : pick.kind === "year" ? { kind: "year", year: Math.min(lastYear, Math.max(firstYear, pick.year)) } : pick;
-  const year = period.kind === "year" ? period.year : lastYear;
   const annualQuery = new URLSearchParams({ ...(period.kind === "all" ? { year: "all" } : periodParams(period, yearMode)), yearMode }).toString();
   const annual = useApi<AnnualReport>(unitList.length ? `/api/reports/annual?${annualQuery}` : null, { keepPrevious: true });
 
@@ -118,32 +115,17 @@ export function ReportLibrary() {
       </Panel>
     );
 
-  const isYear = period.kind === "year";
   const yearControl = (
     <div className={s.controls}>
-      {isYear && (
-        <IconButton size="sm" variant="ghost" label="Previous year" icon={<ChevronLeft />} disabled={year <= firstYear} onClick={() => setPick({ kind: "year", year: year - 1 })} />
-      )}
       <PeriodPicker
         value={period}
         onChange={setPick}
         years={Array.from({ length: lastYear - firstYear + 1 }, (_, i) => lastYear - i)}
         mode={yearMode}
+        onModeChange={setYearMode}
+        modeOnAll
+        arrows
         className={s.period}
-      />
-      {isYear && (
-        <IconButton size="sm" variant="ghost" label="Next year" icon={<ChevronRight />} disabled={year >= lastYear} onClick={() => setPick({ kind: "year", year: year + 1 })} />
-      )}
-      <ChoiceGroup<YearMode>
-        name="yearMode"
-        size="sm"
-        aria-label="Year type"
-        value={yearMode}
-        onChange={setYearMode}
-        options={[
-          { value: "fy", label: "FY" },
-          { value: "calendar", label: "Calendar" },
-        ]}
       />
     </div>
   );

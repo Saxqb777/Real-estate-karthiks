@@ -1,9 +1,72 @@
-/* PeriodPicker: [FY 2026-27 ▾] — years only (owner 1/11/2026) */
+/* PeriodPicker (owner 2/11/2026, two pills): [ Year | All time | Custom ] [FY 2026-27 ▾] or [From] – [To] [ FY | Calendar ] */
 .picker {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+/* the pills never break onto two lines */
+.kinds,
+.mode {
+  display: inline-flex;
+  flex: none;
+  min-width: 0;
+}
+.kinds > *,
+.mode > * {
+  flex-wrap: nowrap;
+}
+.year {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   min-width: 0;
 }
 .select {
   min-width: 130px;
+}
+.dates {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.date {
+  width: 150px;
+}
+.dash {
+  color: var(--text-faint);
+}
+/* phones: the period takes its own rows — [ Year | All time | Custom ] full width, then the year + FY | Calendar or
+   the two dates side by side */
+@media (max-width: 767px) {
+  .picker {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .kinds {
+    flex: 1 1 100%;
+  }
+  .kinds > * {
+    width: 100%;
+  }
+  .kinds button {
+    flex: 1 1 0;
+  }
+  .year {
+    flex: 1 1 140px;
+  }
+  .year .select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .dates {
+    flex: 1 1 100%;
+  }
+  .date {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
 }
