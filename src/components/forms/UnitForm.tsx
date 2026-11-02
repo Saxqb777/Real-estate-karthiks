@@ -1,6 +1,6 @@
 "use client";
 import { Building2, ExternalLink, Hash, MapPin, Zap } from "lucide-react";
-import { DateInput, Field, FormGrid, Input, NumberInput, Toggle } from "@/components/ui";
+import { ComboInput, DateInput, Field, FormGrid, Input, NumberInput, Toggle } from "@/components/ui";
 import { api } from "@/lib/client";
 import { toInputDate, todayIST } from "@/lib/dates";
 import { SITE_DEFAULTS, formatFeetInches } from "@/lib/site-layout";
@@ -15,6 +15,8 @@ import {
   type UnitPosition,
 } from "@/lib/schemas/unit";
 import { ChoiceGroup, Stepper } from "./controls";
+import { useUnits } from "./data";
+import { kindChoices } from "./kind-choices";
 import { FormActions, FormBody, FormSection, inlineFrame, type BaseFormProps } from "./FormFrame";
 import { useForm, type Issue } from "./useForm";
 
@@ -68,8 +70,13 @@ export function unitFormValues(unit?: UnitDTO | null, defaults?: Partial<UnitFor
 }
 
 /** Build or edit a unit (one townhouse). Position, footprint and floors shape the 3D model. */
+const UNIT_TYPES = ["Townhouse", "House", "Flat", "Shop"];
+
 export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inlineFrame, submitLabel, actionsLeft, onValuesChange, onFocusField }: UnitFormProps) {
   const editing = Boolean(unit);
+  // every type: the usual ones + any already given to a unit
+  const allUnits = useUnits();
+  const unitTypes = kindChoices(UNIT_TYPES, allUnits.data?.items.map((u) => u.type) ?? []);
 
   const rules = (v: UnitFormValues): Issue[] => {
     if (!v.position || !v.isActive) return [];
@@ -100,13 +107,7 @@ export function UnitForm({ unit, defaults, units, onSaved, onCancel, frame = inl
             <Input {...form.text("name")} icon={<Building2 />} autoComplete="off" data-autofocus />
           </Field>
           <Field label="Type" error={form.error("type")}>
-            <Input {...form.text("type")} autoComplete="off" placeholder={DEFAULT_UNIT_TYPE} list="pe-unit-types" />
-            <datalist id="pe-unit-types">
-              <option value="Townhouse" />
-              <option value="House" />
-              <option value="Flat" />
-              <option value="Shop" />
-            </datalist>
+            <ComboInput {...form.text("type")} options={unitTypes} placeholder={DEFAULT_UNIT_TYPE} />
           </Field>
           <Field label="Address" span="full" error={form.error("address")}>
             <Input {...form.text("address")} icon={<MapPin />} autoComplete="off" />

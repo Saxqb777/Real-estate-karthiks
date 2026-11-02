@@ -99,8 +99,8 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
   const slices: ExpenseSlice[] =
     period === "allTime" ? data.expenseComposition.allTime : period === "month" ? data.expenseComposition.month : data.expenseComposition.span;
 
-  // the chart's header = its name + the period (Year · All time · Custom) for the period charts — the income chart too
-  // (owner 2/11/2026: "fix the placement of years like the other tabs"); no scope words, no ledger line
+  // the chart's header = its name + the period (Year · All time) for the period charts, the income chart too (owner
+  // 2/11/2026: "keep the year on the side like the other charts") — no scope words, no ledger line
   const yearPick: Partial<Record<DockTab, ReactNode>> = {
     income: <PeriodSwitch data={data} />,
     spending: <PeriodSwitch data={data} />,
@@ -115,7 +115,8 @@ export function Dock({ data, period, tab: controlled, onTabChange, defaultTab = 
         return (
           <IncomeExpenseChart
             years={data.monthlyByYear}
-            year={period === "allTime" ? "all" : (data.monthlyByYear.find((y) => y.isCurrent)?.year ?? undefined)}
+            // the year the header picked (the year of the as-of date), or all time
+            year={period === "allTime" ? "all" : data.monthlyByYear.find((y) => y.isCurrent)?.year}
             allTime={data.periods.allTime}
             cumulative={data.cumulativeNetByYear}
             span={custom ? { label: p.label, points: custom, rentCollected: p.rentCollected, expenses: p.expenses, net: p.net } : null}

@@ -48,6 +48,11 @@ export interface SelectMenuProps {
   onPick: (value: string) => void;
   /** refocus = give focus back to the select (keyboard close / pick) */
   onClose: (refocus: boolean) => void;
+  /** a "type it or pick it" box (ComboInput): the field keeps the typing (letters, space, Home / End go to it) and the
+   *  row starting with what's typed is highlighted (none when nothing matches — Enter then just closes the list) */
+  typed?: string;
+  /** the list's id (a combo box points at it with aria-controls) */
+  id?: string;
 }
 
 const GAP = 6;
@@ -57,22 +62,40 @@ const EDGE = 8;
 const PANEL = '[data-menu-bounds], [role="dialog"], [role="alertdialog"], [data-game-main], [data-centre-panel]';
 function boundsOf(field: HTMLElement): { left: number; right: number; top: number; bottom: number } {
   const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // the part of the page actually on screen (a phone's keyboard covers the bottom of it)
+  const vv = window.visualViewport;
+  const vt = vv ? Math.max(0, vv.offsetTop) : 0;
+  const vh = vv ? Math.min(window.innerHeight, vv.offsetTop + vv.height) : window.innerHeight;
   const p = field.closest<HTMLElement>(PANEL)?.getBoundingClientRect();
-  if (!p) return { left: 0, right: vw, top: 0, bottom: vh };
-  return { left: Math.max(0, p.left), right: Math.min(vw, p.right), top: Math.max(0, p.top), bottom: Math.min(vh, p.bottom) };
+  if (!p) return { left: 0, right: vw, top: vt, bottom: vh };
+  return { left: Math.max(0, p.left), right: Math.min(vw, p.right), top: Math.max(vt, p.top), bottom: Math.min(vh, p.bottom) };
 }
 
-export function SelectMenu({ anchor, entries, value, onPick, onClose }: SelectMenuProps) {
+/** The row for what's typed: the same word, else the first that starts with it; -1 when none (or nothing typed). */
+function rowFor(opts: { label: string; disabled: boolean }[], typed: string): number {
+  const q = typed.trim().toLowerCase();
+  if (!q) return -1;
+  const same = opts.findIndex((o) => !o.disabled && o.label.toLowerCase() === q);
+  return same >= 0 ? same : opts.findIndex((o) => !o.disabled && o.label.toLowerCase().startsWith(q));
+}
+
+export function SelectMenu({ anchor, entries, value, onPick, onClose, typed: typedText, id }: SelectMenuProps) {
   const opts = entries.filter((e): e is Opt => e.kind === "option");
   const firstOn = opts.findIndex((o) => !o.disabled);
   const chosen = opts.findIndex((o) => o.value === value && !o.disabled);
-  const [active, setActive] = useState(chosen >= 0 ? chosen : firstOn);
+  const combo = typedText !== undefined;
+  const [active, setActive] = useState(combo ? rowFor(opts, typedText) : chosen >= 0 ? chosen : firstOn);
+  // a combo box follows the typing: each change highlights the matching row again
+  const [seenText, setSeenText] = useState(typedText);
+  if (typedText !== seenText) {
+    setSeenText(typedText);
+    setActive(rowFor(opts, typedText ?? ""));
+  }
   const menuRef = useRef<HTMLDivElement>(null);
   const typed = useRef({ text: "", at: 0 });
-  const live = useRef({ active, opts, onPick, onClose });
+  const live = useRef({ active, opts, onPick, onClose, combo });
   useEffect(() => {
-    live.current = { active, opts, onPick, onClose };
+    live.current = { active, opts, onPick, onClose, combo };
   });
 
   // place it under the field (above when there's more room there), INSIDE the page panel it belongs to (owner 1/11/2026:
@@ -105,9 +128,11 @@ export function SelectMenu({ anchor, entries, value, onPick, onClose }: SelectMe
     place();
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
+    window.visualViewport?.addEventListener("resize", place);
     return () => {
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place, true);
+      window.visualViewport?.removeEventListener("resize", place);
     };
   }, [anchor]);
 
@@ -119,11 +144,13 @@ export function SelectMenu({ anchor, entries, value, onPick, onClose }: SelectMe
       return from;
     };
     const onKey = (e: KeyboardEvent) => {
-      const { active: a, opts: list, onPick: pick, onClose: close } = live.current;
+      const { active: a, opts: list, onPick: pick, onClose: close, combo: typing } = live.current;
       const stop = () => {
         e.preventDefault();
         e.stopPropagation();
       };
+      // a combo box: letters, space and the caret keys belong to the field
+      if (typing && (e.key.length === 1 || e.key === "Home" || e.key === "End")) return;
       switch (e.key) {
         case "ArrowDown":
           stop();
@@ -189,7 +216,7 @@ export function SelectMenu({ anchor, entries, value, onPick, onClose }: SelectMe
 
   let i = -1;
   return createPortal(
-    <div ref={menuRef} className={styles.menu} role="listbox" style={{ visibility: "hidden" }} onMouseDown={(e) => e.preventDefault()}>
+    <div ref={menuRef} id={id} className={styles.menu} role="listbox" style={{ visibility: "hidden" }} onMouseDown={(e) => e.preventDefault()}>
       {entries.map((e, k) => {
         if (e.kind === "group")
           return (

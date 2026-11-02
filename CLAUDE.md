@@ -808,6 +808,35 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   • INCOME CHART: its year dropdown moved from inside the chart to the HEADER like the other charts (owner: "fix the
     placement of years like the other tabs") and it follows the shared period (All time = year bars, Custom = spanSeries).
   • Chosen pill keeps dark text under the mouse (it went white-on-white: hover rule now skips aria-checked).
+- 2/11/2026: LOADING COVERS WHITE + PILL ON ONE LINE (owner: "both loading screen while enter and exit become white
+  with blue circle", "aline everything in this pill"). The three covers that share .pe-loadbg — arrival, the login
+  hand-over (.travel) and sign-out (.leaving) — are plain white now; .pe-loadbg::before (the blurred, drifting
+  estate photo added 1/11/2026) is gone, as is @keyframes pe-drift. That also answers the owner's "why is it so
+  zoomed in": /estate-backdrop.jpg is only 960x600, so `cover` blew it up ~2.4x on a 1440px window (2.08x for width,
+  then inset -48px, scale(1.06) and the drift animating to scale(1.12)) — the 26px blur hid the softness but not the
+  framing. .pe-spinner's unlit track was white at 22%, invisible on white, so it is now rgba(26,29,36,.14) with the
+  same blue (--marigold #4c8dff) arc. The backdrop file and its other use (RailScreen) are untouched.
+  Login pill: measured live at 1440px, the inputs centred 66px from the bar's top but the Enter button only 53px —
+  each field stacks a label over its input, so the input sits low in a tall column while the button was centred
+  against the whole bar. .bar is align-items: flex-end now, .enter is align-self: flex-end at height 44px (an
+  input's height, not 52px) and .barSep is 44px tall, so title, separator, inputs and button share one line.
+  Reproduced and checked in a standalone page with the real geometry: before, input 62 / button 50; after, input,
+  button and separator all 62, title block 59.6. NOT run against the real app — `npm install` is unavailable in this
+  session, so this is a CSS-only change verified by measurement, not a screenshot of the built site.
+- 2/11/2026: KIND / TYPE BOXES FIXED (owner: "the drop down here is broken doesnt open up list if something is input"): the
+  to-do "Kind" and Config unit "Type" were text boxes with the browser's own suggestion list (datalist), which only shows
+  the entries matching what's typed. Now ui ComboInput: the same glass list as every Select, tap the box / ⌄ / ↓ = the
+  WHOLE list (current one ticked), typing highlights the matching row (Enter takes it), a new word is kept as typed.
+  Choices = the usual ones + kinds already used in the records (prod to-dos have Renovation, Software), "Custom" last
+  (forms/kind-choices.ts, tested). SelectMenu `typed` mode lets letters / space / Home / End through to the box; every
+  dropdown list now keeps inside the visible screen when a phone keyboard is up (visualViewport). DEPLOYED 2/11/2026
+  (owner: "just deploy dropdown fix"; alone — the black birds and the period pills stayed in preview).
+- 2/11/2026: INCOME CHART YEAR IN THE HEADER (owner: "keep the year on the side like the other charts"): the side chart
+  "Income vs expenses" lost its own year dropdown (inside the chart, left of the legend); the year is the same
+  PeriodSwitch as Where money went? / compare, top-right of the chart header (Dock yearPick.income), and the chart shows
+  the year of the overview's as-of date (IncomeExpenseChart `year` prop; its own dropdown only when nothing outside
+  picks the year). Picking an earlier year = the estate at that year's end, like the other charts. DEPLOYED 2/11/2026
+  (owner: "deploy year on the side"; alone — black birds + period pills still in preview).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

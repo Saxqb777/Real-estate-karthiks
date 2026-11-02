@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useCallback, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useCallback, useId, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { daysBetween, formatDate, parseDateInput, todayIST } from "@/lib/dates";
 import { formatINR, formatINRCompact, formatIndianNumber } from "@/lib/format";
 import { cx } from "./cx";
@@ -39,6 +39,119 @@ export function Input({ icon, suffix, compact, className, id, disabled, required
       {icon && <span className={styles.lead}>{icon}</span>}
       <input className={styles.input} disabled={disabled} {...rest} {...a11y} />
       {suffix && <span className={styles.trail}>{suffix}</span>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- ComboInput
+
+export interface ComboInputProps extends Omit<InputProps, "suffix" | "list"> {
+  /** The usual choices; the box still takes any word (a new one is saved as typed). */
+  options: string[];
+}
+
+/** Put text into the box as if it was typed (React's onChange runs). */
+function typeInto(input: HTMLInputElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  if (setter) setter.call(input, value);
+  else input.value = value;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+/**
+ * "Type it or pick it" (to-do Kind, unit Type): a text box with the site's glass list under it. The list ALWAYS shows
+ * every choice (owner 2/11/2026: the browser's list hid them once something was typed) — tap the box or ⌄, or press
+ * ↓, to open it; typing highlights the matching choice (Enter takes it) and a word that isn't listed is kept as typed.
+ */
+export function ComboInput({ options, icon, compact, className, id, disabled, required, value, onChange, onKeyDown, onClick, ref, ...rest }: ComboInputProps) {
+  const { invalid, ...a11y } = useFieldProps(id, rest["aria-describedby"], rest["aria-invalid"], required);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const picking = useRef(false);
+  const listId = useId();
+  const [open, setOpen] = useState(false);
+  const setInput = useCallback(
+    (el: HTMLInputElement | null) => {
+      inputRef.current = el;
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+    },
+    [ref],
+  );
+  const text = typeof value === "string" ? value : String(value ?? "");
+  const entries: MenuEntry[] = options.map((o) => ({ kind: "option", value: o, label: o, disabled: false, placeholder: false }));
+  const chosen = options.find((o) => o.toLowerCase() === text.trim().toLowerCase()) ?? "";
+  const show = () => !disabled && setOpen(true);
+  const close = (refocus: boolean) => {
+    setOpen(false);
+    if (refocus) inputRef.current?.focus({ preventScroll: true });
+  };
+  return (
+    <div ref={boxRef} className={cx(styles.control, styles.comboBox, compact && styles.compact, className)} data-invalid={invalid} data-disabled={disabled} data-open={open || undefined}>
+      {icon && <span className={styles.lead}>{icon}</span>}
+      <input
+        ref={setInput}
+        className={styles.input}
+        disabled={disabled}
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        value={value}
+        {...rest}
+        {...a11y}
+        onChange={(e) => {
+          onChange?.(e);
+          if (!picking.current) show();
+        }}
+        onClick={(e) => {
+          onClick?.(e);
+          show();
+        }}
+        onKeyDown={(e) => {
+          onKeyDown?.(e);
+          if (e.defaultPrevented || open) return;
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            show();
+          }
+        }}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        className={styles.chevBtn}
+        aria-label={open ? "Hide the list" : "Show the list"}
+        disabled={disabled}
+        onPointerDown={(e) => e.preventDefault()}
+        onClick={() => {
+          if (open) close(false);
+          else show();
+          inputRef.current?.focus({ preventScroll: true });
+        }}
+      >
+        <ChevronDown className={styles.chev} aria-hidden />
+      </button>
+      {open && (
+        <SelectMenu
+          anchor={boxRef}
+          entries={entries}
+          value={chosen}
+          typed={text}
+          id={listId}
+          onClose={close}
+          onPick={(v) => {
+            const input = inputRef.current;
+            if (input) {
+              picking.current = true;
+              typeInto(input, v);
+              picking.current = false;
+            }
+            close(true);
+          }}
+        />
+      )}
     </div>
   );
 }

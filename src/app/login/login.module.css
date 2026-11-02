@@ -381,7 +381,12 @@
 /* the sign-in bar = the reel (owner 31/10/2026): one pane of clear frosted glass, glass fields, the blue Enter pill */
 .bar {
   display: flex;
-  align-items: center;
+  /* Everything hangs off one line. Centring instead put the Enter button's
+     middle 13px above the inputs': each field is a label stacked over its
+     input, so the input sits low in a tall column while the button was
+     centred against the whole bar. Measured on the live page at 1440px:
+     inputs centred at 66px from the bar's top, the button at 53px. */
+  align-items: flex-end;
   gap: 22px;
   min-height: 100px;
   padding: 16px 20px 16px 28px;
@@ -424,7 +429,8 @@
 .barSep {
   flex: none;
   width: 1px;
-  height: 58px;
+  /* spans the input row exactly rather than floating across the middle */
+  height: 44px;
   background: rgba(255, 255, 255, 0.14);
 }
 .form {
@@ -493,8 +499,10 @@
   justify-content: center;
   gap: 10px;
   width: 170px;
-  height: 52px;
-  align-self: center;
+  /* the same height as an input, and on the same bottom line, so the three
+     boxes read as one row */
+  height: 44px;
+  align-self: flex-end;
   font-family: var(--ff-body);
   font-size: 17px;
   font-weight: 600;
@@ -629,7 +637,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background: var(--bg-0);
+  background: #fff;
 }
 
 @media (prefers-reduced-motion: reduce) {

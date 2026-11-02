@@ -128,8 +128,8 @@ export function IncomeExpenseChart({ years, allTime, cumulative, lastYear, year:
   return (
     <div className={cx(s.chart, className)}>
       <div className={s.chartBar}>
-        {/* its own year dropdown only when nothing outside picks the period (the side chart's header does, like the
-            other charts — owner 2/11/2026: "fix the placement of years like the other tabs") */}
+        {/* its own year dropdown only when nothing outside picks the year — the side chart puts it in its header like the
+            other charts (owner 2/11/2026: "keep the year on the side like the other charts") */}
         {controlled === undefined && (
           <Select compact aria-label="Year" value={String(ys.year)} className={s.yearSelect} onChange={(e) => pick(Number(e.target.value))}>
             {[...years].reverse().map((yy) => (
