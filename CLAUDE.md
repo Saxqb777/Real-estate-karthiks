@@ -839,8 +839,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   ChoiceGroup sm (choice = --pill-h − 8 inside the 3px track + 1px edge), compact dropdowns (Input .selectBox.compact:
   round ends, 13px / 500 text, chevron 12px in — they were 32px with 8px corners), the window / chart year dropdowns
   (hud .pyearSelect, charts .yearSelect: were 30px), small buttons (Button .sm: + Record rent / Add expense / Sign lease …,
-  were 30px) and compact text / number / date boxes (.compact, so rows like Rent changes line up). Measured 34px with
-  round ends on Reports, Payments, Expenses, Leases, the property window and the side charts, desktop + phone.
+  were 30px) and compact text / number / date boxes (.compact, so rows like Rent changes line up). Then (owner: "basically
+  all") the regular buttons too (Button .btn: Cancel / Save / Add in forms and drawers, were 36px) and the Overview ·
+  Data · Config tabs (Shell .floatLink, were 36px). A crawl of every Data / Config section, a drawer form, the overview
+  and a window found every round-ended control at 34px (the small ▲ / ▼ % change badges are labels, left as they are).
+  DEPLOYED 2/11/2026 (owner: "deploy it"; the black birds stayed in preview).
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

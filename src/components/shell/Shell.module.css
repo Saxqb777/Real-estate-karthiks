@@ -686,7 +686,7 @@
   justify-content: center;
   gap: 8px;
   min-width: 112px;
-  height: 36px;
+  height: var(--pill-h); /* the same size as every other pill (owner 2/11/2026) */
   padding: 0 18px;
   font-family: var(--ff-body);
   font-size: 14px;

@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 36px;
+  height: var(--pill-h); /* every pill on the site is one size (owner 2/11/2026: "basically all") */
   padding: 0 16px;
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
