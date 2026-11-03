@@ -48,14 +48,14 @@ function worldSpots(units: UnitBreakdown[], mobile: boolean): Spot[] {
       opens: mobile ? "Tap: details" : "Click: details",
     });
     if (u.activeLease) out.push({ key: `tenant:${u.id}`, kind: "tenant", unitId: u.id, title: "Tenant", opens: "Profile · tap to call" });
-    if (u.status === "vacant" && u.isActive) out.push({ key: `tolet:${u.id}`, kind: "tolet", unitId: u.id, title: "TO-LET board", opens: "Sign a new lease" });
+    if (u.status === "vacant" && u.isActive) out.push({ key: `tolet:${u.id}`, kind: "tolet", unitId: u.id, title: "New lease", opens: "Sign a new lease" });
   }
   out.push(
-    { key: "mailbox", kind: "mailbox", title: "Mailbox", opens: "Record rent · receipts" },
-    { key: "noticeboard", kind: "noticeboard", title: "Property manager", opens: "To-dos" },
-    { key: "pole", kind: "pole", title: "Electricity Board", opens: "TNPDCL numbers · pay link" },
-    { key: "taxstamp", kind: "taxstamp", title: "Revenue officer", opens: "Property tax · mark paid" },
-    { key: "plot", kind: "plot", title: "Plot marker", opens: "Plot size" },
+    { key: "mailbox", kind: "mailbox", title: "Rent & receipts", opens: "Record rent · receipts" },
+    { key: "noticeboard", kind: "noticeboard", title: "To-dos", opens: "To-dos" },
+    { key: "pole", kind: "pole", title: "Electricity bills", opens: "TNPDCL numbers · pay link" },
+    { key: "taxstamp", kind: "taxstamp", title: "Property tax", opens: "Property tax · mark paid" },
+    { key: "plot", kind: "plot", title: "Property", opens: "Property figures" },
   );
   return out;
 }

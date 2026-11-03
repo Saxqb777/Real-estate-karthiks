@@ -885,6 +885,13 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   Config: Plot ("The land"), Units ("Unit / New unit"), Offers ("Paper value" on the page + each unit; "Inactive unit"
   stays for an inactive one), Categories ("Expenses"). DataPanel eyebrow is optional now. Kept: the report page's
   "‹ Reports" back button, drawers / dialogs, the Units slot cards' Front / Back words. DEPLOYED 3/11/2026.
+- 3/11/2026: OVERVIEW TAGS NAME WHAT THEY OPEN (owner: "rename all tags in overview like Property Manager, Electricity
+  Board, etc" → picked "Name what it opens" → "deploy both of these"): hover tag + "?" tag — rover "To-dos" (was Property
+  manager), pole "Electricity bills" (was Electricity Board), moped / officer "Property tax" (was Revenue officer), mailbox
+  "Rent & receipts" (was Mailbox), CCTV "Interior photos", plot marker "Property" (it opens the property window; was Plot
+  marker), TO-LET "New lease". Houses + tenants keep their real names. Inspect TAG_NAME, HelpOverlay worldSpots,
+  estate/types SCENE_OBJECT_INFO. Window eyebrows (Property manager / Revenue officer / Electricity Board · TNPDCL) and
+  code names unchanged. DEPLOYED 3/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

@@ -252,21 +252,21 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
 /** Depth 1: hovering a world object shows just its name tag (owner: same tags as the "?" view, no detail box). */
 const TAG_NAME: Record<SceneObjectKind, string> = {
   unit: "House",
-  mailbox: "Mailbox",
-  noticeboard: "Property manager",
-  pole: "Electricity Board",
-  tolet: "TO-LET board",
+  // each tag names what the object opens (owner 3/11/2026); houses + tenants show their real names
+  mailbox: "Rent & receipts",
+  noticeboard: "To-dos",
+  pole: "Electricity bills",
+  tolet: "New lease",
   tenant: "Tenant",
-  taxstamp: "Revenue officer",
-  plot: "Plot marker",
-  photographer: "CCTV",
+  taxstamp: "Property tax",
+  plot: "Property",
+  photographer: "Interior photos",
 };
 export function WorldHint({ obj, data }: { obj: SceneObject | null; data: DashboardData }) {
   const isClient = useIsClient();
   if (!isClient) return null;
   const u = (obj?.kind === "unit" || obj?.kind === "tenant") && obj.unitId ? data.units.find((x) => x.id === obj.unitId) : undefined;
-  // houses show the unit name, tenants the tenant's own name (health check, 5/10/2026); the revenue officer's tag is
-  // just "Revenue officer" (owner, 9/10/2026: no name on the tag)
+  // houses show the unit name, tenants the tenant's own name (health check, 5/10/2026); every other tag = TAG_NAME
   const name = obj ? ((obj.kind === "tenant" ? u?.activeLease?.tenantName : u?.name) ?? TAG_NAME[obj.kind]) : "";
   return createPortal(
     <AnimatePresence>
