@@ -134,7 +134,6 @@ export function ExpensesTab({ openId, onOpened, goto, newSignal }: TabProps) {
   return (
     <>
       <DataPanel
-        eyebrow="Cash · money out"
         title="Expenses"
         actions={
           <Button variant="primary" size="sm" icon={<Plus />} onClick={create.start}>

@@ -45,7 +45,6 @@ export function TenantsTab({ openId, onOpened, goto, newSignal }: TabProps) {
   return (
     <>
       <DataPanel
-        eyebrow="People"
         title="Tenants"
         actions={
           <Button variant="primary" size="sm" icon={<Plus />} onClick={create.start}>

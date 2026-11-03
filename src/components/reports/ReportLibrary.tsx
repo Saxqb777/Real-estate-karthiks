@@ -172,7 +172,7 @@ export function ReportLibrary() {
       deposits: { big: k ? inr(k.securityDepositsHeld) : "…", sub: "held for tenants", tone: s.mari },
     };
     return (
-      <Panel fill padding="none" title="Reports" eyebrow={`${REPORTS.length} reports`} actions={yearControl} className={s.panel}
+      <Panel fill padding="none" title="Reports" actions={yearControl} className={s.panel}
         data-wrap-head>
         {dashQ.error && !d ? (
           <EmptyState

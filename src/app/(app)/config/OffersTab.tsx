@@ -25,7 +25,7 @@ export function OffersTab() {
   }
   if (!items.length) {
     return (
-      <Panel fill eyebrow="Paper value" title="Offers">
+      <Panel fill title="Offers">
         <EmptyState title="No units yet" />
       </Panel>
     );
@@ -56,7 +56,7 @@ function UnitOffers({ unit, info }: { unit: UnitListItem; info?: UnitBreakdown }
     <Panel
       fill
       padding="none"
-      eyebrow={unit.isActive ? "Paper value" : "Inactive unit"}
+      eyebrow={unit.isActive ? undefined : "Inactive unit"}
       title={unitLabel(unit)}
       actions={
         <Button size="sm" variant="secondary" icon={<Plus />} onClick={add}>

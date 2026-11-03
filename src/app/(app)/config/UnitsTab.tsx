@@ -136,7 +136,6 @@ export function UnitsTab() {
         <Panel
           fill
           padding="none"
-          eyebrow={sel?.mode === "new" ? "New unit" : "Unit"}
           title={sel?.mode === "new" ? (draft?.name || "Build a unit") : (current?.name ?? "Unit")}
           actions={
             sel?.mode === "edit" ? (

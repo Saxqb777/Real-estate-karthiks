@@ -116,7 +116,6 @@ export function TodosTab({ openId, onOpened, newSignal }: TabProps) {
   return (
     <>
       <DataPanel
-        eyebrow={pendingCount ? `${pendingCount} to do${overdue ? ` · ${overdue} late` : ""}` : "All clear"}
         title="To-dos"
         actions={
           <>

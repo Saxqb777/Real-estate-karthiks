@@ -65,7 +65,6 @@ export function CategoriesTab() {
     <Panel
       fill
       padding="none"
-      eyebrow="Expenses"
       title="Categories"
       actions={
         <Button size="sm" variant="primary" icon={<Plus />} onClick={() => quickAdd("category")}>

@@ -32,7 +32,7 @@ export function PlotTab() {
 
   return (
     <div className={s.split}>
-      <Panel fill padding="none" eyebrow="The land" title="Plot" className={s.formPanel}>
+      <Panel fill padding="none" title="Plot" className={s.formPanel}>
         {plot.data ? (
           <PlotForm
             plot={plot.data}

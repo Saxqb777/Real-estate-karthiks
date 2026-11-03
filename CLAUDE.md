@@ -879,6 +879,12 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   always DD/MM/YYYY; and "remove how the app works" — the eyebrow over the "Settings" title). The dropdown is gone from
   SettingsForm and settingsSchema (DATE_FORMATS deleted); the DB column settings.date_format stays (unused, no migration).
   Formats section = Currency only. DEPLOYED 2/11/2026 (owner: "deploy").
+- 3/11/2026: NO EYEBROWS ON DATA / CONFIG PAGES (owner: "yes remove thoses" → "deploy"): the small grey label over each
+  page's title is gone — Data: Tenants ("People"), Leases ("Agreements"), Payments ("Cash · money in"), Expenses ("Cash ·
+  money out"), Property tax ("N due · … / All paid"), To-dos ("N to do · M late / All clear"), Reports home ("9 reports");
+  Config: Plot ("The land"), Units ("Unit / New unit"), Offers ("Paper value" on the page + each unit; "Inactive unit"
+  stays for an inactive one), Categories ("Expenses"). DataPanel eyebrow is optional now. Kept: the report page's
+  "‹ Reports" back button, drawers / dialogs, the Units slot cards' Front / Back words. DEPLOYED 3/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

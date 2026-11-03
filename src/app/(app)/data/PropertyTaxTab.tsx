@@ -5,7 +5,7 @@ import { Button, EmptyState, Select, StatusPill, Table, type Column } from "@/co
 import { Facts, PropertyTaxForm, drawerFrame, quickAdd, usePropertyTax } from "@/components/forms";
 import { ProofClip, ProofHead, ProofMark, proofCount } from "@/components/proof";
 import { sumAmounts } from "@/lib/calculations";
-import { formatDate, todayIST } from "@/lib/dates";
+import { formatDate } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import type { PropertyTaxDTO } from "@/lib/schemas/property-tax";
 import {
@@ -122,13 +122,9 @@ export function PropertyTaxTab({ openId, onOpened, goto, newSignal }: TabProps) 
         { key: "action", header: "", align: "right", cell: action },
       ];
 
-  const thisYear = todayIST().getUTCFullYear();
-  const overdueDue = due.filter((t) => t.year < thisYear).length;
-
   return (
     <>
       <DataPanel
-        eyebrow={due.length ? `${due.length} due${overdueDue ? ` · ${overdueDue} from past years` : ""}` : "All paid"}
         title="Property tax"
         actions={
           <>

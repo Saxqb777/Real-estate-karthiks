@@ -76,7 +76,6 @@ export function LeasesTab({ openId, onOpened, newSignal }: TabProps) {
   return (
     <>
       <DataPanel
-        eyebrow="Agreements"
         title="Leases"
         actions={
           <>

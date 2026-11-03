@@ -113,7 +113,6 @@ export function PaymentsTab({ openId, onOpened, newSignal }: TabProps) {
   return (
     <>
       <DataPanel
-        eyebrow="Cash · money in"
         title="Rent payments"
         actions={
           <Button variant="primary" size="sm" icon={<Plus />} onClick={create.start} disabled={!leases.data?.items.length}>

@@ -30,7 +30,7 @@ export function DataPanel({
   toolbar,
   children,
 }: {
-  eyebrow: ReactNode;
+  eyebrow?: ReactNode;
   title: ReactNode;
   actions?: ReactNode;
   /** Filters row under the header. */
