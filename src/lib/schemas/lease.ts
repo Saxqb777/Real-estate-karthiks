@@ -37,12 +37,12 @@ export interface LeaseRuleInput {
   startDate: DateLike;
   endDate: DateLike | null;
   securityDeposit: number;
-  depositRefundedAmount?: number | null;
-  depositRefundDate?: DateLike | null;
+  /** Σ deposit refunds already given (the deposit can't drop below it) */
+  refundedTotal?: number;
   agreementEndDate?: DateLike | null;
 }
 
-/** Field-level problems with a lease's own values (dates order, deposit refund). */
+/** Field-level problems with a lease's own values (dates order, deposit vs refunds). */
 export function leaseRuleIssues(l: LeaseRuleInput): { field: string; message: string }[] {
   const issues: { field: string; message: string }[] = [];
   if (l.endDate && ms(l.endDate) < ms(l.startDate)) {
@@ -51,10 +51,10 @@ export function leaseRuleIssues(l: LeaseRuleInput): { field: string; message: st
       message: `Last day of tenancy ${formatDate(l.endDate)} can't be before the start date ${formatDate(l.startDate)}`,
     });
   }
-  if (l.depositRefundedAmount != null && l.depositRefundedAmount > l.securityDeposit) {
+  if (l.refundedTotal && l.refundedTotal > l.securityDeposit) {
     issues.push({
-      field: "depositRefundedAmount",
-      message: `Refunded deposit (${inr(l.depositRefundedAmount)}) can't be more than the security deposit (${inr(l.securityDeposit)})`,
+      field: "securityDeposit",
+      message: `The deposit can't be less than what has already been refunded (${inr(l.refundedTotal)})`,
     });
   }
   if (l.agreementEndDate && ms(l.agreementEndDate) < ms(l.startDate)) {
@@ -63,14 +63,51 @@ export function leaseRuleIssues(l: LeaseRuleInput): { field: string; message: st
       message: `Agreement end ${formatDate(l.agreementEndDate)} can't be before the start date ${formatDate(l.startDate)}`,
     });
   }
-  if (l.depositRefundDate && ms(l.depositRefundDate) < ms(l.startDate)) {
+  return issues;
+}
+
+export interface RefundRuleInput {
+  /** the lease's start and security deposit */
+  startDate: DateLike;
+  securityDeposit: number;
+  /** Σ the lease's OTHER refunds (not the one being added / changed) */
+  otherRefunds: number;
+  /** how many other refunds there are */
+  otherCount: number;
+  amount: number | null;
+  refundDate: DateLike | null;
+}
+
+/**
+ * Problems with one deposit refund (owner, 4/11/2026: a lease can have several). All refunds together can't be more than
+ * the deposit; a refund can't be dated before the lease started; ₹0 means "nothing refunded" and only stands alone.
+ */
+export function refundIssues(r: RefundRuleInput): { field: string; message: string }[] {
+  const issues: { field: string; message: string }[] = [];
+  if (r.amount != null) {
+    const total = round2(r.otherRefunds + r.amount);
+    if (total > r.securityDeposit) {
+      const left = round2(Math.max(0, r.securityDeposit - r.otherRefunds));
+      issues.push({
+        field: "amount",
+        message: r.otherCount
+          ? `Only ${inr(left)} of the ${inr(r.securityDeposit)} deposit is left to refund`
+          : `A refund can't be more than the deposit (${inr(r.securityDeposit)})`,
+      });
+    } else if (r.amount === 0 && r.otherCount > 0) {
+      issues.push({ field: "amount", message: "Enter the amount refunded" });
+    }
+  }
+  if (r.refundDate && ms(r.refundDate) < ms(r.startDate)) {
     issues.push({
-      field: "depositRefundDate",
-      message: `Deposit refund date ${formatDate(l.depositRefundDate)} can't be before the lease start ${formatDate(l.startDate)}`,
+      field: "refundDate",
+      message: `The refund can't be dated before the lease started (${formatDate(r.startDate)})`,
     });
   }
   return issues;
 }
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export interface LeaseSpan {
   startDate: DateLike;
@@ -150,8 +187,6 @@ const leaseFields = {
   securityDeposit: zMoney,
   /** bank / UPI ref no. (UTR) of the deposit transfer */
   depositReference: zReference,
-  depositRefundedAmount: zMoneyOrNull,
-  depositRefundDate: zRefundDate,
   reminderEnabled: zBool,
   /** the current rental agreement's end (can be in the future — e.g. an 11-month agreement); empty = not recorded */
   agreementEndDate: zDateOrNull,
@@ -175,13 +210,26 @@ export const leaseCreateSchema = z
 /** PUT /api/leases/[id] — partial; cross-field rules are re-checked on the merged lease by the route. */
 export const leaseUpdateSchema = z.object(leaseFields).partial();
 
-/** POST /api/leases/[id]/move-out */
+/** POST /api/leases/[id]/move-out — the last day, and (optionally) the deposit refunded then (₹0 = nothing refunded). */
 export const leaseMoveOutSchema = z.object({
   endDate: zRequired(zDate.refine(notFuture, END_IN_FUTURE), "is required (the last day of tenancy)"),
-  depositRefundedAmount: zMoneyOrNull.optional(),
-  depositRefundDate: zRefundDate.optional(),
+  refundAmount: zMoneyOrNull.optional(),
+  refundDate: zRefundDate.optional(),
+  /** bank / UPI ref no. (UTR) of the refund transfer */
+  refundReference: zReference.optional(),
   moveOutNotes: zText(2000).optional(),
 });
+
+/** POST /api/leases/[id]/refunds — one deposit refund (owner, 4/11/2026: refunds can be added later, each with files). */
+export const refundCreateSchema = z.object({
+  amount: zRequired(zMoney, "Enter the amount refunded"),
+  refundDate: zRequired(zDate.refine(notFuture, REFUND_IN_FUTURE), "Choose the day it was refunded"),
+  /** bank / UPI ref no. (UTR) of the refund transfer */
+  reference: zReference,
+});
+/** PATCH /api/leases/[id]/refunds/[refundId] — partial */
+export const refundUpdateSchema = refundCreateSchema.partial();
+export type RefundCreateInput = z.input<typeof refundCreateSchema>;
 
 export const LEASE_STATUSES = ["active", "past", "all"] as const;
 
@@ -224,11 +272,18 @@ export function leaseRent(
   };
 }
 
+/** Deposit refunds oldest first, with how many files each has (Prisma include). */
+export const depositRefundsInclude = {
+  orderBy: [{ refundDate: "asc" }, { createdAt: "asc" }],
+  include: { _count: { select: { attachments: true } } },
+} satisfies Prisma.Lease$depositRefundsArgs;
+
 /** Prisma include for lease detail responses (GET / PUT / move-out): full unit + tenant, payments newest period first. */
 export const leaseDetailInclude = {
   unit: true,
   tenant: true,
   rentChanges: rentChangesInclude,
+  depositRefunds: depositRefundsInclude,
   payments: { orderBy: [{ periodYear: "desc" }, { periodMonth: "desc" }, { paymentDate: "desc" }] },
 } satisfies Prisma.LeaseInclude;
 
@@ -246,7 +301,9 @@ export interface RentChangeDTO {
 }
 
 /** monthlyRent = the rent in effect today; startingRent = the rent the lease began with (what the lease form edits). */
-export type LeaseDTO = Serialized<Lease> & { startingRent?: number; rentChanges?: RentChangeDTO[] };
+export type LeaseDTO = Omit<Serialized<Lease>, LegacyRefundFields> & { startingRent?: number; rentChanges?: RentChangeDTO[] };
+/** the old one-refund columns (kept in the DB, never used — refunds live in depositRefunds) */
+type LegacyRefundFields = "depositRefundedAmount" | "depositRefundDate";
 /** Derived fields on every lease response. paymentsTotal uses sumAmounts(). isActive = state !== "ended". */
 export type LeaseStats = PaymentStats & { isActive: boolean; state: LeaseState };
 
@@ -263,6 +320,21 @@ export type LeaseListItem = LeaseDTO &
     tenant: { id: string; name: string; phone: string | null };
   };
 
+/** One deposit refund (amount 0 = nothing refunded — the whole deposit kept). */
+export interface DepositRefundDTO {
+  id: string;
+  amount: number;
+  refundDate: string;
+  reference: string | null;
+  createdAt: string;
+  _count: { attachments: number };
+}
+
 /** GET / PUT /api/leases/[id] and POST /api/leases/[id]/move-out */
 export type LeaseDetail = LeaseDTO &
-  LeaseStats & { unit: Serialized<Unit>; tenant: Serialized<Tenant>; payments: Serialized<Payment>[] };
+  LeaseStats & {
+    unit: Serialized<Unit>;
+    tenant: Serialized<Tenant>;
+    payments: Serialized<Payment>[];
+    depositRefunds: DepositRefundDTO[];
+  };

@@ -2,8 +2,11 @@
 // statements). Pure rules shared by the upload API and its tests: which record a file belongs to, what a file really is
 // (from its first bytes — never the browser's word), size limits, storage keys and the download headers.
 
-/** A file belongs to exactly one of these records (DB CHECK attachment_one_owner). leaseId = the lease's security deposit. */
-export const ATTACHMENT_OWNERS = ["paymentId", "expenseId", "leaseId", "propertyTaxId"] as const;
+/**
+ * A file belongs to exactly one of these records (DB CHECK attachment_one_owner). leaseId = the lease's security deposit;
+ * depositRefundId = one refund of it (owner, 4/11/2026).
+ */
+export const ATTACHMENT_OWNERS = ["paymentId", "expenseId", "leaseId", "propertyTaxId", "depositRefundId"] as const;
 export type AttachmentOwnerField = (typeof ATTACHMENT_OWNERS)[number];
 export type AttachmentOwner = { [K in AttachmentOwnerField]?: string };
 
@@ -13,7 +16,7 @@ export function ownerOf(input: Record<string, unknown>): { field: AttachmentOwne
     const v = input[field];
     return typeof v === "string" && v.trim() ? [{ field, id: v.trim() }] : [];
   });
-  if (given.length === 0) return { error: "Say which payment, expense, deposit or property tax the file is for" };
+  if (given.length === 0) return { error: "Say which payment, expense, deposit, refund or property tax the file is for" };
   if (given.length > 1) return { error: "A file can belong to only one record" };
   return given[0];
 }

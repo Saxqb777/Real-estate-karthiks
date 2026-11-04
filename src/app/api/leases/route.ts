@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { handler, json, parseBody, parseQuery } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
+import { withoutLegacyRefund } from "@/app/api/_lib/lease-detail";
 import { prisma } from "@/lib/db";
 import { todayIST } from "@/lib/dates";
 import { compareLeases, leaseConflictMessage, leaseCreateSchema, leaseListQuerySchema, leaseRent, leaseStatus, rentChangesInclude } from "@/lib/schemas/lease";
@@ -28,7 +29,7 @@ export const GET = handler(async (req) => {
     },
   });
   const items = leases
-    .map(({ payments, ...l }) => ({ ...l, ...leaseRent(l, today), ...leaseStatus(l, today), ...summarizePayments(payments) }))
+    .map(({ payments, ...l }) => ({ ...withoutLegacyRefund(l), ...leaseRent(l, today), ...leaseStatus(l, today), ...summarizePayments(payments) }))
     .sort((a, b) => compareLeases(a, b, today));
   return json({ items });
 });
@@ -61,5 +62,5 @@ export const POST = handler(async (req) => {
       },
     });
   });
-  return json({ ...lease, ...leaseRent(lease), ...leaseStatus(lease), ...summarizePayments([]) }, 201);
+  return json({ ...withoutLegacyRefund(lease), ...leaseRent(lease), ...leaseStatus(lease), ...summarizePayments([]) }, 201);
 });

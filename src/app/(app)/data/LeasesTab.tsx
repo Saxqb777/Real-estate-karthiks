@@ -37,6 +37,7 @@ import {
   useSelection,
 } from "./shared";
 import { CardGrid, GameCard, initials } from "./cards";
+import { DepositRefunds } from "./DepositRefunds";
 import { RentChanges } from "./RentChanges";
 import type { TabProps } from "./tabs";
 import s from "./data.module.css";
@@ -247,12 +248,6 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
             label: "Security deposit",
             value: l.securityDeposit ? formatINR(l.securityDeposit) : <span className="faint">none</span>,
             num: Boolean(l.securityDeposit),
-            hint:
-              l.depositRefundedAmount != null
-                ? `${formatINR(l.depositRefundedAmount)} refunded${l.depositRefundDate ? ` on ${formatDate(l.depositRefundDate)}` : ""}`
-                : l.securityDeposit
-                  ? "Held for the tenant — not income"
-                  : undefined,
           },
           (l.securityDeposit > 0 || Boolean(l.depositReference)) && {
             label: "Deposit ref no.",
@@ -269,6 +264,7 @@ function LeaseDrawer({ sel }: { sel: ReturnType<typeof useSelection> }) {
         ]}
       />
       <RentChanges lease={l} />
+      <DepositRefunds lease={l} />
       <DetailSection title="Payments" aside={<span className="faint">{l.payments.length ? "newest first" : null}</span>}>
         {l.payments.length ? (
           <ul className={s.miniList}>

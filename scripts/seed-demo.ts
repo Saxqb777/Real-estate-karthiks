@@ -216,8 +216,7 @@ async function main() {
       endDate: d("2023-05-31"),
       monthlyRent: 9500,
       securityDeposit: 50000,
-      depositRefundedAmount: 45000,
-      depositRefundDate: d("2023-06-06"),
+      depositRefunds: { create: [{ amount: 45000, refundDate: d("2023-06-06"), reference: "UTR305612884471" }] },
       moveOutNotes: "Moved to Thanjavur. ₹5,000 kept from the deposit for broken window panes and wall damage.",
     },
   });
@@ -229,8 +228,7 @@ async function main() {
       endDate: d("2025-04-30"),
       monthlyRent: 11000,
       securityDeposit: 60000,
-      depositRefundedAmount: 60000,
-      depositRefundDate: d("2025-05-03"),
+      depositRefunds: { create: [{ amount: 60000, refundDate: d("2025-05-03") }] },
       moveOutNotes: "Transferred to Chennai. Deposit refunded in full.",
     },
   });

@@ -28,7 +28,7 @@ export const GET = handler(async (req) => {
   return json({ items: rows.map(toAttachmentDTO) });
 });
 
-/** multipart/form-data: one of paymentId / expenseId / leaseId / propertyTaxId, `file`, optional `thumb` (photos), `name`. */
+/** multipart/form-data: one of paymentId / expenseId / leaseId / propertyTaxId / depositRefundId, `file`, optional `thumb` (photos), `name`. */
 export const POST = handler(async (req) => {
   let form: FormData;
   try {

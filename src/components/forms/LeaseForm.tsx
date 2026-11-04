@@ -5,7 +5,6 @@ import { DateInput, Field, FormGrid, Input, NumberInput, Select, Textarea, Toggl
 import { PendingProofClip, ProofClip, usePendingProofs } from "@/components/proof";
 import { api } from "@/lib/client";
 import { formatDate, toInputDate, todayIST } from "@/lib/dates";
-import { formatINR } from "@/lib/format";
 import {
   leaseConflictMessage,
   leaseCreateSchema,
@@ -34,8 +33,6 @@ type Values = {
   depositReference: string;
   agreementEndDate: string;
   reminderEnabled: boolean;
-  depositRefundedAmount: number | null;
-  depositRefundDate: string;
   moveOutNotes: string;
 };
 
@@ -69,13 +66,14 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       .sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
   const prev = !editing && defaults?.unitId ? previousOn(defaults.unitId) : undefined;
 
+  // refunds are kept on the lease (Data → Leases → the lease → Deposit refunds); the deposit can't drop below them
+  const refundedTotal = lease && "depositRefunds" in lease ? (lease as LeaseDetail).depositRefunds.reduce((sum, r) => sum + r.amount, 0) : 0;
   const rules = (v: Values): Issue[] => {
     const out: Issue[] = [...leaseRuleIssues({
       startDate: v.startDate || "1970-01-01",
       endDate: v.endDate || null,
       securityDeposit: v.securityDeposit ?? 0,
-      depositRefundedAmount: v.depositRefundedAmount,
-      depositRefundDate: v.depositRefundDate || null,
+      refundedTotal,
       agreementEndDate: v.agreementEndDate || null,
     })].filter((i) => v.startDate || (i.field !== "endDate" && i.field !== "agreementEndDate"));
     if (v.unitId && v.startDate && leases.data) {
@@ -102,8 +100,6 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       depositReference: lease?.depositReference ?? "",
       agreementEndDate: toInputDate(lease?.agreementEndDate),
       reminderEnabled: lease?.reminderEnabled ?? true,
-      depositRefundedAmount: lease?.depositRefundedAmount ?? null,
-      depositRefundDate: toInputDate(lease?.depositRefundDate),
       moveOutNotes: lease?.moveOutNotes ?? "",
     },
     schema: editing ? leaseUpdateSchema : leaseCreateSchema,
@@ -122,9 +118,7 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
         agreementEndDate: v.agreementEndDate || null,
         reminderEnabled: v.reminderEnabled,
       };
-      return editing
-        ? { ...base, depositRefundedAmount: v.depositRefundedAmount, depositRefundDate: v.depositRefundDate || null, moveOutNotes: v.moveOutNotes }
-        : base;
+      return editing ? { ...base, moveOutNotes: v.moveOutNotes } : base;
     },
     submit: (body) =>
       lease ? api<LeaseDetail>(`/api/leases/${lease.id}`, { method: "PUT", body }) : api<LeaseListItem>("/api/leases", { method: "POST", body }),
@@ -252,14 +246,8 @@ export function LeaseForm({ lease, defaults, onSaved, onCancel, frame = inlineFr
       </FormGrid>
 
       {editing && ended && (
-        <FormSection title="Move-out & deposit">
+        <FormSection title="Move-out">
           <FormGrid cols={2}>
-            <Field label="Deposit refunded" error={form.error("depositRefundedAmount")} hint={lease ? `Deposit was ${formatINR(v.securityDeposit ?? lease.securityDeposit)}` : undefined}>
-              <NumberInput {...form.number("depositRefundedAmount")} currency placeholder="0" />
-            </Field>
-            <Field label="Refunded on" error={form.error("depositRefundDate")}>
-              <DateInput {...form.date("depositRefundDate")} />
-            </Field>
             <Field label="Move-out notes" span="full" error={form.error("moveOutNotes")}>
               <Textarea {...form.text("moveOutNotes")} />
             </Field>

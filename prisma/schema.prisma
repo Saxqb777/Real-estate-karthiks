@@ -144,7 +144,10 @@ model Lease {
   /// day of the month the rent is due; null = Settings.rentDueDay
   rentDueDay            Int?      @map("rent_due_day")
   securityDeposit       Decimal   @default(0) @map("security_deposit") @db.Decimal(14, 2)
+  /// LEGACY (before 4/11/2026): the one refund a lease could hold — copied into deposit_refund by migration
+  /// 20261104090000_deposit_refunds; no longer read or written (refunds live in DepositRefund)
   depositRefundedAmount Decimal?  @map("deposit_refunded_amount") @db.Decimal(14, 2)
+  /// LEGACY — see depositRefundedAmount
   depositRefundDate     DateTime? @map("deposit_refund_date") @db.Date
   /// bank / UPI ref no. (UTR) of the security deposit transfer (owner, 10/10/2026)
   depositReference      String?   @map("deposit_reference")
@@ -155,16 +158,39 @@ model Lease {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  unit        Unit              @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  payments    Payment[]
-  rentChanges LeaseRentChange[]
+  unit           Unit              @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  payments       Payment[]
+  rentChanges    LeaseRentChange[]
+  /// security deposit refunds (owner, 4/11/2026: several, each with its own ref no. + files)
+  depositRefunds DepositRefund[]
   /// proof of the security deposit (transfer screenshot, statement)
-  attachments Attachment[]
+  attachments    Attachment[]
 
   @@index([unitId])
   @@index([tenantId])
   @@map("lease")
+}
+
+/// A security deposit refund given to the tenant (owner, 4/11/2026: "add the receipt to the refund given and add a refund
+/// if I decide to refund more later"). A lease can have several; amount 0 = nothing refunded (the whole deposit kept).
+/// Once the lease has ended, kept = deposit − refunds (income on the last day of tenancy).
+model DepositRefund {
+  id         String   @id @default(cuid())
+  leaseId    String   @map("lease_id")
+  amount     Decimal  @db.Decimal(14, 2)
+  refundDate DateTime @map("refund_date") @db.Date
+  /// bank / UPI ref no. (UTR) of the refund transfer
+  reference  String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  lease       Lease        @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  /// proof of the refund (transfer screenshot, statement)
+  attachments Attachment[]
+
+  @@index([leaseId])
+  @@map("deposit_refund")
 }
 
 /// A rent revision on a lease: from `effectiveFrom` (1st of a month) every month expects `monthlyRent`.
@@ -263,33 +289,37 @@ model PropertyTax {
 }
 
 /// A photo, screenshot or PDF kept as proof of a record (owner, 10/10/2026: bills, payment screenshots, deposit and bank
-/// statements). Exactly ONE of the four links is set (CHECK attachment_one_owner). The file itself lives in private
+/// statements). Exactly ONE of the five links is set (CHECK attachment_one_owner). The file itself lives in private
 /// storage (Vercel Blob in production) under fileKey; images also have a small preview under thumbKey.
 model Attachment {
-  id            String   @id @default(cuid())
-  paymentId     String?  @map("payment_id")
-  expenseId     String?  @map("expense_id")
+  id              String   @id @default(cuid())
+  paymentId       String?  @map("payment_id")
+  expenseId       String?  @map("expense_id")
   /// the lease's security deposit
-  leaseId       String?  @map("lease_id")
-  propertyTaxId String?  @map("property_tax_id")
+  leaseId         String?  @map("lease_id")
+  propertyTaxId   String?  @map("property_tax_id")
+  /// a deposit refund given back to the tenant
+  depositRefundId String?  @map("deposit_refund_id")
   /// the name the file had on the owner's phone / computer
-  fileName      String   @map("file_name")
-  contentType   String   @map("content_type")
+  fileName        String   @map("file_name")
+  contentType     String   @map("content_type")
   /// bytes
-  size          Int
-  fileKey       String   @unique @map("file_key")
-  thumbKey      String?  @map("thumb_key")
-  createdAt     DateTime @default(now()) @map("created_at")
+  size            Int
+  fileKey         String   @unique @map("file_key")
+  thumbKey        String?  @map("thumb_key")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  payment     Payment?     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  expense     Expense?     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  lease       Lease?       @relation(fields: [leaseId], references: [id], onDelete: Cascade)
-  propertyTax PropertyTax? @relation(fields: [propertyTaxId], references: [id], onDelete: Cascade)
+  payment       Payment?       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  expense       Expense?       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  lease         Lease?         @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  propertyTax   PropertyTax?   @relation(fields: [propertyTaxId], references: [id], onDelete: Cascade)
+  depositRefund DepositRefund? @relation(fields: [depositRefundId], references: [id], onDelete: Cascade)
 
   @@index([paymentId])
   @@index([expenseId])
   @@index([leaseId])
   @@index([propertyTaxId])
+  @@index([depositRefundId])
   @@map("attachment")
 }
 

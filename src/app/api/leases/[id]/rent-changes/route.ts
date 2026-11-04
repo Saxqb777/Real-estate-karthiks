@@ -2,8 +2,8 @@ import { handler, json, notFound, param, parseBody } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
 import { prisma } from "@/lib/db";
 import { dateOnly, periodLabel } from "@/lib/dates";
-import { leaseDetailInclude, leaseRent, leaseStatus, rentChangeCreateSchema } from "@/lib/schemas/lease";
-import { summarizePayments } from "@/lib/schemas/payment";
+import { loadLeaseDetail } from "@/app/api/_lib/lease-detail";
+import { rentChangeCreateSchema } from "@/lib/schemas/lease";
 
 const monthNo = (d: Date) => d.getUTCFullYear() * 12 + d.getUTCMonth();
 
@@ -35,6 +35,5 @@ export const POST = handler(async (req, ctx) => {
     });
   });
 
-  const lease = await prisma.lease.findUniqueOrThrow({ where: { id }, include: leaseDetailInclude });
-  return json({ ...lease, ...leaseRent(lease), ...leaseStatus(lease), ...summarizePayments(lease.payments) }, 201);
+  return json(await loadLeaseDetail(id), 201);
 });

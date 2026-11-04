@@ -59,8 +59,7 @@ const leases: LeaseInput[] = [
     endDate: D("2023-05-31"),
     monthlyRent: 9_500,
     securityDeposit: 50_000,
-    depositRefundedAmount: 45_000,
-    depositRefundDate: D("2023-06-06"),
+    refunds: [{ amount: 45_000, date: D("2023-06-06") }],
   },
   {
     id: "B1",
@@ -72,8 +71,7 @@ const leases: LeaseInput[] = [
     endDate: D("2025-04-30"),
     monthlyRent: 11_000,
     securityDeposit: 60_000,
-    depositRefundedAmount: 60_000,
-    depositRefundDate: D("2025-05-03"),
+    refunds: [{ amount: 60_000, date: D("2025-05-03") }],
   },
   {
     id: "A2",
@@ -411,7 +409,7 @@ describe("a deposit kept back at move-out = income on the move-out day (not rent
   // fixture: Murugan (A1) left on 31/05/2023, deposit 50,000, refunded 45,000 → 5,000 kept
   const noneKept = () =>
     buildDashboard(
-      { ...fixture(), leases: fixture().leases.map((l) => ({ ...l, depositRefundedAmount: l.securityDeposit })) },
+      { ...fixture(), leases: fixture().leases.map((l) => ({ ...l, refunds: l.endDate ? [{ amount: l.securityDeposit, date: l.refunds?.[0]?.date ?? l.endDate }] : l.refunds })) },
       { asOf: TODAY, today: TODAY, now: NOW, yearMode: "fy" },
     );
 
@@ -465,6 +463,74 @@ describe("a deposit kept back at move-out = income on the move-out day (not rent
     expect(k.inputs?.[0]).toMatchObject({ kind: "lease", id: "A1", value: 5_000 });
     expect(d.explain["netCash"]!.formula).toBe("Rent collected + Deposit kept − Expenses");
     expect(d.explain["rentCollected"]!.inputs?.some((x) => x.label.startsWith("Deposit kept"))).toBe(false);
+  });
+});
+
+describe("several refunds of one deposit (owner 04/11/2026: a top-up refund later lowers what was kept)", () => {
+  // Murugan (A1) left on 31/05/2023 with a 50,000 deposit: 45,000 back on 06/06/2023, then a 2,000 top-up on 10/04/2024
+  const withTopUp = (): DashboardInput => {
+    const f = fixture();
+    return {
+      ...f,
+      leases: f.leases.map((l) =>
+        l.id === "A1" ? { ...l, refunds: [...(l.refunds ?? []), { amount: 2_000, date: D("2024-04-10") }] } : l,
+      ),
+    };
+  };
+  const at = (input: DashboardInput, asOf: Date) => buildDashboard(input, { asOf, today: TODAY, now: NOW, yearMode: "fy" });
+
+  it("kept = deposit − every refund paid back by the day; the latest refund's date is shown", () => {
+    const now = at(withTopUp(), TODAY).deposits.rows.find((r) => r.leaseId === "A1")!;
+    expect(now).toMatchObject({ deposit: 50_000, refunded: 47_000, kept: 3_000, held: 0, awaitingRefund: 0, refundDate: ISO("2024-04-10") });
+    // before the top-up: only the first refund counts
+    const before = at(withTopUp(), D("2024-04-09")).deposits.rows.find((r) => r.leaseId === "A1")!;
+    expect(before).toMatchObject({ refunded: 45_000, kept: 5_000, refundDate: ISO("2023-06-06") });
+  });
+
+  it("the kept income stays on the move-out day and shrinks after the top-up", () => {
+    expect(keptDepositIncome(withTopUp().leases, TODAY).map((k) => [k.leaseId, k.amount, k.paymentDate.toISOString().slice(0, 10)])).toEqual([
+      ["A1", 3_000, "2023-05-31"],
+    ]);
+    expect(keptDepositIncome(withTopUp().leases, D("2024-04-09")).map((k) => k.amount)).toEqual([5_000]);
+    const d = at(withTopUp(), TODAY);
+    expect(d.periods.allTime.depositsKept).toBe(3_000);
+    expect(d.deposits.kept).toBe(3_000);
+    expect(d.checks.ledgerBalanced, JSON.stringify(d.checks.items.filter((x) => !x.ok))).toBe(true);
+  });
+
+  it("the year of the top-up shows it as a refund (and less kept); the ledger still balances", () => {
+    const r = buildAnnualReport(withTopUp(), { ...opts(), year: 2024 });
+    expect(r.deposits).toMatchObject({ refunded: 2_000, kept: -2_000 });
+    expect(r.deposits.closing).toBe(round2(r.deposits.opening + r.deposits.received - r.deposits.refunded - r.deposits.kept));
+    expect(r.reconciliation.ledgerBalanced, JSON.stringify(r.reconciliation.items.filter((x) => !x.ok))).toBe(true);
+  });
+
+  it("a ₹0 refund = nothing given back: the whole deposit is kept", () => {
+    const f = fixture();
+    const input = { ...f, leases: f.leases.map((l) => (l.id === "A1" ? { ...l, refunds: [{ amount: 0, date: D("2023-05-31") }] } : l)) };
+    expect(at(input, TODAY).deposits.rows.find((r) => r.leaseId === "A1")).toMatchObject({ refunded: 0, kept: 50_000, awaitingRefund: 0 });
+  });
+
+  it("refunds never count for more than the deposit", () => {
+    const f = fixture();
+    const input = {
+      ...f,
+      leases: f.leases.map((l) =>
+        l.id === "A1" ? { ...l, refunds: [{ amount: 40_000, date: D("2023-06-06") }, { amount: 20_000, date: D("2023-07-01") }] } : l,
+      ),
+    };
+    expect(at(input, TODAY).deposits.rows.find((r) => r.leaseId === "A1")).toMatchObject({ refunded: 50_000, kept: 0 });
+  });
+
+  it("a part refund while the tenant still lives there lowers what is held", () => {
+    const f = fixture();
+    const current = f.leases.find((l) => !l.endDate)!;
+    const input = {
+      ...f,
+      leases: f.leases.map((l) => (l.id === current.id ? { ...l, refunds: [{ amount: 5_000, date: D("2026-01-15") }] } : l)),
+    };
+    const row = at(input, TODAY).deposits.rows.find((r) => r.leaseId === current.id)!;
+    expect(row).toMatchObject({ refunded: 5_000, kept: 0, held: round2(current.securityDeposit - 5_000) });
   });
 });
 

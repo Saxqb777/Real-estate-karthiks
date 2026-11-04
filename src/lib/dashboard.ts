@@ -29,7 +29,11 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       prisma.unit.findMany(),
       prisma.offer.findMany({ select: { id: true, unitId: true, amount: true, offerDate: true, notes: true } }),
       prisma.lease.findMany({
-        include: { tenant: { select: { name: true, phone: true } }, rentChanges: { select: { effectiveFrom: true, monthlyRent: true } } },
+        include: {
+          tenant: { select: { name: true, phone: true } },
+          rentChanges: { select: { effectiveFrom: true, monthlyRent: true } },
+          depositRefunds: { select: { amount: true, refundDate: true } },
+        },
       }),
       prisma.payment.findMany({
         select: {
@@ -112,8 +116,7 @@ export async function loadDashboardInput(): Promise<DashboardInput> {
       rentTiming: l.rentTiming === "arrears" ? "arrears" : "advance",
       rentDueDay: l.rentDueDay,
       securityDeposit: num(l.securityDeposit),
-      depositRefundedAmount: numOrNull(l.depositRefundedAmount),
-      depositRefundDate: l.depositRefundDate,
+      refunds: l.depositRefunds.map((r) => ({ amount: num(r.amount), date: r.refundDate })),
       agreementEndDate: l.agreementEndDate,
     })),
     payments: payments.map((p) => ({ ...p, amount: num(p.amount) })),

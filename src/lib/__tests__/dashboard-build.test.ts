@@ -648,7 +648,7 @@ describe("buildDashboard — lease states on the as-of date", () => {
   });
 
   it("deposits: partial refund → kept; the KPI holds only current leases' deposits", () => {
-    const input = one({ endDate: D("2025-12-31"), depositRefundedAmount: 25_000, depositRefundDate: D("2026-01-05") });
+    const input = one({ endDate: D("2025-12-31"), refunds: [{ amount: 25_000, date: D("2026-01-05") }] });
     input.leases.push({ id: "L2", unitId: "u", tenantId: "t2", tenantName: "Ravi", tenantPhone: null, startDate: D("2026-01-01"), endDate: null, monthlyRent: 12_000, securityDeposit: 40_000 });
     const d = build(input);
     expect(d.deposits).toMatchObject({ received: 70_000, refunded: 25_000, kept: 5_000, awaitingRefund: 0, held: 40_000 });

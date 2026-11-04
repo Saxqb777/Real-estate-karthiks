@@ -169,10 +169,16 @@ export interface LeaseInput {
   /** day of the month rent falls due for this lease; null/undefined = Settings.rentDueDay */
   rentDueDay?: number | null;
   securityDeposit: number;
-  depositRefundedAmount?: number | null;
-  depositRefundDate?: Date | null;
+  /** deposit refunds given back (owner, 4/11/2026: several, e.g. a top-up later); amount 0 = nothing refunded */
+  refunds?: DepositRefundInput[];
   /** the rental agreement's end (e.g. an 11-month agreement); null = not recorded */
   agreementEndDate?: Date | null;
+}
+
+export interface DepositRefundInput {
+  amount: number;
+  /** the day it was paid back (date-only) */
+  date: Date;
 }
 
 export interface RentChangeInput {
@@ -805,15 +811,18 @@ export function receiptMonthFor(rent: number, payment: ReceiptPayment, leasePaym
 
 /** One lease's deposit position on A (null when the lease starts after A). See RULES: Deposits. */
 /** What a deposit row needs from a lease. */
-export type DepositLease = Pick<LeaseInput, "id" | "tenantName" | "unitId" | "startDate" | "endDate" | "securityDeposit" | "depositRefundedAmount" | "depositRefundDate">;
+export type DepositLease = Pick<LeaseInput, "id" | "tenantName" | "unitId" | "startDate" | "endDate" | "securityDeposit" | "refunds">;
 
 export function depositRowFor(lease: DepositLease, unitName: string, asOf: Date): DepositRow | null {
   const a = dayNum(asOf);
   if (dayNum(lease.startDate) > a) return null;
   const deposit = round2(lease.securityDeposit);
-  const refundAt = lease.depositRefundDate ?? lease.endDate ?? null;
-  const recorded = lease.depositRefundedAmount != null && refundAt !== null && dayNum(refundAt) <= a;
-  const refunded = recorded ? round2(Math.min(lease.depositRefundedAmount ?? 0, deposit)) : 0;
+  // every refund paid back by A (a ₹0 one = "nothing refunded", which still settles the deposit); later top-ups lower
+  // what was kept (owner 4/11/2026: kept = deposit − all refunds)
+  const given = (lease.refunds ?? []).filter((r) => dayNum(r.date) <= a);
+  const recorded = given.length > 0;
+  const refunded = recorded ? round2(Math.min(sum2(given.map((r) => r.amount)), deposit)) : 0;
+  const lastRefund = given.reduce<Date | null>((m, r) => (m === null || dayNum(r.date) > dayNum(m) ? r.date : m), null);
   const ended = lease.endDate !== null && dayNum(lease.endDate) < a;
   return {
     leaseId: lease.id,
@@ -823,7 +832,7 @@ export function depositRowFor(lease: DepositLease, unitName: string, asOf: Date)
     deposit,
     receivedDate: iso(lease.startDate),
     refunded,
-    refundDate: recorded && refundAt ? iso(refundAt) : null,
+    refundDate: lastRefund ? iso(lastRefund) : null,
     kept: ended && recorded ? round2(deposit - refunded) : 0,
     awaitingRefund: ended && !recorded ? deposit : 0,
     held: ended ? 0 : round2(deposit - refunded),

@@ -892,6 +892,28 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   marker), TO-LET "New lease". Houses + tenants keep their real names. Inspect TAG_NAME, HelpOverlay worldSpots,
   estate/types SCENE_OBJECT_INFO. Window eyebrows (Property manager / Revenue officer / Electricity Board · TNPDCL) and
   code names unchanged. DEPLOYED 3/11/2026.
+- 4/11/2026: DEPOSIT REFUNDS = A LIST (owner: "how do i edit the deposit refunded and also add the receipt of the refund" →
+  "i will also need to add the receipt to the refund given and add a refund if i decide to refund more later" → my plan
+  with the recommended maths → "deploy"). Table deposit_refund (lease_id, amount, refund_date, reference = UTR; migration
+  20261104090000 copied each lease's one refund in: Janani ₹0 24/05/2026, Muthukumar ₹10,000 02/11/2026; the old
+  lease.deposit_refunded_amount / deposit_refund_date columns STAY in the DB as a record, never read — LeaseDTO omits
+  them) + attachment.deposit_refund_id (5th owner in attachment_one_owner; a refund's files go with it).
+  MATHS (calculations.depositRowFor, tested): refunded = Σ refunds dated ≤ as-of (capped at the deposit), refundDate =
+  the latest; kept = deposit − refunded once the tenancy has ended and ANY refund is recorded (₹0 = "nothing refunded",
+  the whole deposit kept; none yet = awaiting refund, as before); kept stays income on the LAST DAY of tenancy and a
+  later top-up lowers it (a past year's view as at its end keeps what was kept then); the annual deposits flow shows the
+  top-up as refunded + negative kept (ledger still balances). Rules (schemas/lease refundIssues, tested): all refunds ≤
+  the deposit ("Only ₹x of the ₹y deposit is left to refund"), not before the lease start, not in the future, ₹0 only
+  alone (a real refund replaces a ₹0 entry and takes over its files); the deposit can't be edited below the refunds.
+  API: POST /api/leases/[id]/refunds → { refund: { id }, lease }; PATCH / DELETE …/refunds/[refundId]; move-out takes
+  refundAmount / refundDate / refundReference and returns refundId (its picked files upload onto it); lease detail
+  carries depositRefunds (oldest first, _count.attachments) — shared app/api/_lib/lease-detail.ts.
+  UI: lease drawer "Deposit refunds" (data/DepositRefunds.tsx; shows once the tenancy has ended or a refund exists): a
+  row per refund — amount (or "Nothing refunded"), date · ref no., its 📎, pencil (change inline: amount · date · ref no.
+  · Cancel / Save), ✕ (delete, asks) — then "Kept · of ₹deposit" (green; "Still held" while living there) and an add row
+  (Refund ₹ · date · Ref no. (UTR) with 📎 · + Refund) while anything is left to refund. Move out form: + "Refund ref no.
+  (UTR)" with the 📎 inside the box. Lease edit form: the refund fields are gone (section "Move-out" = notes only); the
+  drawer's deposit line has no refund hint any more. DEPLOYED 4/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

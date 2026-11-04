@@ -515,9 +515,11 @@ export interface DepositRow {
   unitName: string;
   deposit: number;
   receivedDate: string; // lease start
+  /** Σ refunds paid back by the as-of day (a lease can have several — owner 4/11/2026) */
   refunded: number;
+  /** the latest of those refunds */
   refundDate: string | null;
-  /** kept back at move-out (deposit − refunded) once a refund is recorded */
+  /** kept back at move-out (deposit − refunded) once a refund is recorded (₹0 = nothing refunded) */
   kept: number;
   /** lease ended but no refund recorded yet */
   awaitingRefund: number;

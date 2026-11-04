@@ -15,6 +15,7 @@ import {
   leaseConflictMessage,
   leaseRuleIssues,
   leaseStateOf,
+  refundIssues,
   leaseStatus,
   leasesOverlap,
 } from "../schemas/lease";
@@ -119,5 +120,34 @@ describe("rent periods: the last rent month is the month of the last day", () =>
     ];
     expect(paymentsOutsideLease(span("2021-07-01", "2025-04-30"), pays)).toEqual([{ periodMonth: 5, periodYear: 2025 }]);
     expect(paymentsOutsideLease(span("2021-07-01", "2025-03-31"), pays).map((p) => p.periodMonth)).toEqual([4, 5]);
+  });
+});
+
+describe("deposit refunds (owner 04/11/2026: several refunds, each with its own ref no. + files)", () => {
+  const base = { startDate: D("2026-10-07"), securityDeposit: 20_000, otherRefunds: 0, otherCount: 0, refundDate: D("2026-11-02") };
+
+  it("all refunds together can't be more than the deposit", () => {
+    expect(refundIssues({ ...base, amount: 20_000 })).toEqual([]);
+    expect(refundIssues({ ...base, amount: 20_001 })).toEqual([{ field: "amount", message: "A refund can't be more than the deposit (₹20,000)" }]);
+    // a top-up later: only what is left can still be refunded
+    expect(refundIssues({ ...base, otherRefunds: 10_000, otherCount: 1, amount: 10_000 })).toEqual([]);
+    expect(refundIssues({ ...base, otherRefunds: 10_000, otherCount: 1, amount: 12_000 })).toEqual([
+      { field: "amount", message: "Only ₹10,000 of the ₹20,000 deposit is left to refund" },
+    ]);
+  });
+
+  it("₹0 (nothing refunded) only stands alone; a refund can't be dated before the lease", () => {
+    expect(refundIssues({ ...base, amount: 0 })).toEqual([]);
+    expect(refundIssues({ ...base, otherRefunds: 5_000, otherCount: 1, amount: 0 })).toEqual([{ field: "amount", message: "Enter the amount refunded" }]);
+    expect(refundIssues({ ...base, amount: 5_000, refundDate: D("2026-10-06") })).toEqual([
+      { field: "refundDate", message: "The refund can't be dated before the lease started (07/10/2026)" },
+    ]);
+  });
+
+  it("the deposit can't be lowered below what was already refunded", () => {
+    expect(leaseRuleIssues({ startDate: D("2026-10-07"), endDate: null, securityDeposit: 20_000, refundedTotal: 20_000 })).toEqual([]);
+    expect(leaseRuleIssues({ startDate: D("2026-10-07"), endDate: null, securityDeposit: 15_000, refundedTotal: 20_000 })).toEqual([
+      { field: "securityDeposit", message: "The deposit can't be less than what has already been refunded (₹20,000)" },
+    ]);
   });
 });

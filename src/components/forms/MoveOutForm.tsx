@@ -1,55 +1,76 @@
 "use client";
 import { DoorOpen } from "lucide-react";
-import { DateInput, Field, FormGrid, NumberInput, Textarea } from "@/components/ui";
+import { PendingProofClip, usePendingProofs } from "@/components/proof";
+import { DateInput, Field, FormGrid, Input, NumberInput, Textarea } from "@/components/ui";
 import { api } from "@/lib/client";
 import { formatDate, toInputDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
-import { leaseMoveOutSchema, leaseRuleIssues, type LeaseDetail } from "@/lib/schemas/lease";
+import { leaseMoveOutSchema, leaseRuleIssues, refundIssues, type LeaseDetail } from "@/lib/schemas/lease";
 import { FormActions, FormBody, FormNote, inlineFrame, type BaseFormProps } from "./FormFrame";
 import { useForm } from "./useForm";
+import s from "./forms.module.css";
 
-type Values = { endDate: string; depositRefundedAmount: number | null; depositRefundDate: string; moveOutNotes: string };
+type Values = { endDate: string; refundAmount: number | null; refundDate: string; refundReference: string; moveOutNotes: string };
+
+/** move-out response: the lease + the refund just recorded (its files are uploaded onto it), if any */
+type MovedOut = LeaseDetail & { refundId: string | null };
 
 export interface MoveOutFormProps extends BaseFormProps<LeaseDetail> {
   lease: {
     id: string;
     startDate: string;
     securityDeposit: number;
-    depositRefundedAmount?: number | null;
     unit: { name: string };
     tenant: { name: string };
   };
 }
 
-/** Record that a tenant has left: their last day, and what happened to the deposit. */
+/**
+ * Record that a tenant has left: their last day, and the deposit refunded then (with its ref no. + 📎). More refunds can be
+ * added later on the lease (Data → Leases → Deposit refunds) — owner, 4/11/2026.
+ */
 export function MoveOutForm({ lease, onSaved, onCancel, frame = inlineFrame, submitLabel }: MoveOutFormProps) {
   const today = toInputDate(todayIST());
-  const form = useForm<Values, LeaseDetail>({
+  const pending = usePendingProofs();
+  const form = useForm<Values, MovedOut>({
     initial: {
       endDate: today,
-      depositRefundedAmount: lease.depositRefundedAmount ?? (lease.securityDeposit > 0 ? lease.securityDeposit : null),
-      depositRefundDate: lease.securityDeposit > 0 ? today : "",
+      refundAmount: lease.securityDeposit > 0 ? lease.securityDeposit : null,
+      refundDate: lease.securityDeposit > 0 ? today : "",
+      refundReference: "",
       moveOutNotes: "",
     },
     schema: leaseMoveOutSchema,
-    rules: (v) =>
-      leaseRuleIssues({
-        startDate: lease.startDate,
-        endDate: v.endDate || null,
-        securityDeposit: lease.securityDeposit,
-        depositRefundedAmount: v.depositRefundedAmount,
-        depositRefundDate: v.depositRefundDate || null,
-      }).filter((i) => v.endDate || i.field !== "endDate"),
+    rules: (v) => [
+      ...leaseRuleIssues({ startDate: lease.startDate, endDate: v.endDate || null, securityDeposit: lease.securityDeposit }).filter(
+        (i) => v.endDate || i.field !== "endDate",
+      ),
+      ...(v.refundAmount === null
+        ? []
+        : refundIssues({
+            startDate: lease.startDate,
+            securityDeposit: lease.securityDeposit,
+            otherRefunds: 0,
+            otherCount: 0,
+            amount: v.refundAmount,
+            refundDate: v.refundDate || null,
+          }).map((i) => ({ ...i, field: i.field === "amount" ? "refundAmount" : "refundDate" }))),
+    ],
     toBody: (v) => ({
       endDate: v.endDate,
-      depositRefundedAmount: v.depositRefundedAmount,
-      depositRefundDate: v.depositRefundDate || null,
+      refundAmount: v.refundAmount,
+      refundDate: v.refundDate || null,
+      refundReference: v.refundReference || null,
       moveOutNotes: v.moveOutNotes,
     }),
-    submit: (body) => api<LeaseDetail>(`/api/leases/${lease.id}/move-out`, { method: "POST", body }),
+    submit: (body) => api<MovedOut>(`/api/leases/${lease.id}/move-out`, { method: "POST", body }),
     success: () => `Moved out · ${lease.tenant.name} left ${lease.unit.name}`,
-    onSaved,
+    onSaved: (r) => {
+      if (r.refundId) void pending.uploadTo({ depositRefundId: r.refundId });
+      onSaved?.(r);
+    },
   });
+  const hasDeposit = lease.securityDeposit > 0;
 
   const body = (
     <FormBody form={form} intro={<>{lease.tenant.name} has lived in {lease.unit.name} since {formatDate(lease.startDate)}.</>}>
@@ -59,14 +80,28 @@ export function MoveOutForm({ lease, onSaved, onCancel, frame = inlineFrame, sub
         </Field>
         <Field
           label="Deposit refunded"
-          error={form.error("depositRefundedAmount")}
-          hint={lease.securityDeposit > 0 ? `Deposit held: ${formatINR(lease.securityDeposit)}` : "No deposit was taken"}
+          error={form.error("refundAmount")}
+          hint={hasDeposit ? `Deposit held: ${formatINR(lease.securityDeposit)}` : "No deposit was taken"}
         >
-          <NumberInput {...form.number("depositRefundedAmount")} currency placeholder="0" max={lease.securityDeposit || undefined} />
+          <NumberInput {...form.number("refundAmount")} currency placeholder="0" max={lease.securityDeposit || undefined} />
         </Field>
-        <Field label="Refunded on" error={form.error("depositRefundDate")}>
-          <DateInput {...form.date("depositRefundDate")} max={today} />
+        <Field label="Refunded on" error={form.error("refundDate")}>
+          <DateInput {...form.date("refundDate")} max={today} />
         </Field>
+        {hasDeposit && (
+          // the refund's clip (owner 4/11/2026: a receipt for the refund) at the right end of its ref no. box
+          <Field label="Refund ref no. (UTR)" span="full" error={form.error("refundReference")}>
+            <Input
+              {...form.text("refundReference")}
+              className={s.refInput}
+              maxLength={60}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              suffix={<PendingProofClip pending={pending} />}
+            />
+          </Field>
+        )}
         <Field label="Notes" span="full" error={form.error("moveOutNotes")}>
           <Textarea {...form.text("moveOutNotes")} />
         </Field>

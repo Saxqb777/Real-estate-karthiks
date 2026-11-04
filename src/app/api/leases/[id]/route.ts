@@ -2,28 +2,15 @@ import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { conflict, handler, json, notFound, param, parseBody } from "@/lib/api";
 import { fieldError } from "@/app/api/_lib/errors";
+import { loadLeaseDetail, refundsOf } from "@/app/api/_lib/lease-detail";
 import { fileKeysOf } from "@/lib/attachments";
 import { prisma } from "@/lib/db";
 import { removeFiles } from "@/lib/files";
-import {
-  leaseConflictMessage,
-  leaseDeleteBlockedMessage,
-  leaseDetailInclude,
-  leaseRent,
-  leaseRuleIssues,
-  leaseStatus,
-  leaseUpdateSchema,
-} from "@/lib/schemas/lease";
-import { paymentsOutsideLease, periodLabel, summarizePayments } from "@/lib/schemas/payment";
+import { leaseConflictMessage, leaseDeleteBlockedMessage, leaseRuleIssues, leaseUpdateSchema } from "@/lib/schemas/lease";
+import { paymentsOutsideLease, periodLabel } from "@/lib/schemas/payment";
 
-async function leaseDetail(id: string) {
-  const lease = await prisma.lease.findUnique({ where: { id }, include: leaseDetailInclude });
-  if (!lease) throw notFound("Lease");
-  return { ...lease, ...leaseRent(lease), ...leaseStatus(lease), ...summarizePayments(lease.payments) };
-}
-
-/** Lease with full unit, tenant and payments (newest period first). */
-export const GET = handler(async (_req, ctx) => json(await leaseDetail(await param(ctx, "id"))));
+/** Lease with full unit, tenant, payments (newest period first), rent changes and deposit refunds. */
+export const GET = handler(async (_req, ctx) => json(await loadLeaseDetail(await param(ctx, "id"))));
 
 /** Partial update; re-applies every create rule to the merged lease (excluding itself from overlap checks). */
 export const PUT = handler(async (req, ctx) => {
@@ -44,9 +31,8 @@ export const PUT = handler(async (req, ctx) => {
       startDate: body.startDate ?? existing.startDate,
       endDate: body.endDate !== undefined ? body.endDate : existing.endDate,
       securityDeposit: body.securityDeposit ?? existing.securityDeposit.toNumber(),
-      depositRefundedAmount:
-        body.depositRefundedAmount !== undefined ? body.depositRefundedAmount : (existing.depositRefundedAmount?.toNumber() ?? null),
-      depositRefundDate: body.depositRefundDate !== undefined ? body.depositRefundDate : existing.depositRefundDate,
+      // the deposit can't drop below what has already been refunded
+      refundedTotal: (await refundsOf(id, tx)).total,
       agreementEndDate: body.agreementEndDate !== undefined ? body.agreementEndDate : existing.agreementEndDate,
     };
     const issues = leaseRuleIssues(merged);
@@ -106,13 +92,14 @@ export const PUT = handler(async (req, ctx) => {
     await tx.lease.update({ where: { id }, data: { ...body, ...(justEnded && { reminderEnabled: false }) } });
   });
 
-  return json(await leaseDetail(id));
+  return json(await loadLeaseDetail(id));
 });
 
 /** Remove a lease entered by mistake. Refused while it has payments (they'd vanish with it — and their invoices). */
 export const DELETE = handler(async (_req, ctx) => {
   const id = await param(ctx, "id");
-  const files = await fileKeysOf({ leaseId: id }); // the deposit proof (payments block the delete, so none of theirs)
+  // the deposit's files + its refunds' files (payments block the delete, so none of theirs)
+  const files = await fileKeysOf({ OR: [{ leaseId: id }, { depositRefund: { leaseId: id } }] });
   await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT 1 FROM lease WHERE id = ${id} FOR UPDATE`; // no payment can be added mid-check
     const lease = await tx.lease.findUnique({

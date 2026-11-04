@@ -29,6 +29,9 @@ export async function assertOwner(field: AttachmentOwnerField, id: string, db: P
     case "propertyTaxId":
       if (!(await db.propertyTax.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Property tax entry");
       return;
+    case "depositRefundId":
+      if (!(await db.depositRefund.findUnique({ where: { id }, select: { id: true } }))) throw notFound("Refund");
+      return;
     case "expenseId": {
       const e = await db.expense.findUnique({ where: { id }, select: { propertyTax: { select: { id: true } } } });
       if (!e) throw notFound("Expense");
