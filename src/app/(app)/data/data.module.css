@@ -554,6 +554,11 @@ button.miniRow:hover {
   display: inline-block;
   width: 28px;
 }
+.iconSlot {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+}
 /* lease drawer: add / change a deposit refund (owner 4/11/2026) — amount · day, then ref no. (+ clip) · button */
 .refundForm {
   display: grid;

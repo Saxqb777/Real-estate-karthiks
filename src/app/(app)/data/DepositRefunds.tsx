@@ -2,6 +2,8 @@
 // Deposit refunds on a lease (owner, 4/11/2026: "add the receipt to the refund given and add a refund if I decide to
 // refund more later"). Each refund = amount · day · ref no. (UTR) · its own 📎; refunds can be added later, changed or
 // deleted. Once the tenancy has ended, what wasn't refunded is KEPT (income on the last day — calculations.depositRowFor).
+// Simple (owner, 4/11/2026: "just keep it simple x, add, edit and add receipt"): each row has 📎 · ✏️ · ✕ and the
+// header a + ; the amount / date / ref no. boxes only open for adding or changing one.
 import { Pencil, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { PendingProofClip, ProofClip, usePendingProofs } from "@/components/proof";
@@ -19,6 +21,7 @@ const tidyRef = (v: string) => v.replace(/\s+/g, "").toUpperCase();
 export function DepositRefunds({ lease: l }: { lease: LeaseDetail }) {
   const refunds = l.depositRefunds ?? [];
   const deposit = l.securityDeposit;
+  // null = just the list; "add" = the add boxes; a refund id = that refund's boxes
   const [editing, setEditing] = useState<string | null>(null);
   const ended = l.state === "ended";
   // a tenant still living there gets their refund at Move out — the section shows once the tenancy has ended (or a
@@ -28,9 +31,21 @@ export function DepositRefunds({ lease: l }: { lease: LeaseDetail }) {
   const refunded = round2(refunds.reduce((sum, r) => sum + r.amount, 0));
   const left = round2(Math.max(0, deposit - refunded));
   const editingRow = refunds.find((r) => r.id === editing) ?? null;
+  const close = () => setEditing(null);
 
   return (
-    <DetailSection title="Deposit refunds">
+    <DetailSection
+      title="Deposit refunds"
+      aside={
+        editing === null && left > 0 ? (
+          <button type="button" className={s.iconLink} aria-label="Add a refund" title="Add a refund" onClick={() => setEditing("add")}>
+            <Plus aria-hidden />
+          </button>
+        ) : (
+          <span className={s.iconSlot} aria-hidden /> // keeps the heading the same height while the boxes are open
+        )
+      }
+    >
       <ul className={s.miniList}>
         {refunds.map((r) =>
           r.id === editing ? null : <RefundRow key={r.id} lease={l} refund={r} onEdit={() => setEditing(r.id)} />,
@@ -48,9 +63,9 @@ export function DepositRefunds({ lease: l }: { lease: LeaseDetail }) {
         )}
       </ul>
       {editingRow ? (
-        <RefundForm key={editingRow.id} lease={l} refund={editingRow} left={round2(left + editingRow.amount)} onDone={() => setEditing(null)} />
+        <RefundForm key={editingRow.id} lease={l} refund={editingRow} left={round2(left + editingRow.amount)} onDone={close} />
       ) : (
-        left > 0 && <RefundForm key={`add:${refunds.length}`} lease={l} refund={null} left={left} onDone={() => undefined} />
+        editing === "add" && <RefundForm key="add" lease={l} refund={null} left={left} onDone={close} />
       )}
     </DetailSection>
   );
@@ -146,13 +161,11 @@ function RefundForm({
         suffix={refund ? undefined : <PendingProofClip pending={pending} />}
       />
       <span className={s.refundActions}>
-        {refund && (
-          <Button type="button" size="sm" variant="ghost" onClick={onDone}>
-            Cancel
-          </Button>
-        )}
-        <Button type="submit" size="sm" icon={refund ? undefined : <Plus />} disabled={!ready} loading={save.loading}>
-          {refund ? "Save" : "Refund"}
+        <Button type="button" size="sm" variant="ghost" onClick={onDone}>
+          Cancel
+        </Button>
+        <Button type="submit" size="sm" disabled={!ready} loading={save.loading}>
+          {refund ? "Save" : "Add"}
         </Button>
       </span>
     </form>
