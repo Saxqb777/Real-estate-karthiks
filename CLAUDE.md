@@ -919,6 +919,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   heading; the amount / date / ref no. (📎) boxes open only after + or ✏️ (Cancel · Add / Save). The always-open add
   row and the "Kept / Still held" line are gone (kept still shows in the charts, house window and reports).
   DEPLOYED 4/11/2026.
+- 4/11/2026: OVERVIEW TAGS = THE OLD NAMES IN TITLE CASE (owner: "i want the same old tags but each word starts with caps"
+  → "deploy") — supersedes 3/11 "name what they open": Property Manager, Electricity Board, Revenue Officer, Mailbox,
+  CCTV, Plot Marker, TO-LET Board (hover + "?" tags; Inspect TAG_NAME, HelpOverlay, estate/types). Houses + tenants keep
+  their real names. Window eyebrows unchanged ("Property manager", "Revenue officer" — asked, no answer yet).
+  DEPLOYED 4/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
