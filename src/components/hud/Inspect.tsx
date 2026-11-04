@@ -252,15 +252,15 @@ export function hintFor(obj: SceneObject, data: DashboardData): { title: string;
 /** Depth 1: hovering a world object shows just its name tag (owner: same tags as the "?" view, no detail box). */
 const TAG_NAME: Record<SceneObjectKind, string> = {
   unit: "House",
-  // each tag names what the object opens (owner 3/11/2026); houses + tenants show their real names
-  mailbox: "Rent & receipts",
-  noticeboard: "To-dos",
-  pole: "Electricity bills",
-  tolet: "New lease",
+  // the objects' own names, each word capitalised (owner 4/11/2026); houses + tenants show their real names
+  mailbox: "Mailbox",
+  noticeboard: "Property Manager",
+  pole: "Electricity Board",
+  tolet: "TO-LET Board",
   tenant: "Tenant",
-  taxstamp: "Property tax",
-  plot: "Property",
-  photographer: "Interior photos",
+  taxstamp: "Revenue Officer",
+  plot: "Plot Marker",
+  photographer: "CCTV",
 };
 export function WorldHint({ obj, data }: { obj: SceneObject | null; data: DashboardData }) {
   const isClient = useIsClient();

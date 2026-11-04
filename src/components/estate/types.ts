@@ -34,12 +34,12 @@ export type ObjectScreenFn = (kind: SceneObjectKind, unitId?: string) => ScreenP
 /** What each world object opens (DESIGN.md table) — used for tooltips and the "?" help overlay. */
 export const SCENE_OBJECT_INFO: Record<SceneObjectKind, { name: string; opens: string }> = {
   unit: { name: "House", opens: "Unit card" },
-  mailbox: { name: "Rent & receipts", opens: "Payments & invoices" },
-  noticeboard: { name: "To-dos", opens: "To-dos" },
-  pole: { name: "Electricity bills", opens: "Electricity (TNPDCL)" },
-  tolet: { name: "New lease", opens: "New lease" },
+  mailbox: { name: "Mailbox", opens: "Payments & invoices" },
+  noticeboard: { name: "Property Manager", opens: "To-dos" },
+  pole: { name: "Electricity Board", opens: "Electricity (TNPDCL)" },
+  tolet: { name: "TO-LET Board", opens: "New lease" },
   tenant: { name: "Tenant", opens: "Tenant profile" },
-  taxstamp: { name: "Property tax", opens: "Property tax" },
-  plot: { name: "Property", opens: "Plot dimensions" },
-  photographer: { name: "Interior photos", opens: "Interior photos of 116/B7" },
+  taxstamp: { name: "Revenue Officer", opens: "Property tax" },
+  plot: { name: "Plot Marker", opens: "Plot dimensions" },
+  photographer: { name: "CCTV", opens: "Interior photos of 116/B7" },
 };
