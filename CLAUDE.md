@@ -924,6 +924,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   CCTV, Plot Marker, TO-LET Board (hover + "?" tags; Inspect TAG_NAME, HelpOverlay, estate/types). Houses + tenants keep
   their real names. Window eyebrows unchanged ("Property manager", "Revenue officer" — asked, no answer yet).
   DEPLOYED 4/11/2026.
+- 4/11/2026: REFUND FORM = ONE CLEAN CARD (owner, screenshot of the open add row: "make the refund recording section look
+  clean and nice" → "deploy"): after + / ✏️ the boxes sit in one soft card (data.module.css .refundCard: white .05,
+  hairline, radius 16) — labelled like every form: Amount · Refunded on (2 columns), Ref no. (UTR) full width with the 📎
+  inside, then Cancel (ghost) · Add refund / Save (blue primary) on the right; regular-size boxes (the compact ones had a
+  bigger "Refund" placeholder than the rest). DEPLOYED 4/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,
