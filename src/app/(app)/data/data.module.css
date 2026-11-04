@@ -559,21 +559,24 @@ button.miniRow:hover {
   width: 28px;
   height: 28px;
 }
-/* lease drawer: add / change a deposit refund (owner 4/11/2026) — amount · day, then ref no. (+ clip) · button */
-.refundForm {
+/* lease drawer: add / change a deposit refund (owner 4/11/2026: "clean and nice") — one soft card: labelled amount · day,
+   the ref no. (+ 📎) full width, then Cancel · Add refund on the right */
+.refundCard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
+  gap: 14px;
   margin-top: 10px;
+  padding: 14px 14px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  border-radius: 16px;
 }
-.refundForm input {
+.refundCard input {
   font-variant-numeric: tabular-nums;
 }
 .refundActions {
-  display: inline-flex;
+  display: flex;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
 }
 @media (max-width: 767px) {
   .rentChangeRow {

@@ -8,7 +8,7 @@
 import { Pencil, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { PendingProofClip, ProofClip, usePendingProofs } from "@/components/proof";
-import { Button, DateInput, Input, NumberInput, confirmDialog } from "@/components/ui";
+import { Button, DateInput, Field, FormGrid, Input, NumberInput, confirmDialog } from "@/components/ui";
 import { api, useMutation } from "@/lib/client";
 import { formatDate, toInputDate, todayIST } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
@@ -128,36 +128,43 @@ function RefundForm({
   const others = (l.depositRefunds ?? []).filter((r) => r.id !== refund?.id).length;
   const ready = amount !== null && (amount > 0 || others === 0) && amount <= left && Boolean(date);
 
+  // one clean card (owner 4/11/2026: "make the refund recording section look clean and nice"): labelled boxes like
+  // every other form — amount · day, then the ref no. with its 📎 — and Cancel · Add refund / Save on the right
   return (
     <form
-      className={s.refundForm}
+      className={s.refundCard}
       onSubmit={(e) => {
         e.preventDefault();
         if (ready) void save.run();
       }}
     >
-      <NumberInput compact currency hideHint aria-label="Amount refunded" placeholder="Refund" value={amount} onValueChange={setAmount} max={left} />
-      <DateInput compact aria-label="Refunded on" value={date} max={today} min={toInputDate(l.startDate)} onValueChange={setDate} />
-      <Input
-        compact
-        aria-label="Refund ref no. (UTR)"
-        placeholder="Ref no. (UTR)"
-        value={reference}
-        maxLength={60}
-        autoComplete="off"
-        autoCapitalize="characters"
-        spellCheck={false}
-        onChange={(e) => setReference(tidyRef(e.target.value))}
-        suffix={refund ? undefined : <PendingProofClip pending={pending} />}
-      />
-      <span className={s.refundActions}>
-        <Button type="button" size="sm" variant="ghost" onClick={onDone}>
+      <FormGrid cols={2}>
+        <Field label="Amount">
+          <NumberInput currency hideHint value={amount} onValueChange={setAmount} max={left} data-autofocus />
+        </Field>
+        <Field label="Refunded on">
+          <DateInput value={date} max={today} min={toInputDate(l.startDate)} onValueChange={setDate} />
+        </Field>
+        <Field label="Ref no. (UTR)" span="full">
+          <Input
+            value={reference}
+            maxLength={60}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            onChange={(e) => setReference(tidyRef(e.target.value))}
+            suffix={refund ? undefined : <PendingProofClip pending={pending} />}
+          />
+        </Field>
+      </FormGrid>
+      <div className={s.refundActions}>
+        <Button type="button" variant="ghost" onClick={onDone}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={!ready} loading={save.loading}>
-          {refund ? "Save" : "Add"}
+        <Button type="submit" variant="primary" disabled={!ready} loading={save.loading}>
+          {refund ? "Save" : "Add refund"}
         </Button>
-      </span>
+      </div>
     </form>
   );
 }
