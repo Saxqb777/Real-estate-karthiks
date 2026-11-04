@@ -914,6 +914,11 @@ Apply schema changes to Neon via the Neon MCP (`run_sql_transaction`) or via `pr
   (Refund ₹ · date · Ref no. (UTR) with 📎 · + Refund) while anything is left to refund. Move out form: + "Refund ref no.
   (UTR)" with the 📎 inside the box. Lease edit form: the refund fields are gone (section "Move-out" = notes only); the
   drawer's deposit line has no refund hint any more. DEPLOYED 4/11/2026.
+- 4/11/2026: DEPOSIT REFUNDS SIMPLE (owner, screenshot: "just keep it simple x, add, edit and add receipt" → "remove kept
+  also" → "deploy"): the section is just the refund rows (amount, date · ref no., then 📎 · ✏️ · ✕) and a + beside the
+  heading; the amount / date / ref no. (📎) boxes open only after + or ✏️ (Cancel · Add / Save). The always-open add
+  row and the "Kept / Still held" line are gone (kept still shows in the charts, house window and reports).
+  DEPLOYED 4/11/2026.
 
 ## UI conventions (built in round 1)
 - Import the UI kit from `@/components/ui` (Panel, Button, Field/Input/NumberInput/DateInput/Select, Tabs, Table, StatusPill,

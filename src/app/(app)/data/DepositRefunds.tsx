@@ -3,7 +3,8 @@
 // refund more later"). Each refund = amount · day · ref no. (UTR) · its own 📎; refunds can be added later, changed or
 // deleted. Once the tenancy has ended, what wasn't refunded is KEPT (income on the last day — calculations.depositRowFor).
 // Simple (owner, 4/11/2026: "just keep it simple x, add, edit and add receipt"): each row has 📎 · ✏️ · ✕ and the
-// header a + ; the amount / date / ref no. boxes only open for adding or changing one.
+// header a + ; the amount / date / ref no. boxes only open for adding or changing one. No "Kept" line (owner: "remove
+// kept also") — the kept amount shows in the charts, the house window and the reports.
 import { Pencil, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { PendingProofClip, ProofClip, usePendingProofs } from "@/components/proof";
@@ -49,17 +50,6 @@ export function DepositRefunds({ lease: l }: { lease: LeaseDetail }) {
       <ul className={s.miniList}>
         {refunds.map((r) =>
           r.id === editing ? null : <RefundRow key={r.id} lease={l} refund={r} onEdit={() => setEditing(r.id)} />,
-        )}
-        {refunds.length > 0 && (
-          <li>
-            <div className={s.miniRow} data-static>
-              <Stack2 top={ended ? "Kept" : "Still held"} bottom={`of ${formatINR(deposit)}`} />
-              <span className={s.miniRight}>
-                <span className={ended && left > 0 ? "num pos" : "num"}>{formatINR(left)}</span>
-                <span className={s.iconSpacer} />
-              </span>
-            </div>
-          </li>
         )}
       </ul>
       {editingRow ? (
